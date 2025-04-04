@@ -7,6 +7,7 @@ use App\Http\Controllers\PostController;
 use App\Http\Controllers\MatchController;
 use App\Http\Controllers\RankingController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\ChatController;
 
 
 Route::post('/register', [AuthController::class, 'register']);
@@ -37,3 +38,8 @@ Route::get('/rankings', [RankingController::class, 'index']);
 //Event routes
 Route::get('/events', [EventController::class, 'index']);
 Route::get('/events/{event}', [EventController::class, 'show']);
+
+//Chat routes
+
+Route::middleware('auth:sanctum')->get('/chat', [ChatController::class, 'index']);
+Route::middleware('auth:sanctum')->post('/chat', [ChatController::class, 'store']);
