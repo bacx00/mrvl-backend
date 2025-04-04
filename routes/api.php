@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ThreadController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\MatchController;
+use App\Http\Controllers\RankingController;
 
 
 Route::post('/register', [AuthController::class, 'register']);
@@ -27,3 +28,7 @@ Route::prefix('forum')->group(function () {
 // Matches routes
 Route::get('/matches', [MatchController::class, 'index']);
 Route::get('/matches/{match}', [MatchController::class, 'show']);
+
+
+// Ranking routes
+Route::get('/rankings', [RankingController::class, 'index']);
