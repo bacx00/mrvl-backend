@@ -4,6 +4,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ThreadController;
 use App\Http\Controllers\PostController;
+use App\Http\Controllers\MatchController;
+
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
@@ -21,3 +23,7 @@ Route::prefix('forum')->group(function () {
         Route::delete('/posts/{post}', [PostController::class, 'destroy']);
     });
 });
+
+// Matches routes
+Route::get('/matches', [MatchController::class, 'index']);
+Route::get('/matches/{match}', [MatchController::class, 'show']);

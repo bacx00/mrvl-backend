@@ -12,6 +12,9 @@ class DatabaseSeeder extends Seeder
             RoleSeeder::class,
             UserSeeder::class,
             ForumSeeder::class,
+            TeamSeeder::class,
+            PlayerSeeder::class,
+            MatchSeeder::class,
         ]);
     }
 }
