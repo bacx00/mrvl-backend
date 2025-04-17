@@ -7,7 +7,9 @@ use App\Http\Controllers\PostController;
 use App\Http\Controllers\MatchController;
 use App\Http\Controllers\RankingController;
 use App\Http\Controllers\EventController;
-
+use App\Http\Controllers\ChatController;
+use App\Http\Controllers\AdminStatsController;
+use App\Http\Controllers\AdminUserController;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
@@ -37,3 +39,16 @@ Route::get('/rankings', [RankingController::class, 'index']);
 //Event routes
 Route::get('/events', [EventController::class, 'index']);
 Route::get('/events/{event}', [EventController::class, 'show']);
+
+//Chat routes
+
+Route::middleware('auth:sanctum')->get('/chat', [ChatController::class, 'index']);
+Route::middleware('auth:sanctum')->post('/chat', [ChatController::class, 'store']);
+
+// Admin routes
+
+Route::prefix('admin')->middleware(['auth:sanctum', 'role:admin'])->group(function () {
+    Route::get('/stats', [AdminStatsController::class, 'index']);
+    Route::get('/users', [AdminUserController::class, 'index']);
+    Route::put('/users/{user}', [AdminUserController::class, 'update']);
+});
