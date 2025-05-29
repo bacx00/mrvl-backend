@@ -1,14 +1,14 @@
 <?php
 namespace App\Http\Controllers;
 
-use App\Models\Match;
+use App\Models\GameMatch;
 use Illuminate\Http\Request;
 
 class MatchController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Match::with(['team1', 'team2', 'event']);
+        $query = GameMatch::with(['team1', 'team2', 'event']);
 
         if ($request->status && $request->status !== 'all') {
             $query->where('status', $request->status);
@@ -23,10 +23,10 @@ class MatchController extends Controller
         ]);
     }
 
-    public function show(Match $match)
+    public function show(GameMatch $gameMatch)
     {
-        $match->load(['team1.players', 'team2.players', 'event']);
-        return response()->json(['data' => $match, 'success' => true]);
+        $gameMatch->load(['team1.players', 'team2.players', 'event']);
+        return response()->json(['data' => $gameMatch, 'success' => true]);
     }
 
     public function store(Request $request)
@@ -40,7 +40,7 @@ class MatchController extends Controller
             'stream_url' => 'nullable|url'
         ]);
 
-        $match = Match::create($validated);
+        $match = GameMatch::create($validated);
 
         return response()->json([
             'data' => $match->load(['team1', 'team2', 'event']),
@@ -49,7 +49,7 @@ class MatchController extends Controller
         ], 201);
     }
 
-    public function update(Request $request, Match $match)
+    public function update(Request $request, GameMatch $gameMatch)
     {
         $validated = $request->validate([
             'status' => 'sometimes|in:upcoming,live,completed',
@@ -60,18 +60,18 @@ class MatchController extends Controller
             'stream_url' => 'nullable|url'
         ]);
 
-        $match->update($validated);
+        $gameMatch->update($validated);
 
         return response()->json([
-            'data' => $match->fresh()->load(['team1', 'team2', 'event']),
+            'data' => $gameMatch->fresh()->load(['team1', 'team2', 'event']),
             'success' => true,
             'message' => 'Match updated successfully'
         ]);
     }
 
-    public function destroy(Match $match)
+    public function destroy(GameMatch $gameMatch)
     {
-        $match->delete();
+        $gameMatch->delete();
         return response()->json([
             'success' => true,
             'message' => 'Match deleted successfully'
@@ -80,9 +80,9 @@ class MatchController extends Controller
 
     public function live()
     {
-        $liveMatches = Match::with(['team1', 'team2', 'event'])
-                           ->where('status', 'live')
-                           ->get();
+        $liveMatches = GameMatch::with(['team1', 'team2', 'event'])
+                               ->where('status', 'live')
+                               ->get();
 
         return response()->json([
             'data' => $liveMatches,
