@@ -1,7 +1,7 @@
 <?php
 namespace App\Http\Controllers;
 
-use App\Models\{Team, Player, Match, Event, ForumThread};
+use App\Models\{Team, Player, GameMatch, Event, ForumThread};
 use Illuminate\Http\Request;
 
 class SearchController extends Controller
@@ -46,7 +46,7 @@ class SearchController extends Controller
         }
 
         if ($category === 'all' || $category === 'matches') {
-            $results['matches'] = Match::whereHas('team1', function($q) use ($query) {
+            $results['matches'] = GameMatch::whereHas('team1', function($q) use ($query) {
                                         $q->where('name', 'LIKE', "%{$query}%");
                                     })
                                     ->orWhereHas('team2', function($q) use ($query) {
