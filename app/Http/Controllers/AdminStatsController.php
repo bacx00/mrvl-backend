@@ -1,7 +1,7 @@
 <?php
 namespace App\Http\Controllers;
 
-use App\Models\{Team, Player, Match, Event, User, ForumThread};
+use App\Models\{Team, Player, GameMatch, Event, User, ForumThread};
 
 class AdminStatsController extends Controller
 {
@@ -16,8 +16,8 @@ class AdminStatsController extends Controller
             'overview' => [
                 'totalTeams' => Team::count(),
                 'totalPlayers' => Player::count(),
-                'totalMatches' => Match::count(),
-                'liveMatches' => Match::where('status', 'live')->count(),
+                'totalMatches' => GameMatch::count(),
+                'liveMatches' => GameMatch::where('status', 'live')->count(),
                 'totalEvents' => Event::count(),
                 'activeEvents' => Event::where('status', 'live')->count(),
                 'totalUsers' => User::count(),
@@ -36,10 +36,10 @@ class AdminStatsController extends Controller
                 'topRated' => Player::with('team')->orderBy('rating', 'desc')->limit(10)->get(),
             ],
             'matches' => [
-                'byStatus' => Match::selectRaw('status, COUNT(*) as count')
+                'byStatus' => GameMatch::selectRaw('status, COUNT(*) as count')
                                   ->groupBy('status')
                                   ->get(),
-                'recent' => Match::with(['team1', 'team2', 'event'])
+                'recent' => GameMatch::with(['team1', 'team2', 'event'])
                                 ->orderBy('scheduled_at', 'desc')
                                 ->limit(10)
                                 ->get(),
