@@ -22,7 +22,7 @@ Route::get('/teams/{team}', [TeamController::class, 'show']);
 Route::get('/players', [PlayerController::class, 'index']);
 Route::get('/players/{player}', [PlayerController::class, 'show']);
 Route::get('/matches', [MatchController::class, 'index']);
-Route::get('/matches/{match}', [MatchController::class, 'show']);
+Route::get('/matches/{gameMatch}', [MatchController::class, 'show']);
 Route::get('/matches/live', [MatchController::class, 'live']);
 Route::get('/events', [EventController::class, 'index']);
 Route::get('/events/{event}', [EventController::class, 'show']);
