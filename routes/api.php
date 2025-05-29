@@ -7,7 +7,9 @@ use App\Http\Controllers\{
     EventController,
     SearchController,
     ForumController,
-    AdminStatsController
+    AdminStatsController,
+    NewsController,
+    ImageUploadController
 };
 
 // Public Authentication Routes
@@ -26,6 +28,11 @@ Route::get('/events', [EventController::class, 'index']);
 Route::get('/events/{event}', [EventController::class, 'show']);
 Route::get('/rankings', [TeamController::class, 'rankings']);
 Route::get('/search', [SearchController::class, 'search']);
+
+// Public News Routes
+Route::get('/news', [NewsController::class, 'index']);
+Route::get('/news/categories', [NewsController::class, 'categories']);
+Route::get('/news/{slug}', [NewsController::class, 'show']);
 
 // Public Forum Routes
 Route::get('/forum/threads', [ForumController::class, 'index']);
@@ -49,5 +56,17 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::apiResource('/admin/players', PlayerController::class)->except(['index', 'show']);
         Route::apiResource('/admin/matches', MatchController::class)->except(['index', 'show']);
         Route::apiResource('/admin/events', EventController::class)->except(['index', 'show']);
+        
+        // News Management
+        Route::get('/admin/news', [NewsController::class, 'adminIndex']);
+        Route::apiResource('/admin/news', NewsController::class)->except(['index']);
+        
+        // Image Upload Routes (Admin Only)
+        Route::post('/upload/team/{team}/logo', [ImageUploadController::class, 'uploadTeamLogo']);
+        Route::post('/upload/team/{team}/flag', [ImageUploadController::class, 'uploadTeamFlag']);
+        Route::post('/upload/player/{player}/avatar', [ImageUploadController::class, 'uploadPlayerAvatar']);
+        Route::post('/upload/news/{news}/featured-image', [ImageUploadController::class, 'uploadNewsFeaturedImage']);
+        Route::post('/upload/news/{news}/gallery', [ImageUploadController::class, 'uploadNewsGalleryImages']);
+        Route::delete('/upload/news/{news}/gallery', [ImageUploadController::class, 'removeNewsGalleryImage']);
     });
 });
