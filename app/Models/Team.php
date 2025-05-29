@@ -34,34 +34,34 @@ class Team extends Model
 
     public function homeMatches()
     {
-        return $this->hasMany(Match::class, 'team1_id');
+        return $this->hasMany(GameMatch::class, 'team1_id');
     }
 
     public function awayMatches()
     {
-        return $this->hasMany(Match::class, 'team2_id');
+        return $this->hasMany(GameMatch::class, 'team2_id');
     }
 
     public function getRecentMatchesAttribute()
     {
-        return Match::where('team1_id', $this->id)
-                   ->orWhere('team2_id', $this->id)
-                   ->with(['team1', 'team2', 'event'])
-                   ->orderBy('scheduled_at', 'desc')
-                   ->limit(5)
-                   ->get();
+        return GameMatch::where('team1_id', $this->id)
+                       ->orWhere('team2_id', $this->id)
+                       ->with(['team1', 'team2', 'event'])
+                       ->orderBy('scheduled_at', 'desc')
+                       ->limit(5)
+                       ->get();
     }
 
     public function getWinPercentageAttribute()
     {
-        $totalMatches = Match::where(function($query) {
+        $totalMatches = GameMatch::where(function($query) {
             $query->where('team1_id', $this->id)
                   ->orWhere('team2_id', $this->id);
         })->where('status', 'completed')->count();
 
         if ($totalMatches === 0) return 0;
 
-        $wins = Match::where(function($query) {
+        $wins = GameMatch::where(function($query) {
             $query->where(function($q) {
                 $q->where('team1_id', $this->id)
                   ->whereRaw('team1_score > team2_score');
@@ -76,8 +76,8 @@ class Team extends Model
 
     public function getTotalMatchesAttribute()
     {
-        return Match::where('team1_id', $this->id)
-                   ->orWhere('team2_id', $this->id)
-                   ->count();
+        return GameMatch::where('team1_id', $this->id)
+                       ->orWhere('team2_id', $this->id)
+                       ->count();
     }
 }
