@@ -49,14 +49,14 @@ Route::middleware('auth:sanctum')->get('/test-auth', function (Request $request)
 });
 
 // Authenticated Routes
+Route::post('/auth/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
+Route::get('/user', [AuthController::class, 'user'])->middleware('auth:sanctum');
+
+// Forum Write Operations
+Route::post('/forum/threads', [ForumController::class, 'store'])->middleware('auth:sanctum');
+
+// Original grouped routes
 Route::middleware('auth:sanctum')->group(function () {
-    // Auth Routes
-    Route::post('/auth/logout', [AuthController::class, 'logout']);
-    Route::get('/user', [AuthController::class, 'user']);
-    
-    // Forum Write Operations
-    Route::post('/forum/threads', [ForumController::class, 'store']);
-    
     // Admin Routes
     Route::middleware('role:admin')->group(function () {
         Route::get('/admin/stats', [AdminStatsController::class, 'index']);
