@@ -24,7 +24,7 @@ class Event extends Model
 
     public function matches()
     {
-        return $this->hasMany(Match::class);
+        return $this->hasMany(GameMatch::class);
     }
 
     public function getTeamsAttribute()
