@@ -5,11 +5,6 @@ use App\Models\{Team, Player, GameMatch, Event, User, ForumThread};
 
 class AdminStatsController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware(['auth:sanctum', 'role:admin']);
-    }
-
     public function index()
     {
         $stats = [
