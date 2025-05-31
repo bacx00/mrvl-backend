@@ -11,6 +11,7 @@ use App\Http\Controllers\{
     NewsController,
     ImageUploadController
 };
+use Illuminate\Http\Request;
 
 // Public Authentication Routes
 Route::post('/auth/login', [AuthController::class, 'login']);
