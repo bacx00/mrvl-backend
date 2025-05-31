@@ -23,10 +23,16 @@ class MatchController extends Controller
         ]);
     }
 
-    public function show(GameMatch $gameMatch)
+    public function show($gameMatch)
     {
-        $gameMatch->load(['team1.players', 'team2.players', 'event']);
-        return response()->json(['data' => $gameMatch, 'success' => true]);
+        // Handle special case for 'live' route
+        if ($gameMatch === 'live') {
+            return $this->live();
+        }
+        
+        $match = GameMatch::findOrFail($gameMatch);
+        $match->load(['team1.players', 'team2.players', 'event']);
+        return response()->json(['data' => $match, 'success' => true]);
     }
 
     public function store(Request $request)
