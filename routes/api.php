@@ -183,3 +183,4 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/upload/news/{news}/gallery', [ImageUploadController::class, 'removeNewsGalleryImage']);
     });
 });
+*/
