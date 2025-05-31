@@ -38,6 +38,15 @@ Route::get('/news/{slug}', [NewsController::class, 'show']);
 Route::get('/forum/threads', [ForumController::class, 'index']);
 Route::get('/forum/threads/{thread}', [ForumController::class, 'show']);
 
+// Test authentication endpoint
+Route::middleware('auth:sanctum')->get('/test-auth', function (Request $request) {
+    return response()->json([
+        'message' => 'Authentication working!',
+        'user_id' => $request->user()->id,
+        'success' => true
+    ]);
+});
+
 // Authenticated Routes
 Route::middleware('auth:sanctum')->group(function () {
     // Auth Routes
