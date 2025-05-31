@@ -30,7 +30,7 @@ return new class extends Migration {
             $table->index(['category', 'status']);
             $table->index(['featured', 'status']);
             $table->index(['author_id']);
-            $table->fullText(['title', 'content', 'excerpt']);
+            // Note: SQLite doesn't support fulltext indexes
         });
     }
 
