@@ -91,6 +91,16 @@ Route::middleware('auth:sanctum')->post('/auth/logout', function (Request $reque
 // Forum Write Operations
 Route::post('/forum/threads', [ForumController::class, 'store'])->middleware('auth:sanctum');
 
+// Test admin endpoint
+Route::middleware(['auth:sanctum', 'role:admin'])->get('/test-admin', function (Request $request) {
+    return response()->json([
+        'message' => 'Admin access working!',
+        'user' => $request->user()->name,
+        'roles' => $request->user()->getRoleNames(),
+        'success' => true
+    ]);
+});
+
 // Original grouped routes
 Route::middleware('auth:sanctum')->group(function () {
     // Admin Routes
