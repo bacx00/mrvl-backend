@@ -60,9 +60,9 @@ Route::middleware('auth:sanctum')->get('/user-direct', function (Request $reques
     ]);
 });
 
-// Authenticated Routes
-Route::post('/auth/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
-Route::get('/user', [AuthController::class, 'user'])->middleware('auth:sanctum');
+// Authenticated Routes  
+Route::get('/user', [AuthController::class, 'user'])->middleware(\Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class);
+Route::post('/auth/logout', [AuthController::class, 'logout'])->middleware(\Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class);
 
 // Forum Write Operations
 Route::post('/forum/threads', [ForumController::class, 'store'])->middleware('auth:sanctum');
