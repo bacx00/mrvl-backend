@@ -140,6 +140,36 @@ Route::middleware(['auth:sanctum', 'role:admin'])->post('/admin/teams', function
     ], 201);
 });
 
+Route::middleware(['auth:sanctum', 'role:admin'])->put('/admin/teams/{team}', function (Request $request, $teamId) {
+    $team = \App\Models\Team::findOrFail($teamId);
+    
+    $validated = $request->validate([
+        'name' => 'required|string|max:255',
+        'region' => 'required|string',
+        'description' => 'nullable|string',
+        'logo' => 'nullable|string',
+    ]);
+    
+    $team->update($validated);
+    
+    return response()->json([
+        'data' => $team->fresh(),
+        'success' => true,
+        'message' => 'Team updated successfully'
+    ]);
+});
+
+Route::middleware(['auth:sanctum', 'role:admin'])->delete('/admin/teams/{team}', function (Request $request, $teamId) {
+    $team = \App\Models\Team::findOrFail($teamId);
+    $teamName = $team->name;
+    $team->delete();
+    
+    return response()->json([
+        'success' => true,
+        'message' => "Team '{$teamName}' deleted successfully"
+    ]);
+});
+
 Route::middleware(['auth:sanctum', 'role:admin'])->post('/admin/players', function (Request $request) {
     $validated = $request->validate([
         'name' => 'required|string|max:255',
@@ -155,6 +185,124 @@ Route::middleware(['auth:sanctum', 'role:admin'])->post('/admin/players', functi
         'success' => true,
         'message' => 'Player created successfully'
     ], 201);
+});
+
+Route::middleware(['auth:sanctum', 'role:admin'])->put('/admin/players/{player}', function (Request $request, $playerId) {
+    $player = \App\Models\Player::findOrFail($playerId);
+    
+    $validated = $request->validate([
+        'name' => 'required|string|max:255',
+        'username' => 'required|string|unique:players,username,' . $playerId,
+        'role' => 'required|string',
+        'team_id' => 'nullable|exists:teams,id',
+    ]);
+    
+    $player->update($validated);
+    
+    return response()->json([
+        'data' => $player->fresh()->load('team'),
+        'success' => true,
+        'message' => 'Player updated successfully'
+    ]);
+});
+
+Route::middleware(['auth:sanctum', 'role:admin'])->delete('/admin/players/{player}', function (Request $request, $playerId) {
+    $player = \App\Models\Player::findOrFail($playerId);
+    $playerName = $player->name;
+    $player->delete();
+    
+    return response()->json([
+        'success' => true,
+        'message' => "Player '{$playerName}' deleted successfully"
+    ]);
+});
+
+// User Management for Admin
+Route::middleware(['auth:sanctum', 'role:admin'])->get('/admin/users', function () {
+    $users = \App\Models\User::with('roles')->paginate(15);
+    
+    return response()->json([
+        'data' => $users->items(),
+        'meta' => [
+            'current_page' => $users->currentPage(),
+            'last_page' => $users->lastPage(),
+            'per_page' => $users->perPage(),
+            'total' => $users->total()
+        ],
+        'success' => true
+    ]);
+});
+
+Route::middleware(['auth:sanctum', 'role:admin'])->post('/admin/users', function (Request $request) {
+    $validated = $request->validate([
+        'name' => 'required|string|max:255',
+        'email' => 'required|email|unique:users',
+        'password' => 'required|min:8',
+        'role' => 'required|string|in:admin,user'
+    ]);
+    
+    $user = \App\Models\User::create([
+        'name' => $validated['name'],
+        'email' => $validated['email'],
+        'password' => bcrypt($validated['password'])
+    ]);
+    
+    $user->assignRole($validated['role']);
+    
+    return response()->json([
+        'data' => $user->load('roles'),
+        'success' => true,
+        'message' => 'User created successfully'
+    ], 201);
+});
+
+Route::middleware(['auth:sanctum', 'role:admin'])->put('/admin/users/{user}', function (Request $request, $userId) {
+    $user = \App\Models\User::findOrFail($userId);
+    
+    $validated = $request->validate([
+        'name' => 'required|string|max:255',
+        'email' => 'required|email|unique:users,email,' . $userId,
+        'password' => 'nullable|min:8',
+        'role' => 'required|string|in:admin,user'
+    ]);
+    
+    $updateData = [
+        'name' => $validated['name'],
+        'email' => $validated['email']
+    ];
+    
+    if (!empty($validated['password'])) {
+        $updateData['password'] = bcrypt($validated['password']);
+    }
+    
+    $user->update($updateData);
+    $user->syncRoles([$validated['role']]);
+    
+    return response()->json([
+        'data' => $user->fresh()->load('roles'),
+        'success' => true,
+        'message' => 'User updated successfully'
+    ]);
+});
+
+Route::middleware(['auth:sanctum', 'role:admin'])->delete('/admin/users/{user}', function (Request $request, $userId) {
+    $user = \App\Models\User::findOrFail($userId);
+    $userName = $user->name;
+    
+    // Prevent admin from deleting themselves
+    if ($user->id === $request->user()->id) {
+        return response()->json([
+            'success' => false,
+            'message' => 'You cannot delete your own account'
+        ], 403);
+    }
+    
+    $user->delete();
+    
+    return response()->json([
+        'success' => true,
+        'message' => "User '{$userName}' deleted successfully"
+    ]);
 });
 
 // Original grouped routes (commented out for now)
