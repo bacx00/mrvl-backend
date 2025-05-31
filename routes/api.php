@@ -60,9 +60,33 @@ Route::middleware('auth:sanctum')->get('/user-direct', function (Request $reques
     ]);
 });
 
+// Working authenticated routes using closures
+Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
+    $user = $request->user();
+    return response()->json([
+        'data' => [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'roles' => $user->getRoleNames(),
+            'avatar' => $user->avatar,
+            'created_at' => $user->created_at->toISOString()
+        ],
+        'success' => true
+    ]);
+});
+
+Route::middleware('auth:sanctum')->post('/auth/logout', function (Request $request) {
+    $request->user()->currentAccessToken()->delete();
+    return response()->json([
+        'message' => 'Successfully logged out',
+        'success' => true
+    ]);
+});
+
 // Authenticated Routes  
-Route::get('/user', [AuthController::class, 'user'])->middleware(\Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class);
-Route::post('/auth/logout', [AuthController::class, 'logout'])->middleware(\Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class);
+// Route::get('/user', [AuthController::class, 'user'])->middleware(\Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class);
+// Route::post('/auth/logout', [AuthController::class, 'logout'])->middleware(\Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class);
 
 // Forum Write Operations
 Route::post('/forum/threads', [ForumController::class, 'store'])->middleware('auth:sanctum');
