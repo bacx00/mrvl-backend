@@ -48,6 +48,18 @@ Route::middleware('auth:sanctum')->get('/test-auth', function (Request $request)
     ]);
 });
 
+// Direct authenticated routes
+Route::middleware('auth:sanctum')->get('/user-direct', function (Request $request) {
+    return response()->json([
+        'data' => [
+            'id' => $request->user()->id,
+            'name' => $request->user()->name,
+            'email' => $request->user()->email,
+        ],
+        'success' => true
+    ]);
+});
+
 // Authenticated Routes
 Route::post('/auth/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
 Route::get('/user', [AuthController::class, 'user'])->middleware('auth:sanctum');
