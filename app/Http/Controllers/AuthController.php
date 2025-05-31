@@ -74,16 +74,22 @@ class AuthController extends Controller
         ]);
     }
 
-    public function user(Request $request)
+    public function user()
     {
+        $user = auth('sanctum')->user();
+        
+        if (!$user) {
+            return response()->json(['message' => 'Unauthenticated.'], 401);
+        }
+        
         return response()->json([
             'data' => [
-                'id' => $request->user()->id,
-                'name' => $request->user()->name,
-                'email' => $request->user()->email,
-                'roles' => $request->user()->getRoleNames(),
-                'avatar' => $request->user()->avatar,
-                'created_at' => $request->user()->created_at->toISOString()
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'roles' => $user->getRoleNames(),
+                'avatar' => $user->avatar,
+                'created_at' => $user->created_at->toISOString()
             ],
             'success' => true
         ]);
