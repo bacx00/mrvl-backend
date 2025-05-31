@@ -101,7 +101,64 @@ Route::middleware(['auth:sanctum', 'role:admin'])->get('/test-admin', function (
     ]);
 });
 
-// Original grouped routes
+// Working admin routes using closures
+Route::middleware(['auth:sanctum', 'role:admin'])->get('/admin/stats', function () {
+    $stats = [
+        'overview' => [
+            'totalTeams' => \App\Models\Team::count(),
+            'totalPlayers' => \App\Models\Player::count(),
+            'totalMatches' => \App\Models\GameMatch::count(),
+            'liveMatches' => \App\Models\GameMatch::where('status', 'live')->count(),
+            'totalEvents' => \App\Models\Event::count(),
+            'activeEvents' => \App\Models\Event::where('status', 'live')->count(),
+            'totalUsers' => \App\Models\User::count(),
+            'totalThreads' => \App\Models\ForumThread::count(),
+        ],
+    ];
+    
+    return response()->json([
+        'data' => $stats,
+        'success' => true
+    ]);
+});
+
+// Working admin CRUD routes
+Route::middleware(['auth:sanctum', 'role:admin'])->post('/admin/teams', function (Request $request) {
+    $validated = $request->validate([
+        'name' => 'required|string|max:255',
+        'region' => 'required|string',
+        'description' => 'nullable|string',
+        'logo' => 'nullable|string',
+    ]);
+    
+    $team = \App\Models\Team::create($validated);
+    
+    return response()->json([
+        'data' => $team,
+        'success' => true,
+        'message' => 'Team created successfully'
+    ], 201);
+});
+
+Route::middleware(['auth:sanctum', 'role:admin'])->post('/admin/players', function (Request $request) {
+    $validated = $request->validate([
+        'name' => 'required|string|max:255',
+        'username' => 'required|string|unique:players',
+        'role' => 'required|string',
+        'team_id' => 'nullable|exists:teams,id',
+    ]);
+    
+    $player = \App\Models\Player::create($validated);
+    
+    return response()->json([
+        'data' => $player->load('team'),
+        'success' => true,
+        'message' => 'Player created successfully'
+    ], 201);
+});
+
+// Original grouped routes (commented out for now)
+/*
 Route::middleware('auth:sanctum')->group(function () {
     // Admin Routes
     Route::middleware('role:admin')->group(function () {
