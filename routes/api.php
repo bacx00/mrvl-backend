@@ -268,12 +268,14 @@ Route::middleware(['auth:sanctum', 'role:admin'])->put('/admin/users/{user}', fu
         'name' => 'required|string|max:255',
         'email' => 'required|email|unique:users,email,' . $userId,
         'password' => 'nullable|min:8',
-        'role' => 'required|string|in:admin,user'
+        'role' => 'required|string|in:admin,user,moderator,Admin,User,Moderator',
+        'status' => 'nullable|string|in:active,inactive,banned'
     ]);
     
     $updateData = [
         'name' => $validated['name'],
-        'email' => $validated['email']
+        'email' => $validated['email'],
+        'status' => $validated['status'] ?? $user->status ?? 'active'
     ];
     
     if (!empty($validated['password'])) {
@@ -281,7 +283,10 @@ Route::middleware(['auth:sanctum', 'role:admin'])->put('/admin/users/{user}', fu
     }
     
     $user->update($updateData);
-    $user->syncRoles([$validated['role']]);
+    
+    // Normalize role to lowercase
+    $role = strtolower($validated['role']);
+    $user->syncRoles([$role]);
     
     return response()->json([
         'data' => $user->fresh()->load('roles'),
