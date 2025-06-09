@@ -198,6 +198,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->post('/admin/players', functi
         $validated['rating'] = $validated['rating'] ?? 1000;
         $validated['region'] = $validated['region'] ?? 'NA';
         $validated['country'] = $validated['country'] ?? 'Unknown';
+        $validated['main_hero'] = $validated['main_hero'] ?? 'Phoenix';
         
         $player = \App\Models\Player::create($validated);
         
