@@ -551,26 +551,118 @@ Route::middleware(['auth:sanctum', 'role:admin'])->delete('/admin/news/{newsId}'
     ]);
 });
 
-// Admin Event Management
-Route::middleware(['auth:sanctum', 'role:admin'])->delete('/admin/events/{eventId}', function (Request $request, $eventId) {
-    $event = \App\Models\Event::findOrFail($eventId);
-    $eventName = $event->name;
-    
-    // Check if event has matches
-    $matchCount = $event->matches()->count();
-    if ($matchCount > 0) {
+// Admin Event Management - CREATE
+Route::middleware(['auth:sanctum', 'role:admin'])->post('/admin/events', function (Request $request) {
+    try {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'required|string',
+            'type' => 'required|string|in:tournament,league,showmatch,qualifier',
+            'tier' => 'required|string|in:S,A,B,C',
+            'status' => 'required|string|in:upcoming,live,completed,cancelled',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after:start_date',
+            'prize_pool' => 'nullable|numeric|min:0',
+            'location' => 'nullable|string',
+            'format' => 'nullable|string',
+            'max_teams' => 'nullable|integer|min:2',
+            'registration_open' => 'nullable|boolean'
+        ]);
+        
+        $validated['registration_open'] = $validated['registration_open'] ?? true;
+        
+        $event = \App\Models\Event::create($validated);
+        
+        return response()->json([
+            'data' => $event,
+            'success' => true,
+            'message' => 'Event created successfully'
+        ], 201);
+        
+    } catch (\Illuminate\Validation\ValidationException $e) {
         return response()->json([
             'success' => false,
-            'message' => "Cannot delete event '{$eventName}' because it has {$matchCount} associated matches. Delete matches first."
+            'message' => 'Validation failed',
+            'errors' => $e->errors()
         ], 422);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Server error: ' . $e->getMessage()
+        ], 500);
     }
-    
-    $event->delete();
-    
-    return response()->json([
-        'success' => true,
-        'message' => "Event '{$eventName}' deleted successfully"
-    ]);
+});
+
+// Admin Event Management - UPDATE
+Route::middleware(['auth:sanctum', 'role:admin'])->put('/admin/events/{eventId}', function (Request $request, $eventId) {
+    try {
+        $event = \App\Models\Event::findOrFail($eventId);
+        
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'required|string',
+            'type' => 'required|string|in:tournament,league,showmatch,qualifier',
+            'tier' => 'required|string|in:S,A,B,C',
+            'status' => 'required|string|in:upcoming,live,completed,cancelled',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after:start_date',
+            'prize_pool' => 'nullable|numeric|min:0',
+            'location' => 'nullable|string',
+            'format' => 'nullable|string',
+            'max_teams' => 'nullable|integer|min:2',
+            'registration_open' => 'nullable|boolean'
+        ]);
+        
+        $event->update($validated);
+        
+        return response()->json([
+            'data' => $event->fresh(),
+            'success' => true,
+            'message' => 'Event updated successfully'
+        ]);
+        
+    } catch (\Illuminate\Validation\ValidationException $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Validation failed',
+            'errors' => $e->errors()
+        ], 422);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Server error: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// Admin Event Management - DELETE (already exists but keeping here for completeness)
+Route::middleware(['auth:sanctum', 'role:admin'])->delete('/admin/events/{eventId}', function (Request $request, $eventId) {
+    try {
+        $event = \App\Models\Event::findOrFail($eventId);
+        $eventName = $event->name;
+        
+        // Check if event has matches
+        $matchCount = \App\Models\GameMatch::where('event_id', $eventId)->count();
+        if ($matchCount > 0) {
+            return response()->json([
+                'success' => false,
+                'message' => "Cannot delete event '{$eventName}' because it has {$matchCount} associated matches. Delete matches first."
+            ], 422);
+        }
+        
+        $event->delete();
+        
+        return response()->json([
+            'success' => true,
+            'message' => "Event '{$eventName}' deleted successfully"
+        ]);
+        
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Server error: ' . $e->getMessage()
+        ], 500);
+    }
 });
 
 // Original grouped routes (commented out for now)
