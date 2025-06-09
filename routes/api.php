@@ -644,6 +644,24 @@ Route::middleware(['auth:sanctum', 'role:admin'])->delete('/admin/news/{newsId}'
     ]);
 });
 
+// Admin Event Management - GET individual event for editing
+Route::middleware(['auth:sanctum', 'role:admin'])->get('/admin/events/{eventId}', function (Request $request, $eventId) {
+    try {
+        $event = \App\Models\Event::findOrFail($eventId);
+        
+        return response()->json([
+            'data' => $event,
+            'success' => true
+        ]);
+        
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Event not found: ' . $e->getMessage()
+        ], 404);
+    }
+});
+
 // Admin Event Management - CREATE
 Route::middleware(['auth:sanctum', 'role:admin'])->post('/admin/events', function (Request $request) {
     try {
