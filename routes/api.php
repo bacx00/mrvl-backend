@@ -607,20 +607,21 @@ Route::middleware(['auth:sanctum', 'role:admin'])->post('/admin/events', functio
     try {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'description' => 'required|string',
-            'type' => 'required|string|in:tournament,league,showmatch,qualifier',
-            'tier' => 'required|string|in:S,A,B,C',
-            'status' => 'required|string|in:upcoming,live,completed,cancelled',
+            'description' => 'nullable|string',
+            'type' => 'required|string|in:International,Regional,Qualifier,Community',
+            'status' => 'required|string|in:upcoming,live,completed',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after:start_date',
-            'prize_pool' => 'nullable|numeric|min:0',
+            'prize_pool' => 'nullable|string',
             'location' => 'nullable|string',
+            'organizer' => 'nullable|string',
             'format' => 'nullable|string',
-            'max_teams' => 'nullable|integer|min:2',
+            'team_count' => 'nullable|integer|min:2',
             'registration_open' => 'nullable|boolean'
         ]);
         
         $validated['registration_open'] = $validated['registration_open'] ?? true;
+        $validated['team_count'] = $validated['team_count'] ?? 32;
         
         $event = \App\Models\Event::create($validated);
         
@@ -651,16 +652,16 @@ Route::middleware(['auth:sanctum', 'role:admin'])->put('/admin/events/{eventId}'
         
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'description' => 'required|string',
-            'type' => 'required|string|in:tournament,league,showmatch,qualifier',
-            'tier' => 'required|string|in:S,A,B,C',
-            'status' => 'required|string|in:upcoming,live,completed,cancelled',
+            'description' => 'nullable|string',
+            'type' => 'required|string|in:International,Regional,Qualifier,Community',
+            'status' => 'required|string|in:upcoming,live,completed',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after:start_date',
-            'prize_pool' => 'nullable|numeric|min:0',
+            'prize_pool' => 'nullable|string',
             'location' => 'nullable|string',
+            'organizer' => 'nullable|string',
             'format' => 'nullable|string',
-            'max_teams' => 'nullable|integer|min:2',
+            'team_count' => 'nullable|integer|min:2',
             'registration_open' => 'nullable|boolean'
         ]);
         
