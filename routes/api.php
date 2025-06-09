@@ -694,30 +694,150 @@ Route::middleware(['auth:sanctum', 'role:admin'])->delete('/admin/events/{eventI
     }
 });
 
-// Original grouped routes (commented out for now)
-/*
-Route::middleware('auth:sanctum')->group(function () {
-    // Admin Routes
-    Route::middleware('role:admin')->group(function () {
-        Route::get('/admin/stats', [AdminStatsController::class, 'index']);
+// ==========================================
+// FILE UPLOAD ROUTES
+// ==========================================
+
+// Team Logo Upload
+Route::middleware(['auth:sanctum', 'role:admin'])->post('/upload/team/{teamId}/logo', function (Request $request, $teamId) {
+    try {
+        $team = \App\Models\Team::findOrFail($teamId);
         
-        // Full CRUD for all resources
-        Route::apiResource('/admin/teams', TeamController::class)->except(['index', 'show']);
-        Route::apiResource('/admin/players', PlayerController::class)->except(['index', 'show']);
-        Route::apiResource('/admin/matches', MatchController::class)->except(['index', 'show']);
-        Route::apiResource('/admin/events', EventController::class)->except(['index', 'show']);
+        $request->validate([
+            'logo' => 'required|file|mimes:jpeg,jpg,png,gif,svg|max:2048'
+        ]);
         
-        // News Management
-        Route::get('/admin/news', [NewsController::class, 'adminIndex']);
-        Route::apiResource('/admin/news', NewsController::class)->except(['index']);
+        if (!$request->hasFile('logo')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No file uploaded'
+            ], 400);
+        }
         
-        // Image Upload Routes (Admin Only)
-        Route::post('/upload/team/{team}/logo', [ImageUploadController::class, 'uploadTeamLogo']);
-        Route::post('/upload/team/{team}/flag', [ImageUploadController::class, 'uploadTeamFlag']);
-        Route::post('/upload/player/{player}/avatar', [ImageUploadController::class, 'uploadPlayerAvatar']);
-        Route::post('/upload/news/{news}/featured-image', [ImageUploadController::class, 'uploadNewsFeaturedImage']);
-        Route::post('/upload/news/{news}/gallery', [ImageUploadController::class, 'uploadNewsGalleryImages']);
-        Route::delete('/upload/news/{news}/gallery', [ImageUploadController::class, 'removeNewsGalleryImage']);
-    });
+        $file = $request->file('logo');
+        $fileName = 'team_' . $teamId . '_logo_' . time() . '.' . $file->getClientOriginalExtension();
+        
+        // Store file in public/uploads/teams directory
+        $path = $file->storeAs('teams', $fileName, 'public');
+        
+        // Update team logo path
+        $team->update(['logo' => '/storage/' . $path]);
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Logo uploaded successfully',
+            'data' => [
+                'logo_url' => '/storage/' . $path,
+                'team' => $team->fresh()
+            ]
+        ]);
+        
+    } catch (\Illuminate\Validation\ValidationException $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Validation failed',
+            'errors' => $e->errors()
+        ], 422);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Upload error: ' . $e->getMessage()
+        ], 500);
+    }
 });
-*/
+
+// Player Avatar Upload
+Route::middleware(['auth:sanctum', 'role:admin'])->post('/upload/player/{playerId}/avatar', function (Request $request, $playerId) {
+    try {
+        $player = \App\Models\Player::findOrFail($playerId);
+        
+        $request->validate([
+            'avatar' => 'required|file|mimes:jpeg,jpg,png,gif|max:2048'
+        ]);
+        
+        if (!$request->hasFile('avatar')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No file uploaded'
+            ], 400);
+        }
+        
+        $file = $request->file('avatar');
+        $fileName = 'player_' . $playerId . '_avatar_' . time() . '.' . $file->getClientOriginalExtension();
+        
+        // Store file in public/uploads/players directory
+        $path = $file->storeAs('players', $fileName, 'public');
+        
+        // Update player avatar path
+        $player->update(['avatar' => '/storage/' . $path]);
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Avatar uploaded successfully',
+            'data' => [
+                'avatar_url' => '/storage/' . $path,
+                'player' => $player->fresh()
+            ]
+        ]);
+        
+    } catch (\Illuminate\Validation\ValidationException $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Validation failed',
+            'errors' => $e->errors()
+        ], 422);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Upload error: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// News Featured Image Upload
+Route::middleware(['auth:sanctum', 'role:admin'])->post('/upload/news/{newsId}/featured-image', function (Request $request, $newsId) {
+    try {
+        $news = \App\Models\News::findOrFail($newsId);
+        
+        $request->validate([
+            'featured_image' => 'required|file|mimes:jpeg,jpg,png,gif|max:4096'
+        ]);
+        
+        if (!$request->hasFile('featured_image')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No file uploaded'
+            ], 400);
+        }
+        
+        $file = $request->file('featured_image');
+        $fileName = 'news_' . $newsId . '_featured_' . time() . '.' . $file->getClientOriginalExtension();
+        
+        // Store file in public/uploads/news directory
+        $path = $file->storeAs('news', $fileName, 'public');
+        
+        // Update news featured image path
+        $news->update(['featured_image' => '/storage/' . $path]);
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Featured image uploaded successfully',
+            'data' => [
+                'featured_image_url' => '/storage/' . $path,
+                'news' => $news->fresh()
+            ]
+        ]);
+        
+    } catch (\Illuminate\Validation\ValidationException $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Validation failed',
+            'errors' => $e->errors()
+        ], 422);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Upload error: ' . $e->getMessage()
+        ], 500);
+    }
+});
