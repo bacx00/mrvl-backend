@@ -220,7 +220,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->post('/admin/players', functi
             'name' => 'nullable|string|max:255',
             'username' => 'required|string|max:255|unique:players',
             'real_name' => 'nullable|string|max:255',
-            'role' => 'required|string|in:Duelist,Tank,Support,Controller,Initiator',
+            'role' => 'required|string|in:Duelist,Tank,Support,Controller,Initiator,Coach,IGL,Flex,Sub',
             'team_id' => 'nullable|exists:teams,id',
             'main_hero' => 'nullable|string',
             'alt_heroes' => 'nullable|array',
