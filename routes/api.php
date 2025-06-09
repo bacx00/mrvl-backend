@@ -453,6 +453,100 @@ Route::middleware(['auth:sanctum', 'role:admin'])->delete('/admin/users/{user}',
 });
 
 // ==========================================
+// MISSING ADMIN GET ROUTES - ADDING NOW
+// ==========================================
+
+// Admin Team GET for editing
+Route::middleware(['auth:sanctum', 'role:admin'])->get('/admin/teams/{teamId}', function (Request $request, $teamId) {
+    try {
+        $team = \App\Models\Team::findOrFail($teamId);
+        
+        return response()->json([
+            'data' => $team,
+            'success' => true
+        ]);
+        
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Team not found: ' . $e->getMessage()
+        ], 404);
+    }
+});
+
+// Admin Player GET for editing
+Route::middleware(['auth:sanctum', 'role:admin'])->get('/admin/players/{playerId}', function (Request $request, $playerId) {
+    try {
+        $player = \App\Models\Player::with('team')->findOrFail($playerId);
+        
+        return response()->json([
+            'data' => $player,
+            'success' => true
+        ]);
+        
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Player not found: ' . $e->getMessage()
+        ], 404);
+    }
+});
+
+// Admin Match GET for editing
+Route::middleware(['auth:sanctum', 'role:admin'])->get('/admin/matches/{matchId}', function (Request $request, $matchId) {
+    try {
+        $match = \App\Models\GameMatch::with(['team1', 'team2', 'event'])->findOrFail($matchId);
+        
+        return response()->json([
+            'data' => $match,
+            'success' => true
+        ]);
+        
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Match not found: ' . $e->getMessage()
+        ], 404);
+    }
+});
+
+// Admin News GET for editing
+Route::middleware(['auth:sanctum', 'role:admin'])->get('/admin/news/{newsId}', function (Request $request, $newsId) {
+    try {
+        $news = \App\Models\News::with('author')->findOrFail($newsId);
+        
+        return response()->json([
+            'data' => $news,
+            'success' => true
+        ]);
+        
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'News not found: ' . $e->getMessage()
+        ], 404);
+    }
+});
+
+// Admin User GET for editing
+Route::middleware(['auth:sanctum', 'role:admin'])->get('/admin/users/{userId}', function (Request $request, $userId) {
+    try {
+        $user = \App\Models\User::with('roles')->findOrFail($userId);
+        
+        return response()->json([
+            'data' => $user,
+            'success' => true
+        ]);
+        
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'User not found: ' . $e->getMessage()
+        ], 404);
+    }
+});
+
+// ==========================================
 // MISSING ADMIN ROUTES - ADDING NOW
 // ==========================================
 
