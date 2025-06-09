@@ -9,8 +9,8 @@ class Event extends Model
     use HasFactory;
 
     protected $fillable = [
-        'name', 'type', 'tier', 'status', 'start_date', 'end_date', 'prize_pool',
-        'team_count', 'max_teams', 'location', 'organizer', 'format', 'description',
+        'name', 'type', 'status', 'start_date', 'end_date', 'prize_pool',
+        'team_count', 'location', 'organizer', 'format', 'description',
         'image', 'registration_open', 'stream_viewers'
     ];
 
