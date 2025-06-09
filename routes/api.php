@@ -77,11 +77,33 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 Route::middleware('auth:sanctum')->post('/auth/logout', function (Request $request) {
-    $request->user()->currentAccessToken()->delete();
-    return response()->json([
-        'message' => 'Successfully logged out',
-        'success' => true
-    ]);
+    try {
+        $user = $request->user();
+        
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User not authenticated'
+            ], 401);
+        }
+        
+        // Delete the current access token
+        $token = $user->currentAccessToken();
+        if ($token) {
+            $token->delete();
+        }
+        
+        return response()->json([
+            'message' => 'Successfully logged out',
+            'success' => true
+        ]);
+        
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Logout error: ' . $e->getMessage()
+        ], 500);
+    }
 });
 
 // Authenticated Routes  
