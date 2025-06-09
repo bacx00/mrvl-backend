@@ -301,37 +301,62 @@ Route::middleware(['auth:sanctum', 'role:admin'])->post('/admin/users', function
 });
 
 Route::middleware(['auth:sanctum', 'role:admin'])->put('/admin/users/{user}', function (Request $request, $userId) {
-    $user = \App\Models\User::findOrFail($userId);
-    
-    $validated = $request->validate([
-        'name' => 'required|string|max:255',
-        'email' => 'required|email|unique:users,email,' . $userId,
-        'password' => 'nullable|min:8',
-        'role' => 'required|string|in:admin,user,moderator,Admin,User,Moderator',
-        'status' => 'nullable|string|in:active,inactive,banned'
-    ]);
-    
-    $updateData = [
-        'name' => $validated['name'],
-        'email' => $validated['email'],
-        'status' => $validated['status'] ?? $user->status ?? 'active'
-    ];
-    
-    if (!empty($validated['password'])) {
-        $updateData['password'] = bcrypt($validated['password']);
+    try {
+        $user = \App\Models\User::findOrFail($userId);
+        
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $userId,
+            'password' => 'nullable|min:8',
+            'role' => 'required|string',
+            'status' => 'nullable|string|in:active,inactive,banned',
+            'avatar' => 'nullable|string'
+        ]);
+        
+        // Normalize role to lowercase and validate
+        $role = strtolower(trim($validated['role']));
+        $allowedRoles = ['admin', 'moderator', 'user'];
+        
+        if (!in_array($role, $allowedRoles)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid role. Allowed roles: ' . implode(', ', $allowedRoles),
+                'errors' => ['role' => ['The selected role is invalid.']]
+            ], 422);
+        }
+        
+        $updateData = [
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'status' => $validated['status'] ?? $user->status ?? 'active',
+            'avatar' => $validated['avatar'] ?? $user->avatar
+        ];
+        
+        if (!empty($validated['password'])) {
+            $updateData['password'] = $validated['password']; // Model handles hashing
+        }
+        
+        $user->update($updateData);
+        $user->syncRoles([$role]);
+        
+        return response()->json([
+            'data' => $user->fresh()->load('roles'),
+            'success' => true,
+            'message' => 'User updated successfully'
+        ]);
+        
+    } catch (\Illuminate\Validation\ValidationException $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Validation failed',
+            'errors' => $e->errors()
+        ], 422);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Server error: ' . $e->getMessage()
+        ], 500);
     }
-    
-    $user->update($updateData);
-    
-    // Normalize role to lowercase
-    $role = strtolower($validated['role']);
-    $user->syncRoles([$role]);
-    
-    return response()->json([
-        'data' => $user->fresh()->load('roles'),
-        'success' => true,
-        'message' => 'User updated successfully'
-    ]);
 });
 
 Route::middleware(['auth:sanctum', 'role:admin'])->delete('/admin/users/{user}', function (Request $request, $userId) {
