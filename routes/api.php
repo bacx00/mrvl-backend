@@ -305,6 +305,109 @@ Route::middleware(['auth:sanctum', 'role:admin'])->delete('/admin/users/{user}',
     ]);
 });
 
+// ==========================================
+// MISSING ADMIN ROUTES - ADDING NOW
+// ==========================================
+
+// Admin Match Management
+Route::middleware(['auth:sanctum', 'role:admin'])->post('/admin/matches', function (Request $request) {
+    $validated = $request->validate([
+        'team1_id' => 'required|exists:teams,id',
+        'team2_id' => 'required|exists:teams,id|different:team1_id',
+        'event_id' => 'required|exists:events,id',
+        'scheduled_at' => 'required|date|after:now',
+        'format' => 'required|string|in:BO1,BO3,BO5',
+        'status' => 'nullable|string|in:scheduled,live,completed,cancelled',
+        'stream_url' => 'nullable|url'
+    ]);
+    
+    $validated['status'] = $validated['status'] ?? 'scheduled';
+    
+    $match = \App\Models\GameMatch::create($validated);
+    
+    return response()->json([
+        'data' => $match->load(['team1', 'team2', 'event']),
+        'success' => true,
+        'message' => 'Match created successfully'
+    ], 201);
+});
+
+// Admin News Management
+Route::middleware(['auth:sanctum', 'role:admin'])->get('/admin/news', function () {
+    $news = \App\Models\News::with('author')
+        ->orderBy('created_at', 'desc')
+        ->paginate(15);
+    
+    return response()->json([
+        'data' => $news->items(),
+        'meta' => [
+            'current_page' => $news->currentPage(),
+            'last_page' => $news->lastPage(),
+            'per_page' => $news->perPage(),
+            'total' => $news->total()
+        ],
+        'success' => true
+    ]);
+});
+
+Route::middleware(['auth:sanctum', 'role:admin'])->post('/admin/news', function (Request $request) {
+    $validated = $request->validate([
+        'title' => 'required|string|max:255',
+        'excerpt' => 'required|string|max:500',
+        'content' => 'required|string',
+        'category' => 'required|string|in:updates,tournaments,content,community,esports',
+        'status' => 'required|string|in:draft,published,archived',
+        'featured' => 'nullable|boolean',
+        'tags' => 'nullable|array',
+        'featured_image' => 'nullable|string'
+    ]);
+    
+    $validated['author_id'] = $request->user()->id;
+    $validated['published_at'] = $validated['status'] === 'published' ? now() : null;
+    $validated['featured'] = $validated['featured'] ?? false;
+    
+    $news = \App\Models\News::create($validated);
+    
+    return response()->json([
+        'data' => $news->load('author'),
+        'success' => true,
+        'message' => 'News article created successfully'
+    ], 201);
+});
+
+Route::middleware(['auth:sanctum', 'role:admin'])->delete('/admin/news/{newsId}', function (Request $request, $newsId) {
+    $news = \App\Models\News::findOrFail($newsId);
+    $newsTitle = $news->title;
+    $news->delete();
+    
+    return response()->json([
+        'success' => true,
+        'message' => "News article '{$newsTitle}' deleted successfully"
+    ]);
+});
+
+// Admin Event Management
+Route::middleware(['auth:sanctum', 'role:admin'])->delete('/admin/events/{eventId}', function (Request $request, $eventId) {
+    $event = \App\Models\Event::findOrFail($eventId);
+    $eventName = $event->name;
+    
+    // Check if event has matches
+    $matchCount = $event->matches()->count();
+    if ($matchCount > 0) {
+        return response()->json([
+            'success' => false,
+            'message' => "Cannot delete event '{$eventName}' because it has {$matchCount} associated matches. Delete matches first."
+        ], 422);
+    }
+    
+    $event->delete();
+    
+    return response()->json([
+        'success' => true,
+        'message' => "Event '{$eventName}' deleted successfully"
+    ]);
+});
+
 // Original grouped routes (commented out for now)
 /*
 Route::middleware('auth:sanctum')->group(function () {
