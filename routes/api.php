@@ -248,31 +248,56 @@ Route::middleware(['auth:sanctum', 'role:admin'])->get('/admin/users', function 
 });
 
 Route::middleware(['auth:sanctum', 'role:admin'])->post('/admin/users', function (Request $request) {
-    $validated = $request->validate([
-        'name' => 'required|string|max:255',
-        'email' => 'required|email|unique:users',
-        'password' => 'required|min:8',
-        'role' => 'required|string|in:admin,user,moderator,Admin,User,Moderator',
-        'status' => 'nullable|string|in:active,inactive,banned'
-    ]);
-    
-    // Normalize role to lowercase
-    $role = strtolower($validated['role']);
-    
-    $user = \App\Models\User::create([
-        'name' => $validated['name'],
-        'email' => $validated['email'],
-        'password' => bcrypt($validated['password']),
-        'status' => $validated['status'] ?? 'active'
-    ]);
-    
-    $user->assignRole($role);
-    
-    return response()->json([
-        'data' => $user->load('roles'),
-        'success' => true,
-        'message' => 'User created successfully'
-    ], 201);
+    try {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users',
+            'password' => 'required|min:8',
+            'role' => 'required|string',
+            'status' => 'nullable|string|in:active,inactive,banned',
+            'avatar' => 'nullable|string'
+        ]);
+        
+        // Normalize role to lowercase and validate
+        $role = strtolower(trim($validated['role']));
+        $allowedRoles = ['admin', 'moderator', 'user'];
+        
+        if (!in_array($role, $allowedRoles)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid role. Allowed roles: ' . implode(', ', $allowedRoles),
+                'errors' => ['role' => ['The selected role is invalid.']]
+            ], 422);
+        }
+        
+        $user = \App\Models\User::create([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => $validated['password'], // Model handles hashing
+            'status' => $validated['status'] ?? 'active',
+            'avatar' => $validated['avatar'] ?? null
+        ]);
+        
+        $user->assignRole($role);
+        
+        return response()->json([
+            'data' => $user->load('roles'),
+            'success' => true,
+            'message' => 'User created successfully'
+        ], 201);
+        
+    } catch (\Illuminate\Validation\ValidationException $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Validation failed',
+            'errors' => $e->errors()
+        ], 422);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Server error: ' . $e->getMessage()
+        ], 500);
+    }
 });
 
 Route::middleware(['auth:sanctum', 'role:admin'])->put('/admin/users/{user}', function (Request $request, $userId) {
