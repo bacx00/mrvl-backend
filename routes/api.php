@@ -407,25 +407,39 @@ Route::middleware(['auth:sanctum', 'role:admin'])->delete('/admin/users/{user}',
 
 // Admin Match Management
 Route::middleware(['auth:sanctum', 'role:admin'])->post('/admin/matches', function (Request $request) {
-    $validated = $request->validate([
-        'team1_id' => 'required|exists:teams,id',
-        'team2_id' => 'required|exists:teams,id|different:team1_id',
-        'event_id' => 'required|exists:events,id',
-        'scheduled_at' => 'required|date|after:now',
-        'format' => 'required|string|in:BO1,BO3,BO5',
-        'status' => 'nullable|string|in:scheduled,live,completed,cancelled',
-        'stream_url' => 'nullable|url'
-    ]);
-    
-    $validated['status'] = $validated['status'] ?? 'scheduled';
-    
-    $match = \App\Models\GameMatch::create($validated);
-    
-    return response()->json([
-        'data' => $match->load(['team1', 'team2', 'event']),
-        'success' => true,
-        'message' => 'Match created successfully'
-    ], 201);
+    try {
+        $validated = $request->validate([
+            'team1_id' => 'required|exists:teams,id',
+            'team2_id' => 'required|exists:teams,id|different:team1_id',
+            'event_id' => 'required|exists:events,id',
+            'scheduled_at' => 'required|date|after:now',
+            'format' => 'required|string|in:BO1,BO3,BO5',
+            'status' => 'nullable|string|in:upcoming,live,completed',
+            'stream_url' => 'nullable|url'
+        ]);
+        
+        $validated['status'] = $validated['status'] ?? 'upcoming';
+        
+        $match = \App\Models\GameMatch::create($validated);
+        
+        return response()->json([
+            'data' => $match->load(['team1', 'team2', 'event']),
+            'success' => true,
+            'message' => 'Match created successfully'
+        ], 201);
+        
+    } catch (\Illuminate\Validation\ValidationException $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Validation failed',
+            'errors' => $e->errors()
+        ], 422);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Server error: ' . $e->getMessage()
+        ], 500);
+    }
 });
 
 // Admin News Management
