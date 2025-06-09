@@ -124,20 +124,42 @@ Route::middleware(['auth:sanctum', 'role:admin'])->get('/admin/stats', function 
 
 // Working admin CRUD routes
 Route::middleware(['auth:sanctum', 'role:admin'])->post('/admin/teams', function (Request $request) {
-    $validated = $request->validate([
-        'name' => 'required|string|max:255',
-        'region' => 'required|string',
-        'description' => 'nullable|string',
-        'logo' => 'nullable|string',
-    ]);
-    
-    $team = \App\Models\Team::create($validated);
-    
-    return response()->json([
-        'data' => $team,
-        'success' => true,
-        'message' => 'Team created successfully'
-    ], 201);
+    try {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'short_name' => 'nullable|string|max:10',
+            'region' => 'required|string',
+            'country' => 'nullable|string',
+            'description' => 'nullable|string',
+            'logo' => 'nullable|string',
+        ]);
+        
+        // Set default values for required fields
+        $validated['short_name'] = $validated['short_name'] ?? strtoupper(substr($validated['name'], 0, 3));
+        $validated['rating'] = 1000; // Default rating
+        $validated['rank'] = 999; // Default rank
+        
+        $team = \App\Models\Team::create($validated);
+        
+        return response()->json([
+            'data' => $team,
+            'success' => true,
+            'message' => 'Team created successfully'
+        ], 201);
+        
+    } catch (\Illuminate\Validation\ValidationException $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Validation failed',
+            'errors' => $e->errors()
+        ], 422);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Server error: ' . $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ], 500);
+    }
 });
 
 Route::middleware(['auth:sanctum', 'role:admin'])->put('/admin/teams/{team}', function (Request $request, $teamId) {
