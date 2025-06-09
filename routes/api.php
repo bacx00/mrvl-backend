@@ -591,15 +591,46 @@ Route::middleware(['auth:sanctum', 'role:admin'])->post('/admin/news', function 
     ], 201);
 });
 
-Route::middleware(['auth:sanctum', 'role:admin'])->delete('/admin/news/{newsId}', function (Request $request, $newsId) {
-    $news = \App\Models\News::findOrFail($newsId);
-    $newsTitle = $news->title;
-    $news->delete();
-    
-    return response()->json([
-        'success' => true,
-        'message' => "News article '{$newsTitle}' deleted successfully"
-    ]);
+Route::middleware(['auth:sanctum', 'role:admin'])->put('/admin/news/{newsId}', function (Request $request, $newsId) {
+    try {
+        $news = \App\Models\News::findOrFail($newsId);
+        
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'excerpt' => 'required|string|max:500',
+            'content' => 'required|string',
+            'category' => 'required|string|in:updates,tournaments,content,community,esports',
+            'status' => 'required|string|in:draft,published,archived',
+            'featured' => 'nullable|boolean',
+            'tags' => 'nullable|array',
+            'featured_image' => 'nullable|string'
+        ]);
+        
+        $validated['featured'] = $validated['featured'] ?? false;
+        if ($validated['status'] === 'published' && $news->status !== 'published') {
+            $validated['published_at'] = now();
+        }
+        
+        $news->update($validated);
+        
+        return response()->json([
+            'data' => $news->fresh()->load('author'),
+            'success' => true,
+            'message' => 'News article updated successfully'
+        ]);
+        
+    } catch (\Illuminate\Validation\ValidationException $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Validation failed',
+            'errors' => $e->errors()
+        ], 422);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Server error: ' . $e->getMessage()
+        ], 500);
+    }
 });
 
 // Admin Event Management - CREATE
