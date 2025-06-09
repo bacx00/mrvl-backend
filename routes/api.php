@@ -172,11 +172,25 @@ Route::middleware(['auth:sanctum', 'role:admin'])->delete('/admin/teams/{team}',
 
 Route::middleware(['auth:sanctum', 'role:admin'])->post('/admin/players', function (Request $request) {
     $validated = $request->validate([
-        'name' => 'required|string|max:255',
-        'username' => 'required|string|unique:players',
-        'role' => 'required|string',
+        'name' => 'nullable|string|max:255',
+        'username' => 'required|string|max:255|unique:players',
+        'real_name' => 'nullable|string|max:255',
+        'role' => 'required|string|in:Duelist,Tank,Support,Controller,Initiator',
         'team_id' => 'nullable|exists:teams,id',
+        'main_hero' => 'nullable|string',
+        'alt_heroes' => 'nullable|array',
+        'region' => 'nullable|string|max:10',
+        'country' => 'nullable|string',
+        'rating' => 'nullable|numeric|min:0',
+        'age' => 'nullable|integer|min:13|max:50',
+        'social_media' => 'nullable|array',
+        'biography' => 'nullable|string'
     ]);
+    
+    // Set name to username if name is not provided
+    if (empty($validated['name'])) {
+        $validated['name'] = $validated['username'];
+    }
     
     $player = \App\Models\Player::create($validated);
     
