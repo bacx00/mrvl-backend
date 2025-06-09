@@ -21,7 +21,7 @@ class Player extends Model
         'social_media' => 'array'
     ];
 
-    protected $appends = ['avatar_url'];
+    protected $appends = []; // Removed problematic accessors
 
     public function team()
     {
@@ -34,10 +34,5 @@ class Player extends Model
                    ->withPivot(['kills', 'deaths', 'assists', 'damage', 'healing']);
     }
 
-    public function getAvatarUrlAttribute()
-    {
-        return $this->avatar 
-            ? asset('storage/' . $this->avatar) 
-            : asset('storage/images/players/default-avatar.png');
-    }
+    // Remove problematic accessor - handled in frontend
 }
