@@ -171,34 +171,55 @@ Route::middleware(['auth:sanctum', 'role:admin'])->delete('/admin/teams/{team}',
 });
 
 Route::middleware(['auth:sanctum', 'role:admin'])->post('/admin/players', function (Request $request) {
-    $validated = $request->validate([
-        'name' => 'nullable|string|max:255',
-        'username' => 'required|string|max:255|unique:players',
-        'real_name' => 'nullable|string|max:255',
-        'role' => 'required|string|in:Duelist,Tank,Support,Controller,Initiator',
-        'team_id' => 'nullable|exists:teams,id',
-        'main_hero' => 'nullable|string',
-        'alt_heroes' => 'nullable|array',
-        'region' => 'nullable|string|max:10',
-        'country' => 'nullable|string',
-        'rating' => 'nullable|numeric|min:0',
-        'age' => 'nullable|integer|min:13|max:50',
-        'social_media' => 'nullable|array',
-        'biography' => 'nullable|string'
-    ]);
-    
-    // Set name to username if name is not provided
-    if (empty($validated['name'])) {
-        $validated['name'] = $validated['username'];
+    try {
+        $validated = $request->validate([
+            'name' => 'nullable|string|max:255',
+            'username' => 'required|string|max:255|unique:players',
+            'real_name' => 'nullable|string|max:255',
+            'role' => 'required|string|in:Duelist,Tank,Support,Controller,Initiator',
+            'team_id' => 'nullable|exists:teams,id',
+            'main_hero' => 'nullable|string',
+            'alt_heroes' => 'nullable|array',
+            'region' => 'nullable|string|max:10',
+            'country' => 'nullable|string',
+            'rating' => 'nullable|numeric|min:0|max:5000',
+            'age' => 'nullable|integer|min:13|max:50',
+            'social_media' => 'nullable|array',
+            'biography' => 'nullable|string',
+            'avatar' => 'nullable|string'
+        ]);
+        
+        // Set name to username if name is not provided
+        if (empty($validated['name'])) {
+            $validated['name'] = $validated['username'];
+        }
+        
+        // Set default values for required fields that might be missing
+        $validated['rating'] = $validated['rating'] ?? 1000;
+        $validated['region'] = $validated['region'] ?? 'NA';
+        $validated['country'] = $validated['country'] ?? 'Unknown';
+        
+        $player = \App\Models\Player::create($validated);
+        
+        return response()->json([
+            'data' => $player->load('team'),
+            'success' => true,
+            'message' => 'Player created successfully'
+        ], 201);
+        
+    } catch (\Illuminate\Validation\ValidationException $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Validation failed',
+            'errors' => $e->errors()
+        ], 422);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Server error: ' . $e->getMessage(),
+            'error_details' => $e->getTraceAsString()
+        ], 500);
     }
-    
-    $player = \App\Models\Player::create($validated);
-    
-    return response()->json([
-        'data' => $player->load('team'),
-        'success' => true,
-        'message' => 'Player created successfully'
-    ], 201);
 });
 
 Route::middleware(['auth:sanctum', 'role:admin'])->put('/admin/players/{player}', function (Request $request, $playerId) {
