@@ -633,6 +633,17 @@ Route::middleware(['auth:sanctum', 'role:admin'])->put('/admin/news/{newsId}', f
     }
 });
 
+Route::middleware(['auth:sanctum', 'role:admin'])->delete('/admin/news/{newsId}', function (Request $request, $newsId) {
+    $news = \App\Models\News::findOrFail($newsId);
+    $newsTitle = $news->title;
+    $news->delete();
+    
+    return response()->json([
+        'success' => true,
+        'message' => "News article '{$newsTitle}' deleted successfully"
+    ]);
+});
+
 // Admin Event Management - CREATE
 Route::middleware(['auth:sanctum', 'role:admin'])->post('/admin/events', function (Request $request) {
     try {
