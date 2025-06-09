@@ -405,7 +405,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->delete('/admin/users/{user}',
 // MISSING ADMIN ROUTES - ADDING NOW
 // ==========================================
 
-// Admin Match Management
+// Admin Match Management - CREATE
 Route::middleware(['auth:sanctum', 'role:admin'])->post('/admin/matches', function (Request $request) {
     try {
         $validated = $request->validate([
@@ -434,6 +434,61 @@ Route::middleware(['auth:sanctum', 'role:admin'])->post('/admin/matches', functi
             'message' => 'Validation failed',
             'errors' => $e->errors()
         ], 422);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Server error: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// Admin Match Management - UPDATE
+Route::middleware(['auth:sanctum', 'role:admin'])->put('/admin/matches/{matchId}', function (Request $request, $matchId) {
+    try {
+        $match = \App\Models\GameMatch::findOrFail($matchId);
+        
+        $validated = $request->validate([
+            'status' => 'nullable|string|in:upcoming,live,completed',
+            'team1_score' => 'nullable|integer|min:0',
+            'team2_score' => 'nullable|integer|min:0',
+            'stream_url' => 'nullable|url',
+            'scheduled_at' => 'nullable|date'
+        ]);
+        
+        $match->update($validated);
+        
+        return response()->json([
+            'data' => $match->fresh()->load(['team1', 'team2', 'event']),
+            'success' => true,
+            'message' => 'Match updated successfully'
+        ]);
+        
+    } catch (\Illuminate\Validation\ValidationException $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Validation failed',
+            'errors' => $e->errors()
+        ], 422);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Server error: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// Admin Match Management - DELETE
+Route::middleware(['auth:sanctum', 'role:admin'])->delete('/admin/matches/{matchId}', function (Request $request, $matchId) {
+    try {
+        $match = \App\Models\GameMatch::findOrFail($matchId);
+        $matchInfo = $match->team1->name . ' vs ' . $match->team2->name;
+        $match->delete();
+        
+        return response()->json([
+            'success' => true,
+            'message' => "Match '{$matchInfo}' deleted successfully"
+        ]);
+        
     } catch (\Exception $e) {
         return response()->json([
             'success' => false,
