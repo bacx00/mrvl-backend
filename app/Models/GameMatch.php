@@ -24,7 +24,7 @@ class GameMatch extends Model
         'maps_data' => 'array'
     ];
 
-    protected $appends = ['series', 'maps'];
+    protected $appends = []; // Removed problematic accessors
 
     public function team1()
     {
