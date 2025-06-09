@@ -238,16 +238,21 @@ Route::middleware(['auth:sanctum', 'role:admin'])->post('/admin/users', function
         'name' => 'required|string|max:255',
         'email' => 'required|email|unique:users',
         'password' => 'required|min:8',
-        'role' => 'required|string|in:admin,user'
+        'role' => 'required|string|in:admin,user,moderator,Admin,User,Moderator',
+        'status' => 'nullable|string|in:active,inactive,banned'
     ]);
+    
+    // Normalize role to lowercase
+    $role = strtolower($validated['role']);
     
     $user = \App\Models\User::create([
         'name' => $validated['name'],
         'email' => $validated['email'],
-        'password' => bcrypt($validated['password'])
+        'password' => bcrypt($validated['password']),
+        'status' => $validated['status'] ?? 'active'
     ]);
     
-    $user->assignRole($validated['role']);
+    $user->assignRole($role);
     
     return response()->json([
         'data' => $user->load('roles'),
