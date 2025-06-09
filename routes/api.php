@@ -847,20 +847,59 @@ Route::middleware(['auth:sanctum', 'role:admin'])->delete('/admin/events/{eventI
         $event = \App\Models\Event::findOrFail($eventId);
         $eventName = $event->name;
         
+        // Check if force delete is requested
+        $forceDelete = $request->boolean('force', false);
+        
         // Check if event has matches
         $matchCount = \App\Models\GameMatch::where('event_id', $eventId)->count();
-        if ($matchCount > 0) {
+        if ($matchCount > 0 && !$forceDelete) {
             return response()->json([
                 'success' => false,
-                'message' => "Cannot delete event '{$eventName}' because it has {$matchCount} associated matches. Delete matches first."
+                'message' => "Cannot delete event '{$eventName}' because it has {$matchCount} associated matches. Delete matches first or use force delete.",
+                'can_force_delete' => true,
+                'match_count' => $matchCount
             ], 422);
+        }
+        
+        // If force delete, remove associated matches first
+        if ($forceDelete && $matchCount > 0) {
+            \App\Models\GameMatch::where('event_id', $eventId)->delete();
         }
         
         $event->delete();
         
         return response()->json([
             'success' => true,
-            'message' => "Event '{$eventName}' deleted successfully"
+            'message' => $forceDelete 
+                ? "Event '{$eventName}' and {$matchCount} associated matches deleted successfully" 
+                : "Event '{$eventName}' deleted successfully"
+        ]);
+        
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Server error: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// Admin Event Force Delete (Alternative endpoint for cascading delete)
+Route::middleware(['auth:sanctum', 'role:admin'])->delete('/admin/events/{eventId}/force', function (Request $request, $eventId) {
+    try {
+        $event = \App\Models\Event::findOrFail($eventId);
+        $eventName = $event->name;
+        
+        // Count and delete associated matches
+        $matchCount = \App\Models\GameMatch::where('event_id', $eventId)->count();
+        if ($matchCount > 0) {
+            \App\Models\GameMatch::where('event_id', $eventId)->delete();
+        }
+        
+        $event->delete();
+        
+        return response()->json([
+            'success' => true,
+            'message' => "Event '{$eventName}' and {$matchCount} associated matches deleted successfully"
         ]);
         
     } catch (\Exception $e) {
