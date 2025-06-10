@@ -445,18 +445,29 @@ Route::middleware(['auth:sanctum', 'role:admin'])->post('/admin/users', function
     }
 });
 
-Route::middleware(['auth:sanctum', 'role:admin'])->put('/admin/users/{user}', function (Request $request, $userId) {
+Route::middleware(['auth:sanctum', 'role:admin'])->put('/admin/users/{userId}', function (Request $request, $userId) {
     try {
         $user = \App\Models\User::findOrFail($userId);
         
-        $validated = $request->validate([
+        // Get current user data to fill in missing fields
+        $currentData = [
+            'name' => $user->name,
+            'email' => $user->email,
+            'status' => $user->status ?? 'active'
+        ];
+        
+        // Merge request data with current data
+        $requestData = $request->all();
+        $updateData = array_merge($currentData, $requestData);
+        
+        $validated = validator($updateData, [
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $userId,
             'password' => 'nullable|min:8',
             'role' => 'required|string',
             'status' => 'nullable|string|in:active,inactive,banned',
             'avatar' => 'nullable|string'
-        ]);
+        ])->validate();
         
         // Normalize role to lowercase and validate
         $role = strtolower(trim($validated['role']));
@@ -470,7 +481,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->put('/admin/users/{user}', fu
             ], 422);
         }
         
-        $updateData = [
+        $updateFields = [
             'name' => $validated['name'],
             'email' => $validated['email'],
             'status' => $validated['status'] ?? $user->status ?? 'active',
@@ -478,10 +489,10 @@ Route::middleware(['auth:sanctum', 'role:admin'])->put('/admin/users/{user}', fu
         ];
         
         if (!empty($validated['password'])) {
-            $updateData['password'] = $validated['password']; // Model handles hashing
+            $updateFields['password'] = $validated['password']; // Model handles hashing
         }
         
-        $user->update($updateData);
+        $user->update($updateFields);
         $user->syncRoles([$role]);
         
         return response()->json([
@@ -496,6 +507,40 @@ Route::middleware(['auth:sanctum', 'role:admin'])->put('/admin/users/{user}', fu
             'message' => 'Validation failed',
             'errors' => $e->errors()
         ], 422);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Server error: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// Add PATCH route for partial user updates (role/status only)
+Route::middleware(['auth:sanctum', 'role:admin'])->patch('/admin/users/{userId}', function (Request $request, $userId) {
+    try {
+        $user = \App\Models\User::findOrFail($userId);
+        
+        $validated = $request->validate([
+            'role' => 'nullable|string|in:admin,moderator,user',
+            'status' => 'nullable|string|in:active,inactive,banned'
+        ]);
+        
+        // Update only provided fields
+        if (isset($validated['status'])) {
+            $user->update(['status' => $validated['status']]);
+        }
+        
+        if (isset($validated['role'])) {
+            $role = strtolower(trim($validated['role']));
+            $user->syncRoles([$role]);
+        }
+        
+        return response()->json([
+            'data' => $user->fresh()->load('roles'),
+            'success' => true,
+            'message' => 'User updated successfully'
+        ]);
+        
     } catch (\Exception $e) {
         return response()->json([
             'success' => false,
