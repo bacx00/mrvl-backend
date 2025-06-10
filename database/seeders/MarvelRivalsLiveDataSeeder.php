@@ -97,9 +97,9 @@ class MarvelRivalsLiveDataSeeder extends Seeder
             // Delete existing players for this team
             DB::table('players')->where('team_id', $team->id)->delete();
             
-            // Create 6 players per team
+            // Create 6 players per team (2 of each role)
             for ($i = 0; $i < 6; $i++) {
-                $role = $roles[$i % count($roles)];
+                $role = $roles[$i % 3]; // Cycle through Tank, Duelist, Support
                 $hero_role = $role === 'Flex' ? array_rand($marvel_heroes) : $role;
                 $main_hero = $marvel_heroes[$hero_role][array_rand($marvel_heroes[$hero_role])];
                 
