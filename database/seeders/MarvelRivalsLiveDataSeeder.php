@@ -100,7 +100,7 @@ class MarvelRivalsLiveDataSeeder extends Seeder
             // Create 6 players per team (2 of each role)
             for ($i = 0; $i < 6; $i++) {
                 $role = $roles[$i % 3]; // Cycle through Tank, Duelist, Support
-                $hero_role = $role === 'Flex' ? array_rand($marvel_heroes) : $role;
+                $hero_role = $role; // Use exact role match
                 $main_hero = $marvel_heroes[$hero_role][array_rand($marvel_heroes[$hero_role])];
                 
                 $rating_base = $team->rating;
