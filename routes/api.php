@@ -116,13 +116,13 @@ Route::middleware('auth:sanctum')->post('/forums/threads', function (Request $re
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'content' => 'required|string|min:10',
-            'category' => 'nullable|string|in:general,strategies,team-recruitment,announcements,bugs'
+            'category' => 'nullable|string|in:general,strategies,team-recruitment,announcements,bugs,feedback,discussion,guides'
         ]);
         
         $validated['user_id'] = $request->user()->id;
         $validated['category'] = $validated['category'] ?? 'general';
-        $validated['is_pinned'] = false;
-        $validated['is_locked'] = false;
+        $validated['pinned'] = false;  // Fixed: use 'pinned' not 'is_pinned'
+        $validated['locked'] = false;  // Fixed: use 'locked' not 'is_locked'
         $validated['views'] = 0;
         $validated['replies'] = 0;
         
@@ -133,7 +133,7 @@ Route::middleware('auth:sanctum')->post('/forums/threads', function (Request $re
             ->leftJoin('users as u', 'ft.user_id', '=', 'u.id')
             ->select([
                 'ft.id', 'ft.title', 'ft.content', 'ft.category', 
-                'ft.views', 'ft.replies', 'ft.is_pinned', 'ft.is_locked',
+                'ft.views', 'ft.replies', 'ft.pinned', 'ft.locked',
                 'ft.created_at', 'ft.updated_at',
                 'u.id as user_id', 'u.name as user_name', 'u.avatar as user_avatar'
             ])
