@@ -66,10 +66,7 @@ class MarvelRivalsLiveDataSeeder extends Seeder
         $marvel_heroes = [
             'Tank' => ['Hulk', 'Thor', 'Groot', 'Thing', 'Colossus', 'Magneto'],
             'Duelist' => ['Iron Man', 'Spider-Man', 'Black Widow', 'Hawkeye', 'Star-Lord', 'Punisher'],
-            'Support' => ['Storm', 'Mantis', 'Rocket Raccoon', 'Cloak & Dagger', 'Luna Snow', 'Adam Warlock'],
-            'Coach' => ['Nick Fury', 'Professor X', 'Tony Stark', 'Captain Marvel', 'Doctor Strange'],
-            'IGL' => ['Captain America', 'Black Panther', 'Wolverine', 'Psylocke', 'Venom', 'Namor'],
-            'Flex' => ['Deadpool', 'Gambit', 'Cyclops', 'Jean Grey', 'Beast', 'Iceman']
+            'Support' => ['Storm', 'Mantis', 'Rocket Raccoon', 'Cloak & Dagger', 'Luna Snow', 'Adam Warlock']
         ];
 
         $player_names = [
