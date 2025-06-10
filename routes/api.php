@@ -110,6 +110,41 @@ Route::middleware('auth:sanctum')->post('/auth/logout', function (Request $reque
 // Route::get('/user', [AuthController::class, 'user'])->middleware(\Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class);
 // Route::post('/auth/logout', [AuthController::class, 'logout'])->middleware(\Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class);
 
+// Forum Read Operations - GET THREADS LIST
+Route::get('/forums/threads', function (Request $request) {
+    try {
+        $query = DB::table('forum_threads as ft')
+            ->leftJoin('users as u', 'ft.user_id', '=', 'u.id')
+            ->select([
+                'ft.id', 'ft.title', 'ft.content', 'ft.category', 
+                'ft.views', 'ft.replies', 'ft.pinned', 'ft.locked',
+                'ft.created_at', 'ft.updated_at',
+                'u.id as user_id', 'u.name as user_name', 'u.avatar as user_avatar'
+            ]);
+
+        if ($request->category && $request->category !== 'all') {
+            $query->where('ft.category', $request->category);
+        }
+
+        $threads = $query->orderBy('ft.pinned', 'desc')
+                         ->orderBy('ft.created_at', 'desc')
+                         ->limit(50)
+                         ->get();
+
+        return response()->json([
+            'data' => $threads,
+            'total' => $threads->count(),
+            'success' => true
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error fetching threads: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
 // Forum Write Operations - CREATE THREAD
 Route::middleware('auth:sanctum')->post('/forums/threads', function (Request $request) {
     try {
