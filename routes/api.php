@@ -110,7 +110,57 @@ Route::middleware('auth:sanctum')->post('/auth/logout', function (Request $reque
 // Route::get('/user', [AuthController::class, 'user'])->middleware(\Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class);
 // Route::post('/auth/logout', [AuthController::class, 'logout'])->middleware(\Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class);
 
-// Forum Write Operations
+// Forum Write Operations - CREATE THREAD
+Route::middleware('auth:sanctum')->post('/forums/threads', function (Request $request) {
+    try {
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'content' => 'required|string|min:10',
+            'category' => 'nullable|string|in:general,strategies,team-recruitment,announcements,bugs'
+        ]);
+        
+        $validated['user_id'] = $request->user()->id;
+        $validated['category'] = $validated['category'] ?? 'general';
+        $validated['is_pinned'] = false;
+        $validated['is_locked'] = false;
+        $validated['views'] = 0;
+        $validated['replies'] = 0;
+        
+        $threadId = DB::table('forum_threads')->insertGetId($validated);
+        
+        // Get the created thread with user info
+        $thread = DB::table('forum_threads as ft')
+            ->leftJoin('users as u', 'ft.user_id', '=', 'u.id')
+            ->select([
+                'ft.id', 'ft.title', 'ft.content', 'ft.category', 
+                'ft.views', 'ft.replies', 'ft.is_pinned', 'ft.is_locked',
+                'ft.created_at', 'ft.updated_at',
+                'u.id as user_id', 'u.name as user_name', 'u.avatar as user_avatar'
+            ])
+            ->where('ft.id', $threadId)
+            ->first();
+        
+        return response()->json([
+            'data' => $thread,
+            'success' => true,
+            'message' => 'Thread created successfully'
+        ], 201);
+        
+    } catch (\Illuminate\Validation\ValidationException $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Validation failed',
+            'errors' => $e->errors()
+        ], 422);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Server error: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// Forum Write Operations - EXISTING
 Route::post('/forum/threads', [ForumController::class, 'store'])->middleware('auth:sanctum');
 
 // Test admin endpoint
