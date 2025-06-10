@@ -91,7 +91,7 @@ class MarvelRivalsLiveDataSeeder extends Seeder
             'Reliable', 'Clutch', 'Choker', 'Warrior', 'Guardian', 'Sentinel'
         ];
 
-        $roles = ['Tank', 'Duelist', 'Support', 'Controller', 'Initiator', 'Flex'];
+        $roles = ['Tank', 'Duelist', 'Support', 'Coach', 'IGL', 'Flex'];
         
         $teams = DB::table('teams')->get();
         
