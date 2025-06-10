@@ -136,7 +136,7 @@ class MarvelRivalsLiveDataSeeder extends Seeder
         
         for ($i = 0; $i < 12; $i++) {
             $role = $roles[array_rand($roles)];
-            $hero_role = $role === 'Flex' ? array_rand($marvel_heroes) : $role;
+            $hero_role = $role; // Use exact role match
             $main_hero = $marvel_heroes[$hero_role][array_rand($marvel_heroes[$hero_role])];
             
             DB::table('players')->insert([
