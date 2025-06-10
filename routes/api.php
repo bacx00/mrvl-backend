@@ -20,6 +20,67 @@ Route::post('/auth/register', [AuthController::class, 'register']);
 // Public Data Routes
 Route::get('/teams', [TeamController::class, 'index']);
 Route::get('/teams/{team}', [TeamController::class, 'show']);
+// Public Player Detail
+Route::get('/players/{playerId}', function (Request $request, $playerId) {
+    try {
+        $player = DB::table('players as p')
+            ->leftJoin('teams as t', 'p.team_id', '=', 't.id')
+            ->select([
+                'p.id', 'p.name', 'p.username', 'p.real_name', 'p.role', 
+                'p.main_hero', 'p.alt_heroes', 'p.region', 'p.country', 
+                'p.rating', 'p.age', 'p.earnings', 'p.social_media', 
+                'p.biography', 'p.avatar', 'p.team_id',
+                't.name as team_name', 't.short_name as team_short', 't.logo as team_logo'
+            ])
+            ->where('p.id', $playerId)
+            ->first();
+
+        if (!$player) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Player not found'
+            ], 404);
+        }
+
+        // Format player data
+        $formattedPlayer = [
+            'id' => $player->id,
+            'name' => $player->name,
+            'username' => $player->username,
+            'real_name' => $player->real_name,
+            'role' => $player->role,
+            'main_hero' => $player->main_hero,
+            'alt_heroes' => $player->alt_heroes ? json_decode($player->alt_heroes, true) : [],
+            'region' => $player->region,
+            'country' => $player->country,
+            'rating' => $player->rating ?? 1000,
+            'age' => $player->age,
+            'earnings' => $player->earnings ?? '$0',
+            'social_media' => $player->social_media ? json_decode($player->social_media, true) : [],
+            'biography' => $player->biography,
+            'avatar' => $player->avatar,
+            'team_id' => $player->team_id,
+            'team' => $player->team_id ? [
+                'id' => $player->team_id,
+                'name' => $player->team_name,
+                'short_name' => $player->team_short,
+                'logo' => $player->team_logo
+            ] : null
+        ];
+
+        return response()->json([
+            'data' => $formattedPlayer,
+            'success' => true
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error fetching player: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
 Route::get('/players', [PlayerController::class, 'index']);
 Route::get('/players/{player}', [PlayerController::class, 'show']);
 Route::get('/matches', [MatchController::class, 'index']);
