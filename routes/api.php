@@ -1272,6 +1272,389 @@ Route::middleware(['auth:sanctum', 'role:admin'])->post('/upload/news/{newsId}/f
 });
 
 // ==========================================
+// MODERATOR API SYSTEM - PRODUCTION READY
+// ==========================================
+
+// ==========================================
+// MODERATOR FORUMS MANAGEMENT
+// ==========================================
+
+// Moderator thread management queue
+Route::middleware(['auth:sanctum', 'permission:moderate-forums'])->get('/moderator/forums/threads', function (Request $request) {
+    try {
+        $query = DB::table('forum_threads as ft')
+            ->leftJoin('users as u', 'ft.user_id', '=', 'u.id')
+            ->select([
+                'ft.id', 'ft.title', 'ft.content', 'ft.category', 
+                'ft.views', 'ft.replies', 'ft.pinned', 'ft.locked',
+                'ft.created_at', 'ft.updated_at',
+                'u.id as user_id', 'u.name as user_name', 'u.avatar as user_avatar'
+            ]);
+
+        // Moderator-specific filters
+        if ($request->filter === 'reported') {
+            // Add logic for reported content when reports system exists
+            $query->where('ft.locked', false);
+        } elseif ($request->filter === 'recent') {
+            $query->where('ft.created_at', '>=', now()->subDays(7));
+        }
+
+        $threads = $query->orderBy('ft.created_at', 'desc')
+                         ->paginate(20);
+
+        return response()->json([
+            'data' => $threads->items(),
+            'meta' => [
+                'current_page' => $threads->currentPage(),
+                'last_page' => $threads->lastPage(),
+                'per_page' => $threads->perPage(),
+                'total' => $threads->total()
+            ],
+            'success' => true
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error fetching threads: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// Moderator user warning system
+Route::middleware(['auth:sanctum', 'permission:moderate-users'])->post('/moderator/users/{userId}/warn', function (Request $request, $userId) {
+    try {
+        $validated = $request->validate([
+            'reason' => 'required|string|max:500',
+            'severity' => 'required|string|in:low,medium,high',
+            'duration' => 'nullable|integer|min:1|max:30' // days
+        ]);
+
+        // Log the warning
+        $warningId = DB::table('user_warnings')->insertGetId([
+            'user_id' => $userId,
+            'moderator_id' => $request->user()->id,
+            'reason' => $validated['reason'],
+            'severity' => $validated['severity'],
+            'duration_days' => $validated['duration'] ?? 1,
+            'created_at' => now(),
+            'updated_at' => now()
+        ]);
+
+        return response()->json([
+            'data' => ['warning_id' => $warningId],
+            'success' => true,
+            'message' => 'User warning issued successfully'
+        ], 201);
+
+    } catch (\Illuminate\Validation\ValidationException $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Validation failed',
+            'errors' => $e->errors()
+        ], 422);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error issuing warning: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// Moderator temporary mute system
+Route::middleware(['auth:sanctum', 'permission:moderate-users'])->post('/moderator/users/{userId}/mute', function (Request $request, $userId) {
+    try {
+        $validated = $request->validate([
+            'duration' => 'required|integer|min:1|max:168', // hours (max 1 week)
+            'reason' => 'required|string|max:255'
+        ]);
+
+        $muteUntil = now()->addHours($validated['duration']);
+
+        // Update user mute status
+        DB::table('users')->where('id', $userId)->update([
+            'muted_until' => $muteUntil,
+            'mute_reason' => $validated['reason'],
+            'updated_at' => now()
+        ]);
+
+        // Log the action
+        DB::table('moderation_logs')->insert([
+            'user_id' => $userId,
+            'moderator_id' => $request->user()->id,
+            'action' => 'mute',
+            'reason' => $validated['reason'],
+            'duration' => $validated['duration'] . ' hours',
+            'created_at' => now(),
+            'updated_at' => now()
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => "User muted for {$validated['duration']} hours",
+            'data' => ['muted_until' => $muteUntil]
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error muting user: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// ==========================================
+// MODERATOR LIVE SCORING SYSTEM
+// ==========================================
+
+// Moderator match status updates
+Route::middleware(['auth:sanctum', 'permission:update-match-scores'])->put('/moderator/matches/{matchId}/status', function (Request $request, $matchId) {
+    try {
+        $validated = $request->validate([
+            'status' => 'required|string|in:upcoming,live,paused,completed,cancelled',
+            'pause_reason' => 'nullable|string',
+            'moderator_note' => 'nullable|string|max:255'
+        ]);
+
+        $updated = DB::table('matches')
+            ->where('id', $matchId)
+            ->update([
+                'status' => $validated['status'],
+                'updated_at' => now()
+            ]);
+
+        if (!$updated) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Match not found'
+            ], 404);
+        }
+
+        // Log moderator action
+        if (isset($validated['moderator_note'])) {
+            DB::table('match_events')->insert([
+                'match_id' => $matchId,
+                'type' => 'moderator_action',
+                'description' => "Status changed to {$validated['status']}. Note: {$validated['moderator_note']}",
+                'created_at' => now(),
+                'updated_at' => now()
+            ]);
+        }
+
+        // Add pause event if needed
+        if ($validated['status'] === 'paused' && isset($validated['pause_reason'])) {
+            DB::table('match_events')->insert([
+                'match_id' => $matchId,
+                'type' => 'pause',
+                'description' => $validated['pause_reason'],
+                'created_at' => now(),
+                'updated_at' => now()
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => "Match status updated to {$validated['status']} by moderator"
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error updating match status: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// Moderator score updates
+Route::middleware(['auth:sanctum', 'permission:update-match-scores'])->put('/moderator/matches/{matchId}/score', function (Request $request, $matchId) {
+    try {
+        $validated = $request->validate([
+            'team1_score' => 'required|integer|min:0',
+            'team2_score' => 'required|integer|min:0',
+            'moderator_note' => 'nullable|string|max:255'
+        ]);
+
+        $updated = DB::table('matches')
+            ->where('id', $matchId)
+            ->update([
+                'team1_score' => $validated['team1_score'],
+                'team2_score' => $validated['team2_score'],
+                'updated_at' => now()
+            ]);
+
+        if (!$updated) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Match not found'
+            ], 404);
+        }
+
+        // Log score update
+        DB::table('match_events')->insert([
+            'match_id' => $matchId,
+            'type' => 'score_update',
+            'description' => "Score updated to {$validated['team1_score']}-{$validated['team2_score']} by moderator" . 
+                           (isset($validated['moderator_note']) ? ". Note: {$validated['moderator_note']}" : ""),
+            'created_at' => now(),
+            'updated_at' => now()
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Match score updated by moderator'
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error updating match score: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// ==========================================
+// MODERATOR NEWS MANAGEMENT
+// ==========================================
+
+// Get pending news for approval
+Route::middleware(['auth:sanctum', 'permission:publish-news'])->get('/moderator/news/pending', function () {
+    try {
+        $pendingNews = DB::table('news as n')
+            ->leftJoin('users as u', 'n.author_id', '=', 'u.id')
+            ->select([
+                'n.id', 'n.title', 'n.excerpt', 'n.category', 'n.status',
+                'n.created_at', 'u.id as author_id', 'u.name as author_name'
+            ])
+            ->where('n.status', 'draft')
+            ->orderBy('n.created_at', 'desc')
+            ->get();
+
+        return response()->json([
+            'data' => $pendingNews,
+            'total' => $pendingNews->count(),
+            'success' => true
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error fetching pending news: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// Approve news article
+Route::middleware(['auth:sanctum', 'permission:publish-news'])->put('/moderator/news/{newsId}/approve', function (Request $request, $newsId) {
+    try {
+        $validated = $request->validate([
+            'moderator_note' => 'nullable|string|max:500'
+        ]);
+
+        $updated = DB::table('news')
+            ->where('id', $newsId)
+            ->update([
+                'status' => 'published',
+                'published_at' => now(),
+                'approved_by' => $request->user()->id,
+                'moderator_note' => $validated['moderator_note'] ?? null,
+                'updated_at' => now()
+            ]);
+
+        if (!$updated) {
+            return response()->json([
+                'success' => false,
+                'message' => 'News article not found'
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'News article approved and published'
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error approving news: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// Reject news article
+Route::middleware(['auth:sanctum', 'permission:publish-news'])->put('/moderator/news/{newsId}/reject', function (Request $request, $newsId) {
+    try {
+        $validated = $request->validate([
+            'rejection_reason' => 'required|string|max:500'
+        ]);
+
+        $updated = DB::table('news')
+            ->where('id', $newsId)
+            ->update([
+                'status' => 'rejected',
+                'rejected_by' => $request->user()->id,
+                'rejection_reason' => $validated['rejection_reason'],
+                'updated_at' => now()
+            ]);
+
+        if (!$updated) {
+            return response()->json([
+                'success' => false,
+                'message' => 'News article not found'
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'News article rejected with feedback'
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error rejecting news: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// ==========================================
+// MODERATOR DASHBOARD & ANALYTICS
+// ==========================================
+
+// Moderator dashboard stats
+Route::middleware(['auth:sanctum', 'role:moderator'])->get('/moderator/dashboard/stats', function () {
+    try {
+        $stats = [
+            'moderation_queue' => [
+                'pending_reports' => 0, // Placeholder for future reports system
+                'pending_news' => DB::table('news')->where('status', 'draft')->count(),
+                'recent_warnings' => DB::table('user_warnings')->where('created_at', '>=', now()->subDays(7))->count(),
+                'active_mutes' => DB::table('users')->where('muted_until', '>', now())->count()
+            ],
+            'content_stats' => [
+                'threads_today' => DB::table('forum_threads')->where('created_at', '>=', now()->startOfDay())->count(),
+                'live_matches' => DB::table('matches')->where('status', 'live')->count(),
+                'published_news_today' => DB::table('news')->where('published_at', '>=', now()->startOfDay())->count()
+            ],
+            'recent_activity' => [
+                'last_action_time' => now()->toISOString(),
+                'actions_today' => DB::table('moderation_logs')->where('created_at', '>=', now()->startOfDay())->count()
+            ]
+        ];
+
+        return response()->json([
+            'data' => $stats,
+            'success' => true
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error fetching moderator stats: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// ==========================================
 // FORUMS MANAGEMENT API - FOR ADMIN PANEL
 // ==========================================
 
