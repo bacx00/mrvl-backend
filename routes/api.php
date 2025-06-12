@@ -1270,3 +1270,474 @@ Route::middleware(['auth:sanctum', 'role:admin'])->post('/upload/news/{newsId}/f
         ], 500);
     }
 });
+
+// ==========================================
+// FORUMS MANAGEMENT API - FOR ADMIN PANEL
+// ==========================================
+
+// List all forum threads for moderation
+Route::middleware(['auth:sanctum', 'role:admin'])->get('/admin/forums/threads', function (Request $request) {
+    try {
+        $query = DB::table('forum_threads as ft')
+            ->leftJoin('users as u', 'ft.user_id', '=', 'u.id')
+            ->select([
+                'ft.id', 'ft.title', 'ft.content', 'ft.category', 
+                'ft.views', 'ft.replies', 'ft.pinned', 'ft.locked',
+                'ft.created_at', 'ft.updated_at',
+                'u.id as user_id', 'u.name as user_name', 'u.avatar as user_avatar'
+            ]);
+
+        // Filter by category if provided
+        if ($request->category && $request->category !== 'all') {
+            $query->where('ft.category', $request->category);
+        }
+
+        // Filter by status
+        if ($request->status) {
+            if ($request->status === 'pinned') {
+                $query->where('ft.pinned', true);
+            } elseif ($request->status === 'locked') {
+                $query->where('ft.locked', true);
+            }
+        }
+
+        $threads = $query->orderBy('ft.pinned', 'desc')
+                         ->orderBy('ft.created_at', 'desc')
+                         ->paginate(20);
+
+        return response()->json([
+            'data' => $threads->items(),
+            'meta' => [
+                'current_page' => $threads->currentPage(),
+                'last_page' => $threads->lastPage(),
+                'per_page' => $threads->perPage(),
+                'total' => $threads->total()
+            ],
+            'success' => true
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error fetching threads: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// Edit forum thread
+Route::middleware(['auth:sanctum', 'role:admin'])->put('/admin/forums/threads/{threadId}', function (Request $request, $threadId) {
+    try {
+        $validated = $request->validate([
+            'title' => 'nullable|string|max:255',
+            'content' => 'nullable|string',
+            'category' => 'nullable|string|in:general,strategies,team-recruitment,announcements,bugs,feedback,discussion,guides',
+            'pinned' => 'nullable|boolean',
+            'locked' => 'nullable|boolean'
+        ]);
+
+        $updated = DB::table('forum_threads')
+            ->where('id', $threadId)
+            ->update(array_filter($validated, function($value) {
+                return !is_null($value);
+            }));
+
+        if (!$updated) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Thread not found'
+            ], 404);
+        }
+
+        // Get updated thread with user info
+        $thread = DB::table('forum_threads as ft')
+            ->leftJoin('users as u', 'ft.user_id', '=', 'u.id')
+            ->select([
+                'ft.id', 'ft.title', 'ft.content', 'ft.category', 
+                'ft.views', 'ft.replies', 'ft.pinned', 'ft.locked',
+                'ft.created_at', 'ft.updated_at',
+                'u.id as user_id', 'u.name as user_name', 'u.avatar as user_avatar'
+            ])
+            ->where('ft.id', $threadId)
+            ->first();
+
+        return response()->json([
+            'data' => $thread,
+            'success' => true,
+            'message' => 'Thread updated successfully'
+        ]);
+
+    } catch (\Illuminate\Validation\ValidationException $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Validation failed',
+            'errors' => $e->errors()
+        ], 422);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error updating thread: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// Delete forum thread
+Route::middleware(['auth:sanctum', 'role:admin'])->delete('/admin/forums/threads/{threadId}', function (Request $request, $threadId) {
+    try {
+        // Get thread title before deletion
+        $thread = DB::table('forum_threads')->where('id', $threadId)->first();
+        
+        if (!$thread) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Thread not found'
+            ], 404);
+        }
+
+        DB::table('forum_threads')->where('id', $threadId)->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => "Thread '{$thread->title}' deleted successfully"
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error deleting thread: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// Pin/Unpin thread
+Route::middleware(['auth:sanctum', 'role:admin'])->post('/admin/forums/threads/{threadId}/pin', function (Request $request, $threadId) {
+    try {
+        $pin = $request->boolean('pin', true);
+        
+        $updated = DB::table('forum_threads')
+            ->where('id', $threadId)
+            ->update(['pinned' => $pin]);
+
+        if (!$updated) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Thread not found'
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => $pin ? 'Thread pinned successfully' : 'Thread unpinned successfully'
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error updating thread pin status: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// Lock/Unlock thread
+Route::middleware(['auth:sanctum', 'role:admin'])->post('/admin/forums/threads/{threadId}/lock', function (Request $request, $threadId) {
+    try {
+        $lock = $request->boolean('lock', true);
+        
+        $updated = DB::table('forum_threads')
+            ->where('id', $threadId)
+            ->update(['locked' => $lock]);
+
+        if (!$updated) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Thread not found'
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => $lock ? 'Thread locked successfully' : 'Thread unlocked successfully'
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error updating thread lock status: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// List forum categories for management
+Route::middleware(['auth:sanctum', 'role:admin'])->get('/admin/forums/categories', function () {
+    $categories = [
+        ['id' => 'general', 'name' => 'General Discussion', 'description' => 'General Marvel Rivals discussion'],
+        ['id' => 'strategies', 'name' => 'Strategies & Tactics', 'description' => 'Team compositions and tactics'],
+        ['id' => 'team-recruitment', 'name' => 'Team Recruitment', 'description' => 'Looking for team/players'],
+        ['id' => 'announcements', 'name' => 'Announcements', 'description' => 'Official tournament news'],
+        ['id' => 'bugs', 'name' => 'Bugs & Issues', 'description' => 'Game issues and feedback'],
+        ['id' => 'feedback', 'name' => 'Feedback', 'description' => 'Platform feedback'],
+        ['id' => 'discussion', 'name' => 'Discussion', 'description' => 'General discussion'],
+        ['id' => 'guides', 'name' => 'Guides', 'description' => 'Player guides and tutorials']
+    ];
+
+    return response()->json([
+        'data' => $categories,
+        'success' => true
+    ]);
+});
+
+// ==========================================
+// LIVE SCORING API - FOR MARVEL RIVALS MATCHES
+// ==========================================
+
+// Update match status (live, completed, etc.)
+Route::middleware(['auth:sanctum', 'role:admin|moderator'])->put('/matches/{matchId}/status', function (Request $request, $matchId) {
+    try {
+        $validated = $request->validate([
+            'status' => 'required|string|in:upcoming,live,paused,completed,cancelled',
+            'pause_reason' => 'nullable|string'
+        ]);
+
+        $updated = DB::table('matches')
+            ->where('id', $matchId)
+            ->update([
+                'status' => $validated['status'],
+                'updated_at' => now()
+            ]);
+
+        if (!$updated) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Match not found'
+            ], 404);
+        }
+
+        // Add match event for status changes
+        if ($validated['status'] === 'paused' && isset($validated['pause_reason'])) {
+            DB::table('match_events')->insert([
+                'match_id' => $matchId,
+                'type' => 'pause',
+                'description' => $validated['pause_reason'],
+                'created_at' => now(),
+                'updated_at' => now()
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => "Match status updated to {$validated['status']}"
+        ]);
+
+    } catch (\Illuminate\Validation\ValidationException $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Validation failed',
+            'errors' => $e->errors()
+        ], 422);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error updating match status: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// Update overall match score
+Route::middleware(['auth:sanctum', 'role:admin|moderator'])->put('/matches/{matchId}/score', function (Request $request, $matchId) {
+    try {
+        $validated = $request->validate([
+            'team1_score' => 'required|integer|min:0',
+            'team2_score' => 'required|integer|min:0'
+        ]);
+
+        $updated = DB::table('matches')
+            ->where('id', $matchId)
+            ->update([
+                'team1_score' => $validated['team1_score'],
+                'team2_score' => $validated['team2_score'],
+                'updated_at' => now()
+            ]);
+
+        if (!$updated) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Match not found'
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Match score updated successfully'
+        ]);
+
+    } catch (\Illuminate\Validation\ValidationException $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Validation failed',
+            'errors' => $e->errors()
+        ], 422);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error updating match score: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// Update individual map scores
+Route::middleware(['auth:sanctum', 'role:admin|moderator'])->put('/matches/{matchId}/maps/{mapId}', function (Request $request, $matchId, $mapId) {
+    try {
+        $validated = $request->validate([
+            'team1_score' => 'nullable|integer|min:0',
+            'team2_score' => 'nullable|integer|min:0',
+            'status' => 'nullable|string|in:upcoming,live,completed',
+            'map_name' => 'nullable|string',
+            'game_mode' => 'nullable|string|in:Convoy,Domination,Control'
+        ]);
+
+        // For now, store map data in JSON format in the match record
+        // In a real implementation, you'd have a separate maps table
+        $match = DB::table('matches')->where('id', $matchId)->first();
+        
+        if (!$match) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Match not found'
+            ], 404);
+        }
+
+        $maps = $match->maps ? json_decode($match->maps, true) : [];
+        
+        // Update or create map entry
+        $maps[$mapId] = array_merge($maps[$mapId] ?? [], array_filter($validated, function($value) {
+            return !is_null($value);
+        }));
+
+        DB::table('matches')
+            ->where('id', $matchId)
+            ->update([
+                'maps' => json_encode($maps),
+                'updated_at' => now()
+            ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Map score updated successfully',
+            'data' => $maps[$mapId]
+        ]);
+
+    } catch (\Illuminate\Validation\ValidationException $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Validation failed',
+            'errors' => $e->errors()
+        ], 422);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error updating map score: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// Add match events (pauses, notes)
+Route::middleware(['auth:sanctum', 'role:admin|moderator'])->post('/matches/{matchId}/events', function (Request $request, $matchId) {
+    try {
+        $validated = $request->validate([
+            'type' => 'required|string|in:pause,resume,note,technical_timeout,hero_substitution',
+            'description' => 'required|string',
+            'timestamp' => 'nullable|string'
+        ]);
+
+        // Verify match exists
+        $match = DB::table('matches')->where('id', $matchId)->first();
+        if (!$match) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Match not found'
+            ], 404);
+        }
+
+        $eventId = DB::table('match_events')->insertGetId([
+            'match_id' => $matchId,
+            'type' => $validated['type'],
+            'description' => $validated['description'],
+            'timestamp' => $validated['timestamp'] ?? now()->toTimeString(),
+            'created_at' => now(),
+            'updated_at' => now()
+        ]);
+
+        $event = DB::table('match_events')->where('id', $eventId)->first();
+
+        return response()->json([
+            'data' => $event,
+            'success' => true,
+            'message' => 'Match event added successfully'
+        ], 201);
+
+    } catch (\Illuminate\Validation\ValidationException $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Validation failed',
+            'errors' => $e->errors()
+        ], 422);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error adding match event: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// Update live broadcast data
+Route::middleware(['auth:sanctum', 'role:admin|moderator'])->put('/matches/{matchId}/live-data', function (Request $request, $matchId) {
+    try {
+        $validated = $request->validate([
+            'viewers' => 'nullable|integer|min:0',
+            'stream_url' => 'nullable|url',
+            'stream_title' => 'nullable|string',
+            'broadcaster' => 'nullable|string',
+            'languages' => 'nullable|array'
+        ]);
+
+        $match = DB::table('matches')->where('id', $matchId)->first();
+        
+        if (!$match) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Match not found'
+            ], 404);
+        }
+
+        $broadcast = $match->broadcast ? json_decode($match->broadcast, true) : [];
+        
+        // Update broadcast data
+        $broadcast = array_merge($broadcast, array_filter($validated, function($value) {
+            return !is_null($value);
+        }));
+
+        DB::table('matches')
+            ->where('id', $matchId)
+            ->update([
+                'broadcast' => json_encode($broadcast),
+                'updated_at' => now()
+            ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Live broadcast data updated successfully',
+            'data' => $broadcast
+        ]);
+
+    } catch (\Illuminate\Validation\ValidationException $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Validation failed',
+            'errors' => $e->errors()
+        ], 422);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error updating live data: ' . $e->getMessage()
+        ], 500);
+    }
+});
