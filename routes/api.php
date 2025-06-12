@@ -1326,6 +1326,129 @@ Route::middleware(['auth:sanctum', 'role:moderator'])->get('/moderator/dashboard
     }
 });
 
+// ==========================================
+// MATCH COMMENTS SYSTEM - CRITICAL FEATURE
+// ==========================================
+
+// Get match comments
+Route::get('/matches/{matchId}/comments', function (Request $request, $matchId) {
+    try {
+        $comments = DB::table('match_comments as mc')
+            ->leftJoin('users as u', 'mc.user_id', '=', 'u.id')
+            ->select([
+                'mc.id', 'mc.content', 'mc.created_at', 'mc.updated_at',
+                'u.id as user_id', 'u.name as user_name', 'u.avatar as user_avatar'
+            ])
+            ->where('mc.match_id', $matchId)
+            ->orderBy('mc.created_at', 'desc')
+            ->paginate(50);
+
+        return response()->json([
+            'data' => $comments->items(),
+            'meta' => [
+                'current_page' => $comments->currentPage(),
+                'last_page' => $comments->lastPage(),
+                'per_page' => $comments->perPage(),
+                'total' => $comments->total()
+            ],
+            'success' => true
+        ]);
+    } catch (\Exception $e) {
+        return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()], 500);
+    }
+});
+
+// Add match comment
+Route::middleware(['auth:sanctum'])->post('/matches/{matchId}/comments', function (Request $request, $matchId) {
+    try {
+        $validated = $request->validate([
+            'content' => 'required|string|min:1|max:1000'
+        ]);
+
+        // Verify match exists
+        $match = DB::table('matches')->where('id', $matchId)->first();
+        if (!$match) {
+            return response()->json(['success' => false, 'message' => 'Match not found'], 404);
+        }
+
+        $commentId = DB::table('match_comments')->insertGetId([
+            'match_id' => $matchId,
+            'user_id' => $request->user()->id,
+            'content' => $validated['content'],
+            'created_at' => now(),
+            'updated_at' => now()
+        ]);
+
+        // Get created comment with user info
+        $comment = DB::table('match_comments as mc')
+            ->leftJoin('users as u', 'mc.user_id', '=', 'u.id')
+            ->select([
+                'mc.id', 'mc.content', 'mc.created_at', 'mc.updated_at',
+                'u.id as user_id', 'u.name as user_name', 'u.avatar as user_avatar'
+            ])
+            ->where('mc.id', $commentId)
+            ->first();
+
+        return response()->json([
+            'data' => $comment,
+            'success' => true,
+            'message' => 'Comment added successfully'
+        ], 201);
+    } catch (\Exception $e) {
+        return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()], 500);
+    }
+});
+
+// Delete match comment (admin/moderator + own comments)
+Route::middleware(['auth:sanctum'])->delete('/matches/{matchId}/comments/{commentId}', function (Request $request, $matchId, $commentId) {
+    try {
+        $comment = DB::table('match_comments')->where('id', $commentId)->where('match_id', $matchId)->first();
+        if (!$comment) {
+            return response()->json(['success' => false, 'message' => 'Comment not found'], 404);
+        }
+
+        // Allow deletion if: user owns comment OR user is admin/moderator
+        $user = $request->user();
+        $canDelete = $comment->user_id == $user->id || $user->hasRole(['admin', 'moderator']);
+
+        if (!$canDelete) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        DB::table('match_comments')->where('id', $commentId)->delete();
+
+        return response()->json(['success' => true, 'message' => 'Comment deleted successfully']);
+    } catch (\Exception $e) {
+        return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()], 500);
+    }
+});
+
+// Moderator: Delete any comment
+Route::middleware(['auth:sanctum', 'role:moderator'])->delete('/moderator/comments/{commentId}', function (Request $request, $commentId) {
+    try {
+        $comment = DB::table('match_comments')->where('id', $commentId)->first();
+        if (!$comment) {
+            return response()->json(['success' => false, 'message' => 'Comment not found'], 404);
+        }
+
+        DB::table('match_comments')->where('id', $commentId)->delete();
+
+        // Log moderation action
+        DB::table('moderation_logs')->insert([
+            'user_id' => $comment->user_id,
+            'moderator_id' => $request->user()->id,
+            'action' => 'delete_comment',
+            'reason' => 'Comment deleted by moderator',
+            'created_at' => now(),
+            'updated_at' => now()
+        ]);
+
+        return response()->json(['success' => true, 'message' => 'Comment deleted by moderator']);
+    } catch (\Exception $e) {
+        return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()], 500);
+    }
+});
+
 // Moderator Forums Management
 Route::middleware(['auth:sanctum', 'role:moderator'])->get('/moderator/forums/threads', function (Request $request) {
     try {
