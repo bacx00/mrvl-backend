@@ -1285,6 +1285,17 @@ Route::middleware(['auth:sanctum', 'role:moderator'])->get('/moderator/test', fu
 });
 
 // ==========================================
+// MODERATOR TEST ROUTE
+// ==========================================
+Route::middleware(['auth:sanctum', 'role:moderator'])->get('/moderator/test', function () {
+    return response()->json([
+        'success' => true,
+        'message' => 'Moderator access working!',
+        'user' => auth()->user()->name
+    ]);
+});
+
+// ==========================================
 // FORUMS MANAGEMENT API - FOR ADMIN PANEL
 // ==========================================
 
