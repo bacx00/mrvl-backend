@@ -100,6 +100,70 @@ Route::get('/news/{slug}', [NewsController::class, 'show']);
 Route::get('/forum/threads', [ForumController::class, 'index']);
 Route::get('/forum/threads/{thread}', [ForumController::class, 'show']);
 
+// Additional Forum Routes for /forums/ path compatibility
+Route::get('/forums/threads/{id}', function (Request $request, $id) {
+    try {
+        $thread = DB::table('forum_threads as ft')
+            ->leftJoin('users as u', 'ft.user_id', '=', 'u.id')
+            ->select([
+                'ft.id', 'ft.title', 'ft.content', 'ft.category', 
+                'ft.views', 'ft.replies', 'ft.pinned', 'ft.locked',
+                'ft.created_at', 'ft.updated_at',
+                'u.id as user_id', 'u.name as user_name', 'u.avatar as user_avatar'
+            ])
+            ->where('ft.id', $id)
+            ->first();
+
+        if (!$thread) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Thread not found'
+            ], 404);
+        }
+
+        // Increment view count
+        DB::table('forum_threads')->where('id', $id)->increment('views');
+
+        return response()->json([
+            'data' => $thread,
+            'success' => true
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error fetching thread: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+Route::get('/forums/categories', function () {
+    try {
+        $categories = [
+            ['id' => 'general', 'name' => 'General Discussion', 'description' => 'General Marvel Rivals discussion'],
+            ['id' => 'strategies', 'name' => 'Strategies & Tips', 'description' => 'Team compositions and tactics'],
+            ['id' => 'team-recruitment', 'name' => 'Team Recruitment', 'description' => 'Looking for team/players'],
+            ['id' => 'announcements', 'name' => 'Announcements', 'description' => 'Official tournament news'],
+            ['id' => 'bugs', 'name' => 'Bug Reports', 'description' => 'Game issues and feedback'],
+            ['id' => 'feedback', 'name' => 'Feedback', 'description' => 'Community feedback'],
+            ['id' => 'discussion', 'name' => 'Discussion', 'description' => 'General discussions'],
+            ['id' => 'guides', 'name' => 'Guides', 'description' => 'How-to guides and tutorials']
+        ];
+
+        return response()->json([
+            'data' => $categories,
+            'total' => count($categories),
+            'success' => true
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error fetching categories: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
 // Test authentication endpoint
 Route::middleware('auth:sanctum')->get('/test-auth', function (Request $request) {
     return response()->json([
