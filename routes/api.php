@@ -769,7 +769,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->post('/admin/matches', functi
         $validated = $request->validate([
             'team1_id' => 'required|exists:teams,id',
             'team2_id' => 'required|exists:teams,id|different:team1_id',
-            'event_id' => 'required|exists:events,id',
+            'event_id' => 'nullable|exists:events,id',
             'scheduled_at' => 'required|date|after:now',
             'format' => 'required|string|in:BO1,BO3,BO5',
             'status' => 'nullable|string|in:upcoming,live,completed',
