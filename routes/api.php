@@ -975,7 +975,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->post('/admin/events', functio
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'type' => 'required|string|in:International,Regional,Qualifier,Community',
+            'type' => 'required|string|in:championship,tournament,scrim,qualifier,regional,international,invitational,International,Regional,Qualifier,Community',
             'status' => 'required|string|in:upcoming,live,completed',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after:start_date',
