@@ -2037,3 +2037,51 @@ Route::middleware(['auth:sanctum', 'role:admin|moderator'])->put('/matches/{matc
         ], 500);
     }
 });
+
+// Team Flag Upload
+Route::middleware(['auth:sanctum', 'role:admin'])->post('/upload/team/{teamId}/flag', function (Request $request, $teamId) {
+    try {
+        $team = \App\Models\Team::findOrFail($teamId);
+        
+        $request->validate([
+            'flag' => 'required|file|mimes:jpeg,jpg,png,gif,svg|max:2048'
+        ]);
+        
+        if (!$request->hasFile('flag')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No file uploaded'
+            ], 400);
+        }
+        
+        $file = $request->file('flag');
+        $fileName = 'team_' . $teamId . '_flag_' . time() . '.' . $file->getClientOriginalExtension();
+        
+        // Store file in public/uploads/teams directory
+        $path = $file->storeAs('teams', $fileName, 'public');
+        
+        // Update team flag path
+        $team->update(['flag' => '/storage/' . $path]);
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Flag uploaded successfully',
+            'data' => [
+                'flag_url' => '/storage/' . $path,
+                'team' => $team->fresh()
+            ]
+        ]);
+        
+    } catch (\Illuminate\Validation\ValidationException $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Validation failed',
+            'errors' => $e->errors()
+        ], 422);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Upload error: ' . $e->getMessage()
+        ], 500);
+    }
+});
