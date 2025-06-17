@@ -6,7 +6,7 @@ import sys
 from datetime import datetime, timedelta
 
 # Base URL for API requests
-BASE_URL = "http://localhost:8000/api"
+BASE_URL = "http://localhost:8001/api"
 
 # Admin credentials for authentication
 ADMIN_CREDENTIALS = {
