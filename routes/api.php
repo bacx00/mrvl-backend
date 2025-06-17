@@ -2149,3 +2149,76 @@ Route::middleware(['auth:sanctum', 'role:admin'])->post('/upload/team/{teamId}/f
         ], 500);
     }
 });
+
+// ==========================================
+// IMAGE URL NORMALIZATION FIX
+// ==========================================
+
+// Fix image URL paths - normalize all image URLs to have /storage/ prefix
+Route::middleware(['auth:sanctum', 'role:admin'])->post('/admin/fix-image-urls', function (Request $request) {
+    try {
+        $fixedTeams = 0;
+        $fixedPlayers = 0;
+        $fixedNews = 0;
+        
+        // Fix team logos and flags that don't start with /storage/
+        $teams = DB::table('teams')->get();
+        foreach ($teams as $team) {
+            $updates = [];
+            
+            // Fix logo URL
+            if ($team->logo && !str_starts_with($team->logo, '/storage/')) {
+                $updates['logo'] = '/storage/' . $team->logo;
+            }
+            
+            // Fix flag URL  
+            if ($team->flag && !str_starts_with($team->flag, '/storage/')) {
+                $updates['flag'] = '/storage/' . $team->flag;
+            }
+            
+            if (!empty($updates)) {
+                DB::table('teams')->where('id', $team->id)->update($updates);
+                $fixedTeams++;
+            }
+        }
+        
+        // Fix player avatars that don't start with /storage/
+        $players = DB::table('players')->whereNotNull('avatar')->get();
+        foreach ($players as $player) {
+            if ($player->avatar && !str_starts_with($player->avatar, '/storage/')) {
+                DB::table('players')->where('id', $player->id)->update([
+                    'avatar' => '/storage/' . $player->avatar
+                ]);
+                $fixedPlayers++;
+            }
+        }
+        
+        // Fix news featured images that don't start with /storage/
+        $news = DB::table('news')->whereNotNull('featured_image')->get();
+        foreach ($news as $article) {
+            if ($article->featured_image && !str_starts_with($article->featured_image, '/storage/')) {
+                DB::table('news')->where('id', $article->id)->update([
+                    'featured_image' => '/storage/' . $article->featured_image
+                ]);
+                $fixedNews++;
+            }
+        }
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Image URLs normalized successfully',
+            'data' => [
+                'teams_fixed' => $fixedTeams,
+                'players_fixed' => $fixedPlayers, 
+                'news_fixed' => $fixedNews,
+                'total_fixed' => $fixedTeams + $fixedPlayers + $fixedNews
+            ]
+        ]);
+        
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error fixing image URLs: ' . $e->getMessage()
+        ], 500);
+    }
+});
