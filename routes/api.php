@@ -2357,10 +2357,8 @@ Route::middleware(['auth:sanctum', 'role:admin'])->get('/admin/analytics', funct
                     ->select('region', DB::raw('count(*) as count'))
                     ->groupBy('region')
                     ->get(),
-                'by_division' => DB::table('teams')
-                    ->select('division', DB::raw('count(*) as count'))
-                    ->groupBy('division')
-                    ->get(),
+                'avg_rating' => DB::table('teams')
+                    ->avg('rating'),
             ],
             'player_stats' => [
                 'by_role' => DB::table('players')
