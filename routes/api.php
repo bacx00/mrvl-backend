@@ -2222,3 +2222,346 @@ Route::middleware(['auth:sanctum', 'role:admin'])->post('/admin/fix-image-urls',
         ], 500);
     }
 });
+
+// ==========================================
+// MISSING BACKEND ENDPOINTS - FRONTEND FIXES
+// ==========================================
+
+// 1. Team Players endpoint
+Route::get('/teams/{id}/players', function ($teamId) {
+    try {
+        $players = DB::table('players as p')
+            ->leftJoin('teams as t', 'p.team_id', '=', 't.id')
+            ->select([
+                'p.id', 'p.name', 'p.username', 'p.real_name', 'p.role', 
+                'p.main_hero', 'p.alt_heroes', 'p.region', 'p.country', 
+                'p.rating', 'p.age', 'p.avatar', 'p.created_at',
+                't.name as team_name', 't.short_name as team_short_name'
+            ])
+            ->where('p.team_id', $teamId)
+            ->orderBy('p.role')
+            ->orderBy('p.rating', 'desc')
+            ->get();
+
+        // Parse alt_heroes JSON
+        $players = $players->map(function ($player) {
+            $player->alt_heroes = $player->alt_heroes ? json_decode($player->alt_heroes, true) : [];
+            return $player;
+        });
+
+        return response()->json([
+            'data' => $players,
+            'total' => $players->count(),
+            'success' => true
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error fetching team players: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// 2. Event Matches endpoint
+Route::get('/events/{id}/matches', function ($eventId) {
+    try {
+        $matches = DB::table('matches as m')
+            ->leftJoin('teams as t1', 'm.team1_id', '=', 't1.id')
+            ->leftJoin('teams as t2', 'm.team2_id', '=', 't2.id')
+            ->leftJoin('events as e', 'm.event_id', '=', 'e.id')
+            ->select([
+                'm.id', 'm.team1_id', 'm.team2_id', 'm.event_id',
+                'm.scheduled_at', 'm.status', 'm.format', 'm.team1_score', 'm.team2_score',
+                'm.stream_url', 'm.created_at',
+                't1.name as team1_name', 't1.short_name as team1_short_name', 
+                't1.logo as team1_logo', 't1.rating as team1_rating',
+                't2.name as team2_name', 't2.short_name as team2_short_name',
+                't2.logo as team2_logo', 't2.rating as team2_rating',
+                'e.name as event_name'
+            ])
+            ->where('m.event_id', $eventId)
+            ->orderBy('m.scheduled_at', 'desc')
+            ->get();
+
+        return response()->json([
+            'data' => $matches,
+            'total' => $matches->count(),
+            'success' => true
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error fetching event matches: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// 3. Event Teams endpoint
+Route::get('/events/{id}/teams', function ($eventId) {
+    try {
+        // Get teams participating in this event through matches
+        $teams = DB::table('teams as t')
+            ->join(DB::raw('(SELECT DISTINCT team1_id as team_id FROM matches WHERE event_id = ' . $eventId . ' 
+                           UNION 
+                           SELECT DISTINCT team2_id as team_id FROM matches WHERE event_id = ' . $eventId . ') as event_teams'), 
+                   't.id', '=', 'event_teams.team_id')
+            ->select([
+                't.id', 't.name', 't.short_name', 't.logo', 't.flag', 't.region', 't.country',
+                't.rating', 't.rank', 't.win_rate', 't.record', 't.earnings', 't.division'
+            ])
+            ->orderBy('t.rating', 'desc')
+            ->get();
+
+        return response()->json([
+            'data' => $teams,
+            'total' => $teams->count(),
+            'success' => true
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error fetching event teams: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// 4. Admin Analytics endpoint
+Route::middleware(['auth:sanctum', 'role:admin'])->get('/admin/analytics', function () {
+    try {
+        $analytics = [
+            'overview' => [
+                'totalTeams' => DB::table('teams')->count(),
+                'totalPlayers' => DB::table('players')->count(),
+                'totalMatches' => DB::table('matches')->count(),
+                'totalEvents' => DB::table('events')->count(),
+                'totalNews' => DB::table('news')->count(),
+                'totalUsers' => DB::table('users')->count(),
+                'totalThreads' => DB::table('forum_threads')->count(),
+            ],
+            'recent_activity' => [
+                'matches_this_week' => DB::table('matches')
+                    ->where('created_at', '>=', now()->subWeek())
+                    ->count(),
+                'players_this_week' => DB::table('players')
+                    ->where('created_at', '>=', now()->subWeek())
+                    ->count(),
+                'threads_this_week' => DB::table('forum_threads')
+                    ->where('created_at', '>=', now()->subWeek())
+                    ->count(),
+            ],
+            'team_stats' => [
+                'by_region' => DB::table('teams')
+                    ->select('region', DB::raw('count(*) as count'))
+                    ->groupBy('region')
+                    ->get(),
+                'by_division' => DB::table('teams')
+                    ->select('division', DB::raw('count(*) as count'))
+                    ->groupBy('division')
+                    ->get(),
+            ],
+            'player_stats' => [
+                'by_role' => DB::table('players')
+                    ->select('role', DB::raw('count(*) as count'))
+                    ->groupBy('role')
+                    ->get(),
+                'by_region' => DB::table('players')
+                    ->select('region', DB::raw('count(*) as count'))
+                    ->groupBy('region')
+                    ->get(),
+            ],
+            'match_stats' => [
+                'by_status' => DB::table('matches')
+                    ->select('status', DB::raw('count(*) as count'))
+                    ->groupBy('status')
+                    ->get(),
+                'by_format' => DB::table('matches')
+                    ->select('format', DB::raw('count(*) as count'))
+                    ->groupBy('format')
+                    ->get(),
+            ]
+        ];
+
+        return response()->json([
+            'data' => $analytics,
+            'success' => true
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error fetching analytics: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// 5. Forum Thread Pin/Unpin endpoints
+Route::middleware(['auth:sanctum', 'role:admin'])->post('/admin/forums/threads/{id}/pin', function ($threadId) {
+    try {
+        $updated = DB::table('forum_threads')
+            ->where('id', $threadId)
+            ->update(['pinned' => true]);
+
+        if (!$updated) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Thread not found'
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Thread pinned successfully'
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error pinning thread: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+Route::middleware(['auth:sanctum', 'role:admin'])->post('/admin/forums/threads/{id}/unpin', function ($threadId) {
+    try {
+        $updated = DB::table('forum_threads')
+            ->where('id', $threadId)
+            ->update(['pinned' => false]);
+
+        if (!$updated) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Thread not found'
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Thread unpinned successfully'
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error unpinning thread: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+Route::middleware(['auth:sanctum', 'role:admin'])->post('/admin/forums/threads/{id}/lock', function ($threadId) {
+    try {
+        $updated = DB::table('forum_threads')
+            ->where('id', $threadId)
+            ->update(['locked' => true]);
+
+        if (!$updated) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Thread not found'
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Thread locked successfully'
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error locking thread: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+Route::middleware(['auth:sanctum', 'role:admin'])->post('/admin/forums/threads/{id}/unlock', function ($threadId) {
+    try {
+        $updated = DB::table('forum_threads')
+            ->where('id', $threadId)
+            ->update(['locked' => false]);
+
+        if (!$updated) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Thread not found'
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Thread unlocked successfully'
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error unlocking thread: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// 6. Fix forum thread update endpoint (the broken SQL issue)
+Route::middleware(['auth:sanctum', 'role:admin'])->put('/admin/forums/threads/{id}', function (Request $request, $threadId) {
+    try {
+        $validated = $request->validate([
+            'title' => 'nullable|string|max:255',
+            'content' => 'nullable|string',
+            'category' => 'nullable|string',
+            'pinned' => 'nullable|boolean',
+            'locked' => 'nullable|boolean'
+        ]);
+
+        // Remove null values to avoid empty SET clause
+        $updateData = array_filter($validated, function($value) {
+            return $value !== null;
+        });
+
+        if (empty($updateData)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No valid data provided for update'
+            ], 422);
+        }
+
+        $updated = DB::table('forum_threads')
+            ->where('id', $threadId)
+            ->update($updateData);
+
+        if (!$updated) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Thread not found'
+            ], 404);
+        }
+
+        // Get updated thread
+        $thread = DB::table('forum_threads as ft')
+            ->leftJoin('users as u', 'ft.user_id', '=', 'u.id')
+            ->select([
+                'ft.*',
+                'u.name as user_name'
+            ])
+            ->where('ft.id', $threadId)
+            ->first();
+
+        return response()->json([
+            'data' => $thread,
+            'success' => true,
+            'message' => 'Thread updated successfully'
+        ]);
+
+    } catch (\Illuminate\Validation\ValidationException $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Validation failed',
+            'errors' => $e->errors()
+        ], 422);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error updating thread: ' . $e->getMessage()
+        ], 500);
+    }
+});
