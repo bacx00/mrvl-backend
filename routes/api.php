@@ -2501,7 +2501,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->post('/admin/forums/threads/{
 });
 
 // 6. Fix forum thread update endpoint (the broken SQL issue)
-Route::middleware(['auth:sanctum', 'role:admin'])->put('/admin/forums/threads/{id}', function (Request $request, $threadId) {
+Route::middleware(['auth:sanctum', 'role:admin'])->put('/admin/forums/threads/{id}', function (Request $request, $id) {
     try {
         $validated = $request->validate([
             'title' => 'nullable|string|max:255',
@@ -2524,7 +2524,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->put('/admin/forums/threads/{i
         }
 
         $updated = DB::table('forum_threads')
-            ->where('id', $threadId)
+            ->where('id', $id)
             ->update($updateData);
 
         if (!$updated) {
@@ -2541,7 +2541,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->put('/admin/forums/threads/{i
                 'ft.*',
                 'u.name as user_name'
             ])
-            ->where('ft.id', $threadId)
+            ->where('ft.id', $id)
             ->first();
 
         return response()->json([
