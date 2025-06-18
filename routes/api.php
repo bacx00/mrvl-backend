@@ -2309,7 +2309,7 @@ Route::get('/events/{id}/teams', function ($eventId) {
                    't.id', '=', 'event_teams.team_id')
             ->select([
                 't.id', 't.name', 't.short_name', 't.logo', 't.flag', 't.region', 't.country',
-                't.rating', 't.rank', 't.win_rate', 't.record', 't.earnings', 't.division'
+                't.rating', 't.rank', 't.win_rate', 't.record', 't.earnings'
             ])
             ->orderBy('t.rating', 'desc')
             ->get();
