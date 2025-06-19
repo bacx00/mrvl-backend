@@ -2645,36 +2645,7 @@ Route::middleware(['auth:sanctum', 'role:admin,moderator'])->put('/matches/{id}/
     return response()->json(['success' => true, 'message' => 'Map data updated', 'data' => $validated]);
 });
 
-// 3. ADMIN ANALYTICS (3 endpoints)
-Route::middleware(['auth:sanctum', 'role:admin,moderator'])->get('/admin/stats', function () {
-    $stats = [
-        'overview' => [
-            'totalTeams' => 17,
-            'totalPlayers' => 120,
-            'totalMatches' => 45,
-            'liveMatches' => 3,
-            'totalEvents' => 8,
-            'activeEvents' => 2,
-            'totalUsers' => 1250,
-            'totalThreads' => 67
-        ]
-    ];
-    return response()->json(['success' => true, 'data' => $stats]);
-});
-
-Route::middleware(['auth:sanctum', 'role:admin,moderator'])->get('/admin/analytics', function (Request $request) {
-    $period = $request->get('period', '7d');
-    $analytics = [
-        'user_growth' => ['7d' => 145, '30d' => 892, '90d' => 2341],
-        'match_activity' => ['7d' => 23, '30d' => 156, '90d' => 445],
-        'content_stats' => ['news' => 45, 'forum_posts' => 234, 'comments' => 1567],
-        'team_performance' => [
-            ['team' => 'Luminosity Gaming', 'wins' => 28, 'losses' => 5, 'win_rate' => 84.8],
-            ['team' => 'Fnatic', 'wins' => 22, 'losses' => 11, 'win_rate' => 66.7]
-        ]
-    ];
-    return response()->json(['success' => true, 'data' => $analytics]);
-});
+// REMOVED DUPLICATE ROUTES - USING ORIGINAL WORKING VERSIONS ABOVE
 
 Route::get('/matches/{id}/comprehensive-stats', function ($matchId) {
     $stats = [
