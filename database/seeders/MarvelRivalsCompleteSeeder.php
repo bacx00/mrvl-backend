@@ -146,14 +146,12 @@ class MarvelRivalsCompleteSeeder extends Seeder
                 'team2_score' => 1,
                 'scheduled_at' => Carbon::now()->addMinutes(30),
                 'stream_url' => 'https://twitch.tv/marvelrivals',
-                'current_map' => 'Tokyo 2099',
-                'map_score' => '13-8',
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now()
             ],
             [
-                'team1_id' => 3,
-                'team2_id' => 4,
+                'team1_id' => 1,
+                'team2_id' => 3,
                 'status' => 'upcoming',
                 'format' => 'BO3',
                 'team1_score' => 0,
@@ -166,7 +164,16 @@ class MarvelRivalsCompleteSeeder extends Seeder
         ];
         
         foreach ($liveMatches as $match) {
-            DB::table('matches')->insert($match);
+            // Check if match already exists to avoid duplicates
+            $existing = DB::table('matches')
+                ->where('team1_id', $match['team1_id'])
+                ->where('team2_id', $match['team2_id'])
+                ->where('status', $match['status'])
+                ->first();
+                
+            if (!$existing) {
+                DB::table('matches')->insert($match);
+            }
         }
     }
     
