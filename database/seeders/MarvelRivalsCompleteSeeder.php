@@ -10,58 +10,26 @@ class MarvelRivalsCompleteSeeder extends Seeder
 {
     public function run()
     {
-        // 1. FORUM THREADS - FIX THE 404 ERROR
+        $this->command->info('Starting Marvel Rivals Complete Seeder...');
+        
+        // Step 1: ONLY seed forum threads (fixes the 404 error)
         $this->seedForumThreads();
         
-        // 2. MARVEL RIVALS HEROES DATA
-        $this->seedMarvelHeroes();
+        // Step 2: Check existing data before seeding other content
+        $this->checkAndSeedSafely();
         
-        // 3. LIVE MATCH DATA
-        $this->seedLiveMatches();
-        
-        // 4. NEWS ARTICLES
-        $this->seedNewsArticles();
-        
-        // 5. MATCH COMMENTS
-        $this->seedMatchComments();
-        
-        // 6. TOURNAMENTS & EVENTS
-        $this->seedTournaments();
+        $this->command->info('Marvel Rivals seeding completed successfully!');
     }
     
     private function seedForumThreads()
     {
+        $this->command->info('Seeding forum threads...');
+        
         $threads = [
-            [
-                'id' => 1,
-                'title' => 'Welcome to Marvel Rivals Esports!',
-                'content' => 'Welcome to the official Marvel Rivals esports community! Discuss strategies, team compositions, and tournament updates here.',
-                'category' => 'announcements',
-                'views' => 245,
-                'replies' => 18,
-                'pinned' => true,
-                'locked' => false,
-                'user_id' => 1,
-                'created_at' => Carbon::now()->subDays(30),
-                'updated_at' => Carbon::now()->subDays(30)
-            ],
-            [
-                'id' => 2,
-                'title' => 'Best Tank Compositions for Ranked',
-                'content' => 'Let\'s discuss the most effective tank compositions in the current meta. Hulk + Magneto seems to be dominating.',
-                'category' => 'strategies',
-                'views' => 389,
-                'replies' => 42,
-                'pinned' => false,
-                'locked' => false,
-                'user_id' => 1,
-                'created_at' => Carbon::now()->subDays(25),
-                'updated_at' => Carbon::now()->subDays(2)
-            ],
             [
                 'id' => 15,
                 'title' => 'Marvel Rivals World Championship 2025',
-                'content' => 'The biggest Marvel Rivals tournament is coming! Prize pool: $500,000. Registration opens next week.',
+                'content' => 'The biggest Marvel Rivals tournament is coming! Prize pool: $500,000. Registration opens next week. Who do you think will dominate this year?',
                 'category' => 'tournaments',
                 'views' => 1250,
                 'replies' => 89,
@@ -74,7 +42,7 @@ class MarvelRivalsCompleteSeeder extends Seeder
             [
                 'id' => 16,
                 'title' => 'Support Hero Tier List - December 2024',
-                'content' => 'Updated tier list for support heroes based on recent patch changes. Luna Snow still S-tier!',
+                'content' => 'Updated tier list for support heroes based on recent patch changes. Luna Snow still S-tier! What are your thoughts on the current meta?',
                 'category' => 'strategies',
                 'views' => 456,
                 'replies' => 23,
@@ -83,16 +51,73 @@ class MarvelRivalsCompleteSeeder extends Seeder
                 'user_id' => 1,
                 'created_at' => Carbon::now()->subDays(5),
                 'updated_at' => Carbon::now()->subDays(1)
+            ],
+            [
+                'id' => 17,
+                'title' => 'Best Tank Compositions for Ranked',
+                'content' => 'Let\'s discuss the most effective tank compositions in the current meta. Hulk + Magneto seems to be dominating ranked matches.',
+                'category' => 'strategies',
+                'views' => 789,
+                'replies' => 42,
+                'pinned' => false,
+                'locked' => false,
+                'user_id' => 1,
+                'created_at' => Carbon::now()->subDays(3),
+                'updated_at' => Carbon::now()->subHours(2)
             ]
         ];
         
         foreach ($threads as $thread) {
-            DB::table('forum_threads')->updateOrInsert(['id' => $thread['id']], $thread);
+            // Use updateOrInsert to avoid duplicates
+            DB::table('forum_threads')->updateOrInsert(
+                ['id' => $thread['id']], 
+                $thread
+            );
+            $this->command->info("- Created/updated forum thread: {$thread['title']}");
+        }
+    }
+    
+    private function checkAndSeedSafely()
+    {
+        $this->command->info('Checking existing data before seeding...');
+        
+        // Check what teams exist
+        $teams = DB::table('teams')->pluck('id')->toArray();
+        $this->command->info('Existing teams: ' . implode(', ', $teams));
+        
+        // Check what users exist  
+        $users = DB::table('users')->pluck('id')->toArray();
+        $this->command->info('Existing users: ' . implode(', ', $users));
+        
+        // Only seed Marvel heroes if the table exists and is empty
+        if (Schema::hasTable('marvel_heroes')) {
+            $heroCount = DB::table('marvel_heroes')->count();
+            if ($heroCount === 0) {
+                $this->seedMarvelHeroes();
+            } else {
+                $this->command->info("Marvel heroes already exist ({$heroCount} heroes)");
+            }
+        }
+        
+        // Only seed matches if we have valid teams
+        if (count($teams) >= 2) {
+            $this->seedSafeMatches($teams);
+        } else {
+            $this->command->info('Skipping match seeding - need at least 2 teams');
+        }
+        
+        // Only seed news if we have valid users
+        if (count($users) >= 1) {
+            $this->seedNewsArticles($users[0]);
+        } else {
+            $this->command->info('Skipping news seeding - need at least 1 user');
         }
     }
     
     private function seedMarvelHeroes()
     {
+        $this->command->info('Seeding Marvel heroes...');
+        
         $heroes = [
             // Duelists
             ['name' => 'Iron Man', 'role' => 'Duelist', 'abilities' => 'Repulsor Rays, Unibeam, Flight'],
@@ -132,39 +157,33 @@ class MarvelRivalsCompleteSeeder extends Seeder
                 ])
             );
         }
+        
+        $this->command->info('- Added ' . count($heroes) . ' Marvel heroes');
     }
     
-    private function seedLiveMatches()
+    private function seedSafeMatches($teamIds)
     {
-        $liveMatches = [
+        $this->command->info('Seeding safe matches with existing teams...');
+        
+        if (count($teamIds) < 2) return;
+        
+        $matches = [
             [
-                'team1_id' => 1,
-                'team2_id' => 2,
-                'status' => 'live',
-                'format' => 'BO5',
-                'team1_score' => 2,
-                'team2_score' => 1,
-                'scheduled_at' => Carbon::now()->addMinutes(30),
-                'stream_url' => 'https://twitch.tv/marvelrivals',
-                'created_at' => Carbon::now(),
-                'updated_at' => Carbon::now()
-            ],
-            [
-                'team1_id' => 1,
-                'team2_id' => 3,
+                'team1_id' => $teamIds[0],
+                'team2_id' => $teamIds[1],
                 'status' => 'upcoming',
                 'format' => 'BO3',
                 'team1_score' => 0,
                 'team2_score' => 0,
                 'scheduled_at' => Carbon::now()->addHours(2),
-                'stream_url' => 'https://youtube.com/marvelrivals',
+                'stream_url' => 'https://twitch.tv/marvelrivals',
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now()
             ]
         ];
         
-        foreach ($liveMatches as $match) {
-            // Check if match already exists to avoid duplicates
+        foreach ($matches as $match) {
+            // Check if match already exists
             $existing = DB::table('matches')
                 ->where('team1_id', $match['team1_id'])
                 ->where('team2_id', $match['team2_id'])
@@ -173,22 +192,25 @@ class MarvelRivalsCompleteSeeder extends Seeder
                 
             if (!$existing) {
                 DB::table('matches')->insert($match);
+                $this->command->info("- Created match between teams {$match['team1_id']} vs {$match['team2_id']}");
             }
         }
     }
     
-    private function seedNewsArticles()
+    private function seedNewsArticles($userId)
     {
+        $this->command->info('Seeding news articles...');
+        
         $news = [
             [
                 'title' => 'Marvel Rivals Championship 2025 Announced',
                 'slug' => 'marvel-rivals-championship-2025-announced',
                 'excerpt' => 'The biggest Marvel Rivals tournament ever with $500K prize pool',
-                'content' => 'NetEase Games announces the Marvel Rivals Championship 2025, featuring the largest prize pool in the game\'s history...',
+                'content' => 'NetEase Games announces the Marvel Rivals Championship 2025, featuring the largest prize pool in the game\'s history. Teams from around the world will compete for glory and a massive $500,000 prize pool.',
                 'category' => 'tournaments',
                 'status' => 'published',
                 'featured' => true,
-                'author_id' => 1,
+                'author_id' => $userId,
                 'published_at' => Carbon::now()->subDays(2),
                 'created_at' => Carbon::now()->subDays(2),
                 'updated_at' => Carbon::now()->subDays(2)
@@ -197,11 +219,11 @@ class MarvelRivalsCompleteSeeder extends Seeder
                 'title' => 'New Hero Jeff the Land Shark Joins the Roster',
                 'slug' => 'new-hero-jeff-land-shark-joins-roster',
                 'excerpt' => 'The adorable but deadly support hero makes his debut',
-                'content' => 'Jeff the Land Shark brings unique support abilities to Marvel Rivals...',
+                'content' => 'Jeff the Land Shark brings unique support abilities to Marvel Rivals. This loveable character offers powerful healing abilities and crowd control that can turn the tide of battle.',
                 'category' => 'updates',
                 'status' => 'published',
                 'featured' => true,
-                'author_id' => 1,
+                'author_id' => $userId,
                 'published_at' => Carbon::now()->subDays(1),
                 'created_at' => Carbon::now()->subDays(1),
                 'updated_at' => Carbon::now()->subDays(1)
@@ -209,73 +231,12 @@ class MarvelRivalsCompleteSeeder extends Seeder
         ];
         
         foreach ($news as $article) {
-            DB::table('news')->insert($article);
-        }
-    }
-    
-    private function seedMatchComments()
-    {
-        $comments = [
-            [
-                'match_id' => 1,
-                'user_id' => 1,
-                'content' => 'Amazing Spider-Man play! That wall-crawl flank was insane!',
-                'created_at' => Carbon::now()->subMinutes(30),
-                'updated_at' => Carbon::now()->subMinutes(30)
-            ],
-            [
-                'match_id' => 1,
-                'user_id' => 1,
-                'content' => 'Hulk and Thor tank combo is too strong in this meta',
-                'created_at' => Carbon::now()->subMinutes(15),
-                'updated_at' => Carbon::now()->subMinutes(15)
-            ]
-        ];
-        
-        foreach ($comments as $comment) {
-            DB::table('match_comments')->insert($comment);
-        }
-    }
-    
-    private function seedTournaments()
-    {
-        $tournaments = [
-            [
-                'name' => 'Marvel Rivals World Championship 2025',
-                'description' => 'The ultimate Marvel Rivals tournament',
-                'type' => 'international',
-                'status' => 'upcoming',
-                'start_date' => Carbon::now()->addMonths(2),
-                'end_date' => Carbon::now()->addMonths(2)->addDays(7),
-                'prize_pool' => '$500,000',
-                'location' => 'Los Angeles, CA',
-                'organizer' => 'NetEase Games',
-                'format' => 'Double Elimination',
-                'team_count' => 32,
-                'registration_open' => true,
-                'created_at' => Carbon::now(),
-                'updated_at' => Carbon::now()
-            ],
-            [
-                'name' => 'Marvel Rivals NA Regional',
-                'description' => 'North American regional championship',
-                'type' => 'regional',
-                'status' => 'live',
-                'start_date' => Carbon::now()->subDays(3),
-                'end_date' => Carbon::now()->addDays(4),
-                'prize_pool' => '$100,000',
-                'location' => 'Online',
-                'organizer' => 'MRVL Esports',
-                'format' => 'Swiss System',
-                'team_count' => 16,
-                'registration_open' => false,
-                'created_at' => Carbon::now(),
-                'updated_at' => Carbon::now()
-            ]
-        ];
-        
-        foreach ($tournaments as $tournament) {
-            DB::table('events')->insert($tournament);
+            // Check if article exists
+            $existing = DB::table('news')->where('slug', $article['slug'])->first();
+            if (!$existing) {
+                DB::table('news')->insert($article);
+                $this->command->info("- Created news article: {$article['title']}");
+            }
         }
     }
 }
