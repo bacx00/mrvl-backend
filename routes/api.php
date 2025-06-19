@@ -1004,6 +1004,37 @@ Route::middleware(['auth:sanctum', 'role:admin'])->put('/admin/news/{newsId}', f
     }
 });
 
+// Add PATCH route for partial news updates (for status changes, etc.)
+Route::middleware(['auth:sanctum', 'role:admin'])->patch('/admin/news/{newsId}', function (Request $request, $newsId) {
+    try {
+        $news = \App\Models\News::findOrFail($newsId);
+        
+        $validated = $request->validate([
+            'status' => 'sometimes|string|in:draft,published,archived',
+            'featured' => 'sometimes|boolean',
+            'category' => 'sometimes|string|in:updates,tournaments,content,community,esports'
+        ]);
+        
+        if (isset($validated['status']) && $validated['status'] === 'published' && $news->status !== 'published') {
+            $validated['published_at'] = now();
+        }
+        
+        $news->update($validated);
+        
+        return response()->json([
+            'data' => $news->fresh()->load('author'),
+            'success' => true,
+            'message' => 'News article updated successfully'
+        ]);
+        
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Server error: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
 Route::middleware(['auth:sanctum', 'role:admin'])->delete('/admin/news/{newsId}', function (Request $request, $newsId) {
     $news = \App\Models\News::findOrFail($newsId);
     $newsTitle = $news->title;
