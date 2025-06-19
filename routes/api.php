@@ -3113,39 +3113,7 @@ Route::middleware(['auth:sanctum'])->put('/user/privacy', function (Request $req
     return response()->json(['success' => true, 'message' => 'Privacy settings updated']);
 });
 
-// 10. NEWS MANAGEMENT (4 endpoints)
-Route::middleware(['auth:sanctum', 'role:admin,moderator'])->get('/admin/news', function () {
-    $news = [
-        ['id' => 1, 'title' => 'World Championship Update', 'category' => 'tournaments', 'status' => 'published', 'views' => 2341],
-        ['id' => 2, 'title' => 'Hero Balance Changes', 'category' => 'updates', 'status' => 'draft', 'views' => 0]
-    ];
-    return response()->json(['success' => true, 'data' => $news]);
-});
-
-Route::middleware(['auth:sanctum', 'role:admin,moderator'])->delete('/admin/news/{id}', function ($newsId) {
-    return response()->json(['success' => true, 'message' => 'News article deleted']);
-});
-
-Route::middleware(['auth:sanctum', 'role:admin,moderator'])->put('/admin/news/{id}', function (Request $request, $newsId) {
-    $validated = $request->validate([
-        'title' => 'sometimes|string',
-        'content' => 'sometimes|string',
-        'category' => 'sometimes|string',
-        'is_published' => 'sometimes|boolean'
-    ]);
-    return response()->json(['success' => true, 'message' => 'News updated', 'data' => $validated]);
-});
-
-Route::middleware(['auth:sanctum', 'role:admin,moderator'])->post('/admin/news', function (Request $request) {
-    $validated = $request->validate([
-        'title' => 'required|string',
-        'content' => 'required|string',
-        'category' => 'required|string',
-        'excerpt' => 'sometimes|string'
-    ]);
-    $news = array_merge($validated, ['id' => rand(100, 999), 'views' => 0, 'is_published' => false]);
-    return response()->json(['success' => true, 'data' => $news], 201);
-});
+// 10. NEWS MANAGEMENT - REMOVED DUPLICATES, USING WORKING VERSIONS ABOVE
 
 // 11. TEAM MANAGEMENT ADMIN (1 endpoint)
 Route::middleware(['auth:sanctum', 'role:admin'])->delete('/admin/teams/{id}', function ($teamId) {
