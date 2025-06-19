@@ -18,10 +18,7 @@ return new class extends Migration
             'regional',
             'international',
             'invitational',
-            'International',
-            'Regional', 
-            'Qualifier',
-            'Community',
+            'community',
             'friendly',
             'practice',
             'exhibition'
