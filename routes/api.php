@@ -1068,12 +1068,12 @@ Route::middleware(['auth:sanctum', 'role:admin'])->get('/admin/events/{eventId}'
 Route::middleware(['auth:sanctum', 'role:admin'])->post('/admin/events', function (Request $request) {
     try {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'sometimes|required|string|max:255',
             'description' => 'nullable|string',
-            'type' => 'required|string|in:championship,tournament,scrim,qualifier,regional,international,invitational,International,Regional,Qualifier,Community',
-            'status' => 'required|string|in:upcoming,live,completed',
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after:start_date',
+            'type' => 'sometimes|required|string|in:championship,tournament,scrim,qualifier,regional,international,invitational,International,Regional,Qualifier,Community,friendly,practice,exhibition',
+            'status' => 'sometimes|required|string|in:upcoming,live,completed',
+            'start_date' => 'sometimes|required|date',
+            'end_date' => 'sometimes|required|date|after:start_date',
             'prize_pool' => 'nullable|string',
             'location' => 'nullable|string',
             'organizer' => 'nullable|string',
