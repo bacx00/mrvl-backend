@@ -2645,6 +2645,304 @@ Route::middleware(['auth:sanctum', 'role:admin,moderator'])->put('/matches/{id}/
     return response()->json(['success' => true, 'message' => 'Map data updated', 'data' => $validated]);
 });
 
+// ==========================================
+// MARVEL RIVALS SPECIFIC ENDPOINTS
+// ==========================================
+
+// Marvel Heroes Management
+Route::get('/heroes', function () {
+    try {
+        $heroes = DB::table('marvel_heroes')
+            ->orderBy('role')
+            ->orderBy('name')
+            ->get();
+            
+        $heroesByRole = $heroes->groupBy('role');
+        
+        return response()->json([
+            'data' => $heroesByRole,
+            'total' => $heroes->count(),
+            'success' => true
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error fetching heroes: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+Route::get('/heroes/{heroName}', function ($heroName) {
+    try {
+        $hero = DB::table('marvel_heroes')
+            ->where('name', $heroName)
+            ->first();
+            
+        if (!$hero) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Hero not found'
+            ], 404);
+        }
+        
+        return response()->json([
+            'data' => $hero,
+            'success' => true
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error fetching hero: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// Live Match Events
+Route::get('/matches/{matchId}/events', function ($matchId) {
+    try {
+        $events = DB::table('match_events')
+            ->where('match_id', $matchId)
+            ->orderBy('event_time', 'desc')
+            ->get();
+            
+        return response()->json([
+            'data' => $events,
+            'total' => $events->count(),
+            'success' => true
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error fetching match events: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+Route::middleware(['auth:sanctum', 'role:moderator'])->post('/matches/{matchId}/events', function (Request $request, $matchId) {
+    try {
+        $validated = $request->validate([
+            'type' => 'required|string|in:kill,death,objective,round_start,round_end,hero_swap',
+            'player_name' => 'nullable|string',
+            'hero' => 'nullable|string',
+            'victim' => 'nullable|string',
+            'description' => 'required|string|max:255',
+            'round_number' => 'nullable|integer|min:1'
+        ]);
+        
+        $validated['match_id'] = $matchId;
+        $validated['event_time'] = now();
+        $validated['round_number'] = $validated['round_number'] ?? 1;
+        
+        $eventId = DB::table('match_events')->insertGetId($validated);
+        
+        $event = DB::table('match_events')->where('id', $eventId)->first();
+        
+        return response()->json([
+            'data' => $event,
+            'success' => true,
+            'message' => 'Match event recorded'
+        ], 201);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error recording event: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// Team Compositions
+Route::get('/teams/{teamId}/compositions', function ($teamId) {
+    try {
+        $compositions = DB::table('team_compositions')
+            ->where('team_id', $teamId)
+            ->orderBy('created_at', 'desc')
+            ->get();
+            
+        return response()->json([
+            'data' => $compositions,
+            'total' => $compositions->count(),
+            'success' => true
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error fetching compositions: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// Player Match Statistics
+Route::get('/players/{playerId}/stats', function ($playerId) {
+    try {
+        $stats = DB::table('player_match_stats as pms')
+            ->leftJoin('matches as m', 'pms.match_id', '=', 'm.id')
+            ->leftJoin('teams as t1', 'm.team1_id', '=', 't1.id')
+            ->leftJoin('teams as t2', 'm.team2_id', '=', 't2.id')
+            ->select([
+                'pms.*',
+                'm.scheduled_at as match_date',
+                't1.name as team1_name',
+                't2.name as team2_name'
+            ])
+            ->where('pms.player_id', $playerId)
+            ->orderBy('m.scheduled_at', 'desc')
+            ->get();
+            
+        // Calculate aggregate stats
+        $aggregate = [
+            'total_eliminations' => $stats->sum('eliminations'),
+            'total_deaths' => $stats->sum('deaths'),
+            'total_assists' => $stats->sum('assists'),
+            'total_damage' => $stats->sum('damage_dealt'),
+            'total_healing' => $stats->sum('healing_done'),
+            'avg_kda' => $stats->count() > 0 ? 
+                ($stats->sum('eliminations') + $stats->sum('assists')) / max($stats->sum('deaths'), 1) : 0,
+            'matches_played' => $stats->count(),
+            'favorite_hero' => $stats->groupBy('hero_played')->map->count()->sortDesc()->keys()->first()
+        ];
+            
+        return response()->json([
+            'data' => [
+                'recent_matches' => $stats->take(10),
+                'aggregate_stats' => $aggregate
+            ],
+            'success' => true
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error fetching player stats: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// Tournament Brackets
+Route::get('/events/{eventId}/bracket', function ($eventId) {
+    try {
+        $brackets = DB::table('tournament_brackets as tb')
+            ->leftJoin('teams as t1', 'tb.team1_id', '=', 't1.id')
+            ->leftJoin('teams as t2', 'tb.team2_id', '=', 't2.id')
+            ->leftJoin('teams as tw', 'tb.winner_id', '=', 'tw.id')
+            ->select([
+                'tb.*',
+                't1.name as team1_name', 't1.logo as team1_logo',
+                't2.name as team2_name', 't2.logo as team2_logo',
+                'tw.name as winner_name'
+            ])
+            ->where('tb.event_id', $eventId)
+            ->orderBy('round_number')
+            ->orderBy('match_number')
+            ->get();
+            
+        $bracketsByType = $brackets->groupBy('bracket_type');
+            
+        return response()->json([
+            'data' => $bracketsByType,
+            'total_matches' => $brackets->count(),
+            'success' => true
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error fetching bracket: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// Live Leaderboards
+Route::get('/leaderboards/teams', function (Request $request) {
+    try {
+        $region = $request->get('region', 'all');
+        
+        $query = DB::table('teams')
+            ->select(['id', 'name', 'short_name', 'region', 'rating', 'rank', 'logo'])
+            ->orderBy('rating', 'desc');
+            
+        if ($region !== 'all') {
+            $query->where('region', $region);
+        }
+        
+        $teams = $query->limit(50)->get();
+        
+        return response()->json([
+            'data' => $teams,
+            'region' => $region,
+            'success' => true
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error fetching leaderboard: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+Route::get('/leaderboards/players', function (Request $request) {
+    try {
+        $role = $request->get('role', 'all');
+        
+        $query = DB::table('players as p')
+            ->leftJoin('teams as t', 'p.team_id', '=', 't.id')
+            ->select([
+                'p.id', 'p.name', 'p.username', 'p.role', 'p.rating', 
+                'p.region', 'p.main_hero', 'p.avatar',
+                't.name as team_name', 't.logo as team_logo'
+            ])
+            ->orderBy('p.rating', 'desc');
+            
+        if ($role !== 'all') {
+            $query->where('p.role', $role);
+        }
+        
+        $players = $query->limit(100)->get();
+        
+        return response()->json([
+            'data' => $players,
+            'role' => $role,
+            'success' => true
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error fetching player leaderboard: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// Meta Statistics
+Route::get('/meta/heroes', function () {
+    try {
+        $heroStats = DB::table('player_match_stats as pms')
+            ->leftJoin('matches as m', 'pms.match_id', '=', 'm.id')
+            ->select([
+                'pms.hero_played as hero',
+                DB::raw('COUNT(*) as games_played'),
+                DB::raw('AVG(pms.eliminations) as avg_eliminations'),
+                DB::raw('AVG(pms.deaths) as avg_deaths'),
+                DB::raw('AVG(pms.assists) as avg_assists'),
+                DB::raw('AVG(pms.damage_dealt) as avg_damage'),
+                DB::raw('SUM(CASE WHEN m.team1_score > m.team2_score THEN 1 ELSE 0 END) as wins'),
+                DB::raw('ROUND((SUM(CASE WHEN m.team1_score > m.team2_score THEN 1 ELSE 0 END) / COUNT(*)) * 100, 2) as win_rate')
+            ])
+            ->where('m.status', 'completed')
+            ->where('m.created_at', '>=', now()->subDays(30))
+            ->groupBy('pms.hero_played')
+            ->orderBy('games_played', 'desc')
+            ->get();
+            
+        return response()->json([
+            'data' => $heroStats,
+            'period' => 'Last 30 days',
+            'success' => true
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error fetching meta stats: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
 // REMOVED DUPLICATE ROUTES - USING ORIGINAL WORKING VERSIONS ABOVE
 
 Route::get('/matches/{id}/comprehensive-stats', function ($matchId) {
