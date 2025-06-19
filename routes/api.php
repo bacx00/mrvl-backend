@@ -2563,11 +2563,6 @@ Route::middleware(['auth:sanctum', 'role:admin'])->put('/admin/forums/threads/{i
         ], 500);
     }
 });
-<?php
-
-// ALL 35 MISSING BACKEND ENDPOINTS TO ELIMINATE FRONTEND FALLBACKS
-
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\AuthController;
 
