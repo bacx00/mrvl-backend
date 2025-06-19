@@ -2563,8 +2563,6 @@ Route::middleware(['auth:sanctum', 'role:admin'])->put('/admin/forums/threads/{i
         ], 500);
     }
 });
-use Illuminate\Support\Facades\DB;
-use App\Http\Controllers\AuthController;
 
 // ==========================================
 // FRONTEND FALLBACK ELIMINATION - 35 ENDPOINTS
