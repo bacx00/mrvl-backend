@@ -967,18 +967,18 @@ Route::middleware(['auth:sanctum', 'role:admin'])->put('/admin/news/{newsId}', f
         $news = \App\Models\News::findOrFail($newsId);
         
         $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'excerpt' => 'required|string|max:500',
-            'content' => 'required|string',
-            'category' => 'required|string|in:updates,tournaments,content,community,esports',
-            'status' => 'required|string|in:draft,published,archived',
+            'title' => 'sometimes|required|string|max:255',
+            'excerpt' => 'sometimes|required|string|max:500',
+            'content' => 'sometimes|required|string',
+            'category' => 'sometimes|required|string|in:updates,tournaments,content,community,esports',
+            'status' => 'sometimes|required|string|in:draft,published,archived',
             'featured' => 'nullable|boolean',
             'tags' => 'nullable|array',
             'featured_image' => 'nullable|string'
         ]);
         
-        $validated['featured'] = $validated['featured'] ?? false;
-        if ($validated['status'] === 'published' && $news->status !== 'published') {
+        $validated['featured'] = $validated['featured'] ?? $news->featured ?? false;
+        if (isset($validated['status']) && $validated['status'] === 'published' && $news->status !== 'published') {
             $validated['published_at'] = now();
         }
         
