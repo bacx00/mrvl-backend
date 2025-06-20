@@ -3341,18 +3341,33 @@ Route::get('/heroes', function (Request $request) {
         
         $heroes = $query->get();
         
+        // Add image URLs to each hero
+        $heroesWithImages = $heroes->map(function ($hero) {
+            $heroKey = strtolower(str_replace(' ', '_', $hero->name));
+            $imagePath = "/storage/heroes/{$heroKey}.png";
+            $imageExists = file_exists(public_path($imagePath));
+            
+            return (object) array_merge((array) $hero, [
+                'image_url' => $imageExists ? url($imagePath) : null,
+                'image_exists' => $imageExists,
+                'expected_path' => $imagePath
+            ]);
+        });
+        
         // Group by role for easier frontend consumption
-        $heroesByRole = $heroes->groupBy('role');
+        $heroesByRole = $heroesWithImages->groupBy('role');
         
         return response()->json([
             'data' => [
-                'all' => $heroes,
+                'all' => $heroesWithImages,
                 'by_role' => $heroesByRole,
                 'summary' => [
-                    'total_heroes' => $heroes->count(),
+                    'total_heroes' => $heroesWithImages->count(),
                     'tanks' => $heroesByRole->get('Tank', collect())->count(),
                     'duelists' => $heroesByRole->get('Duelist', collect())->count(),
-                    'supports' => $heroesByRole->get('Support', collect())->count()
+                    'supports' => $heroesByRole->get('Support', collect())->count(),
+                    'images_available' => $heroesWithImages->where('image_exists', true)->count(),
+                    'images_missing' => $heroesWithImages->where('image_exists', false)->count()
                 ]
             ],
             'success' => true
