@@ -3160,7 +3160,7 @@ Route::middleware(['auth:sanctum', 'role:admin|moderator'])->put('/admin/matches
 });
 
 // Real-time Live Stats Update
-Route::middleware(['auth:sanctum', 'role:admin,moderator'])->put('/admin/matches/{id}/live-stats', function (Request $request, $id) {
+Route::middleware(['auth:sanctum', 'role:admin|moderator'])->put('/admin/matches/{id}/live-stats', function (Request $request, $id) {
     try {
         $validated = $request->validate([
             'player_stats' => 'required|array',
