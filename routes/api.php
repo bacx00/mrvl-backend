@@ -118,7 +118,84 @@ Route::get('/heroes/images/validate', function () {
         ], 500);
     }
 });
-// Public Player Detail
+// Team Flag Validation Endpoint
+Route::get('/teams/images/validate', function () {
+    try {
+        $teams = DB::table('teams')->get();
+        $validation = [];
+        
+        foreach ($teams as $team) {
+            $logoExists = $team->logo ? file_exists(public_path($team->logo)) : false;
+            $flagExists = $team->flag ? file_exists(public_path($team->flag)) : false;
+            
+            $validation[] = [
+                'team_id' => $team->id,
+                'team_name' => $team->name,
+                'logo_url' => $team->logo,
+                'logo_exists' => $logoExists,
+                'logo_accessible' => $logoExists ? url($team->logo) : null,
+                'flag_url' => $team->flag,
+                'flag_exists' => $flagExists,
+                'flag_accessible' => $flagExists ? url($team->flag) : null,
+                'images_complete' => $logoExists && $flagExists
+            ];
+        }
+        
+        $summary = [
+            'total_teams' => count($teams),
+            'teams_with_logo' => count(array_filter($validation, fn($t) => $t['logo_exists'])),
+            'teams_with_flag' => count(array_filter($validation, fn($t) => $t['flag_exists'])),
+            'teams_complete' => count(array_filter($validation, fn($t) => $t['images_complete'])),
+            'broken_images' => count(array_filter($validation, fn($t) => !$t['images_complete']))
+        ];
+        
+        return response()->json([
+            'data' => $validation,
+            'summary' => $summary,
+            'success' => true
+        ]);
+        
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error validating team images: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// Image Upload Status Check
+Route::get('/images/system-status', function () {
+    try {
+        $directories = [
+            'storage/teams' => public_path('storage/teams'),
+            'storage/heroes' => public_path('storage/heroes'),
+            'storage/news' => public_path('storage/news'),
+            'storage/players' => public_path('storage/players')
+        ];
+        
+        $status = [];
+        foreach ($directories as $name => $path) {
+            $status[$name] = [
+                'exists' => file_exists($path),
+                'writable' => is_writable($path),
+                'files_count' => file_exists($path) ? count(glob($path . '/*')) : 0,
+                'path' => $path
+            ];
+        }
+        
+        return response()->json([
+            'data' => $status,
+            'system_ready' => !in_array(false, array_column($status, 'exists')),
+            'success' => true
+        ]);
+        
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error checking image system: ' . $e->getMessage()
+        ], 500);
+    }
+});
 Route::get('/players/{playerId}', function (Request $request, $playerId) {
     try {
         $player = DB::table('players as p')
