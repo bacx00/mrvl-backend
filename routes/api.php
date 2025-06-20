@@ -2976,128 +2976,17 @@ Route::get('/meta/heroes', function () {
 
 // REMOVED DUPLICATE ROUTES - USING ORIGINAL WORKING VERSIONS ABOVE
 
-Route::get('/matches/{id}/comprehensive-stats', function ($matchId) {
-    $stats = [
-        'match_id' => $matchId,
-        'team_performance' => [
-            'team1' => ['total_damage' => 45230, 'eliminations' => 67, 'deaths' => 42],
-            'team2' => ['total_damage' => 42150, 'eliminations' => 59, 'deaths' => 51]
-        ],
-        'player_stats' => [
-            ['player' => 'TenZ', 'hero' => 'Iron Man', 'eliminations' => 24, 'deaths' => 8],
-            ['player' => 'Aspas', 'hero' => 'Spider-Man', 'eliminations' => 21, 'deaths' => 10]
-        ],
-        'hero_picks' => ['Iron Man' => 3, 'Spider-Man' => 2, 'Hulk' => 4, 'Storm' => 3]
-    ];
-    return response()->json(['success' => true, 'data' => $stats]);
-});
+// REMOVED - USING DATABASE ROUTES ABOVE
 
-// 4. SEARCH SYSTEM (1 endpoint)
-Route::get('/search', function (Request $request) {
-    $query = $request->get('q', '');
-    $results = [
-        'teams' => [['id' => 27, 'name' => 'Luminosity Gaming', 'region' => 'EU']],
-        'players' => [['id' => 1, 'name' => 'TenZ', 'team' => 'Sentinels', 'role' => 'Duelist']],
-        'events' => [['id' => 8, 'name' => 'World Championship 2025', 'status' => 'live']]
-    ];
-    return response()->json(['success' => true, 'data' => $results]);
-});
+// 4. SEARCH SYSTEM - REMOVED STATIC DATA, USING REAL SEARCH ABOVE
 
-// 5. FORUM SYSTEM - REMOVED STATIC DATA, USING DATABASE ROUTES ABOVE
+// 6. TOURNAMENT SYSTEM - REMOVED STATIC DATA, USING DATABASE ROUTES ABOVE
 
-// 6. TOURNAMENT SYSTEM (4 endpoints)
-Route::middleware(['auth:sanctum', 'role:admin,moderator'])->get('/admin/tournaments', function () {
-    $tournaments = [
-        ['id' => 1, 'name' => 'World Championship 2025', 'status' => 'live', 'teams_count' => 32, 'prize_pool' => '$2,000,000'],
-        ['id' => 2, 'name' => 'Regional Championship', 'status' => 'upcoming', 'teams_count' => 16, 'prize_pool' => '$250,000']
-    ];
-    return response()->json(['success' => true, 'data' => $tournaments]);
-});
+// 7. MODERATION SYSTEM - REMOVED STATIC DATA, USING DATABASE ROUTES ABOVE
 
-Route::middleware(['auth:sanctum', 'role:admin,moderator'])->get('/admin/tournaments/{id}/bracket', function ($tournamentId) {
-    $bracket = [
-        'tournament_id' => $tournamentId,
-        'rounds' => [
-            ['round' => 1, 'matches' => [['team1' => 'Team A', 'team2' => 'Team B', 'winner' => 'Team A']]],
-            ['round' => 2, 'matches' => [['team1' => 'Team A', 'team2' => 'Team C', 'winner' => null]]]
-        ]
-    ];
-    return response()->json(['success' => true, 'data' => $bracket]);
-});
+// 8. BULK OPERATIONS - REMOVED STATIC DATA, USING DATABASE ROUTES ABOVE
 
-Route::middleware(['auth:sanctum', 'role:admin'])->post('/admin/tournaments', function (Request $request) {
-    $validated = $request->validate([
-        'name' => 'required|string|max:255',
-        'type' => 'required|string',
-        'teams_count' => 'required|integer',
-        'prize_pool' => 'nullable|string'
-    ]);
-    $tournament = array_merge($validated, ['id' => rand(100, 999), 'status' => 'upcoming']);
-    return response()->json(['success' => true, 'data' => $tournament], 201);
-});
-
-Route::middleware(['auth:sanctum', 'role:admin'])->put('/admin/tournaments/{id}/matches/{matchId}', function (Request $request, $tournamentId, $matchId) {
-    $validated = $request->validate([
-        'team1_score' => 'sometimes|integer',
-        'team2_score' => 'sometimes|integer',
-        'status' => 'sometimes|string'
-    ]);
-    return response()->json(['success' => true, 'message' => 'Tournament match updated']);
-});
-
-// 7. MODERATION SYSTEM (3 endpoints)
-Route::middleware(['auth:sanctum', 'role:admin,moderator'])->get('/admin/moderation/reports', function () {
-    $reports = [
-        ['id' => 1, 'type' => 'comment', 'reporter' => 'User123', 'status' => 'pending', 'created_at' => now()->subHours(2)],
-        ['id' => 2, 'type' => 'spam', 'reporter' => 'ModeratorABC', 'status' => 'under_review', 'created_at' => now()->subHours(5)]
-    ];
-    return response()->json(['success' => true, 'data' => $reports]);
-});
-
-Route::middleware(['auth:sanctum', 'role:admin,moderator'])->post('/admin/moderation/reports/{id}/handle', function (Request $request, $reportId) {
-    $validated = $request->validate(['action' => 'required|in:approve,reject,warn,ban']);
-    return response()->json(['success' => true, 'message' => "Report handled with action: {$validated['action']}"]);
-});
-
-Route::middleware(['auth:sanctum', 'role:admin,moderator'])->post('/admin/moderation/comments/{id}/moderate', function (Request $request, $commentId) {
-    $validated = $request->validate(['action' => 'required|in:approve,hide,delete']);
-    return response()->json(['success' => true, 'message' => "Comment moderated with action: {$validated['action']}"]);
-});
-
-// 8. BULK OPERATIONS (1 endpoint)
-Route::middleware(['auth:sanctum', 'role:admin'])->post('/admin/bulk-operations', function (Request $request) {
-    $validated = $request->validate([
-        'operation' => 'required|string',
-        'entity_type' => 'required|string',
-        'entity_ids' => 'required|array'
-    ]);
-    return response()->json(['success' => true, 'message' => 'Bulk operation completed', 'processed_count' => count($validated['entity_ids'])]);
-});
-
-// 9. USER MANAGEMENT (7 endpoints)
-Route::middleware(['auth:sanctum', 'role:admin'])->get('/admin/users', function () {
-    $users = [
-        ['id' => 1, 'name' => 'Johnny Rodriguez', 'email' => 'jhonny@ar-mediia.com', 'role' => 'admin', 'is_active' => true],
-        ['id' => 2, 'name' => 'Test User', 'email' => 'test@example.com', 'role' => 'user', 'is_active' => true]
-    ];
-    return response()->json(['success' => true, 'data' => $users]);
-});
-
-Route::middleware(['auth:sanctum', 'role:admin'])->delete('/admin/users/{id}', function ($userId) {
-    return response()->json(['success' => true, 'message' => 'User deleted successfully']);
-});
-
-Route::middleware(['auth:sanctum', 'role:admin'])->put('/admin/users/{id}', function (Request $request, $userId) {
-    $validated = $request->validate([
-        'name' => 'sometimes|string',
-        'email' => 'sometimes|email',
-        'role' => 'sometimes|in:user,moderator,admin',
-        'is_active' => 'sometimes|boolean'
-    ]);
-    return response()->json(['success' => true, 'message' => 'User updated successfully', 'data' => $validated]);
-});
-
-Route::middleware(['auth:sanctum', 'role:admin'])->post('/admin/users', function (Request $request) {
+// 9. USER MANAGEMENT - REMOVED STATIC DATA, USING DATABASE ROUTES ABOVE
     $validated = $request->validate([
         'name' => 'required|string',
         'email' => 'required|email',
