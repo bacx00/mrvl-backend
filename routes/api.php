@@ -12,6 +12,7 @@ use App\Http\Controllers\{
     ImageUploadController
 };
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 // Public Authentication Routes
 Route::post('/auth/login', [AuthController::class, 'login']);
