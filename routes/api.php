@@ -1857,23 +1857,149 @@ Route::middleware(['auth:sanctum', 'role:admin'])->post('/admin/forums/threads/{
     }
 });
 
+// ==========================================
+// FORUM CATEGORY MANAGEMENT
+// ==========================================
+
 // List forum categories for management
 Route::middleware(['auth:sanctum', 'role:admin'])->get('/admin/forums/categories', function () {
-    $categories = [
-        ['id' => 'general', 'name' => 'General Discussion', 'description' => 'General Marvel Rivals discussion'],
-        ['id' => 'strategies', 'name' => 'Strategies & Tactics', 'description' => 'Team compositions and tactics'],
-        ['id' => 'team-recruitment', 'name' => 'Team Recruitment', 'description' => 'Looking for team/players'],
-        ['id' => 'announcements', 'name' => 'Announcements', 'description' => 'Official tournament news'],
-        ['id' => 'bugs', 'name' => 'Bugs & Issues', 'description' => 'Game issues and feedback'],
-        ['id' => 'feedback', 'name' => 'Feedback', 'description' => 'Platform feedback'],
-        ['id' => 'discussion', 'name' => 'Discussion', 'description' => 'General discussion'],
-        ['id' => 'guides', 'name' => 'Guides', 'description' => 'Player guides and tutorials']
-    ];
+    try {
+        $categories = DB::table('forum_categories')->orderBy('name')->get();
+        
+        return response()->json([
+            'data' => $categories,
+            'total' => $categories->count(),
+            'success' => true
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error fetching categories: ' . $e->getMessage()
+        ], 500);
+    }
+});
 
-    return response()->json([
-        'data' => $categories,
-        'success' => true
-    ]);
+// Create forum category
+Route::middleware(['auth:sanctum', 'role:admin'])->post('/admin/forums/categories', function (Request $request) {
+    try {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'slug' => 'required|string|max:255|unique:forum_categories',
+            'description' => 'nullable|string|max:500',
+            'color' => 'nullable|string|max:7', // hex color
+            'icon' => 'nullable|string|max:50',
+            'is_active' => 'nullable|boolean'
+        ]);
+        
+        $validated['is_active'] = $validated['is_active'] ?? true;
+        $validated['created_at'] = now();
+        $validated['updated_at'] = now();
+        
+        $categoryId = DB::table('forum_categories')->insertGetId($validated);
+        $category = DB::table('forum_categories')->where('id', $categoryId)->first();
+        
+        return response()->json([
+            'data' => $category,
+            'success' => true,
+            'message' => 'Forum category created successfully'
+        ], 201);
+        
+    } catch (\Illuminate\Validation\ValidationException $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Validation failed',
+            'errors' => $e->errors()
+        ], 422);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error creating category: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// Update forum category
+Route::middleware(['auth:sanctum', 'role:admin'])->put('/admin/forums/categories/{id}', function (Request $request, $id) {
+    try {
+        $validated = $request->validate([
+            'name' => 'sometimes|required|string|max:255',
+            'slug' => 'sometimes|required|string|max:255|unique:forum_categories,slug,' . $id,
+            'description' => 'nullable|string|max:500',
+            'color' => 'nullable|string|max:7',
+            'icon' => 'nullable|string|max:50',
+            'is_active' => 'nullable|boolean'
+        ]);
+        
+        $validated['updated_at'] = now();
+        
+        $updated = DB::table('forum_categories')->where('id', $id)->update($validated);
+        
+        if (!$updated) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Category not found'
+            ], 404);
+        }
+        
+        $category = DB::table('forum_categories')->where('id', $id)->first();
+        
+        return response()->json([
+            'data' => $category,
+            'success' => true,
+            'message' => 'Forum category updated successfully'
+        ]);
+        
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error updating category: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// Delete forum category
+Route::middleware(['auth:sanctum', 'role:admin'])->delete('/admin/forums/categories/{id}', function (Request $request, $id) {
+    try {
+        // Check if category has threads
+        $threadCount = DB::table('forum_threads')->where('category', $id)->count();
+        
+        if ($threadCount > 0 && !$request->boolean('force')) {
+            return response()->json([
+                'success' => false,
+                'message' => "Cannot delete category. It has {$threadCount} threads. Use force delete or move threads first.",
+                'thread_count' => $threadCount,
+                'can_force_delete' => true
+            ], 422);
+        }
+        
+        // Force delete - remove threads first
+        if ($request->boolean('force') && $threadCount > 0) {
+            DB::table('forum_threads')->where('category', $id)->delete();
+        }
+        
+        $category = DB::table('forum_categories')->where('id', $id)->first();
+        if (!$category) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Category not found'
+            ], 404);
+        }
+        
+        DB::table('forum_categories')->where('id', $id)->delete();
+        
+        return response()->json([
+            'success' => true,
+            'message' => $request->boolean('force') 
+                ? "Category '{$category->name}' and {$threadCount} threads deleted successfully"
+                : "Category '{$category->name}' deleted successfully"
+        ]);
+        
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error deleting category: ' . $e->getMessage()
+        ], 500);
+    }
 });
 
 // ==========================================
