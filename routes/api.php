@@ -395,6 +395,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->post('/admin/teams', function
         
         // Set default values for required fields
         $validated['short_name'] = $validated['short_name'] ?? strtoupper(substr($validated['name'], 0, 3));
+        $validated['country'] = $validated['country'] ?? 'Unknown'; // Default country
         $validated['rating'] = 1000; // Default rating
         $validated['rank'] = 999; // Default rank
         
