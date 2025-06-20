@@ -891,7 +891,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->post('/admin/matches', functi
 });
 
 // Admin Match Management - UPDATE
-Route::middleware(['auth:sanctum', 'role:admin'])->put('/admin/matches/{matchId}', function (Request $request, $matchId) {
+Route::middleware(['auth:sanctum', 'role:admin'])->put('/admin/matches/{id}', function (Request $request, $id) {
     try {
         $match = \App\Models\GameMatch::findOrFail($matchId);
         
