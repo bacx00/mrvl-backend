@@ -3003,23 +3003,7 @@ Route::get('/search', function (Request $request) {
     return response()->json(['success' => true, 'data' => $results]);
 });
 
-// 5. FORUM SYSTEM (Already exists but adding alias)
-Route::get('/forums/threads', function () {
-    $threads = [
-        ['id' => 16, 'title' => 'World Championship Discussion', 'category' => 'tournaments', 'views' => 1247, 'replies' => 89, 'pinned' => true],
-        ['id' => 15, 'title' => 'Best Iron Man Builds', 'category' => 'strategy', 'views' => 567, 'replies' => 23, 'pinned' => false]
-    ];
-    return response()->json(['success' => true, 'data' => $threads]);
-});
-
-Route::get('/forums/categories', function () {
-    $categories = [
-        ['id' => 'general', 'name' => 'General Discussion'],
-        ['id' => 'strategy', 'name' => 'Strategy & Tactics'],
-        ['id' => 'tournaments', 'name' => 'Tournament Discussion']
-    ];
-    return response()->json(['success' => true, 'data' => $categories]);
-});
+// 5. FORUM SYSTEM - REMOVED STATIC DATA, USING DATABASE ROUTES ABOVE
 
 // 6. TOURNAMENT SYSTEM (4 endpoints)
 Route::middleware(['auth:sanctum', 'role:admin,moderator'])->get('/admin/tournaments', function () {
