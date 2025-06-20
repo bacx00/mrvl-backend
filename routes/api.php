@@ -3099,7 +3099,7 @@ Route::get('/meta/heroes', function () {
 // ==========================================
 
 // Enhanced Match Update with Maps & Team Compositions
-Route::middleware(['auth:sanctum', 'role:admin,moderator'])->put('/admin/matches/{id}', function (Request $request, $id) {
+Route::middleware(['auth:sanctum', 'role:admin|moderator'])->put('/admin/matches/{id}', function (Request $request, $id) {
     try {
         // Check if match exists using DB query instead of model
         $match = DB::table('matches')->where('id', $id)->first();
