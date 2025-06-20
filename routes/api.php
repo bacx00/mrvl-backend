@@ -21,6 +21,103 @@ Route::post('/auth/register', [AuthController::class, 'register']);
 // Public Data Routes
 Route::get('/teams', [TeamController::class, 'index']);
 Route::get('/teams/{team}', [TeamController::class, 'show']);
+
+// Hero Image Endpoint - Individual hero images
+Route::get('/heroes/{name}/image', function ($name) {
+    try {
+        // Normalize hero name (handle spaces, case)
+        $heroName = str_replace(['-', '_'], ' ', $name);
+        $heroName = ucwords(strtolower($heroName));
+        
+        // Check if hero exists in database
+        $hero = DB::table('marvel_heroes')
+            ->where('name', 'LIKE', $heroName)
+            ->first();
+            
+        if (!$hero) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Hero not found'
+            ], 404);
+        }
+        
+        // Generate image paths (multiple formats for flexibility)
+        $imagePaths = [
+            "/storage/heroes/" . strtolower(str_replace(' ', '_', $hero->name)) . ".png",
+            "/storage/heroes/" . strtolower(str_replace(' ', '_', $hero->name)) . ".jpg",
+            "/storage/heroes/" . strtolower(str_replace(' ', '-', $hero->name)) . ".png",
+            "/storage/heroes/" . strtolower(str_replace(' ', '-', $hero->name)) . ".jpg",
+            "/storage/heroes/default_" . strtolower($hero->role) . ".png", // Default by role
+            "/storage/heroes/default_hero.png" // Fallback
+        ];
+        
+        // Check which image exists
+        $existingImage = null;
+        foreach ($imagePaths as $path) {
+            if (file_exists(public_path($path))) {
+                $existingImage = $path;
+                break;
+            }
+        }
+        
+        return response()->json([
+            'data' => [
+                'hero_name' => $hero->name,
+                'hero_role' => $hero->role,
+                'image_url' => $existingImage ? url($existingImage) : null,
+                'fallback_url' => url('/storage/heroes/default_hero.png'),
+                'available_formats' => $imagePaths
+            ],
+            'success' => true
+        ]);
+        
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error fetching hero image: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// Hero Image Validation Endpoint
+Route::get('/heroes/images/validate', function () {
+    try {
+        $heroes = DB::table('marvel_heroes')->get();
+        $validation = [];
+        
+        foreach ($heroes as $hero) {
+            $heroKey = strtolower(str_replace(' ', '_', $hero->name));
+            $imagePath = public_path("/storage/heroes/{$heroKey}.png");
+            $imageUrl = "/storage/heroes/{$heroKey}.png";
+            
+            $validation[] = [
+                'hero_name' => $hero->name,
+                'hero_role' => $hero->role,
+                'image_exists' => file_exists($imagePath),
+                'image_url' => file_exists($imagePath) ? url($imageUrl) : null,
+                'expected_path' => $imageUrl
+            ];
+        }
+        
+        $summary = [
+            'total_heroes' => count($heroes),
+            'images_found' => count(array_filter($validation, fn($h) => $h['image_exists'])),
+            'images_missing' => count(array_filter($validation, fn($h) => !$h['image_exists']))
+        ];
+        
+        return response()->json([
+            'data' => $validation,
+            'summary' => $summary,
+            'success' => true
+        ]);
+        
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error validating hero images: ' . $e->getMessage()
+        ], 500);
+    }
+});
 // Public Player Detail
 Route::get('/players/{playerId}', function (Request $request, $playerId) {
     try {
