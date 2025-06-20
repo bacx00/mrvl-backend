@@ -3128,7 +3128,249 @@ Route::get('/meta/heroes', function () {
 
 // REMOVED DUPLICATE ROUTES - USING ORIGINAL WORKING VERSIONS ABOVE
 
-// REMOVED - USING DATABASE ROUTES ABOVE
+// ==========================================
+// ENHANCED MARVEL RIVALS MATCH MANAGEMENT
+// ==========================================
+
+// Enhanced Match Update with Maps & Team Compositions
+Route::middleware(['auth:sanctum', 'role:admin,moderator'])->put('/admin/matches/{id}', function (Request $request, $id) {
+    try {
+        $match = \App\Models\Match::findOrFail($id);
+        
+        $validated = $request->validate([
+            'team1_score' => 'sometimes|integer|min:0',
+            'team2_score' => 'sometimes|integer|min:0',
+            'status' => 'sometimes|string|in:upcoming,live,completed,cancelled',
+            'stream_url' => 'sometimes|nullable|url',
+            'maps' => 'sometimes|array',
+            'maps.*.map_number' => 'required_with:maps|integer|min:1',
+            'maps.*.map_name' => 'required_with:maps|string',
+            'maps.*.team1_composition' => 'required_with:maps|array|size:6',
+            'maps.*.team2_composition' => 'required_with:maps|array|size:6',
+            'maps.*.team1_composition.*.player_name' => 'required|string',
+            'maps.*.team1_composition.*.hero' => 'required|string',
+            'maps.*.team1_composition.*.role' => 'required|string|in:Tank,Duelist,Support',
+            'maps.*.team2_composition.*.player_name' => 'required|string', 
+            'maps.*.team2_composition.*.hero' => 'required|string',
+            'maps.*.team2_composition.*.role' => 'required|string|in:Tank,Duelist,Support',
+            'maps.*.team1_score' => 'sometimes|integer|min:0',
+            'maps.*.team2_score' => 'sometimes|integer|min:0'
+        ]);
+        
+        // Update match basic info
+        $matchData = collect($validated)->except('maps')->toArray();
+        if (!empty($matchData)) {
+            $match->update($matchData);
+        }
+        
+        // Update/store map data if provided
+        if (isset($validated['maps'])) {
+            foreach ($validated['maps'] as $mapData) {
+                DB::table('team_compositions')->updateOrInsert([
+                    'team_id' => $match->team1_id,
+                    'match_id' => $match->id,
+                    'map_name' => $mapData['map_name']
+                ], [
+                    'heroes' => json_encode($mapData['team1_composition']),
+                    'side' => 'team1',
+                    'won' => ($mapData['team1_score'] ?? 0) > ($mapData['team2_score'] ?? 0),
+                    'updated_at' => now()
+                ]);
+                
+                DB::table('team_compositions')->updateOrInsert([
+                    'team_id' => $match->team2_id,
+                    'match_id' => $match->id,
+                    'map_name' => $mapData['map_name']
+                ], [
+                    'heroes' => json_encode($mapData['team2_composition']),
+                    'side' => 'team2', 
+                    'won' => ($mapData['team2_score'] ?? 0) > ($mapData['team1_score'] ?? 0),
+                    'updated_at' => now()
+                ]);
+            }
+        }
+        
+        $updatedMatch = \App\Models\Match::with(['team1', 'team2', 'event'])
+            ->findOrFail($id);
+            
+        return response()->json([
+            'data' => $updatedMatch,
+            'success' => true,
+            'message' => 'Match updated successfully with team compositions'
+        ]);
+        
+    } catch (\Illuminate\Validation\ValidationException $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Validation failed',
+            'errors' => $e->errors()
+        ], 422);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error updating match: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// Real-time Live Stats Update
+Route::middleware(['auth:sanctum', 'role:admin,moderator'])->put('/admin/matches/{id}/live-stats', function (Request $request, $id) {
+    try {
+        $validated = $request->validate([
+            'player_stats' => 'required|array',
+            'player_stats.*.player_id' => 'required|integer',
+            'player_stats.*.hero_played' => 'required|string',
+            'player_stats.*.eliminations' => 'sometimes|integer|min:0',
+            'player_stats.*.deaths' => 'sometimes|integer|min:0',
+            'player_stats.*.assists' => 'sometimes|integer|min:0',
+            'player_stats.*.damage_dealt' => 'sometimes|integer|min:0',
+            'player_stats.*.healing_done' => 'sometimes|integer|min:0',
+            'player_stats.*.damage_blocked' => 'sometimes|integer|min:0',
+            'current_map' => 'sometimes|string',
+            'round_number' => 'sometimes|integer|min:1',
+            'match_events' => 'sometimes|array',
+            'match_events.*.type' => 'required_with:match_events|string|in:kill,death,objective,round_start,round_end,hero_swap',
+            'match_events.*.player_name' => 'sometimes|string',
+            'match_events.*.hero' => 'sometimes|string',
+            'match_events.*.description' => 'required_with:match_events|string'
+        ]);
+        
+        // Update player stats
+        foreach ($validated['player_stats'] as $playerStat) {
+            $statData = collect($playerStat)->except('player_id')->toArray();
+            $statData['match_id'] = $id;
+            $statData['updated_at'] = now();
+            
+            DB::table('player_match_stats')->updateOrInsert([
+                'player_id' => $playerStat['player_id'],
+                'match_id' => $id,
+                'hero_played' => $playerStat['hero_played']
+            ], $statData);
+        }
+        
+        // Add match events if provided
+        if (isset($validated['match_events'])) {
+            foreach ($validated['match_events'] as $event) {
+                $eventData = $event;
+                $eventData['match_id'] = $id;
+                $eventData['event_time'] = now();
+                $eventData['round_number'] = $validated['round_number'] ?? 1;
+                $eventData['created_at'] = now();
+                $eventData['updated_at'] = now();
+                
+                DB::table('match_events')->insert($eventData);
+            }
+        }
+        
+        // Update match with current map if provided
+        if (isset($validated['current_map'])) {
+            DB::table('matches')->where('id', $id)->update([
+                'current_map' => $validated['current_map'],
+                'updated_at' => now()
+            ]);
+        }
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Live stats updated successfully',
+            'timestamp' => now()->toISOString()
+        ]);
+        
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error updating live stats: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// Marvel Heroes Database (Enhanced)
+Route::get('/heroes', function (Request $request) {
+    try {
+        $role = $request->get('role'); // Optional filter by role
+        
+        $query = DB::table('marvel_heroes')->orderBy('role')->orderBy('name');
+        
+        if ($role) {
+            $query->where('role', $role);
+        }
+        
+        $heroes = $query->get();
+        
+        // Group by role for easier frontend consumption
+        $heroesByRole = $heroes->groupBy('role');
+        
+        return response()->json([
+            'data' => [
+                'all' => $heroes,
+                'by_role' => $heroesByRole,
+                'summary' => [
+                    'total_heroes' => $heroes->count(),
+                    'tanks' => $heroesByRole->get('Tank', collect())->count(),
+                    'duelists' => $heroesByRole->get('Duelist', collect())->count(),
+                    'supports' => $heroesByRole->get('Support', collect())->count()
+                ]
+            ],
+            'success' => true
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error fetching heroes: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// Match Live Data (Get current state)
+Route::get('/matches/{id}/live-data', function ($id) {
+    try {
+        $match = \App\Models\Match::with(['team1', 'team2'])->findOrFail($id);
+        
+        // Get current player stats
+        $playerStats = DB::table('player_match_stats as pms')
+            ->leftJoin('players as p', 'pms.player_id', '=', 'p.id')
+            ->select([
+                'pms.*', 
+                'p.name as player_name',
+                'p.username as player_username'
+            ])
+            ->where('pms.match_id', $id)
+            ->get();
+            
+        // Get recent match events (last 20)
+        $recentEvents = DB::table('match_events')
+            ->where('match_id', $id)
+            ->orderBy('event_time', 'desc')
+            ->limit(20)
+            ->get();
+            
+        // Get team compositions for current match
+        $compositions = DB::table('team_compositions as tc')
+            ->leftJoin('teams as t', 'tc.team_id', '=', 't.id')
+            ->select(['tc.*', 't.name as team_name'])
+            ->where('tc.match_id', $id)
+            ->get();
+        
+        return response()->json([
+            'data' => [
+                'match' => $match,
+                'player_stats' => $playerStats->groupBy('hero_played'),
+                'recent_events' => $recentEvents,
+                'team_compositions' => $compositions->groupBy('team_id'),
+                'last_updated' => now()->toISOString()
+            ],
+            'success' => true
+        ]);
+        
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error fetching live data: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// REMOVED - USING REAL DATABASE ROUTES ABOVE
 
 // 4. SEARCH SYSTEM - REMOVED STATIC DATA, USING REAL SEARCH ABOVE
 
