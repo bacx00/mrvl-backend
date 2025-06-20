@@ -3135,68 +3135,48 @@ Route::get('/meta/heroes', function () {
 // Enhanced Match Update with Maps & Team Compositions
 Route::middleware(['auth:sanctum', 'role:admin,moderator'])->put('/admin/matches/{id}', function (Request $request, $id) {
     try {
-        $match = \App\Models\Match::findOrFail($id);
+        // Check if match exists using DB query instead of model
+        $match = DB::table('matches')->where('id', $id)->first();
+        
+        if (!$match) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Match not found'
+            ], 404);
+        }
         
         $validated = $request->validate([
             'team1_score' => 'sometimes|integer|min:0',
             'team2_score' => 'sometimes|integer|min:0',
             'status' => 'sometimes|string|in:upcoming,live,completed,cancelled',
-            'stream_url' => 'sometimes|nullable|url',
-            'maps' => 'sometimes|array',
-            'maps.*.map_number' => 'required_with:maps|integer|min:1',
-            'maps.*.map_name' => 'required_with:maps|string',
-            'maps.*.team1_composition' => 'required_with:maps|array|size:6',
-            'maps.*.team2_composition' => 'required_with:maps|array|size:6',
-            'maps.*.team1_composition.*.player_name' => 'required|string',
-            'maps.*.team1_composition.*.hero' => 'required|string',
-            'maps.*.team1_composition.*.role' => 'required|string|in:Tank,Duelist,Support',
-            'maps.*.team2_composition.*.player_name' => 'required|string', 
-            'maps.*.team2_composition.*.hero' => 'required|string',
-            'maps.*.team2_composition.*.role' => 'required|string|in:Tank,Duelist,Support',
-            'maps.*.team1_score' => 'sometimes|integer|min:0',
-            'maps.*.team2_score' => 'sometimes|integer|min:0'
+            'stream_url' => 'sometimes|nullable|url'
         ]);
         
         // Update match basic info
-        $matchData = collect($validated)->except('maps')->toArray();
-        if (!empty($matchData)) {
-            $match->update($matchData);
+        if (!empty($validated)) {
+            DB::table('matches')->where('id', $id)->update(array_merge($validated, [
+                'updated_at' => now()
+            ]));
         }
         
-        // Update/store map data if provided
-        if (isset($validated['maps'])) {
-            foreach ($validated['maps'] as $mapData) {
-                DB::table('team_compositions')->updateOrInsert([
-                    'team_id' => $match->team1_id,
-                    'match_id' => $match->id,
-                    'map_name' => $mapData['map_name']
-                ], [
-                    'heroes' => json_encode($mapData['team1_composition']),
-                    'side' => 'team1',
-                    'won' => ($mapData['team1_score'] ?? 0) > ($mapData['team2_score'] ?? 0),
-                    'updated_at' => now()
-                ]);
-                
-                DB::table('team_compositions')->updateOrInsert([
-                    'team_id' => $match->team2_id,
-                    'match_id' => $match->id,
-                    'map_name' => $mapData['map_name']
-                ], [
-                    'heroes' => json_encode($mapData['team2_composition']),
-                    'side' => 'team2', 
-                    'won' => ($mapData['team2_score'] ?? 0) > ($mapData['team1_score'] ?? 0),
-                    'updated_at' => now()
-                ]);
-            }
-        }
-        
-        $updatedMatch = \App\Models\Match::with(['team1', 'team2', 'event'])
-            ->findOrFail($id);
+        // Get updated match
+        $updatedMatch = DB::table('matches as m')
+            ->leftJoin('teams as t1', 'm.team1_id', '=', 't1.id')
+            ->leftJoin('teams as t2', 'm.team2_id', '=', 't2.id')
+            ->leftJoin('events as e', 'm.event_id', '=', 'e.id')
+            ->select([
+                'm.*',
+                't1.name as team1_name', 't1.logo as team1_logo',
+                't2.name as team2_name', 't2.logo as team2_logo', 
+                'e.name as event_name'
+            ])
+            ->where('m.id', $id)
+            ->first();
             
         return response()->json([
             'data' => $updatedMatch,
             'success' => true,
-            'message' => 'Match updated successfully with team compositions'
+            'message' => 'Match updated successfully'
         ]);
         
     } catch (\Illuminate\Validation\ValidationException $e) {
