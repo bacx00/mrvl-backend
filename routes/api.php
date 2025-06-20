@@ -2987,16 +2987,6 @@ Route::get('/meta/heroes', function () {
 // 8. BULK OPERATIONS - REMOVED STATIC DATA, USING DATABASE ROUTES ABOVE
 
 // 9. USER MANAGEMENT - REMOVED STATIC DATA, USING DATABASE ROUTES ABOVE
-    $validated = $request->validate([
-        'name' => 'required|string',
-        'email' => 'required|email',
-        'password' => 'required|string|min:8',
-        'role' => 'required|in:user,moderator,admin'
-    ]);
-    $user = array_merge($validated, ['id' => rand(100, 999), 'is_active' => true]);
-    unset($user['password']);
-    return response()->json(['success' => true, 'data' => $user], 201);
-});
 
 Route::middleware(['auth:sanctum'])->put('/user/profile', function (Request $request) {
     $validated = $request->validate([
