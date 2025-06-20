@@ -96,6 +96,28 @@ Route::get('/news', [NewsController::class, 'index']);
 Route::get('/news/categories', [NewsController::class, 'categories']);
 Route::get('/news/{slug}', [NewsController::class, 'show']);
 
+// News by ID route (for frontend compatibility)
+Route::get('/news/id/{id}', function ($id) {
+    try {
+        $news = \App\Models\News::with('author')->findOrFail($id);
+        
+        return response()->json([
+            'data' => $news,
+            'success' => true
+        ]);
+    } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'News article not found'
+        ], 404);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error fetching news: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
 // Public Forum Routes
 Route::get('/forum/threads', [ForumController::class, 'index']);
 Route::get('/forum/threads/{thread}', [ForumController::class, 'show']);
