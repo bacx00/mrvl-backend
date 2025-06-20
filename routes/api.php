@@ -926,9 +926,9 @@ Route::middleware(['auth:sanctum', 'role:admin'])->put('/admin/matches/{id}', fu
 });
 
 // Admin Match Management - DELETE
-Route::middleware(['auth:sanctum', 'role:admin'])->delete('/admin/matches/{matchId}', function (Request $request, $matchId) {
+Route::middleware(['auth:sanctum', 'role:admin'])->delete('/admin/matches/{id}', function (Request $request, $id) {
     try {
-        $match = \App\Models\GameMatch::findOrFail($matchId);
+        $match = \App\Models\GameMatch::findOrFail($id);
         $matchInfo = $match->team1->name . ' vs ' . $match->team2->name;
         $match->delete();
         
