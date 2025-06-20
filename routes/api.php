@@ -94,12 +94,16 @@ Route::get('/search', [SearchController::class, 'search']);
 // Public News Routes
 Route::get('/news', [NewsController::class, 'index']);
 Route::get('/news/categories', [NewsController::class, 'categories']);
-Route::get('/news/{slug}', [NewsController::class, 'show']);
 
-// News by ID route (for frontend compatibility)
-Route::get('/news/id/{id}', function ($id) {
+// News detail route - handles both ID and slug
+Route::get('/news/{identifier}', function ($identifier) {
     try {
-        $news = \App\Models\News::with('author')->findOrFail($id);
+        // Check if identifier is numeric (ID) or string (slug)
+        if (is_numeric($identifier)) {
+            $news = \App\Models\News::with('author')->findOrFail($identifier);
+        } else {
+            $news = \App\Models\News::with('author')->where('slug', $identifier)->firstOrFail();
+        }
         
         return response()->json([
             'data' => $news,
