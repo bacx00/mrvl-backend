@@ -3539,6 +3539,173 @@ Route::middleware(['auth:sanctum'])->put('/user/privacy', function (Request $req
 
 // 10. NEWS MANAGEMENT - REMOVED DUPLICATES, USING WORKING VERSIONS ABOVE
 
+// ENHANCED ADMIN MATCH UPDATE - FULL MAP DATA PERSISTENCE
+Route::middleware(['auth:sanctum', 'role:admin|moderator'])->put('/admin/matches/{id}', function (Request $request, $id) {
+    try {
+        $match = DB::table('matches')->where('id', $id)->first();
+        if (!$match) {
+            return response()->json(['success' => false, 'message' => 'Match not found'], 404);
+        }
+
+        $validated = $request->validate([
+            'team1_score' => 'sometimes|integer|min:0',
+            'team2_score' => 'sometimes|integer|min:0',
+            'status' => 'sometimes|string|in:upcoming,live,paused,completed,cancelled',
+            'stream_url' => 'sometimes|nullable|url',
+            'maps' => 'sometimes|array',
+            'maps.*.map_number' => 'sometimes|integer|min:1',
+            'maps.*.map_name' => 'sometimes|string',
+            'maps.*.mode' => 'sometimes|string',
+            'maps.*.team1_composition' => 'sometimes|array',
+            'maps.*.team2_composition' => 'sometimes|array',
+            'maps.*.team1_score' => 'sometimes|integer|min:0',
+            'maps.*.team2_score' => 'sometimes|integer|min:0'
+        ]);
+
+        // Update basic match fields
+        $updateData = [];
+        foreach (['team1_score', 'team2_score', 'status', 'stream_url'] as $field) {
+            if (isset($validated[$field])) $updateData[$field] = $validated[$field];
+        }
+        
+        if (!empty($updateData)) {
+            $updateData['updated_at'] = now();
+            DB::table('matches')->where('id', $id)->update($updateData);
+        }
+
+        // Store complete map data as JSON with compositions
+        if (isset($validated['maps'])) {
+            DB::table('matches')->where('id', $id)->update([
+                'maps_data' => json_encode($validated['maps']),
+                'maps' => json_encode($validated['maps']), // Store in both fields for compatibility
+                'updated_at' => now()
+            ]);
+        }
+
+        // Get updated match with team info
+        $updatedMatch = DB::table('matches as m')
+            ->leftJoin('teams as t1', 'm.team1_id', '=', 't1.id')
+            ->leftJoin('teams as t2', 'm.team2_id', '=', 't2.id')
+            ->select([
+                'm.*',
+                't1.name as team1_name', 't1.logo as team1_logo', 't1.country as team1_country',
+                't2.name as team2_name', 't2.logo as team2_logo', 't2.country as team2_country'
+            ])
+            ->where('m.id', $id)
+            ->first();
+
+        // Parse stored map data
+        $mapsData = null;
+        if ($updatedMatch->maps_data) {
+            $mapsData = json_decode($updatedMatch->maps_data, true);
+        } else if ($updatedMatch->maps) {
+            $mapsData = json_decode($updatedMatch->maps, true);
+        }
+
+        $response = (array) $updatedMatch;
+        $response['maps'] = $mapsData; // Return parsed map data
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Match updated successfully',
+            'data' => $response
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error updating match: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// ENHANCED MATCH COMPLETE DATA ENDPOINT - FOR FRONTEND LOADING
+Route::middleware(['auth:sanctum', 'role:admin|moderator'])->get('/admin/matches/{id}/complete', function (Request $request, $id) {
+    try {
+        // Get match with team details
+        $match = DB::table('matches as m')
+            ->leftJoin('teams as t1', 'm.team1_id', '=', 't1.id')
+            ->leftJoin('teams as t2', 'm.team2_id', '=', 't2.id')
+            ->leftJoin('events as e', 'm.event_id', '=', 'e.id')
+            ->select([
+                'm.*',
+                't1.name as team1_name', 't1.logo as team1_logo', 't1.country as team1_country',
+                't2.name as team2_name', 't2.logo as team2_logo', 't2.country as team2_country',
+                'e.name as event_name', 'e.type as event_type'
+            ])
+            ->where('m.id', $id)
+            ->first();
+
+        if (!$match) {
+            return response()->json(['success' => false, 'message' => 'Match not found'], 404);
+        }
+
+        // Get team1 players with enhanced country data
+        $team1Players = DB::table('players')
+            ->where('team_id', $match->team1_id)
+            ->select([
+                'id', 'name', 'username', 'role', 'main_hero', 'avatar',
+                'country', 'nationality', 'team_country'
+            ])
+            ->get()
+            ->map(function($player) use ($match) {
+                return [
+                    'id' => $player->id,
+                    'name' => $player->name,
+                    'username' => $player->username,
+                    'role' => $player->role,
+                    'main_hero' => $player->main_hero,
+                    'avatar' => $player->avatar,
+                    'country' => $player->country ?: ($player->nationality ?: ($player->team_country ?: ($match->team1_country ?: 'US')))
+                ];
+            });
+
+        // Get team2 players with enhanced country data
+        $team2Players = DB::table('players')
+            ->where('team_id', $match->team2_id)
+            ->select([
+                'id', 'name', 'username', 'role', 'main_hero', 'avatar',
+                'country', 'nationality', 'team_country'
+            ])
+            ->get()
+            ->map(function($player) use ($match) {
+                return [
+                    'id' => $player->id,
+                    'name' => $player->name,
+                    'username' => $player->username,
+                    'role' => $player->role,
+                    'main_hero' => $player->main_hero,
+                    'avatar' => $player->avatar,
+                    'country' => $player->country ?: ($player->nationality ?: ($player->team_country ?: ($match->team2_country ?: 'US')))
+                ];
+            });
+
+        // Parse map data from JSON
+        $mapsData = null;
+        if ($match->maps_data) {
+            $mapsData = json_decode($match->maps_data, true);
+        } else if ($match->maps) {
+            $mapsData = json_decode($match->maps, true);
+        }
+
+        $response = (array) $match;
+        $response['maps'] = $mapsData;
+        $response['team1_players'] = $team1Players;
+        $response['team2_players'] = $team2Players;
+
+        return response()->json([
+            'data' => $response,
+            'success' => true
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error fetching complete match: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
 // 11. TEAM MANAGEMENT ADMIN (1 endpoint)
 Route::middleware(['auth:sanctum', 'role:admin'])->delete('/admin/teams/{id}', function ($teamId) {
     return response()->json(['success' => true, 'message' => 'Team deleted successfully']);
