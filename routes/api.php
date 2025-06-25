@@ -2118,6 +2118,400 @@ Route::middleware(['auth:sanctum', 'role:admin,moderator'])->post('/matches/{mat
         $validated = $request->validate(['status' => 'required|string|in:upcoming,live,paused,completed,cancelled', 'moderator_note' => 'nullable|string|max:255']);
 
         $updated = DB::table('matches')->where('id', $matchId)->update(['status' => $validated['status'], 'updated_at' => now()]);
+
+// ==========================================
+// ANALYTICS & PERFORMANCE METRICS SYSTEM
+// ==========================================
+
+// Get player performance analytics
+Route::get('/analytics/players/{playerId}/stats', function (Request $request, $playerId) {
+    try {
+        $player = DB::table('players')->where('id', $playerId)->first();
+        if (!$player) {
+            return response()->json(['success' => false, 'message' => 'Player not found'], 404);
+        }
+
+        // Get all match statistics for this player
+        $matchStats = DB::table('match_player as mp')
+            ->leftJoin('matches as m', 'mp.match_id', '=', 'm.id')
+            ->leftJoin('events as e', 'm.event_id', '=', 'e.id')
+            ->select([
+                'mp.*',
+                'm.status as match_status',
+                'm.scheduled_at',
+                'e.name as event_name',
+                'e.type as event_type'
+            ])
+            ->where('mp.player_id', $playerId)
+            ->get();
+
+        if ($matchStats->isEmpty()) {
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'player_info' => $player,
+                    'overall_stats' => [
+                        'matches_played' => 0,
+                        'total_kills' => 0,
+                        'total_deaths' => 0,
+                        'total_assists' => 0,
+                        'kd_ratio' => 0,
+                        'kda_ratio' => 0,
+                        'avg_damage' => 0,
+                        'avg_healing' => 0,
+                        'total_damage' => 0,
+                        'total_healing' => 0
+                    ],
+                    'match_history' => []
+                ]
+            ]);
+        }
+
+        // Calculate overall statistics
+        $totalKills = $matchStats->sum('kills');
+        $totalDeaths = $matchStats->sum('deaths');
+        $totalAssists = $matchStats->sum('assists');
+        $totalDamage = $matchStats->sum('damage');
+        $totalHealing = $matchStats->sum('healing');
+        $matchesPlayed = $matchStats->count();
+
+        $kdRatio = $totalDeaths > 0 ? round($totalKills / $totalDeaths, 2) : $totalKills;
+        $kdaRatio = $totalDeaths > 0 ? round(($totalKills + $totalAssists) / $totalDeaths, 2) : ($totalKills + $totalAssists);
+        $avgDamage = $matchesPlayed > 0 ? round($totalDamage / $matchesPlayed, 0) : 0;
+        $avgHealing = $matchesPlayed > 0 ? round($totalHealing / $matchesPlayed, 0) : 0;
+
+        $analytics = [
+            'player_info' => $player,
+            'overall_stats' => [
+                'matches_played' => $matchesPlayed,
+                'total_kills' => $totalKills,
+                'total_deaths' => $totalDeaths,
+                'total_assists' => $totalAssists,
+                'kd_ratio' => $kdRatio,
+                'kda_ratio' => $kdaRatio,
+                'avg_damage' => $avgDamage,
+                'avg_healing' => $avgHealing,
+                'total_damage' => $totalDamage,
+                'total_healing' => $totalHealing,
+                'damage_per_minute' => $avgDamage > 0 ? round($avgDamage / 20, 0) : 0, // Assuming 20min average match
+                'healing_per_minute' => $avgHealing > 0 ? round($avgHealing / 20, 0) : 0
+            ],
+            'match_history' => $matchStats->toArray()
+        ];
+
+        return response()->json([
+            'success' => true,
+            'data' => $analytics
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error fetching analytics: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// Get hero usage statistics across all matches
+Route::get('/analytics/heroes/usage', function (Request $request) {
+    try {
+        // Get hero usage from match_player table
+        $heroUsage = DB::table('match_player as mp')
+            ->leftJoin('matches as m', 'mp.match_id', '=', 'm.id')
+            ->select([
+                DB::raw('COALESCE(mp.hero_played, "Unknown") as hero_name'),
+                DB::raw('COUNT(*) as times_played'),
+                DB::raw('SUM(mp.kills) as total_kills'),
+                DB::raw('SUM(mp.deaths) as total_deaths'),
+                DB::raw('SUM(mp.assists) as total_assists'),
+                DB::raw('SUM(mp.damage) as total_damage'),
+                DB::raw('SUM(mp.healing) as total_healing'),
+                DB::raw('AVG(mp.kills) as avg_kills'),
+                DB::raw('AVG(mp.deaths) as avg_deaths'),
+                DB::raw('AVG(mp.damage) as avg_damage'),
+                DB::raw('AVG(mp.healing) as avg_healing')
+            ])
+            ->where('m.status', '!=', 'upcoming')
+            ->groupBy('hero_name')
+            ->orderBy('times_played', 'desc')
+            ->get();
+
+        // Calculate win rates and additional metrics
+        $heroStats = $heroUsage->map(function ($hero) {
+            $kdRatio = $hero->total_deaths > 0 ? round($hero->total_kills / $hero->total_deaths, 2) : $hero->total_kills;
+            
+            return [
+                'hero_name' => $hero->hero_name,
+                'times_played' => $hero->times_played,
+                'popularity_percentage' => 0, // Will calculate after getting total
+                'total_kills' => $hero->total_kills,
+                'total_deaths' => $hero->total_deaths,
+                'total_assists' => $hero->total_assists,
+                'kd_ratio' => $kdRatio,
+                'avg_damage' => round($hero->avg_damage, 0),
+                'avg_healing' => round($hero->avg_healing, 0),
+                'total_damage' => $hero->total_damage,
+                'total_healing' => $hero->total_healing
+            ];
+        });
+
+        // Calculate popularity percentages
+        $totalPicks = $heroStats->sum('times_played');
+        $heroStatsWithPercentage = $heroStats->map(function ($hero) use ($totalPicks) {
+            $hero['popularity_percentage'] = $totalPicks > 0 ? round(($hero['times_played'] / $totalPicks) * 100, 1) : 0;
+            return $hero;
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'hero_statistics' => $heroStatsWithPercentage->toArray(),
+                'summary' => [
+                    'total_hero_picks' => $totalPicks,
+                    'unique_heroes_played' => $heroStats->count(),
+                    'most_popular_hero' => $heroStats->first()['hero_name'] ?? 'None',
+                    'least_popular_hero' => $heroStats->last()['hero_name'] ?? 'None'
+                ]
+            ]
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error fetching hero usage: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// ==========================================
+// TOURNAMENT LEADERBOARDS SYSTEM
+// ==========================================
+
+// Get player leaderboards (ranked by performance metrics)
+Route::get('/leaderboards/players', function (Request $request) {
+    try {
+        $sortBy = $request->query('sort_by', 'kd_ratio'); // kd_ratio, damage, healing, matches
+        $limit = $request->query('limit', 50);
+
+        // Get aggregated player statistics
+        $playerStats = DB::table('match_player as mp')
+            ->leftJoin('players as p', 'mp.player_id', '=', 'p.id')
+            ->leftJoin('teams as t', 'p.team_id', '=', 't.id')
+            ->leftJoin('matches as m', 'mp.match_id', '=', 'm.id')
+            ->select([
+                'p.id',
+                'p.name',
+                'p.username',
+                'p.role',
+                'p.main_hero',
+                'p.avatar',
+                't.name as team_name',
+                't.short_name as team_short',
+                't.logo as team_logo',
+                DB::raw('COUNT(mp.match_id) as matches_played'),
+                DB::raw('SUM(mp.kills) as total_kills'),
+                DB::raw('SUM(mp.deaths) as total_deaths'),
+                DB::raw('SUM(mp.assists) as total_assists'),
+                DB::raw('SUM(mp.damage) as total_damage'),
+                DB::raw('SUM(mp.healing) as total_healing'),
+                DB::raw('AVG(mp.kills) as avg_kills'),
+                DB::raw('AVG(mp.deaths) as avg_deaths'),
+                DB::raw('AVG(mp.damage) as avg_damage'),
+                DB::raw('AVG(mp.healing) as avg_healing'),
+                DB::raw('CASE WHEN SUM(mp.deaths) > 0 THEN ROUND(SUM(mp.kills) / SUM(mp.deaths), 2) ELSE SUM(mp.kills) END as kd_ratio'),
+                DB::raw('CASE WHEN SUM(mp.deaths) > 0 THEN ROUND((SUM(mp.kills) + SUM(mp.assists)) / SUM(mp.deaths), 2) ELSE (SUM(mp.kills) + SUM(mp.assists)) END as kda_ratio')
+            ])
+            ->where('m.status', '!=', 'upcoming')
+            ->groupBy(['p.id', 'p.name', 'p.username', 'p.role', 'p.main_hero', 'p.avatar', 't.name', 't.short_name', 't.logo'])
+            ->having('matches_played', '>', 0);
+
+        // Apply sorting
+        switch ($sortBy) {
+            case 'damage':
+                $playerStats->orderBy('total_damage', 'desc');
+                break;
+            case 'healing':
+                $playerStats->orderBy('total_healing', 'desc');
+                break;
+            case 'matches':
+                $playerStats->orderBy('matches_played', 'desc');
+                break;
+            case 'kills':
+                $playerStats->orderBy('total_kills', 'desc');
+                break;
+            case 'kda_ratio':
+                $playerStats->orderBy('kda_ratio', 'desc');
+                break;
+            default: // kd_ratio
+                $playerStats->orderBy('kd_ratio', 'desc');
+                break;
+        }
+
+        $leaderboard = $playerStats->limit($limit)->get()->map(function ($player, $index) {
+            return [
+                'rank' => $index + 1,
+                'player' => [
+                    'id' => $player->id,
+                    'name' => $player->name,
+                    'username' => $player->username,
+                    'role' => $player->role,
+                    'main_hero' => $player->main_hero,
+                    'avatar' => $player->avatar
+                ],
+                'team' => [
+                    'name' => $player->team_name,
+                    'short_name' => $player->team_short,
+                    'logo' => $player->team_logo
+                ],
+                'statistics' => [
+                    'matches_played' => $player->matches_played,
+                    'total_kills' => $player->total_kills,
+                    'total_deaths' => $player->total_deaths,
+                    'total_assists' => $player->total_assists,
+                    'kd_ratio' => $player->kd_ratio,
+                    'kda_ratio' => $player->kda_ratio,
+                    'total_damage' => $player->total_damage,
+                    'total_healing' => $player->total_healing,
+                    'avg_damage' => round($player->avg_damage, 0),
+                    'avg_healing' => round($player->avg_healing, 0)
+                ]
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'leaderboard' => $leaderboard->toArray(),
+                'sort_by' => $sortBy,
+                'total_players' => $leaderboard->count()
+            ]
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error fetching player leaderboards: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// Get team leaderboards (ranked by team performance)
+Route::get('/leaderboards/teams', function (Request $request) {
+    try {
+        $sortBy = $request->query('sort_by', 'win_rate'); // win_rate, matches, total_damage
+        $limit = $request->query('limit', 20);
+
+        // Get team statistics from matches
+        $teamStats = DB::table('matches as m')
+            ->leftJoin('teams as t1', 'm.team1_id', '=', 't1.id')
+            ->leftJoin('teams as t2', 'm.team2_id', '=', 't2.id')
+            ->select([
+                't1.id',
+                't1.name',
+                't1.short_name',
+                't1.logo',
+                't1.region',
+                't1.country',
+                DB::raw('COUNT(m.id) as total_matches'),
+                DB::raw('SUM(CASE WHEN m.team1_score > m.team2_score THEN 1 ELSE 0 END) as wins'),
+                DB::raw('SUM(CASE WHEN m.team1_score < m.team2_score THEN 1 ELSE 0 END) as losses'),
+                DB::raw('CASE WHEN COUNT(m.id) > 0 THEN ROUND((SUM(CASE WHEN m.team1_score > m.team2_score THEN 1 ELSE 0 END) / COUNT(m.id)) * 100, 1) ELSE 0 END as win_rate')
+            ])
+            ->where('m.status', 'completed')
+            ->groupBy(['t1.id', 't1.name', 't1.short_name', 't1.logo', 't1.region', 't1.country'])
+            ->union(
+                DB::table('matches as m')
+                    ->leftJoin('teams as t2', 'm.team2_id', '=', 't2.id')
+                    ->select([
+                        't2.id',
+                        't2.name',
+                        't2.short_name',
+                        't2.logo',
+                        't2.region',
+                        't2.country',
+                        DB::raw('COUNT(m.id) as total_matches'),
+                        DB::raw('SUM(CASE WHEN m.team2_score > m.team1_score THEN 1 ELSE 0 END) as wins'),
+                        DB::raw('SUM(CASE WHEN m.team2_score < m.team1_score THEN 1 ELSE 0 END) as losses'),
+                        DB::raw('CASE WHEN COUNT(m.id) > 0 THEN ROUND((SUM(CASE WHEN m.team2_score > m.team1_score THEN 1 ELSE 0 END) / COUNT(m.id)) * 100, 1) ELSE 0 END as win_rate')
+                    ])
+                    ->where('m.status', 'completed')
+                    ->groupBy(['t2.id', 't2.name', 't2.short_name', 't2.logo', 't2.region', 't2.country'])
+            );
+
+        // Apply sorting
+        switch ($sortBy) {
+            case 'matches':
+                $teamStats->orderBy('total_matches', 'desc');
+                break;
+            case 'wins':
+                $teamStats->orderBy('wins', 'desc');
+                break;
+            default: // win_rate
+                $teamStats->orderBy('win_rate', 'desc');
+                break;
+        }
+
+        $teams = $teamStats->limit($limit)->get();
+
+        // Get additional team statistics (player performance)
+        $leaderboard = $teams->map(function ($team, $index) {
+            // Get team's player statistics
+            $playerStats = DB::table('match_player as mp')
+                ->leftJoin('players as p', 'mp.player_id', '=', 'p.id')
+                ->leftJoin('matches as m', 'mp.match_id', '=', 'm.id')
+                ->select([
+                    DB::raw('SUM(mp.kills) as total_kills'),
+                    DB::raw('SUM(mp.deaths) as total_deaths'),
+                    DB::raw('SUM(mp.damage) as total_damage'),
+                    DB::raw('SUM(mp.healing) as total_healing'),
+                    DB::raw('COUNT(DISTINCT p.id) as active_players')
+                ])
+                ->where('p.team_id', $team->id)
+                ->where('m.status', '!=', 'upcoming')
+                ->first();
+
+            return [
+                'rank' => $index + 1,
+                'team' => [
+                    'id' => $team->id,
+                    'name' => $team->name,
+                    'short_name' => $team->short_name,
+                    'logo' => $team->logo,
+                    'region' => $team->region,
+                    'country' => $team->country
+                ],
+                'match_statistics' => [
+                    'total_matches' => $team->total_matches,
+                    'wins' => $team->wins,
+                    'losses' => $team->losses,
+                    'win_rate' => $team->win_rate
+                ],
+                'player_statistics' => [
+                    'total_kills' => $playerStats->total_kills ?? 0,
+                    'total_deaths' => $playerStats->total_deaths ?? 0,
+                    'total_damage' => $playerStats->total_damage ?? 0,
+                    'total_healing' => $playerStats->total_healing ?? 0,
+                    'active_players' => $playerStats->active_players ?? 0
+                ]
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'leaderboard' => $leaderboard->toArray(),
+                'sort_by' => $sortBy,
+                'total_teams' => $leaderboard->count()
+            ]
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error fetching team leaderboards: ' . $e->getMessage()
+        ], 500);
+    }
+});
         if (!$updated) return response()->json(['success' => false, 'message' => 'Match not found'], 404);
 
         if (isset($validated['moderator_note'])) {
