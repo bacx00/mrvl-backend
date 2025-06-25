@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import requests
 import json
-import os
 import sys
 from datetime import datetime, timedelta
 
@@ -46,6 +45,255 @@ def get_admin_token():
     except Exception as e:
         print(f"Error during login: {str(e)}")
         return None
+
+def test_game_data_heroes():
+    """Test GET /api/game-data/heroes endpoint"""
+    try:
+        response = requests.get(f"{BASE_URL}/game-data/heroes")
+        
+        if response.status_code == 200:
+            data = response.json()
+            if data.get("success") and "data" in data:
+                heroes = data["data"]
+                if len(heroes) == 5:
+                    log_test("Game Data - Basic Heroes", True, f"Successfully retrieved {len(heroes)} basic heroes")
+                else:
+                    log_test("Game Data - Basic Heroes", False, f"Expected 5 heroes, got {len(heroes)}")
+            else:
+                log_test("Game Data - Basic Heroes", False, f"API returned error: {data.get('message', 'Unknown error')}")
+        else:
+            log_test("Game Data - Basic Heroes", False, f"Request failed with status code {response.status_code}: {response.text}")
+    except Exception as e:
+        log_test("Game Data - Basic Heroes", False, f"Exception: {str(e)}")
+
+def test_game_data_all_heroes():
+    """Test GET /api/game-data/all-heroes endpoint"""
+    try:
+        response = requests.get(f"{BASE_URL}/game-data/all-heroes")
+        
+        if response.status_code == 200:
+            data = response.json()
+            if data.get("success") and "data" in data:
+                heroes = data["data"]
+                if len(heroes) == 29:
+                    log_test("Game Data - All Heroes", True, f"Successfully retrieved {len(heroes)} heroes")
+                else:
+                    log_test("Game Data - All Heroes", False, f"Expected 29 heroes, got {len(heroes)}")
+            else:
+                log_test("Game Data - All Heroes", False, f"API returned error: {data.get('message', 'Unknown error')}")
+        else:
+            log_test("Game Data - All Heroes", False, f"Request failed with status code {response.status_code}: {response.text}")
+    except Exception as e:
+        log_test("Game Data - All Heroes", False, f"Exception: {str(e)}")
+
+def test_game_data_maps():
+    """Test GET /api/game-data/maps endpoint"""
+    try:
+        response = requests.get(f"{BASE_URL}/game-data/maps")
+        
+        if response.status_code == 200:
+            data = response.json()
+            if data.get("success") and "data" in data:
+                maps = data["data"]
+                if len(maps) == 10:
+                    log_test("Game Data - Maps", True, f"Successfully retrieved {len(maps)} maps")
+                else:
+                    log_test("Game Data - Maps", False, f"Expected 10 maps, got {len(maps)}")
+            else:
+                log_test("Game Data - Maps", False, f"API returned error: {data.get('message', 'Unknown error')}")
+        else:
+            log_test("Game Data - Maps", False, f"Request failed with status code {response.status_code}: {response.text}")
+    except Exception as e:
+        log_test("Game Data - Maps", False, f"Exception: {str(e)}")
+
+def test_game_data_modes():
+    """Test GET /api/game-data/modes endpoint"""
+    try:
+        response = requests.get(f"{BASE_URL}/game-data/modes")
+        
+        if response.status_code == 200:
+            data = response.json()
+            if data.get("success") and "data" in data:
+                modes = data["data"]
+                if len(modes) == 4:
+                    log_test("Game Data - Modes", True, f"Successfully retrieved {len(modes)} game modes")
+                else:
+                    log_test("Game Data - Modes", False, f"Expected 4 game modes, got {len(modes)}")
+            else:
+                log_test("Game Data - Modes", False, f"API returned error: {data.get('message', 'Unknown error')}")
+        else:
+            log_test("Game Data - Modes", False, f"Request failed with status code {response.status_code}: {response.text}")
+    except Exception as e:
+        log_test("Game Data - Modes", False, f"Exception: {str(e)}")
+
+def test_match_scoreboard():
+    """Test GET /api/matches/99/scoreboard endpoint"""
+    try:
+        response = requests.get(f"{BASE_URL}/matches/99/scoreboard")
+        
+        if response.status_code == 200:
+            data = response.json()
+            if data.get("success") and "data" in data:
+                match_data = data["data"]
+                
+                # Check if it's the correct match (Sentinels vs T1)
+                team1_id = match_data.get("team1", {}).get("id")
+                team2_id = match_data.get("team2", {}).get("id")
+                
+                if team1_id == 87 and team2_id == 86:
+                    # Check if scoreboard data exists
+                    scoreboard = match_data.get("scoreboard", {})
+                    if scoreboard and "team1" in scoreboard and "team2" in scoreboard:
+                        log_test("Match Scoreboard", True, "Successfully retrieved live scoreboard for Sentinels vs T1")
+                    else:
+                        log_test("Match Scoreboard", False, "Scoreboard data is missing or incomplete")
+                else:
+                    log_test("Match Scoreboard", False, f"Expected teams 87 vs 86, got {team1_id} vs {team2_id}")
+            else:
+                log_test("Match Scoreboard", False, f"API returned error: {data.get('message', 'Unknown error')}")
+        else:
+            log_test("Match Scoreboard", False, f"Request failed with status code {response.status_code}: {response.text}")
+    except Exception as e:
+        log_test("Match Scoreboard", False, f"Exception: {str(e)}")
+
+def test_player_stats(player_id, player_name):
+    """Test GET /api/analytics/players/{player_id}/stats endpoint"""
+    try:
+        response = requests.get(f"{BASE_URL}/analytics/players/{player_id}/stats")
+        
+        if response.status_code == 200:
+            data = response.json()
+            if data.get("success") and "data" in data:
+                player_data = data["data"]
+                
+                # Check if it's the correct player
+                if player_data.get("player", {}).get("id") == player_id:
+                    # Check if stats data exists
+                    stats = player_data.get("stats", {})
+                    if stats and "matches_played" in stats and "avg_damage" in stats:
+                        log_test(f"Player Stats - {player_name}", True, f"Successfully retrieved performance analytics for {player_name}")
+                    else:
+                        log_test(f"Player Stats - {player_name}", False, "Stats data is missing or incomplete")
+                else:
+                    log_test(f"Player Stats - {player_name}", False, f"Expected player ID {player_id}, got {player_data.get('player', {}).get('id')}")
+            else:
+                log_test(f"Player Stats - {player_name}", False, f"API returned error: {data.get('message', 'Unknown error')}")
+        else:
+            log_test(f"Player Stats - {player_name}", False, f"Request failed with status code {response.status_code}: {response.text}")
+    except Exception as e:
+        log_test(f"Player Stats - {player_name}", False, f"Exception: {str(e)}")
+
+def test_hero_usage_stats():
+    """Test GET /api/analytics/heroes/usage endpoint"""
+    try:
+        response = requests.get(f"{BASE_URL}/analytics/heroes/usage")
+        
+        if response.status_code == 200:
+            data = response.json()
+            if data.get("success") and "data" in data:
+                hero_stats = data["data"]
+                
+                # Check if hero usage data exists for at least a few heroes
+                if len(hero_stats) >= 5:
+                    # Check if the data structure is correct
+                    sample_hero = next(iter(hero_stats.values()))
+                    if "pick_rate" in sample_hero and "win_rate" in sample_hero:
+                        log_test("Hero Usage Stats", True, f"Successfully retrieved usage statistics for {len(hero_stats)} heroes")
+                    else:
+                        log_test("Hero Usage Stats", False, "Hero usage data is missing required fields")
+                else:
+                    log_test("Hero Usage Stats", False, f"Expected at least 5 heroes, got {len(hero_stats)}")
+            else:
+                log_test("Hero Usage Stats", False, f"API returned error: {data.get('message', 'Unknown error')}")
+        else:
+            log_test("Hero Usage Stats", False, f"Request failed with status code {response.status_code}: {response.text}")
+    except Exception as e:
+        log_test("Hero Usage Stats", False, f"Exception: {str(e)}")
+
+def test_player_leaderboards():
+    """Test GET /api/leaderboards/players endpoint"""
+    try:
+        response = requests.get(f"{BASE_URL}/leaderboards/players")
+        
+        if response.status_code == 200:
+            data = response.json()
+            if data.get("success") and "data" in data:
+                players = data["data"]
+                
+                # Check if player leaderboard data exists
+                if len(players) > 0:
+                    # Check if the data structure is correct
+                    if "avg_score" in players[0] and "avg_damage" in players[0]:
+                        log_test("Player Leaderboards", True, f"Successfully retrieved leaderboard data for {len(players)} players")
+                    else:
+                        log_test("Player Leaderboards", False, "Player leaderboard data is missing required fields")
+                else:
+                    log_test("Player Leaderboards", False, "No players found in leaderboard")
+            else:
+                log_test("Player Leaderboards", False, f"API returned error: {data.get('message', 'Unknown error')}")
+        else:
+            log_test("Player Leaderboards", False, f"Request failed with status code {response.status_code}: {response.text}")
+    except Exception as e:
+        log_test("Player Leaderboards", False, f"Exception: {str(e)}")
+
+def test_player_leaderboards_sorted():
+    """Test GET /api/leaderboards/players?sort_by=damage endpoint"""
+    try:
+        response = requests.get(f"{BASE_URL}/leaderboards/players?sort_by=damage")
+        
+        if response.status_code == 200:
+            data = response.json()
+            if data.get("success") and "data" in data:
+                players = data["data"]
+                
+                # Check if player leaderboard data exists
+                if len(players) > 0:
+                    # Check if the data is sorted by damage
+                    if data.get("sort_by") == "damage":
+                        # Check if the first player has higher damage than the second
+                        if len(players) >= 2:
+                            if players[0]["avg_damage"] >= players[1]["avg_damage"]:
+                                log_test("Player Leaderboards - Sorted by Damage", True, "Successfully retrieved player leaderboard sorted by damage")
+                            else:
+                                log_test("Player Leaderboards - Sorted by Damage", False, "Players are not correctly sorted by damage")
+                        else:
+                            log_test("Player Leaderboards - Sorted by Damage", True, "Successfully retrieved player leaderboard with only one player")
+                    else:
+                        log_test("Player Leaderboards - Sorted by Damage", False, f"Expected sort_by=damage, got sort_by={data.get('sort_by')}")
+                else:
+                    log_test("Player Leaderboards - Sorted by Damage", False, "No players found in leaderboard")
+            else:
+                log_test("Player Leaderboards - Sorted by Damage", False, f"API returned error: {data.get('message', 'Unknown error')}")
+        else:
+            log_test("Player Leaderboards - Sorted by Damage", False, f"Request failed with status code {response.status_code}: {response.text}")
+    except Exception as e:
+        log_test("Player Leaderboards - Sorted by Damage", False, f"Exception: {str(e)}")
+
+def test_team_leaderboards():
+    """Test GET /api/leaderboards/teams endpoint"""
+    try:
+        response = requests.get(f"{BASE_URL}/leaderboards/teams")
+        
+        if response.status_code == 200:
+            data = response.json()
+            if data.get("success") and "data" in data:
+                teams = data["data"]
+                
+                # Check if team leaderboard data exists
+                if len(teams) > 0:
+                    # Check if the data structure is correct
+                    if "rank" in teams[0] and "wins" in teams[0] and "losses" in teams[0]:
+                        log_test("Team Leaderboards", True, f"Successfully retrieved leaderboard data for {len(teams)} teams")
+                    else:
+                        log_test("Team Leaderboards", False, "Team leaderboard data is missing required fields")
+                else:
+                    log_test("Team Leaderboards", False, "No teams found in leaderboard")
+            else:
+                log_test("Team Leaderboards", False, f"API returned error: {data.get('message', 'Unknown error')}")
+        else:
+            log_test("Team Leaderboards", False, f"Request failed with status code {response.status_code}: {response.text}")
+    except Exception as e:
+        log_test("Team Leaderboards", False, f"Exception: {str(e)}")
 
 def test_event_creation():
     """Test event creation with new types"""
@@ -202,12 +450,24 @@ def run_all_tests():
     """Run all tests"""
     print("Starting Marvel Rivals Esports Platform API Tests...")
     
-    # Run tests
-    test_event_creation()
-    test_match_creation_without_event()
-    test_team_flag_upload()
-    test_player_role_validation()
-    test_forum_endpoints()
+    # Game Data Endpoints
+    test_game_data_heroes()
+    test_game_data_all_heroes()
+    test_game_data_maps()
+    test_game_data_modes()
+    
+    # Live Scoring System
+    test_match_scoreboard()
+    
+    # Analytics Endpoints
+    test_player_stats(183, "SicK")
+    test_player_stats(189, "Faker")
+    test_hero_usage_stats()
+    
+    # Leaderboards
+    test_player_leaderboards()
+    test_player_leaderboards_sorted()
+    test_team_leaderboards()
     
     # Print summary
     print("\n=== Test Summary ===")
