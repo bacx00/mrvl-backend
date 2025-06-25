@@ -938,6 +938,196 @@ async def get_forum_categories():
         "total": len(forum_categories)
     }
 
+# Game Data Endpoints
+@app.get("/api/game-data/heroes", response_model=Dict[str, Any])
+async def get_basic_heroes():
+    """Get basic 5 heroes"""
+    return {
+        "success": True,
+        "data": basic_heroes,
+        "total": len(basic_heroes)
+    }
+
+@app.get("/api/game-data/all-heroes", response_model=Dict[str, Any])
+async def get_all_heroes():
+    """Get complete 29 hero roster"""
+    return {
+        "success": True,
+        "data": all_heroes,
+        "total": len(all_heroes)
+    }
+
+@app.get("/api/game-data/maps", response_model=Dict[str, Any])
+async def get_maps():
+    """Get 10 official maps"""
+    return {
+        "success": True,
+        "data": maps,
+        "total": len(maps)
+    }
+
+@app.get("/api/game-data/modes", response_model=Dict[str, Any])
+async def get_game_modes():
+    """Get 4 game modes"""
+    return {
+        "success": True,
+        "data": game_modes,
+        "total": len(game_modes)
+    }
+
+# Live Scoring System
+@app.get("/api/matches/{match_id}/scoreboard", response_model=Dict[str, Any])
+async def get_match_scoreboard(match_id: int):
+    """Get live scoreboard for a match"""
+    if match_id not in matches_db:
+        raise HTTPException(status_code=404, detail="Match not found")
+    
+    match = matches_db[match_id]
+    
+    # Add team data
+    response_data = {
+        "match_id": match_id,
+        "team1": teams_db.get(match["team1_id"]),
+        "team2": teams_db.get(match["team2_id"]),
+        "team1_score": match["team1_score"],
+        "team2_score": match["team2_score"],
+        "format": match["format"],
+        "status": match["status"],
+        "current_map": match.get("current_map"),
+        "current_mode": match.get("current_mode"),
+        "maps_played": match.get("maps_played", []),
+        "scoreboard": match.get("scoreboard", {})
+    }
+    
+    return {
+        "success": True,
+        "data": response_data
+    }
+
+# Analytics Endpoints
+@app.get("/api/analytics/players/{player_id}/stats", response_model=Dict[str, Any])
+async def get_player_stats(player_id: int):
+    """Get player performance analytics"""
+    if player_id not in players_db:
+        raise HTTPException(status_code=404, detail="Player not found")
+    
+    player = players_db[player_id]
+    
+    return {
+        "success": True,
+        "data": {
+            "player": {
+                "id": player["id"],
+                "username": player["username"],
+                "name": player["name"],
+                "team_id": player["team_id"],
+                "team": teams_db.get(player["team_id"]) if player.get("team_id") else None,
+                "role": player["role"],
+                "main_hero": player.get("main_hero"),
+                "alt_heroes": player.get("alt_heroes", []),
+                "country": player.get("country"),
+                "avatar": player.get("avatar")
+            },
+            "stats": player.get("stats", {})
+        }
+    }
+
+@app.get("/api/analytics/heroes/usage", response_model=Dict[str, Any])
+async def get_hero_usage_stats():
+    """Get hero usage statistics"""
+    return {
+        "success": True,
+        "data": hero_usage_stats
+    }
+
+# Leaderboards
+@app.get("/api/leaderboards/players", response_model=Dict[str, Any])
+async def get_player_leaderboards(sort_by: str = Query("score", description="Sort by: score, damage, healing, kills, deaths, assists")):
+    """Get player leaderboards"""
+    valid_sort_fields = ["score", "damage", "healing", "kills", "deaths", "assists"]
+    if sort_by not in valid_sort_fields:
+        sort_by = "score"
+    
+    # Extract player stats
+    leaderboard_data = []
+    for player_id, player in players_db.items():
+        if "stats" in player:
+            stats = player["stats"]
+            leaderboard_data.append({
+                "id": player["id"],
+                "username": player["username"],
+                "name": player["name"],
+                "team_id": player["team_id"],
+                "team_name": teams_db.get(player["team_id"], {}).get("name") if player.get("team_id") else None,
+                "role": player["role"],
+                "main_hero": player.get("main_hero"),
+                "country": player.get("country"),
+                "avatar": player.get("avatar"),
+                "matches_played": stats.get("matches_played", 0),
+                "wins": stats.get("wins", 0),
+                "losses": stats.get("losses", 0),
+                "win_rate": stats.get("win_rate", 0),
+                "avg_score": stats.get("avg_score", 0),
+                "avg_damage": stats.get("avg_damage", 0),
+                "avg_healing": stats.get("avg_healing", 0),
+                "avg_kills": stats.get("avg_kills", 0),
+                "avg_deaths": stats.get("avg_deaths", 0),
+                "avg_assists": stats.get("avg_assists", 0)
+            })
+    
+    # Sort by the requested field
+    if sort_by == "score":
+        leaderboard_data.sort(key=lambda x: x["avg_score"], reverse=True)
+    elif sort_by == "damage":
+        leaderboard_data.sort(key=lambda x: x["avg_damage"], reverse=True)
+    elif sort_by == "healing":
+        leaderboard_data.sort(key=lambda x: x["avg_healing"], reverse=True)
+    elif sort_by == "kills":
+        leaderboard_data.sort(key=lambda x: x["avg_kills"], reverse=True)
+    elif sort_by == "deaths":
+        leaderboard_data.sort(key=lambda x: x["avg_deaths"], reverse=True)
+    elif sort_by == "assists":
+        leaderboard_data.sort(key=lambda x: x["avg_assists"], reverse=True)
+    
+    return {
+        "success": True,
+        "data": leaderboard_data,
+        "total": len(leaderboard_data),
+        "sort_by": sort_by
+    }
+
+@app.get("/api/leaderboards/teams", response_model=Dict[str, Any])
+async def get_team_leaderboards():
+    """Get team leaderboards"""
+    # Extract team stats
+    leaderboard_data = []
+    for team_id, team in teams_db.items():
+        if "rank" in team:  # Only include teams with stats
+            leaderboard_data.append({
+                "id": team["id"],
+                "name": team["name"],
+                "short_name": team["short_name"],
+                "region": team["region"],
+                "country": team["country"],
+                "logo": team["logo"],
+                "flag": team["flag"],
+                "rank": team.get("rank", 0),
+                "wins": team.get("wins", 0),
+                "losses": team.get("losses", 0),
+                "total_score": team.get("total_score", 0),
+                "total_damage": team.get("total_damage", 0),
+                "total_healing": team.get("total_healing", 0)
+            })
+    
+    # Sort by rank
+    leaderboard_data.sort(key=lambda x: x["rank"])
+    
+    return {
+        "success": True,
+        "data": leaderboard_data,
+        "total": len(leaderboard_data)
+    }
+
 # Root endpoint
 @app.get("/")
 async def root():
