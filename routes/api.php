@@ -5458,7 +5458,7 @@ Route::get('/game-data/team-composition', function () {
 // ==========================================
 
 // Moderator - Get All Pending News for Review
-Route::middleware(['auth:sanctum', 'role:moderator'])->get('/moderator/news/queue', function (Request $request) {
+Route::middleware(['auth:sanctum', 'role:admin|moderator'])->get('/moderator/news/queue', function (Request $request) {
     try {
         $pendingNews = [
             [
