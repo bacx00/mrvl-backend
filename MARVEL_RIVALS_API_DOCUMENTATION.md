@@ -103,3 +103,21 @@ https://staging.mrvl.net/api
   "format": "BO1|BO3|BO5"
 }
 ```
+
+### Player Statistics Structure - MARVEL RIVALS ENHANCED
+```javascript
+{
+  "player_id": 169,
+  "match_id": 97,
+  "kills": 15,                 // E column (Eliminations)
+  "deaths": 3,                 // D column  
+  "assists": 8,                // A column
+  "damage": 12500,             // DMG column
+  "healing": 2300,             // HEAL column (nullable for non-Strategists)
+  "damage_blocked": 8900,      // BLK column (critical for Vanguards)
+  "ultimate_usage": 3,         // Ultimate abilities used
+  "objective_time": 120,       // Time on objective (seconds)
+  "hero_played": "Luna Snow",
+  "kd_ratio": 5.0              // Calculated: kills/deaths
+}
+```
