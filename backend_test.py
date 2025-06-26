@@ -530,6 +530,102 @@ def test_complete_match():
     except Exception as e:
         log_test("Complete Match", False, f"Exception: {str(e)}")
 
+def test_match_creation_with_maps_data():
+    """Test match creation with maps_data and verify scoreboard retrieval"""
+    token = get_admin_token()
+    if not token:
+        log_test("Match Creation With Maps Data", False, "Failed to get admin token")
+        return None
+    
+    # Test data for match creation with maps_data as specified in the review request
+    match_data = {
+        "team1_id": 83,
+        "team2_id": 84,
+        "event_id": 22,
+        "status": "live",
+        "format": "BO1",
+        "maps_data": [
+            {
+                "map_number": 1,
+                "map_name": "Yggsgard: Yggdrasil",
+                "mode": "Conquest",
+                "team1_composition": [
+                    {
+                        "player_id": 195,
+                        "player_name": "p6",
+                        "hero": "Thor",
+                        "role": "Tank"
+                    }
+                ],
+                "team2_composition": []
+            }
+        ]
+    }
+    
+    try:
+        headers = {"Authorization": f"Bearer 415|ySK4yrjyULCTlprffD0KeT5zxd6J2mMMHOHkX6pv1d5fc012"}
+        response = requests.post("https://staging.mrvl.net/api/admin/matches", json=match_data, headers=headers)
+        
+        if response.status_code in [200, 201]:
+            data = response.json()
+            if data.get("success"):
+                match_id = data.get("data", {}).get("id")
+                log_test("Match Creation With Maps Data", True, f"Successfully created match with ID {match_id} including maps_data")
+                
+                # Return the match ID for the scoreboard test
+                return match_id
+            else:
+                log_test("Match Creation With Maps Data", False, f"API returned error: {data.get('message', 'Unknown error')}")
+                return None
+        else:
+            log_test("Match Creation With Maps Data", False, f"Request failed with status code {response.status_code}: {response.text}")
+            return None
+    except Exception as e:
+        log_test("Match Creation With Maps Data", False, f"Exception: {str(e)}")
+        return None
+
+def test_scoreboard_with_maps_data(match_id):
+    """Test scoreboard retrieval for a match with maps_data"""
+    if not match_id:
+        log_test("Scoreboard With Maps Data", False, "No match ID provided")
+        return
+    
+    try:
+        response = requests.get(f"https://staging.mrvl.net/api/matches/{match_id}/scoreboard")
+        
+        if response.status_code == 200:
+            data = response.json()
+            if data.get("success") and "data" in data:
+                match_data = data["data"]
+                
+                # Check if current_map is set correctly
+                current_map = match_data.get("current_map")
+                if current_map == "Yggsgard: Yggdrasil":
+                    log_test("Scoreboard With Maps Data - Current Map", True, f"Current map is correctly set to '{current_map}'")
+                else:
+                    log_test("Scoreboard With Maps Data - Current Map", False, f"Expected current_map to be 'Yggsgard: Yggdrasil', got '{current_map}'")
+                
+                # Check if maps array contains the map data
+                maps = match_data.get("maps_played", [])
+                if maps:
+                    map_data = maps[0]
+                    if map_data.get("map") == "Yggsgard: Yggdrasil" and map_data.get("mode") == "Conquest":
+                        log_test("Scoreboard With Maps Data - Maps Array", True, "Maps array contains the correct map data")
+                    else:
+                        log_test("Scoreboard With Maps Data - Maps Array", False, f"Maps array does not contain the expected data: {map_data}")
+                else:
+                    log_test("Scoreboard With Maps Data - Maps Array", False, "Maps array is empty")
+                
+                # Print the full response for debugging
+                print(f"\nScoreboard Response for Match {match_id}:")
+                print(json.dumps(match_data, indent=2))
+            else:
+                log_test("Scoreboard With Maps Data", False, f"API returned error: {data.get('message', 'Unknown error')}")
+        else:
+            log_test("Scoreboard With Maps Data", False, f"Request failed with status code {response.status_code}: {response.text}")
+    except Exception as e:
+        log_test("Scoreboard With Maps Data", False, f"Exception: {str(e)}")
+
 def run_all_tests():
     """Run all tests"""
     print("Starting Marvel Rivals Esports Platform API Tests...")
@@ -557,6 +653,12 @@ def run_all_tests():
     test_update_match_viewers()
     test_aggregate_match_stats()
     test_complete_match()
+    
+    # Test match creation with maps_data and scoreboard retrieval
+    print("\n=== Testing Match Creation with Maps Data vs Scoreboard Data Mismatch Fix ===")
+    match_id = test_match_creation_with_maps_data()
+    if match_id:
+        test_scoreboard_with_maps_data(match_id)
     
     # Print summary
     print("\n=== Test Summary ===")
