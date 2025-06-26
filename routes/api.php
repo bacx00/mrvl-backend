@@ -4872,8 +4872,7 @@ Route::middleware(['auth:sanctum', 'role:admin,moderator'])->post('/matches/{mat
     try {
         $validated = $request->validate([
             'viewers' => 'required|integer|min:0',
-            'peak_viewers' => 'nullable|integer|min:0',
-            'platform' => 'nullable|string', // twitch, youtube, etc
+            'platform' => 'nullable|string',
             'stream_url' => 'nullable|url'
         ]);
 
@@ -4882,15 +4881,7 @@ Route::middleware(['auth:sanctum', 'role:admin,moderator'])->post('/matches/{mat
             return response()->json(['success' => false, 'message' => 'Match not found'], 404);
         }
 
-        // Get current peak viewers
-        $currentPeakViewers = $match->peak_viewers ?? 0;
-        $newPeakViewers = max($currentPeakViewers, $validated['viewers']);
-        
-        if (isset($validated['peak_viewers'])) {
-            $newPeakViewers = max($newPeakViewers, $validated['peak_viewers']);
-        }
-
-        // Update match viewer data
+        // Update only basic viewer data that we know exists
         $updateData = [
             'viewers' => $validated['viewers'],
             'updated_at' => now()
@@ -4900,40 +4891,14 @@ Route::middleware(['auth:sanctum', 'role:admin,moderator'])->post('/matches/{mat
             $updateData['stream_url'] = $validated['stream_url'];
         }
 
-        try {
-            $updateData['peak_viewers'] = $newPeakViewers;
-            DB::table('matches')->where('id', $matchId)->update($updateData);
-        } catch (\Exception $e) {
-            // peak_viewers column might not exist, update without it
-            unset($updateData['peak_viewers']);
-            DB::table('matches')->where('id', $matchId)->update($updateData);
-        }
-
-        // Log viewer milestone if significant
-        $milestones = [1000, 5000, 10000, 25000, 50000, 100000, 250000, 500000, 1000000];
-        $milestoneReached = in_array($validated['viewers'], $milestones);
-
-        if ($milestoneReached) {
-            try {
-                DB::table('match_events')->insert([
-                    'match_id' => $matchId,
-                    'type' => 'viewer_milestone',
-                    'description' => "Reached {$validated['viewers']} concurrent viewers",
-                    'created_at' => now(),
-                    'updated_at' => now()
-                ]);
-            } catch (\Exception $e) {
-                // match_events table might not exist, continue without logging
-            }
-        }
+        DB::table('matches')->where('id', $matchId)->update($updateData);
 
         return response()->json([
             'success' => true,
             'data' => [
                 'current_viewers' => $validated['viewers'],
-                'peak_viewers' => $newPeakViewers,
                 'platform' => $validated['platform'] ?? null,
-                'milestone_reached' => $milestoneReached
+                'stream_url' => $validated['stream_url'] ?? null
             ],
             'message' => 'Viewer count updated successfully'
         ]);
