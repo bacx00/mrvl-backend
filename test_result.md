@@ -24,17 +24,17 @@ backend:
         agent: "testing"
         comment: "All game data endpoints working: /api/game-data/heroes (5 basic heroes), /api/game-data/all-heroes (29 complete roster), /api/game-data/maps (10 maps), /api/game-data/modes (4 modes)"
 
-  - task: "Team Flag Upload"
+  - task: "Live Scoring System"
     implemented: true
     working: true
-    file: "/app/backend/server.py"
+    file: "/app/routes/api.php"
     stuck_count: 0
     priority: "high"
     needs_retesting: false
     status_history:
       - working: true
         agent: "testing"
-        comment: "Successfully tested team flag upload. The API returns the flag_url as expected."
+        comment: "Live scoreboard endpoint working for Match ID 99 (Sentinels vs T1) with complete team rosters, player assignments, and match statistics"
 
   - task: "Player Role Validation"
     implemented: true
