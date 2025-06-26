@@ -446,6 +446,90 @@ def test_forum_endpoints():
     except Exception as e:
         log_test("Forum Endpoints", False, f"Exception: {str(e)}")
 
+def test_update_match_viewers():
+    """Test POST /api/matches/99/viewers endpoint"""
+    token = get_admin_token()
+    if not token:
+        log_test("Update Match Viewers", False, "Failed to get admin token")
+        return
+
+    # Test data for updating match viewers
+    viewers_data = {
+        "viewers": 1500,
+        "platform": "Twitch",
+        "stream_url": "https://twitch.tv/marvelrivals"
+    }
+
+    try:
+        headers = {"Authorization": f"Bearer {token}"}
+        response = requests.post(f"{BASE_URL}/matches/99/viewers", json=viewers_data, headers=headers)
+        
+        if response.status_code == 200:
+            data = response.json()
+            if data.get("success"):
+                log_test("Update Match Viewers", True, f"Successfully updated match viewers to {viewers_data['viewers']}")
+            else:
+                log_test("Update Match Viewers", False, f"API returned error: {data.get('message', 'Unknown error')}")
+        else:
+            log_test("Update Match Viewers", False, f"Request failed with status code {response.status_code}: {response.text}")
+    except Exception as e:
+        log_test("Update Match Viewers", False, f"Exception: {str(e)}")
+
+def test_aggregate_match_stats():
+    """Test POST /api/matches/99/aggregate-stats endpoint"""
+    token = get_admin_token()
+    if not token:
+        log_test("Aggregate Match Stats", False, "Failed to get admin token")
+        return
+
+    # Empty payload as specified
+    stats_data = {}
+
+    try:
+        headers = {"Authorization": f"Bearer {token}"}
+        response = requests.post(f"{BASE_URL}/matches/99/aggregate-stats", json=stats_data, headers=headers)
+        
+        if response.status_code == 200:
+            data = response.json()
+            if data.get("success"):
+                log_test("Aggregate Match Stats", True, "Successfully aggregated match statistics")
+            else:
+                log_test("Aggregate Match Stats", False, f"API returned error: {data.get('message', 'Unknown error')}")
+        else:
+            log_test("Aggregate Match Stats", False, f"Request failed with status code {response.status_code}: {response.text}")
+    except Exception as e:
+        log_test("Aggregate Match Stats", False, f"Exception: {str(e)}")
+
+def test_complete_match():
+    """Test POST /api/matches/99/complete endpoint"""
+    token = get_admin_token()
+    if not token:
+        log_test("Complete Match", False, "Failed to get admin token")
+        return
+
+    # Test data for completing a match
+    complete_data = {
+        "winner_team_id": 87,
+        "final_score": {"team1": 2, "team2": 1},
+        "match_duration": "45:30",
+        "mvp_player_id": 183
+    }
+
+    try:
+        headers = {"Authorization": f"Bearer {token}"}
+        response = requests.post(f"{BASE_URL}/matches/99/complete", json=complete_data, headers=headers)
+        
+        if response.status_code == 200:
+            data = response.json()
+            if data.get("success"):
+                log_test("Complete Match", True, f"Successfully completed match with winner team ID {complete_data['winner_team_id']}")
+            else:
+                log_test("Complete Match", False, f"API returned error: {data.get('message', 'Unknown error')}")
+        else:
+            log_test("Complete Match", False, f"Request failed with status code {response.status_code}: {response.text}")
+    except Exception as e:
+        log_test("Complete Match", False, f"Exception: {str(e)}")
+
 def run_all_tests():
     """Run all tests"""
     print("Starting Marvel Rivals Esports Platform API Tests...")
@@ -468,6 +552,11 @@ def run_all_tests():
     test_player_leaderboards()
     test_player_leaderboards_sorted()
     test_team_leaderboards()
+    
+    # Problematic POST endpoints
+    test_update_match_viewers()
+    test_aggregate_match_stats()
+    test_complete_match()
     
     # Print summary
     print("\n=== Test Summary ===")
