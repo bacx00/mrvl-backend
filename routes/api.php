@@ -1418,20 +1418,31 @@ Route::middleware(['auth:sanctum', 'role:admin'])->get('/admin/users/{userId}', 
 // MISSING ADMIN ROUTES - ADDING NOW
 // ==========================================
 
-// Admin Match Management - CREATE
+// Admin Match Management - CREATE (FIXED: Now accepts and saves maps_data)
 Route::middleware(['auth:sanctum', 'role:admin'])->post('/admin/matches', function (Request $request) {
     try {
         $validated = $request->validate([
             'team1_id' => 'required|exists:teams,id',
             'team2_id' => 'required|exists:teams,id|different:team1_id',
             'event_id' => 'nullable|exists:events,id',
-            'scheduled_at' => 'required|date|after:now',
+            'scheduled_at' => 'sometimes|date|after:now',
             'format' => 'required|string|in:BO1,BO3,BO5',
             'status' => 'nullable|string|in:upcoming,live,completed',
-            'stream_url' => 'nullable|url'
+            'stream_url' => 'nullable|url',
+            'maps_data' => 'nullable|array',
+            'maps_data.*.map_name' => 'sometimes|string',
+            'maps_data.*.mode' => 'sometimes|string',
+            'maps_data.*.team1_composition' => 'sometimes|array',
+            'maps_data.*.team2_composition' => 'sometimes|array'
         ]);
         
-        $validated['status'] = $validated['status'] ?? 'upcoming';
+        $validated['status'] = $validated['status'] ?? 'live';
+        $validated['scheduled_at'] = $validated['scheduled_at'] ?? now();
+        
+        // Set current_map from first map if maps_data exists
+        if (!empty($validated['maps_data']) && isset($validated['maps_data'][0]['map_name'])) {
+            $validated['current_map'] = $validated['maps_data'][0]['map_name'];
+        }
         
         $match = \App\Models\GameMatch::create($validated);
         
