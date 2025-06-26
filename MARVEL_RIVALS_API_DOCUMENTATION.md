@@ -82,12 +82,12 @@ The Marvel Rivals Esports Platform provides a complete HLTV.org equivalent backe
 ### Bearer Token Authentication
 Protected endpoints require Bearer token authentication.
 
-**Working Token**: `415|ySK4yrjyULCTlprffD0KeT5zxd6J2mMMHOHkX6pv1d5fc012`
+**Working Token**: `416|4RrNPNWOwaW5Byo45Nsa9ReHbgfubWdpNpNgRUfe6416d238`
 
 ```javascript
 // Example Authorization Header
 headers: {
-  'Authorization': 'Bearer 415|ySK4yrjyULCTlprffD0KeT5zxd6J2mMMHOHkX6pv1d5fc012',
+  'Authorization': 'Bearer 416|4RrNPNWOwaW5Byo45Nsa9ReHbgfubWdpNpNgRUfe6416d238',
   'Content-Type': 'application/json'
 }
 ```
