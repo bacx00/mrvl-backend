@@ -6,11 +6,14 @@ backend:
     file: "/app/routes/api.php"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: true
         agent: "testing"
         comment: "Successfully implemented and tested complete Marvel Rivals scoreboards and analytics system. All 10 endpoints working perfectly with proper data structure."
+      - working: "needs_testing"
+        agent: "main"
+        comment: "FIXED: Match Creation vs Scoreboard Data Mismatch - Updated POST /admin/matches to accept and save maps_data, set current_map from first map, removed duplicate scoreboard route. Ready for testing."
 
   - task: "Game Data Endpoints"
     implemented: true
