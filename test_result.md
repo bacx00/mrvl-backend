@@ -48,17 +48,17 @@ backend:
         agent: "testing"
         comment: "Player statistics updating endpoints working with bulk update support for live match scoring"
 
-  - task: "New Forum Endpoints"
+  - task: "Analytics System"
     implemented: true
     working: true
-    file: "/app/backend/server.py"
+    file: "/app/routes/api.php"
     stuck_count: 0
     priority: "high"
     needs_retesting: false
     status_history:
       - working: true
         agent: "testing"
-        comment: "Successfully tested both new forum endpoints: /api/forums/threads/{id} and /api/forums/categories. Both return the expected data structures."
+        comment: "Player performance analytics and hero usage statistics working with K/D ratios, damage per minute, and hero popularity metrics"
 
   - task: "Game Data Endpoints"
     implemented: true
