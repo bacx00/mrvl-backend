@@ -685,7 +685,7 @@ Route::middleware(['auth:sanctum', 'role:user'])->post('/user/forums/threads/{th
 });
 
 // User Match Comments
-Route::middleware(['auth:sanctum', 'role:user'])->post('/user/matches/{matchId}/comments', function (Request $request, $matchId) {
+Route::middleware(['auth:sanctum', 'role:admin|moderator|user'])->post('/user/matches/{matchId}/comments', function (Request $request, $matchId) {
     try {
         $validated = $request->validate([
             'content' => 'required|string|min:5|max:500'
