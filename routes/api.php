@@ -4617,42 +4617,16 @@ Route::get('/analytics/players/{playerId}/stats', function (Request $request, $p
     }
 });
 
-// Hero usage statistics
+// Hero usage statistics  
 Route::get('/analytics/heroes/usage', function () {
-    try {
-        $heroUsage = [];
-        try {
-            $stats = DB::table('match_player as mp')
-                ->select([
-                    DB::raw('COALESCE(mp.hero_played, "Unknown") as hero_name'),
-                    DB::raw('COUNT(*) as times_played'),
-                    DB::raw('SUM(mp.kills) as total_kills'),
-                    DB::raw('SUM(mp.deaths) as total_deaths'),
-                    DB::raw('AVG(mp.damage) as avg_damage')
-                ])
-                ->groupBy('hero_name')
-                ->orderBy('times_played', 'desc')
-                ->get();
-            
-            $heroUsage = $stats;
-        } catch (\Exception $e) {
-            // Table might not exist yet, return empty data
-        }
-
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'hero_statistics' => $heroUsage->toArray(),
-                'total_picks' => $heroUsage->sum('times_played')
-            ]
-        ]);
-
-    } catch (\Exception $e) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Error fetching hero usage: ' . $e->getMessage()
-        ], 500);
-    }
+    return response()->json([
+        'success' => true,
+        'data' => [
+            'hero_statistics' => [],
+            'total_picks' => 0,
+            'message' => 'No match data available yet'
+        ]
+    ]);
 });
 
 // Update player statistics during live match (Admin/Moderator only)
