@@ -18,6 +18,15 @@ use Illuminate\Support\Facades\DB;
 Route::post('/auth/login', [AuthController::class, 'login']);
 Route::post('/auth/register', [AuthController::class, 'register']);
 
+// Add missing login route to prevent 500 errors
+Route::get('/login', function () {
+    return response()->json([
+        'success' => false,
+        'message' => 'Authentication required. Please provide a valid Bearer token.',
+        'error' => 'Unauthenticated'
+    ], 401);
+})->name('login');
+
 // Public Data Routes
 Route::get('/teams', [TeamController::class, 'index']);
 Route::get('/teams/{team}', [TeamController::class, 'show']);
