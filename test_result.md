@@ -60,53 +60,7 @@ backend:
         agent: "testing"
         comment: "Player performance analytics and hero usage statistics working with K/D ratios, damage per minute, and hero popularity metrics"
 
-  - task: "Game Data Endpoints"
-    implemented: true
-    working: true
-    file: "/app/backend/server.py"
-    stuck_count: 0
-    priority: "high"
-    needs_retesting: false
-    status_history:
-      - working: true
-        agent: "testing"
-        comment: "Successfully tested all game data endpoints: /api/game-data/heroes (5 basic heroes), /api/game-data/all-heroes (29 hero roster), /api/game-data/maps (10 maps), and /api/game-data/modes (4 game modes). All endpoints return the expected data."
 
-  - task: "Live Scoring System"
-    implemented: true
-    working: true
-    file: "/app/backend/server.py"
-    stuck_count: 0
-    priority: "high"
-    needs_retesting: false
-    status_history:
-      - working: true
-        agent: "testing"
-        comment: "Successfully tested the live scoring system endpoint: /api/matches/99/scoreboard. The API returns the complete scoreboard for the Sentinels vs T1 match with all player stats and team information."
-
-  - task: "Analytics Endpoints"
-    implemented: true
-    working: true
-    file: "/app/backend/server.py"
-    stuck_count: 0
-    priority: "high"
-    needs_retesting: false
-    status_history:
-      - working: true
-        agent: "testing"
-        comment: "Successfully tested all analytics endpoints: /api/analytics/players/183/stats (SicK's stats), /api/analytics/players/189/stats (Faker's stats), and /api/analytics/heroes/usage. All endpoints return comprehensive performance data."
-
-  - task: "Leaderboards"
-    implemented: true
-    working: true
-    file: "/app/backend/server.py"
-    stuck_count: 0
-    priority: "high"
-    needs_retesting: false
-    status_history:
-      - working: true
-        agent: "testing"
-        comment: "Successfully tested all leaderboard endpoints: /api/leaderboards/players, /api/leaderboards/players?sort_by=damage, and /api/leaderboards/teams. The endpoints return properly sorted data with all required fields."
 
   - task: "Leaderboards System"
     implemented: true
