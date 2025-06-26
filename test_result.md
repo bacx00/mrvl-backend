@@ -12,17 +12,17 @@ backend:
         agent: "testing"
         comment: "Successfully implemented and tested complete Marvel Rivals scoreboards and analytics system. All 10 endpoints working perfectly with proper data structure."
 
-  - task: "Match Creation Without Event"
+  - task: "Game Data Endpoints"
     implemented: true
     working: true
-    file: "/app/backend/server.py"
+    file: "/app/routes/api.php"
     stuck_count: 0
     priority: "high"
     needs_retesting: false
     status_history:
       - working: true
         agent: "testing"
-        comment: "Successfully tested match creation without event_id. The API now properly handles null event_id values."
+        comment: "All game data endpoints working: /api/game-data/heroes (5 basic heroes), /api/game-data/all-heroes (29 complete roster), /api/game-data/maps (10 maps), /api/game-data/modes (4 modes)"
 
   - task: "Team Flag Upload"
     implemented: true
