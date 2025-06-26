@@ -1,0 +1,14 @@
+// Update player statistics during live match (Admin/Moderator only)
+Route::middleware(['auth:sanctum', 'role:admin,moderator'])->post('/matches/{matchId}/players/{playerId}/stats', function (Request $request, $matchId, $playerId) {
+    try {
+        $validated = $request->validate([
+            'kills' => 'required|integer|min:0',
+            'deaths' => 'required|integer|min:0', 
+            'assists' => 'required|integer|min:0',
+            'damage' => 'required|integer|min:0',
+            'healing' => 'nullable|integer|min:0',  // Made nullable for Marvel Rivals
+            'hero_played' => 'nullable|string',
+            'damage_blocked' => 'nullable|integer|min:0',  // Critical for Vanguards
+            'ultimate_usage' => 'nullable|integer|min:0',  // Ultimate ability tracking
+            'objective_time' => 'nullable|integer|min:0'   // Time on objective (seconds)
+        ]);
