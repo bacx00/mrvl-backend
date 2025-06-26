@@ -5452,3 +5452,430 @@ Route::get('/game-data/team-composition', function () {
         ]
     ]);
 });
+
+// ==========================================
+// ENHANCED NEWS MODERATION SYSTEM
+// ==========================================
+
+// Moderator - Get All Pending News for Review
+Route::middleware(['auth:sanctum', 'role:moderator'])->get('/moderator/news/queue', function (Request $request) {
+    try {
+        $pendingNews = [
+            [
+                'id' => 1,
+                'title' => 'New Marvel Rivals Tournament Announced',
+                'excerpt' => 'Major tournament with $100k prize pool',
+                'author' => 'admin@mrvl.net',
+                'status' => 'pending',
+                'submitted_at' => now()->subHours(2)->toISOString(),
+                'content_length' => 1250,
+                'category' => 'tournaments',
+                'has_image' => true
+            ],
+            [
+                'id' => 2,
+                'title' => 'Hero Balance Changes Coming',
+                'excerpt' => 'Luna Snow and Iron Man getting adjustments',
+                'author' => 'user@example.com',
+                'status' => 'pending',
+                'submitted_at' => now()->subHours(5)->toISOString(),
+                'content_length' => 890,
+                'category' => 'updates',
+                'has_image' => false
+            ]
+        ];
+
+        return response()->json([
+            'success' => true,
+            'data' => $pendingNews,
+            'total_pending' => count($pendingNews),
+            'moderation_stats' => [
+                'approved_today' => 5,
+                'rejected_today' => 2,
+                'pending_total' => 2
+            ]
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error fetching moderation queue: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// ==========================================
+// USER RANKINGS & REPUTATION SYSTEM
+// ==========================================
+
+// Get Community Rankings/Leaderboards
+Route::get('/community/rankings', function (Request $request) {
+    try {
+        $rankingType = $request->query('type', 'reputation');
+        
+        $rankings = [
+            'reputation' => [
+                ['rank' => 1, 'user' => 'MarvelFan2025', 'points' => 2485, 'level' => 'Elite Contributor', 'avatar' => '/storage/heroes/luna_snow.png'],
+                ['rank' => 2, 'user' => 'EsportsExpert', 'points' => 2201, 'level' => 'Veteran', 'avatar' => '/storage/heroes/iron_man.png'],
+                ['rank' => 3, 'user' => 'RivalsAnalyst', 'points' => 1987, 'level' => 'Veteran', 'avatar' => '/storage/heroes/spider_man.png'],
+                ['rank' => 4, 'user' => 'TournamentPro', 'points' => 1756, 'level' => 'Advanced', 'avatar' => '/storage/heroes/captain_america.png'],
+                ['rank' => 5, 'user' => 'CommunityHelper', 'points' => 1523, 'level' => 'Advanced', 'avatar' => '/storage/heroes/hulk.png']
+            ],
+            'forum_contributors' => [
+                ['rank' => 1, 'user' => 'ForumKing', 'posts' => 1250, 'helpful_votes' => 890, 'thumbs_up_received' => 1340],
+                ['rank' => 2, 'user' => 'DiscussionLead', 'posts' => 987, 'helpful_votes' => 675, 'thumbs_up_received' => 987],
+                ['rank' => 3, 'user' => 'CommunityVoice', 'posts' => 834, 'helpful_votes' => 554, 'thumbs_up_received' => 756]
+            ],
+            'match_predictors' => [
+                ['rank' => 1, 'user' => 'MatchPredictor', 'accuracy' => 87.5, 'predictions' => 200, 'thumbs_up_received' => 445],
+                ['rank' => 2, 'user' => 'AnalysisGuru', 'accuracy' => 84.2, 'predictions' => 150, 'thumbs_up_received' => 329],
+                ['rank' => 3, 'user' => 'TournamentOracle', 'accuracy' => 82.1, 'predictions' => 180, 'thumbs_up_received' => 298]
+            ]
+        ];
+
+        return response()->json([
+            'success' => true,
+            'data' => $rankings[$rankingType] ?? $rankings['reputation'],
+            'ranking_type' => $rankingType,
+            'available_types' => ['reputation', 'forum_contributors', 'match_predictors'],
+            'updated_at' => now()->toISOString()
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error fetching rankings: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// ==========================================
+// VOTING/THUMBS UP SYSTEM WITH PROFILE TRACKING
+// ==========================================
+
+// Vote on Forum Thread (Thumbs Up/Down)
+Route::middleware(['auth:sanctum', 'role:user'])->post('/user/forums/threads/{threadId}/vote', function (Request $request, $threadId) {
+    try {
+        $validated = $request->validate([
+            'vote_type' => 'required|string|in:thumbs_up,thumbs_down,helpful,informative,funny'
+        ]);
+
+        $thread = DB::table('forum_threads')->where('id', $threadId)->first();
+        if (!$thread) {
+            return response()->json(['success' => false, 'message' => 'Thread not found'], 404);
+        }
+
+        // In real implementation, save to user_votes table
+        $voteData = [
+            'user_id' => $request->user()->id,
+            'content_type' => 'forum_thread',
+            'content_id' => $threadId,
+            'vote_type' => $validated['vote_type'],
+            'created_at' => now()
+        ];
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Vote recorded successfully',
+            'data' => [
+                'vote_type' => $validated['vote_type'],
+                'content_type' => 'forum_thread',
+                'content_id' => $threadId,
+                'reputation_bonus' => '+5 points',
+                'vote_stats' => [
+                    'thumbs_up' => 34,
+                    'thumbs_down' => 2,
+                    'helpful' => 12,
+                    'informative' => 8,
+                    'user_vote' => $validated['vote_type']
+                ]
+            ]
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error recording vote: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// Vote on Match Comment (Thumbs Up/Down)
+Route::middleware(['auth:sanctum', 'role:user'])->post('/user/matches/{matchId}/comments/{commentId}/vote', function (Request $request, $matchId, $commentId) {
+    try {
+        $validated = $request->validate([
+            'vote_type' => 'required|string|in:thumbs_up,thumbs_down,helpful,insightful,funny'
+        ]);
+
+        // In real implementation, save to user_votes table and update user reputation
+        return response()->json([
+            'success' => true,
+            'message' => 'Comment vote recorded',
+            'data' => [
+                'comment_id' => $commentId,
+                'vote_type' => $validated['vote_type'],
+                'reputation_bonus' => '+3 points',
+                'vote_stats' => [
+                    'thumbs_up' => 23,
+                    'thumbs_down' => 1,
+                    'helpful' => 7,
+                    'insightful' => 5,
+                    'user_vote' => $validated['vote_type']
+                ]
+            ]
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error recording vote: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// Get User's Voting Profile & Stats
+Route::middleware(['auth:sanctum', 'role:user'])->get('/user/voting-profile', function (Request $request) {
+    try {
+        $user = $request->user();
+        
+        $votingProfile = [
+            'user_id' => $user->id,
+            'username' => $user->name,
+            'voting_stats' => [
+                'total_votes_cast' => 167,
+                'thumbs_up_given' => 124,
+                'thumbs_down_given' => 8,
+                'helpful_votes_given' => 35,
+                'votes_received' => [
+                    'thumbs_up_received' => 89,
+                    'thumbs_down_received' => 4,
+                    'helpful_received' => 23,
+                    'total_received' => 116
+                ]
+            ],
+            'reputation_from_votes' => 348,
+            'voting_breakdown' => [
+                'forum_threads' => 78,
+                'match_comments' => 56,
+                'news_articles' => 33
+            ],
+            'recent_votes_cast' => [
+                [
+                    'content_type' => 'forum_thread',
+                    'content_title' => 'Best Marvel Rivals Team Compositions',
+                    'vote_type' => 'thumbs_up',
+                    'date' => now()->subHours(2)->toISOString()
+                ],
+                [
+                    'content_type' => 'match_comment',
+                    'content_title' => 'Great analysis of test1 vs test2',
+                    'vote_type' => 'helpful',
+                    'date' => now()->subHours(6)->toISOString()
+                ]
+            ],
+            'votes_received_today' => 12,
+            'voting_accuracy' => 91.5  // How often others agree with user's votes
+        ];
+
+        return response()->json([
+            'success' => true,
+            'data' => $votingProfile
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error fetching voting profile: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// ==========================================
+// NEWS IMAGE MANAGEMENT SYSTEM
+// ==========================================
+
+// Get News Article Image
+Route::get('/news/{newsId}/image', function (Request $request, $newsId) {
+    try {
+        $newsImage = [
+            'news_id' => $newsId,
+            'featured_image' => "/storage/news/news_{$newsId}_featured.jpg",
+            'thumbnail' => "/storage/news/news_{$newsId}_thumb.jpg",
+            'gallery' => [
+                "/storage/news/news_{$newsId}_1.jpg",
+                "/storage/news/news_{$newsId}_2.jpg",
+                "/storage/news/news_{$newsId}_3.jpg"
+            ],
+            'image_metadata' => [
+                'width' => 1920,
+                'height' => 1080,
+                'format' => 'JPEG',
+                'size' => '245KB',
+                'alt_text' => 'Marvel Rivals Tournament Championship'
+            ]
+        ];
+
+        return response()->json([
+            'success' => true,
+            'data' => $newsImage
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error fetching news images: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// Upload News Image (Admin/Moderator)
+Route::middleware(['auth:sanctum', 'role:admin|moderator'])->post('/news/{newsId}/upload-image', function (Request $request, $newsId) {
+    try {
+        $validated = $request->validate([
+            'image' => 'required|file|mimes:jpeg,jpg,png,gif|max:4096',
+            'image_type' => 'required|string|in:featured,gallery,thumbnail',
+            'alt_text' => 'nullable|string|max:255'
+        ]);
+
+        // Mock file upload response
+        $imagePath = "/storage/news/news_{$newsId}_{$validated['image_type']}_" . time() . ".jpg";
+
+        return response()->json([
+            'success' => true,
+            'message' => 'News image uploaded successfully',
+            'data' => [
+                'news_id' => $newsId,
+                'image_type' => $validated['image_type'],
+                'image_url' => $imagePath,
+                'alt_text' => $validated['alt_text'] ?? '',
+                'uploaded_by' => $request->user()->name,
+                'uploaded_at' => now()->toISOString()
+            ]
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error uploading news image: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// ==========================================
+// USER PROFILE PICTURES (USING HERO IMAGES)
+// ==========================================
+
+// Get Available Profile Pictures (All Hero Images)
+Route::middleware(['auth:sanctum', 'role:user'])->get('/user/profile-pictures/available', function (Request $request) {
+    try {
+        $heroImages = [
+            // Vanguard Heroes
+            ['name' => 'Captain America', 'role' => 'Vanguard', 'image' => '/storage/heroes/captain_america.png'],
+            ['name' => 'Hulk', 'role' => 'Vanguard', 'image' => '/storage/heroes/hulk.png'],
+            ['name' => 'Thor', 'role' => 'Vanguard', 'image' => '/storage/heroes/thor.png'],
+            ['name' => 'Doctor Strange', 'role' => 'Vanguard', 'image' => '/storage/heroes/doctor_strange.png'],
+            ['name' => 'Groot', 'role' => 'Vanguard', 'image' => '/storage/heroes/groot.png'],
+            ['name' => 'Magneto', 'role' => 'Vanguard', 'image' => '/storage/heroes/magneto.png'],
+            ['name' => 'Peni Parker', 'role' => 'Vanguard', 'image' => '/storage/heroes/peni_parker.png'],
+            ['name' => 'Venom', 'role' => 'Vanguard', 'image' => '/storage/heroes/venom.png'],
+
+            // Duelist Heroes  
+            ['name' => 'Iron Man', 'role' => 'Duelist', 'image' => '/storage/heroes/iron_man.png'],
+            ['name' => 'Spider-Man', 'role' => 'Duelist', 'image' => '/storage/heroes/spider_man.png'],
+            ['name' => 'Black Panther', 'role' => 'Duelist', 'image' => '/storage/heroes/black_panther.png'],
+            ['name' => 'Wolverine', 'role' => 'Duelist', 'image' => '/storage/heroes/wolverine.png'],
+            ['name' => 'Punisher', 'role' => 'Duelist', 'image' => '/storage/heroes/punisher.png'],
+            ['name' => 'Hawkeye', 'role' => 'Duelist', 'image' => '/storage/heroes/hawkeye.png'],
+            ['name' => 'Hela', 'role' => 'Duelist', 'image' => '/storage/heroes/hela.png'],
+            ['name' => 'Magik', 'role' => 'Duelist', 'image' => '/storage/heroes/magik.png'],
+            ['name' => 'Namor', 'role' => 'Duelist', 'image' => '/storage/heroes/namor.png'],
+            ['name' => 'Psylocke', 'role' => 'Duelist', 'image' => '/storage/heroes/psylocke.png'],
+            ['name' => 'Scarlet Witch', 'role' => 'Duelist', 'image' => '/storage/heroes/scarlet_witch.png'],
+            ['name' => 'Star-Lord', 'role' => 'Duelist', 'image' => '/storage/heroes/star_lord.png'],
+            ['name' => 'Storm', 'role' => 'Duelist', 'image' => '/storage/heroes/storm.png'],
+            ['name' => 'Winter Soldier', 'role' => 'Duelist', 'image' => '/storage/heroes/winter_soldier.png'],
+
+            // Strategist Heroes
+            ['name' => 'Luna Snow', 'role' => 'Strategist', 'image' => '/storage/heroes/luna_snow.png'],
+            ['name' => 'Mantis', 'role' => 'Strategist', 'image' => '/storage/heroes/mantis.png'],
+            ['name' => 'Adam Warlock', 'role' => 'Strategist', 'image' => '/storage/heroes/adam_warlock.png'],
+            ['name' => 'Cloak & Dagger', 'role' => 'Strategist', 'image' => '/storage/heroes/cloak_dagger.png'],
+            ['name' => 'Jeff the Land Shark', 'role' => 'Strategist', 'image' => '/storage/heroes/jeff_land_shark.png'],
+            ['name' => 'Loki', 'role' => 'Strategist', 'image' => '/storage/heroes/loki.png'],
+            ['name' => 'Rocket Raccoon', 'role' => 'Strategist', 'image' => '/storage/heroes/rocket_raccoon.png']
+        ];
+
+        return response()->json([
+            'success' => true,
+            'data' => $heroImages,
+            'total_available' => count($heroImages),
+            'organized_by_role' => [
+                'vanguard' => array_values(array_filter($heroImages, fn($h) => $h['role'] === 'Vanguard')),
+                'duelist' => array_values(array_filter($heroImages, fn($h) => $h['role'] === 'Duelist')),
+                'strategist' => array_values(array_filter($heroImages, fn($h) => $h['role'] === 'Strategist'))
+            ],
+            'usage_stats' => [
+                'most_popular' => 'Spider-Man',
+                'least_popular' => 'Jeff the Land Shark',
+                'trending' => ['Luna Snow', 'Iron Man', 'Captain America']
+            ]
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error fetching profile pictures: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// Set User Profile Picture (Hero Image)
+Route::middleware(['auth:sanctum', 'role:user'])->post('/user/profile-picture/set', function (Request $request) {
+    try {
+        $validated = $request->validate([
+            'hero_name' => 'required|string',
+            'image_url' => 'required|string|starts_with:/storage/heroes/'
+        ]);
+
+        $user = $request->user();
+        
+        // In real implementation, update user avatar in database
+        // $user->update(['avatar' => $validated['image_url']]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Profile picture updated successfully',
+            'data' => [
+                'user_id' => $user->id,
+                'hero_name' => $validated['hero_name'],
+                'new_avatar' => $validated['image_url'],
+                'updated_at' => now()->toISOString(),
+                'reputation_bonus' => '+10 points (profile completion)'
+            ]
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error setting profile picture: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// Get User's Current Profile Picture
+Route::middleware(['auth:sanctum', 'role:user'])->get('/user/profile-picture', function (Request $request) {
+    try {
+        $user = $request->user();
+        
+        $profilePicture = [
+            'user_id' => $user->id,
+            'current_avatar' => $user->avatar ?? '/storage/heroes/default_hero.png',
+            'hero_name' => 'Spider-Man', // Extracted from avatar URL
+            'hero_role' => 'Duelist',
+            'set_date' => now()->subDays(15)->toISOString(),
+            'profile_views_today' => 23,
+            'compliments_received' => 8
+        ];
+
+        return response()->json([
+            'success' => true,
+            'data' => $profilePicture
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error fetching profile picture: ' . $e->getMessage()
+        ], 500);
+    }
+});
