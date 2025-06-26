@@ -28,11 +28,14 @@ The Marvel Rivals Esports Platform provides a complete HLTV.org equivalent backe
 - **Live Viewer Count Management** from streaming platforms
 - **Professional Esports Broadcasting** capabilities
 
-### Current Match Data
-- **Primary Match**: ID `97` (test1 vs test2)
-- **Teams**: test1 (ID: 83) vs test2 (ID: 84)
-- **Players**: 10 total players (IDs: 169-173, 176-180)
+### Current Match Data - MARVEL RIVALS TOURNAMENT READY
+- **Primary Match**: ID `97` (test1 vs test2) - **6v6 FORMAT**
+- **Teams**: test1 (ID: 83) vs test2 (ID: 84) 
+- **Players**: 12 total players (6v6) - Need to add 2 more (currently 10)
 - **Event**: Tournament ID `20`
+- **Roles**: Vanguard, Duelist, Strategist (Marvel Rivals official)
+- **Format**: BO5 series support with map rotation
+- **Stats**: K/D, damage, healing, damage_blocked, ultimate_usage, objective_time
 
 ---
 
