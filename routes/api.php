@@ -2508,17 +2508,6 @@ Route::get('/leaderboards/teams', function (Request $request) {
         ], 500);
     }
 });
-        if (!$updated) return response()->json(['success' => false, 'message' => 'Match not found'], 404);
-
-        if (isset($validated['moderator_note'])) {
-            DB::table('match_events')->insert(['match_id' => $matchId, 'type' => 'moderator_action', 'description' => "Status: {$validated['status']}. Note: {$validated['moderator_note']}", 'created_at' => now(), 'updated_at' => now()]);
-        }
-
-        return response()->json(['success' => true, 'message' => "Match status updated to {$validated['status']} by moderator"]);
-    } catch (\Exception $e) {
-        return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()], 500);
-    }
-});
 
 Route::middleware(['auth:sanctum', 'role:moderator'])->put('/moderator/matches/{matchId}/score', function (Request $request, $matchId) {
     try {
