@@ -605,7 +605,7 @@ Route::middleware(['auth:sanctum', 'role:admin|moderator|user'])->put('/user/pro
 });
 
 // User Forum Participation - Create Thread
-Route::middleware(['auth:sanctum', 'role:user'])->post('/user/forums/threads', function (Request $request) {
+Route::middleware(['auth:sanctum', 'role:admin|moderator|user'])->post('/user/forums/threads', function (Request $request) {
     try {
         $validated = $request->validate([
             'title' => 'required|string|max:255',
