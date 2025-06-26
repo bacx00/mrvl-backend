@@ -62,17 +62,50 @@ backend:
 
 
 
-  - task: "Leaderboards System"
+  - task: "Match Viewer Update API"
     implemented: true
     working: true
-    file: "/app/routes/api.php"
+    file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
     needs_retesting: false
     status_history:
+      - working: false
+        agent: "User"
+        comment: "POST /api/matches/99/viewers endpoint was returning 500 Server Error"
       - working: true
         agent: "testing"
-        comment: "Player and team leaderboards working with multiple sorting options (K/D, damage, matches) and comprehensive ranking system"
+        comment: "Successfully implemented and tested the match viewer update endpoint. Now properly updates live viewer count for Match ID 99."
+
+  - task: "Match Statistics Aggregation API"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: false
+        agent: "User"
+        comment: "POST /api/matches/99/aggregate-stats endpoint was returning 500 Server Error"
+      - working: true
+        agent: "testing"
+        comment: "Successfully implemented and tested the match statistics aggregation endpoint. Now properly aggregates player statistics after match completion."
+
+  - task: "Match Completion API"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: false
+        agent: "User"
+        comment: "POST /api/matches/99/complete endpoint was returning 404 Not Found"
+      - working: true
+        agent: "testing"
+        comment: "Successfully implemented and tested the match completion endpoint. Now properly finalizes matches with winner, score, duration, and MVP data."
 
 frontend:
   - task: "UI Integration"
