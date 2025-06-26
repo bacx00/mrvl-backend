@@ -4985,7 +4985,7 @@ Route::post('/matches/{matchId}/complete', function (Request $request, $matchId)
 // MARVEL RIVALS MATCH SERIES SUPPORT (BO3/BO5)
 // ==========================================
 
-// Get match series status and games
+// Get match series status and games (supports BO1, BO3, BO5)
 Route::get('/matches/{matchId}/series', function (Request $request, $matchId) {
     try {
         $match = DB::table('matches')->where('id', $matchId)->first();
@@ -4993,62 +4993,122 @@ Route::get('/matches/{matchId}/series', function (Request $request, $matchId) {
             return response()->json(['success' => false, 'message' => 'Match not found'], 404);
         }
 
-        // Mock series data structure for Marvel Rivals tournaments
+        // Get format from request or default to BO1
+        $format = $request->query('format', 'BO1');
+        if (!in_array($format, ['BO1', 'BO3', 'BO5'])) {
+            $format = 'BO1';
+        }
+
+        // Determine games structure based on format
         $seriesData = [
             'match_id' => $matchId,
-            'format' => 'BO5',  // Best of 5 format
+            'format' => $format,
             'status' => 'in_progress',
-            'current_game' => 2,
+            'current_game' => 1,
             'score' => [
-                'team1' => 1,  // test1 wins
-                'team2' => 0   // test2 wins
-            ],
-            'games' => [
-                [
-                    'game_number' => 1,
-                    'mode' => 'Domination',
-                    'map' => 'Asgard: Royal Palace',
-                    'status' => 'completed',
-                    'winner' => 'team1',
-                    'duration' => '8:45',
-                    'scores' => ['team1' => 100, 'team2' => 78]
-                ],
-                [
-                    'game_number' => 2,
-                    'mode' => 'Convoy',
-                    'map' => 'Tokyo 2099: Spider Islands',
-                    'status' => 'live',
-                    'winner' => null,
-                    'duration' => '5:30',
-                    'scores' => ['team1' => 0, 'team2' => 0]
-                ],
-                [
-                    'game_number' => 3,
-                    'mode' => 'Convergence',
-                    'map' => 'Wakanda',
-                    'status' => 'upcoming',
-                    'winner' => null
-                ],
-                [
-                    'game_number' => 4,
-                    'mode' => 'Domination',
-                    'map' => 'Sanctum Sanctorum',
-                    'status' => 'upcoming',
-                    'winner' => null
-                ],
-                [
-                    'game_number' => 5,
-                    'mode' => 'Convoy',
-                    'map' => 'Birnin Zana: Golden City',
-                    'status' => 'upcoming',
-                    'winner' => null
-                ]
-            ],
-            'first_to_win' => 3,  // First to win 3 games
-            'tournament_info' => [
-                'bracket_stage' => 'Grand Finals',
-                'tournament' => 'Marvel Rivals Invitational 2025'
+                'team1' => 0,
+                'team2' => 0
             ]
+        ];
+
+        // Configure series based on format
+        switch ($format) {
+            case 'BO1':
+                $seriesData['first_to_win'] = 1;
+                $seriesData['games'] = [
+                    [
+                        'game_number' => 1,
+                        'mode' => 'Domination',
+                        'map' => 'Asgard: Royal Palace',
+                        'status' => 'live',
+                        'winner' => null,
+                        'duration' => '0:00',
+                        'scores' => ['team1' => 0, 'team2' => 0]
+                    ]
+                ];
+                break;
+
+            case 'BO3':
+                $seriesData['first_to_win'] = 2;
+                $seriesData['games'] = [
+                    [
+                        'game_number' => 1,
+                        'mode' => 'Domination',
+                        'map' => 'Asgard: Royal Palace',
+                        'status' => 'live',
+                        'winner' => null,
+                        'duration' => '0:00',
+                        'scores' => ['team1' => 0, 'team2' => 0]
+                    ],
+                    [
+                        'game_number' => 2,
+                        'mode' => 'Convoy',
+                        'map' => 'Tokyo 2099: Spider Islands',
+                        'status' => 'upcoming',
+                        'winner' => null
+                    ],
+                    [
+                        'game_number' => 3,
+                        'mode' => 'Convergence',
+                        'map' => 'Wakanda',
+                        'status' => 'upcoming',
+                        'winner' => null
+                    ]
+                ];
+                break;
+
+            case 'BO5':
+                $seriesData['first_to_win'] = 3;
+                $seriesData['score'] = ['team1' => 1, 'team2' => 0]; // Sample ongoing series
+                $seriesData['current_game'] = 2;
+                $seriesData['games'] = [
+                    [
+                        'game_number' => 1,
+                        'mode' => 'Domination',
+                        'map' => 'Asgard: Royal Palace',
+                        'status' => 'completed',
+                        'winner' => 'team1',
+                        'duration' => '8:45',
+                        'scores' => ['team1' => 100, 'team2' => 78]
+                    ],
+                    [
+                        'game_number' => 2,
+                        'mode' => 'Convoy',
+                        'map' => 'Tokyo 2099: Spider Islands',
+                        'status' => 'live',
+                        'winner' => null,
+                        'duration' => '5:30',
+                        'scores' => ['team1' => 0, 'team2' => 0]
+                    ],
+                    [
+                        'game_number' => 3,
+                        'mode' => 'Convergence',
+                        'map' => 'Wakanda',
+                        'status' => 'upcoming',
+                        'winner' => null
+                    ],
+                    [
+                        'game_number' => 4,
+                        'mode' => 'Domination',
+                        'map' => 'Sanctum Sanctorum',
+                        'status' => 'upcoming',
+                        'winner' => null
+                    ],
+                    [
+                        'game_number' => 5,
+                        'mode' => 'Convoy',
+                        'map' => 'Birnin Zana: Golden City',
+                        'status' => 'upcoming',
+                        'winner' => null
+                    ]
+                ];
+                break;
+        }
+
+        $seriesData['tournament_info'] = [
+            'bracket_stage' => 'Group Stage',
+            'tournament' => 'Marvel Rivals Tournament 2025',
+            'supported_formats' => ['BO1', 'BO3', 'BO5']
         ];
 
         return response()->json([
