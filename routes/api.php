@@ -347,25 +347,30 @@ Route::get('/game-data/all-heroes', function () {
     ]);
 });
 
-// Get Marvel Rivals maps data (10 official maps)
+// Get Marvel Rivals maps data (10 official maps) - Updated for competitive formats
 Route::get('/game-data/maps', function () {
     $maps = [
-        ['name' => 'Asgard: Royal Palace', 'modes' => ['Domination', 'Convergence']],
-        ['name' => 'Birnin Zana: Golden City', 'modes' => ['Escort', 'Convergence']],
-        ['name' => 'Klyntar', 'modes' => ['Convoy', 'Domination']],
-        ['name' => 'Midtown: Times Square', 'modes' => ['Domination', 'Escort']],
-        ['name' => 'Moon Base: Artiluna-1', 'modes' => ['Convoy', 'Convergence']],
-        ['name' => 'Sanctum Sanctorum', 'modes' => ['Domination', 'Escort']],
-        ['name' => 'Throne Room of Asgard', 'modes' => ['Convergence', 'Convoy']],
-        ['name' => 'Tokyo 2099: Spider Islands', 'modes' => ['Escort', 'Domination']],
-        ['name' => 'Wakanda', 'modes' => ['Convoy', 'Convergence']],
-        ['name' => 'Yggsgard', 'modes' => ['Domination', 'Escort']]
+        ['name' => 'Asgard: Royal Palace', 'modes' => ['Domination', 'Convergence'], 'type' => 'competitive'],
+        ['name' => 'Birnin Zana: Golden City', 'modes' => ['Convoy', 'Convergence'], 'type' => 'competitive'],
+        ['name' => 'Klyntar', 'modes' => ['Convoy', 'Domination'], 'type' => 'competitive'],
+        ['name' => 'Midtown: Times Square', 'modes' => ['Domination', 'Convoy'], 'type' => 'competitive'],
+        ['name' => 'Moon Base: Artiluna-1', 'modes' => ['Convoy', 'Convergence'], 'type' => 'competitive'],
+        ['name' => 'Sanctum Sanctorum', 'modes' => ['Domination', 'Convoy'], 'type' => 'competitive'],
+        ['name' => 'Throne Room of Asgard', 'modes' => ['Convergence', 'Convoy'], 'type' => 'competitive'],
+        ['name' => 'Tokyo 2099: Spider Islands', 'modes' => ['Convoy', 'Domination'], 'type' => 'competitive'],
+        ['name' => 'Wakanda', 'modes' => ['Convoy', 'Convergence'], 'type' => 'competitive'],
+        ['name' => 'Yggsgard', 'modes' => ['Domination', 'Convoy'], 'type' => 'competitive']
     ];
     
     return response()->json([
         'success' => true,
         'data' => $maps,
-        'total' => count($maps)
+        'total' => count($maps),
+        'competitive_rotation' => [
+            'domination_pool' => array_values(array_filter($maps, fn($m) => in_array('Domination', $m['modes']))),
+            'convoy_pool' => array_values(array_filter($maps, fn($m) => in_array('Convoy', $m['modes']))),
+            'convergence_pool' => array_values(array_filter($maps, fn($m) => in_array('Convergence', $m['modes'])))
+        ]
     ]);
 });
 
