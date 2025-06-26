@@ -5759,7 +5759,7 @@ Route::middleware(['auth:sanctum', 'role:admin|moderator'])->post('/news/{newsId
 // ==========================================
 
 // Get Available Profile Pictures (All Hero Images)
-Route::middleware(['auth:sanctum', 'role:user'])->get('/user/profile-pictures/available', function (Request $request) {
+Route::middleware(['auth:sanctum', 'role:admin|moderator|user'])->get('/user/profile-pictures/available', function (Request $request) {
     try {
         $heroImages = [
             // Vanguard Heroes
