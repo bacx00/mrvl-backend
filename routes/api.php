@@ -813,7 +813,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->put('/admin/players/{playerId
             'name' => 'nullable|string|max:255',
             'username' => 'required|string|max:255|unique:players,username,' . $playerId,
             'real_name' => 'nullable|string|max:255',
-            'role' => 'required|string|in:Duelist,Tank,Support,Flex,Sub',
+            'role' => 'required|string|in:Vanguard,Duelist,Strategist,Flex,Sub',
             'team_id' => 'nullable|exists:teams,id',
             'main_hero' => 'nullable|string',
             'alt_heroes' => 'nullable|array',
