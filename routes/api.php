@@ -2113,11 +2113,7 @@ Route::middleware(['auth:sanctum', 'role:admin,moderator'])->post('/matches/{mat
             'message' => 'Error updating bulk statistics: ' . $e->getMessage()
         ], 500);
     }
-});n (Request $request, $matchId) {
-    try {
-        $validated = $request->validate(['status' => 'required|string|in:upcoming,live,paused,completed,cancelled', 'moderator_note' => 'nullable|string|max:255']);
-
-        $updated = DB::table('matches')->where('id', $matchId)->update(['status' => $validated['status'], 'updated_at' => now()]);
+});
 
 // ==========================================
 // ANALYTICS & PERFORMANCE METRICS SYSTEM
