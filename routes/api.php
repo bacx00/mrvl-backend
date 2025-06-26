@@ -4579,6 +4579,11 @@ Route::get('/matches/{matchId}/scoreboard', function (Request $request, $matchId
     }
 });
 
+// Test analytics route
+Route::get('/analytics/test', function () {
+    return response()->json(['success' => true, 'message' => 'Analytics test working']);
+});
+
 // Player analytics for players 169-180
 Route::get('/analytics/players/{playerId}/stats', function (Request $request, $playerId) {
     try {
