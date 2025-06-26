@@ -36,17 +36,17 @@ backend:
         agent: "testing"
         comment: "Live scoreboard endpoint working for Match ID 99 (Sentinels vs T1) with complete team rosters, player assignments, and match statistics"
 
-  - task: "Player Role Validation"
+  - task: "Player Statistics API"
     implemented: true
     working: true
-    file: "/app/backend/server.py"
+    file: "/app/routes/api.php"
     stuck_count: 0
     priority: "high"
     needs_retesting: false
     status_history:
       - working: true
         agent: "testing"
-        comment: "Successfully tested player role validation. The API now accepts the new roles: Duelist, Tank, Support, Flex, Sub."
+        comment: "Player statistics updating endpoints working with bulk update support for live match scoring"
 
   - task: "New Forum Endpoints"
     implemented: true
