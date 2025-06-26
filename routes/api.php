@@ -5552,7 +5552,7 @@ Route::get('/community/rankings', function (Request $request) {
 // ==========================================
 
 // Vote on Forum Thread (Thumbs Up/Down)
-Route::middleware(['auth:sanctum', 'role:user'])->post('/user/forums/threads/{threadId}/vote', function (Request $request, $threadId) {
+Route::middleware(['auth:sanctum', 'role:admin|moderator|user'])->post('/user/forums/threads/{threadId}/vote', function (Request $request, $threadId) {
     try {
         $validated = $request->validate([
             'vote_type' => 'required|string|in:thumbs_up,thumbs_down,helpful,informative,funny'
