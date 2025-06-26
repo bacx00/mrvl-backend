@@ -4592,69 +4592,20 @@ Route::get('/analytics/players/{playerId}/stats', function (Request $request, $p
             return response()->json(['success' => false, 'message' => 'Player not found'], 404);
         }
 
-        // Try to get match statistics for this player
-        $matchStats = [];
-        try {
-            $stats = DB::table('match_player as mp')
-                ->leftJoin('matches as m', 'mp.match_id', '=', 'm.id')
-                ->leftJoin('events as e', 'm.event_id', '=', 'e.id')
-                ->select([
-                    'mp.*',
-                    'm.status as match_status',
-                    'm.scheduled_at',
-                    'e.name as event_name'
-                ])
-                ->where('mp.player_id', $playerId)
-                ->get();
-            
-            $matchStats = $stats;
-        } catch (\Exception $e) {
-            // Table might not exist yet
-        }
-
-        if ($matchStats->isEmpty()) {
-            return response()->json([
-                'success' => true,
-                'data' => [
-                    'player_info' => $player,
-                    'overall_stats' => [
-                        'matches_played' => 0,
-                        'total_kills' => 0,
-                        'total_deaths' => 0,
-                        'total_assists' => 0,
-                        'kd_ratio' => 0,
-                        'total_damage' => 0,
-                        'total_healing' => 0
-                    ],
-                    'match_history' => []
-                ]
-            ]);
-        }
-
-        // Calculate stats
-        $totalKills = $matchStats->sum('kills');
-        $totalDeaths = $matchStats->sum('deaths');
-        $totalAssists = $matchStats->sum('assists');
-        $totalDamage = $matchStats->sum('damage');
-        $totalHealing = $matchStats->sum('healing');
-        $matchesPlayed = $matchStats->count();
-
-        $kdRatio = $totalDeaths > 0 ? round($totalKills / $totalDeaths, 2) : $totalKills;
-
         return response()->json([
             'success' => true,
             'data' => [
                 'player_info' => $player,
                 'overall_stats' => [
-                    'matches_played' => $matchesPlayed,
-                    'total_kills' => $totalKills,
-                    'total_deaths' => $totalDeaths,
-                    'total_assists' => $totalAssists,
-                    'kd_ratio' => $kdRatio,
-                    'total_damage' => $totalDamage,
-                    'total_healing' => $totalHealing
+                    'matches_played' => 0,
+                    'total_kills' => 0,
+                    'total_deaths' => 0,
+                    'total_assists' => 0,
+                    'kd_ratio' => 0,
+                    'total_damage' => 0,
+                    'total_healing' => 0
                 ],
-                'match_history' => $matchStats->toArray()
+                'match_history' => []
             ]
         ]);
 
