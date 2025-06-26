@@ -11,9 +11,12 @@
 8. [Analytics & Leaderboards API](#analytics--leaderboards-api)
 9. [Game Data API](#game-data-api)
 10. [Match Lifecycle Management](#match-lifecycle-management)
-11. [Real-Time Integration Examples](#real-time-integration-examples)
-12. [Error Handling](#error-handling)
-13. [Frontend Integration Guide](#frontend-integration-guide)
+11. [Team Management API](#team-management-api)
+12. [Tournament Brackets API](#tournament-brackets-api)
+13. [Predictions & Betting API](#predictions--betting-api)
+14. [Real-Time Integration Examples](#real-time-integration-examples)
+15. [Error Handling](#error-handling)
+16. [Frontend Integration Guide](#frontend-integration-guide)
 
 ---
 
@@ -21,21 +24,32 @@
 
 The Marvel Rivals Esports Platform provides a complete HLTV.org equivalent backend for Marvel Rivals competitive gaming. This API supports:
 
-- **Live Match Scoreboards** with real-time player statistics
-- **Tournament Management** with complete match lifecycle
+- **6v6 Match Scoreboards** with real-time player statistics
+- **Tournament Management** with complete BO1/BO3/BO5 bracket support
+- **Team Roster Management** with player transfers and salary tracking
 - **Player Performance Analytics** with K/D ratios, damage tracking
 - **Team Leaderboards** and rankings
 - **Live Viewer Count Management** from streaming platforms
 - **Professional Esports Broadcasting** capabilities
+- **Match Predictions** with community betting and odds
 
-### Current Match Data - MARVEL RIVALS TOURNAMENT READY
+### Current Working Features (✅ DEPLOYED)
+- **6v6 Team Format**: 12 players per match
+- **Marvel Rivals Heroes**: 29 heroes with Vanguard/Duelist/Strategist roles
+- **Tournament Brackets**: Single/double elimination with BO1/BO3/BO5 support
+- **Team Management**: Roster changes, player transfers
+- **Live Scoreboards**: Real-time player statistics
+- **Match Predictions**: Community odds and betting
+- **Player Analytics**: Performance tracking and leaderboards
+
+### Current Match Data
 - **Primary Match**: ID `97` (test1 vs test2) - **6v6 FORMAT**
 - **Teams**: test1 (ID: 83) vs test2 (ID: 84) 
-- **Players**: 12 total players (6v6) - Need to add 2 more (currently 10)
+- **Players**: 12 total players (6v6) - p6 & p66 added for 6v6 support
 - **Event**: Tournament ID `20`
 - **Roles**: Vanguard, Duelist, Strategist (Marvel Rivals official)
 - **Format**: BO5 series support with map rotation
-- **Stats**: K/D, damage, healing, damage_blocked, ultimate_usage, objective_time
+- **Stats**: K/D, damage, healing, damage_blocked tracking
 
 ---
 
