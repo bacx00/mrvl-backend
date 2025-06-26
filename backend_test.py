@@ -544,7 +544,7 @@ def test_match_creation_with_maps_data():
         "event_id": 22,
         "status": "live",
         "format": "BO1",
-        "scheduled_at": datetime.now().isoformat(),  # Added the missing scheduled_at field
+        "scheduled_at": (datetime.now() + timedelta(days=1)).isoformat(),  # Set to tomorrow
         "maps_data": [
             {
                 "map_number": 1,
