@@ -134,6 +134,9 @@ test_plan:
     - "Player Statistics API"
     - "Analytics System"
     - "Leaderboards System"
+    - "Match Viewer Update API"
+    - "Match Statistics Aggregation API"
+    - "Match Completion API"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
