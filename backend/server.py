@@ -1128,10 +1128,212 @@ async def get_team_leaderboards():
         "total": len(leaderboard_data)
     }
 
-# Root endpoint
-@app.get("/")
-async def root():
-    return {"message": "Marvel Rivals Esports Platform API"}
+@app.post("/api/matches/{match_id}/viewers", response_model=Dict[str, Any])
+async def update_match_viewers(match_id: int, data: Dict[str, Any], current_user: User = Depends(get_admin_user)):
+    """Update live viewer count for a match"""
+    if match_id not in matches_db:
+        raise HTTPException(status_code=404, detail="Match not found")
+    
+    # Update match with viewer data
+    if "viewers" not in matches_db[match_id]:
+        matches_db[match_id]["viewers"] = []
+    
+    # Add new viewer count data
+    viewer_entry = {
+        "count": data.get("viewers", 0),
+        "platform": data.get("platform", "Unknown"),
+        "stream_url": data.get("stream_url"),
+        "timestamp": datetime.now().isoformat()
+    }
+    
+    matches_db[match_id]["viewers"].append(viewer_entry)
+    matches_db[match_id]["current_viewers"] = data.get("viewers", 0)
+    matches_db[match_id]["stream_url"] = data.get("stream_url", matches_db[match_id].get("stream_url"))
+    
+    return {
+        "success": True,
+        "message": "Match viewers updated successfully",
+        "data": {
+            "match_id": match_id,
+            "current_viewers": matches_db[match_id]["current_viewers"],
+            "stream_url": matches_db[match_id]["stream_url"],
+            "viewer_history": matches_db[match_id]["viewers"]
+        }
+    }
+
+@app.post("/api/matches/{match_id}/aggregate-stats", response_model=Dict[str, Any])
+async def aggregate_match_stats(match_id: int, data: Dict[str, Any], current_user: User = Depends(get_admin_user)):
+    """Aggregate player statistics after match completion"""
+    if match_id not in matches_db:
+        raise HTTPException(status_code=404, detail="Match not found")
+    
+    match = matches_db[match_id]
+    
+    # Check if match has scoreboard data
+    if "scoreboard" not in match:
+        raise HTTPException(status_code=400, detail="Match has no scoreboard data to aggregate")
+    
+    # Aggregate team 1 stats
+    team1_id = match["team1_id"]
+    team1_players = match["scoreboard"]["team1"]["players"]
+    
+    for player_data in team1_players:
+        player_id = player_data["player_id"]
+        if player_id in players_db:
+            # Update player stats
+            player = players_db[player_id]
+            if "stats" not in player:
+                player["stats"] = {}
+            
+            stats = player["stats"]
+            
+            # Update matches played
+            stats["matches_played"] = stats.get("matches_played", 0) + 1
+            
+            # Update wins/losses based on match result
+            if match.get("winner_team_id") == team1_id:
+                stats["wins"] = stats.get("wins", 0) + 1
+            else:
+                stats["losses"] = stats.get("losses", 0) + 1
+            
+            # Calculate win rate
+            total_matches = stats.get("wins", 0) + stats.get("losses", 0)
+            if total_matches > 0:
+                stats["win_rate"] = round((stats.get("wins", 0) / total_matches) * 100, 1)
+            
+            # Update averages
+            stats["avg_kills"] = round(((stats.get("avg_kills", 0) * (stats["matches_played"] - 1)) + player_data["kills"]) / stats["matches_played"], 1)
+            stats["avg_deaths"] = round(((stats.get("avg_deaths", 0) * (stats["matches_played"] - 1)) + player_data["deaths"]) / stats["matches_played"], 1)
+            stats["avg_assists"] = round(((stats.get("avg_assists", 0) * (stats["matches_played"] - 1)) + player_data["assists"]) / stats["matches_played"], 1)
+            stats["avg_damage"] = round(((stats.get("avg_damage", 0) * (stats["matches_played"] - 1)) + player_data["damage"]) / stats["matches_played"], 1)
+            stats["avg_healing"] = round(((stats.get("avg_healing", 0) * (stats["matches_played"] - 1)) + player_data.get("healing", 0)) / stats["matches_played"], 1)
+            stats["avg_score"] = round(((stats.get("avg_score", 0) * (stats["matches_played"] - 1)) + player_data["score"]) / stats["matches_played"], 1)
+            
+            # Update hero usage
+            if "hero_usage" not in stats:
+                stats["hero_usage"] = {}
+            
+            hero = player_data["hero"]
+            stats["hero_usage"][hero] = stats["hero_usage"].get(hero, 0) + 1
+    
+    # Aggregate team 2 stats
+    team2_id = match["team2_id"]
+    team2_players = match["scoreboard"]["team2"]["players"]
+    
+    for player_data in team2_players:
+        player_id = player_data["player_id"]
+        if player_id in players_db:
+            # Update player stats
+            player = players_db[player_id]
+            if "stats" not in player:
+                player["stats"] = {}
+            
+            stats = player["stats"]
+            
+            # Update matches played
+            stats["matches_played"] = stats.get("matches_played", 0) + 1
+            
+            # Update wins/losses based on match result
+            if match.get("winner_team_id") == team2_id:
+                stats["wins"] = stats.get("wins", 0) + 1
+            else:
+                stats["losses"] = stats.get("losses", 0) + 1
+            
+            # Calculate win rate
+            total_matches = stats.get("wins", 0) + stats.get("losses", 0)
+            if total_matches > 0:
+                stats["win_rate"] = round((stats.get("wins", 0) / total_matches) * 100, 1)
+            
+            # Update averages
+            stats["avg_kills"] = round(((stats.get("avg_kills", 0) * (stats["matches_played"] - 1)) + player_data["kills"]) / stats["matches_played"], 1)
+            stats["avg_deaths"] = round(((stats.get("avg_deaths", 0) * (stats["matches_played"] - 1)) + player_data["deaths"]) / stats["matches_played"], 1)
+            stats["avg_assists"] = round(((stats.get("avg_assists", 0) * (stats["matches_played"] - 1)) + player_data["assists"]) / stats["matches_played"], 1)
+            stats["avg_damage"] = round(((stats.get("avg_damage", 0) * (stats["matches_played"] - 1)) + player_data["damage"]) / stats["matches_played"], 1)
+            stats["avg_healing"] = round(((stats.get("avg_healing", 0) * (stats["matches_played"] - 1)) + player_data.get("healing", 0)) / stats["matches_played"], 1)
+            stats["avg_score"] = round(((stats.get("avg_score", 0) * (stats["matches_played"] - 1)) + player_data["score"]) / stats["matches_played"], 1)
+            
+            # Update hero usage
+            if "hero_usage" not in stats:
+                stats["hero_usage"] = {}
+            
+            hero = player_data["hero"]
+            stats["hero_usage"][hero] = stats["hero_usage"].get(hero, 0) + 1
+    
+    # Update match with aggregation status
+    matches_db[match_id]["stats_aggregated"] = True
+    
+    return {
+        "success": True,
+        "message": "Match statistics aggregated successfully",
+        "data": {
+            "match_id": match_id,
+            "team1_id": team1_id,
+            "team2_id": team2_id,
+            "stats_aggregated": True
+        }
+    }
+
+@app.post("/api/matches/{match_id}/complete", response_model=Dict[str, Any])
+async def complete_match(match_id: int, data: Dict[str, Any], current_user: User = Depends(get_admin_user)):
+    """Complete a match and record final results"""
+    if match_id not in matches_db:
+        raise HTTPException(status_code=404, detail="Match not found")
+    
+    match = matches_db[match_id]
+    
+    # Update match with completion data
+    match["status"] = "completed"
+    match["completed_at"] = datetime.now().isoformat()
+    match["winner_team_id"] = data.get("winner_team_id")
+    match["final_score"] = data.get("final_score", {"team1": 0, "team2": 0})
+    match["match_duration"] = data.get("match_duration")
+    match["mvp_player_id"] = data.get("mvp_player_id")
+    
+    # If there's an in-progress map, mark it as completed
+    if "maps_played" in match:
+        for map_data in match["maps_played"]:
+            if map_data.get("in_progress"):
+                map_data["in_progress"] = False
+                # Set the winner if not already set
+                if "winner" not in map_data:
+                    winner_team_id = data.get("winner_team_id")
+                    if winner_team_id == match["team1_id"]:
+                        map_data["winner"] = teams_db.get(match["team1_id"], {}).get("name", "Team 1")
+                    elif winner_team_id == match["team2_id"]:
+                        map_data["winner"] = teams_db.get(match["team2_id"], {}).get("name", "Team 2")
+    
+    # Update team stats
+    if data.get("winner_team_id") in teams_db:
+        winner_team = teams_db[data["winner_team_id"]]
+        winner_team["wins"] = winner_team.get("wins", 0) + 1
+    
+    loser_team_id = match["team1_id"] if data.get("winner_team_id") == match["team2_id"] else match["team2_id"]
+    if loser_team_id in teams_db:
+        loser_team = teams_db[loser_team_id]
+        loser_team["losses"] = loser_team.get("losses", 0) + 1
+    
+    # Update MVP player stats if provided
+    if data.get("mvp_player_id") and data["mvp_player_id"] in players_db:
+        mvp_player = players_db[data["mvp_player_id"]]
+        if "stats" not in mvp_player:
+            mvp_player["stats"] = {}
+        mvp_player["stats"]["mvp_count"] = mvp_player["stats"].get("mvp_count", 0) + 1
+    
+    return {
+        "success": True,
+        "message": "Match completed successfully",
+        "data": {
+            "match_id": match_id,
+            "status": match["status"],
+            "winner_team_id": match["winner_team_id"],
+            "winner_team": teams_db.get(match["winner_team_id"]) if match["winner_team_id"] in teams_db else None,
+            "final_score": match["final_score"],
+            "match_duration": match["match_duration"],
+            "mvp_player_id": match["mvp_player_id"],
+            "mvp_player": players_db.get(match["mvp_player_id"]) if match["mvp_player_id"] in players_db else None,
+            "completed_at": match["completed_at"]
+        }
+    }
 
 # Health check endpoint
 @app.get("/api/health")
