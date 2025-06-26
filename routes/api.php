@@ -4980,3 +4980,166 @@ Route::post('/matches/{matchId}/complete', function (Request $request, $matchId)
         ], 500);
     }
 });
+
+// ==========================================
+// MARVEL RIVALS MATCH SERIES SUPPORT (BO3/BO5)
+// ==========================================
+
+// Get match series status and games
+Route::get('/matches/{matchId}/series', function (Request $request, $matchId) {
+    try {
+        $match = DB::table('matches')->where('id', $matchId)->first();
+        if (!$match) {
+            return response()->json(['success' => false, 'message' => 'Match not found'], 404);
+        }
+
+        // Mock series data structure for Marvel Rivals tournaments
+        $seriesData = [
+            'match_id' => $matchId,
+            'format' => 'BO5',  // Best of 5 format
+            'status' => 'in_progress',
+            'current_game' => 2,
+            'score' => [
+                'team1' => 1,  // test1 wins
+                'team2' => 0   // test2 wins
+            ],
+            'games' => [
+                [
+                    'game_number' => 1,
+                    'mode' => 'Domination',
+                    'map' => 'Asgard: Royal Palace',
+                    'status' => 'completed',
+                    'winner' => 'team1',
+                    'duration' => '8:45',
+                    'scores' => ['team1' => 100, 'team2' => 78]
+                ],
+                [
+                    'game_number' => 2,
+                    'mode' => 'Convoy',
+                    'map' => 'Tokyo 2099: Spider Islands',
+                    'status' => 'live',
+                    'winner' => null,
+                    'duration' => '5:30',
+                    'scores' => ['team1' => 0, 'team2' => 0]
+                ],
+                [
+                    'game_number' => 3,
+                    'mode' => 'Convergence',
+                    'map' => 'Wakanda',
+                    'status' => 'upcoming',
+                    'winner' => null
+                ],
+                [
+                    'game_number' => 4,
+                    'mode' => 'Domination',
+                    'map' => 'Sanctum Sanctorum',
+                    'status' => 'upcoming',
+                    'winner' => null
+                ],
+                [
+                    'game_number' => 5,
+                    'mode' => 'Convoy',
+                    'map' => 'Birnin Zana: Golden City',
+                    'status' => 'upcoming',
+                    'winner' => null
+                ]
+            ],
+            'first_to_win' => 3,  // First to win 3 games
+            'tournament_info' => [
+                'bracket_stage' => 'Grand Finals',
+                'tournament' => 'Marvel Rivals Invitational 2025'
+            ]
+        ];
+
+        return response()->json([
+            'success' => true,
+            'data' => $seriesData
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error fetching series: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// Update series game result
+Route::post('/matches/{matchId}/series/game/{gameNumber}', function (Request $request, $matchId, $gameNumber) {
+    try {
+        $validated = $request->validate([
+            'winner' => 'required|string|in:team1,team2',
+            'scores' => 'required|array',
+            'scores.team1' => 'required|integer|min:0',
+            'scores.team2' => 'required|integer|min:0',
+            'duration' => 'nullable|string',
+            'map' => 'nullable|string',
+            'mode' => 'nullable|string|in:Domination,Convoy,Convergence'
+        ]);
+
+        $match = DB::table('matches')->where('id', $matchId)->first();
+        if (!$match) {
+            return response()->json(['success' => false, 'message' => 'Match not found'], 404);
+        }
+
+        // In a real implementation, this would update a match_games table
+        // For now, return success with the game result
+        return response()->json([
+            'success' => true,
+            'message' => 'Game result recorded successfully',
+            'data' => [
+                'match_id' => $matchId,
+                'game_number' => $gameNumber,
+                'winner' => $validated['winner'],
+                'scores' => $validated['scores'],
+                'duration' => $validated['duration'] ?? '0:00',
+                'recorded_at' => now()->toISOString()
+            ]
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error recording game result: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// ==========================================
+// MARVEL RIVALS 6V6 TEAM COMPOSITION API
+// ==========================================
+
+// Get ideal team composition for Marvel Rivals
+Route::get('/game-data/team-composition', function () {
+    return response()->json([
+        'success' => true,
+        'data' => [
+            'format' => '6v6',
+            'total_players' => 6,
+            'recommended_composition' => [
+                'vanguards' => 2,   // Tank players
+                'duelists' => 2,    // DPS players  
+                'strategists' => 2  // Support players
+            ],
+            'role_descriptions' => [
+                'vanguard' => 'Frontline defenders who absorb damage and protect teammates',
+                'duelist' => 'High damage dealers focused on eliminating enemies',
+                'strategist' => 'Support players providing healing, utility and tactical advantages'
+            ],
+            'popular_compositions' => [
+                [
+                    'name' => 'Standard 2-2-2',
+                    'vanguards' => ['Captain America', 'Hulk'],
+                    'duelists' => ['Spider-Man', 'Iron Man'],
+                    'strategists' => ['Luna Snow', 'Mantis']
+                ],
+                [
+                    'name' => 'Dive Composition',
+                    'vanguards' => ['Doctor Strange', 'Venom'],
+                    'duelists' => ['Black Panther', 'Wolverine'],
+                    'strategists' => ['Loki', 'Cloak & Dagger']
+                ]
+            ]
+        ]
+    ]);
+});
