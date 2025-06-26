@@ -547,7 +547,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 // ==========================================
 
 // User Profile Management
-Route::middleware(['auth:sanctum', 'role:user'])->get('/user/profile', function (Request $request) {
+Route::middleware(['auth:sanctum', 'role:admin|moderator|user'])->get('/user/profile', function (Request $request) {
     try {
         $user = $request->user();
         
