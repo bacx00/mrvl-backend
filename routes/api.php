@@ -287,7 +287,11 @@ Route::get('/game-data/heroes', function () {
     ]);
 });
 
-// Get complete Marvel Rivals heroes roster (29 heroes)
+// ==========================================
+// MARVEL RIVALS GAME DATA - ENHANCED FOR 6V6
+// ==========================================
+
+// Get complete Marvel Rivals heroes roster (29 heroes) - Updated for proper roles
 Route::get('/game-data/all-heroes', function () {
     $heroes = [
         // Vanguard (Tanks) - 8 heroes
@@ -331,9 +335,14 @@ Route::get('/game-data/all-heroes', function () {
         'data' => $heroes,
         'total' => count($heroes),
         'by_role' => [
-            'Vanguard' => array_filter($heroes, fn($h) => $h['role'] === 'Vanguard'),
-            'Duelist' => array_filter($heroes, fn($h) => $h['role'] === 'Duelist'),
-            'Strategist' => array_filter($heroes, fn($h) => $h['role'] === 'Strategist')
+            'Vanguard' => array_values(array_filter($heroes, fn($h) => $h['role'] === 'Vanguard')),
+            'Duelist' => array_values(array_filter($heroes, fn($h) => $h['role'] === 'Duelist')),
+            'Strategist' => array_values(array_filter($heroes, fn($h) => $h['role'] === 'Strategist'))
+        ],
+        'team_composition' => [
+            'recommended' => '2 Vanguards + 2 Duelists + 2 Strategists',
+            'total_players' => 6,
+            'format' => '6v6'
         ]
     ]);
 });
