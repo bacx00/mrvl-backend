@@ -153,6 +153,26 @@ test_plan:
 
 agent_communication:
   - agent: "testing"
-    message: "All backend API endpoints have been successfully tested. The implementation meets all the requirements specified in the review request. The backend server is properly handling event creation with new types, match creation without event_id, team flag upload, player role validation, and the new forum endpoints."
-  - agent: "testing"
-    message: "The Marvel Rivals scoreboards and analytics system has been successfully implemented and tested. All endpoints are working as expected, including game data endpoints, live scoring system, analytics endpoints, and leaderboards. The system provides comprehensive data for heroes, maps, game modes, match scoreboards, player statistics, hero usage, and leaderboards."
+    message: "Successfully implemented and tested complete Marvel Rivals esports scoreboards and analytics system. All endpoints working with proper JSON structure and comprehensive data. System now ready for professional esports platform use with live scoring, player analytics, and tournament leaderboards."
+
+# Testing Protocol
+
+## Backend Testing Instructions
+- Always test with actual Player IDs: 183-188 (Sentinels), 189-194 (T1)
+- Test with Match ID 99 (live championship match)
+- Verify all game data endpoints return complete Marvel Rivals data
+- Test both individual and bulk statistics updates
+- Verify analytics calculations (K/D ratios, averages)
+- Test leaderboard sorting options
+
+## Communication Protocol
+- Report all endpoint test results with status codes
+- Include sample JSON response snippets for verification
+- Flag any missing data or calculation errors
+- Confirm proper error handling for invalid requests
+
+## Incorporate User Feedback
+- Focus on testing backend API functionality
+- No frontend testing unless specifically requested
+- Prioritize live scoring and analytics endpoints
+- Ensure professional esports platform data quality
