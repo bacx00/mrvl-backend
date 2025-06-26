@@ -108,6 +108,18 @@ backend:
         agent: "testing"
         comment: "Successfully tested all leaderboard endpoints: /api/leaderboards/players, /api/leaderboards/players?sort_by=damage, and /api/leaderboards/teams. The endpoints return properly sorted data with all required fields."
 
+  - task: "Leaderboards System"
+    implemented: true
+    working: true
+    file: "/app/routes/api.php"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Player and team leaderboards working with multiple sorting options (K/D, damage, matches) and comprehensive ranking system"
+
 frontend:
   - task: "UI Integration"
     implemented: true
