@@ -2001,7 +2001,7 @@ Route::get('/matches/{matchId}/scoreboard', function (Request $request, $matchId
 });
 
 // Update player statistics during live match (Admin/Moderator only)
-Route::middleware(['auth:sanctum', 'role:admin,moderator'])->post('/matches/{matchId}/players/{playerId}/stats', function (Request $request, $matchId, $playerId) {
+Route::middleware(['auth:sanctum', 'role:admin|moderator'])->post('/matches/{matchId}/players/{playerId}/stats', function (Request $request, $matchId, $playerId) {
     try {
         $validated = $request->validate([
             'kills' => 'required|integer|min:0',
