@@ -574,7 +574,7 @@ Route::middleware(['auth:sanctum', 'role:admin|moderator|user'])->get('/user/pro
 });
 
 // Update User Profile  
-Route::middleware(['auth:sanctum', 'role:user'])->put('/user/profile', function (Request $request) {
+Route::middleware(['auth:sanctum', 'role:admin|moderator|user'])->put('/user/profile', function (Request $request) {
     try {
         $validated = $request->validate([
             'name' => 'sometimes|string|max:255',
