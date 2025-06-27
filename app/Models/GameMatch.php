@@ -13,7 +13,7 @@ class GameMatch extends Model
     protected $fillable = [
         'team1_id', 'team2_id', 'event_id', 'scheduled_at', 'status',
         'team1_score', 'team2_score', 'format', 'current_map', 'viewers',
-        'stream_url', 'maps_data', 'prize_pool'
+        'stream_url', 'maps_data', 'timer_data', 'prize_pool'
     ];
 
     protected $casts = [
