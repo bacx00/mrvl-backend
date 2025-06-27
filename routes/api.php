@@ -2576,7 +2576,7 @@ Route::get('/matches/{matchId}/scoreboard', function (Request $request, $matchId
                     'logo' => $match->team1_logo,
                     'score' => $match->team1_score ?? 0,
                     'players' => $team1Players->toArray(),
-                    'statistics' => $matchStats->get($match->team1_id, collect())->toArray()
+                    'statistics' => isset($matchStats[$match->team1_id]) ? $matchStats[$match->team1_id]->toArray() : []
                 ],
                 'team2' => [
                     'id' => $match->team2_id,
@@ -2585,7 +2585,7 @@ Route::get('/matches/{matchId}/scoreboard', function (Request $request, $matchId
                     'logo' => $match->team2_logo,
                     'score' => $match->team2_score ?? 0,
                     'players' => $team2Players->toArray(),
-                    'statistics' => $matchStats->get($match->team2_id, collect())->toArray()
+                    'statistics' => isset($matchStats[$match->team2_id]) ? $matchStats[$match->team2_id]->toArray() : []
                 ]
             ],
             'maps' => $match->maps_data ? json_decode($match->maps_data, true) : []
