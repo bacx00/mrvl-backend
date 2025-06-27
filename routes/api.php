@@ -4833,10 +4833,11 @@ Route::middleware(['auth:sanctum', 'role:admin|moderator'])->put('/admin/matches
             return response()->json(['success' => false, 'message' => 'Match not found'], 404);
         }
         
+        $mapIndex = $validated['map_index'];
+        
         // Update maps_data with new compositions using transaction
-        DB::transaction(function () use ($id, $validated, $match) {
+        DB::transaction(function () use ($id, $validated, $match, $mapIndex) {
             $mapsData = $match->maps_data ? json_decode($match->maps_data, true) : [];
-            $mapIndex = $validated['map_index'];
             
             if (isset($mapsData[$mapIndex])) {
                 if (isset($validated['team1_composition'])) {
