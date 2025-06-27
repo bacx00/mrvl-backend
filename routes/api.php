@@ -6407,32 +6407,35 @@ Route::middleware(['auth:sanctum', 'role:admin|moderator'])->put('/admin/matches
             'map_scores.*.status' => 'required_with:map_scores|string|in:upcoming,live,completed'
         ]);
         
-        // Update overall match scores
-        DB::table('matches')->where('id', $id)->update([
-            'team1_score' => $validated['team1_score'],
-            'team2_score' => $validated['team2_score'],
-            'updated_at' => now()
-        ]);
-        
-        // Update individual map scores if provided
-        if (isset($validated['map_scores'])) {
-            $match = DB::table('matches')->where('id', $id)->first();
-            $mapsData = $match->maps_data ? json_decode($match->maps_data, true) : [];
-            
-            foreach ($validated['map_scores'] as $mapScore) {
-                $mapIndex = $mapScore['map_index'];
-                if (isset($mapsData[$mapIndex])) {
-                    $mapsData[$mapIndex]['team1_score'] = $mapScore['team1_score'];
-                    $mapsData[$mapIndex]['team2_score'] = $mapScore['team2_score']; 
-                    $mapsData[$mapIndex]['status'] = $mapScore['status'];
-                }
-            }
-            
-            DB::table('matches')->where('id', $id)->update([
-                'maps_data' => json_encode($mapsData),
+        // Update scores with database transaction
+        DB::transaction(function () use ($id, $validated) {
+            // Update overall match scores with row locking
+            DB::table('matches')->where('id', $id)->lockForUpdate()->update([
+                'team1_score' => $validated['team1_score'],
+                'team2_score' => $validated['team2_score'],
                 'updated_at' => now()
             ]);
-        }
+            
+            // Update individual map scores if provided
+            if (isset($validated['map_scores'])) {
+                $match = DB::table('matches')->where('id', $id)->first();
+                $mapsData = $match->maps_data ? json_decode($match->maps_data, true) : [];
+                
+                foreach ($validated['map_scores'] as $mapScore) {
+                    $mapIndex = $mapScore['map_index'];
+                    if (isset($mapsData[$mapIndex])) {
+                        $mapsData[$mapIndex]['team1_score'] = $mapScore['team1_score'];
+                        $mapsData[$mapIndex]['team2_score'] = $mapScore['team2_score']; 
+                        $mapsData[$mapIndex]['status'] = $mapScore['status'];
+                    }
+                }
+                
+                DB::table('matches')->where('id', $id)->update([
+                    'maps_data' => json_encode($mapsData),
+                    'updated_at' => now()
+                ]);
+            }
+        });
         
         return response()->json([
             'success' => true,
