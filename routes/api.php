@@ -2502,14 +2502,17 @@ Route::middleware(['auth:sanctum', 'role:moderator'])->put('/moderator/matches/{
 // Get live match scoreboard for Match ID 99 (Sentinels vs T1)
 Route::get('/matches/{matchId}/scoreboard', function (Request $request, $matchId) {
     try {
-        // Get match with teams
+        // Force fresh data - no caching for live matches
+        DB::connection()->getPdo()->exec('SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED');
+        
+        // Get match with teams using FRESH database read
         $match = DB::table('matches as m')
             ->leftJoin('teams as t1', 'm.team1_id', '=', 't1.id')
             ->leftJoin('teams as t2', 'm.team2_id', '=', 't2.id')
             ->leftJoin('events as e', 'm.event_id', '=', 'e.id')
             ->select([
                 'm.id', 'm.status', 'm.team1_score', 'm.team2_score', 'm.current_map', 'm.viewers',
-                'm.format', 'm.scheduled_at', 'm.maps_data',
+                'm.format', 'm.scheduled_at', 'm.maps_data', 'm.updated_at',
                 't1.id as team1_id', 't1.name as team1_name', 't1.short_name as team1_short', 't1.logo as team1_logo',
                 't2.id as team2_id', 't2.name as team2_name', 't2.short_name as team2_short', 't2.logo as team2_logo',
                 'e.name as event_name', 'e.type as event_type'
