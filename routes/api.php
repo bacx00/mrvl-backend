@@ -4782,6 +4782,256 @@ Route::middleware(['auth:sanctum', 'role:admin|moderator'])->put('/admin/matches
     }
 });
 
+// ==========================================
+// LIVE SCORING ADMIN ENDPOINTS - REAL-TIME UPDATES
+// ==========================================
+
+// Update Match Status (Live/Upcoming/Completed)
+Route::middleware(['auth:sanctum', 'role:admin|moderator'])->put('/admin/matches/{id}/status', function (Request $request, $id) {
+    try {
+        $validated = $request->validate([
+            'status' => 'required|string|in:upcoming,live,paused,completed,cancelled'
+        ]);
+        
+        DB::table('matches')->where('id', $id)->update([
+            'status' => $validated['status'],
+            'updated_at' => now()
+        ]);
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Match status updated successfully',
+            'data' => ['status' => $validated['status']]
+        ]);
+        
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error updating match status: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// Update Team Composition (Heroes) for Live Match
+Route::middleware(['auth:sanctum', 'role:admin|moderator'])->put('/admin/matches/{id}/team-composition', function (Request $request, $id) {
+    try {
+        $validated = $request->validate([
+            'map_index' => 'required|integer|min:0',
+            'team1_composition' => 'sometimes|array',
+            'team1_composition.*.player_id' => 'required_with:team1_composition|integer',
+            'team1_composition.*.hero' => 'required_with:team1_composition|string',
+            'team1_composition.*.role' => 'required_with:team1_composition|string',
+            'team2_composition' => 'sometimes|array',
+            'team2_composition.*.player_id' => 'required_with:team2_composition|integer',
+            'team2_composition.*.hero' => 'required_with:team2_composition|string',
+            'team2_composition.*.role' => 'required_with:team2_composition|string'
+        ]);
+        
+        // Get current match
+        $match = DB::table('matches')->where('id', $id)->first();
+        if (!$match) {
+            return response()->json(['success' => false, 'message' => 'Match not found'], 404);
+        }
+        
+        // Update maps_data with new compositions
+        $mapsData = $match->maps_data ? json_decode($match->maps_data, true) : [];
+        $mapIndex = $validated['map_index'];
+        
+        if (isset($mapsData[$mapIndex])) {
+            if (isset($validated['team1_composition'])) {
+                $mapsData[$mapIndex]['team1_composition'] = $validated['team1_composition'];
+            }
+            if (isset($validated['team2_composition'])) {
+                $mapsData[$mapIndex]['team2_composition'] = $validated['team2_composition'];
+            }
+            
+            DB::table('matches')->where('id', $id)->update([
+                'maps_data' => json_encode($mapsData),
+                'updated_at' => now()
+            ]);
+        }
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Team composition updated successfully',
+            'data' => ['map_index' => $mapIndex, 'updated_compositions' => $validated]
+        ]);
+        
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error updating team composition: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// Update Current Map and Mode
+Route::middleware(['auth:sanctum', 'role:admin|moderator'])->put('/admin/matches/{id}/current-map', function (Request $request, $id) {
+    try {
+        $validated = $request->validate([
+            'current_map' => 'required|string',
+            'current_mode' => 'sometimes|string',
+            'map_index' => 'sometimes|integer|min:0'
+        ]);
+        
+        $updateData = [
+            'current_map' => $validated['current_map'],
+            'updated_at' => now()
+        ];
+        
+        DB::table('matches')->where('id', $id)->update($updateData);
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Current map updated successfully',
+            'data' => $validated
+        ]);
+        
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error updating current map: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// Update Match Timer/Duration
+Route::middleware(['auth:sanctum', 'role:admin|moderator'])->put('/admin/matches/{id}/timer', function (Request $request, $id) {
+    try {
+        $validated = $request->validate([
+            'action' => 'required|string|in:start,pause,resume,stop,sync',
+            'elapsed_time' => 'sometimes|integer|min:0', // seconds
+            'round_time' => 'sometimes|integer|min:0',
+            'phase' => 'sometimes|string|in:warmup,round,overtime,break'
+        ]);
+        
+        // Store timer state in a JSON field or separate table
+        $timerData = [
+            'action' => $validated['action'],
+            'elapsed_time' => $validated['elapsed_time'] ?? 0,
+            'round_time' => $validated['round_time'] ?? 0,
+            'phase' => $validated['phase'] ?? 'round',
+            'timestamp' => now()->toISOString(),
+            'updated_at' => now()
+        ];
+        
+        // For now, store in matches table - could be moved to separate match_timer table
+        DB::table('matches')->where('id', $id)->update([
+            'timer_data' => json_encode($timerData),
+            'updated_at' => now()
+        ]);
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Timer updated successfully',
+            'data' => $timerData
+        ]);
+        
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error updating timer: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// Get Complete Live State for Admin Dashboard
+Route::middleware(['auth:sanctum', 'role:admin|moderator'])->get('/admin/matches/{id}/live-state', function (Request $request, $id) {
+    try {
+        // Get match with all related data
+        $match = DB::table('matches as m')
+            ->leftJoin('teams as t1', 'm.team1_id', '=', 't1.id')
+            ->leftJoin('teams as t2', 'm.team2_id', '=', 't2.id')
+            ->leftJoin('events as e', 'm.event_id', '=', 'e.id')
+            ->select([
+                'm.*',
+                't1.name as team1_name', 't1.logo as team1_logo', 't1.flag as team1_flag',
+                't2.name as team2_name', 't2.logo as team2_logo', 't2.flag as team2_flag',
+                'e.name as event_name', 'e.type as event_type'
+            ])
+            ->where('m.id', $id)
+            ->first();
+
+        if (!$match) {
+            return response()->json(['success' => false, 'message' => 'Match not found'], 404);
+        }
+
+        // Get team players with current stats
+        $team1Players = DB::table('players')
+            ->select(['id', 'name', 'username', 'role', 'main_hero', 'avatar', 'country'])
+            ->where('team_id', $match->team1_id)
+            ->get();
+
+        $team2Players = DB::table('players')
+            ->select(['id', 'name', 'username', 'role', 'main_hero', 'avatar', 'country'])
+            ->where('team_id', $match->team2_id)
+            ->get();
+
+        // Get current player stats
+        $playerStats = [];
+        try {
+            $stats = DB::table('player_match_stats')
+                ->where('match_id', $id)
+                ->get()
+                ->keyBy('player_id');
+            $playerStats = $stats->toArray();
+        } catch (\Exception $e) {
+            // Table might not exist
+        }
+
+        $liveState = [
+            'match' => [
+                'id' => $match->id,
+                'status' => $match->status,
+                'current_map' => $match->current_map,
+                'team1_score' => $match->team1_score,
+                'team2_score' => $match->team2_score,
+                'format' => $match->format,
+                'timer_data' => $match->timer_data ?? null,
+                'viewers' => $match->viewers ?? 0,
+                'stream_url' => $match->stream_url
+            ],
+            'teams' => [
+                'team1' => [
+                    'id' => $match->team1_id,
+                    'name' => $match->team1_name,
+                    'logo' => $match->team1_logo,
+                    'flag' => $match->team1_flag,
+                    'players' => $team1Players->toArray()
+                ],
+                'team2' => [
+                    'id' => $match->team2_id,
+                    'name' => $match->team2_name,
+                    'logo' => $match->team2_logo,
+                    'flag' => $match->team2_flag,
+                    'players' => $team2Players->toArray()
+                ]
+            ],
+            'maps' => $match->maps_data ? json_decode($match->maps_data, true) : [],
+            'player_stats' => $playerStats,
+            'event' => [
+                'name' => $match->event_name,
+                'type' => $match->event_type
+            ],
+            'last_updated' => $match->updated_at
+        ];
+
+        return response()->json([
+            'success' => true,
+            'data' => $liveState
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error fetching live state: ' . $e->getMessage()
+        ], 500);
+    }
+});
+        ], 500);
+    }
+});
+
 // Marvel Heroes Database (Enhanced)
 Route::get('/heroes', function (Request $request) {
     try {
