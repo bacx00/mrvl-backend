@@ -6393,10 +6393,10 @@ Route::middleware(['auth:sanctum', 'role:admin|moderator'])->put('/admin/matches
             'map_scores.*.status' => 'required_with:map_scores|string|in:upcoming,live,completed'
         ]);
         
-        // Update scores with database transaction
+        // Update scores with database transaction  
         DB::transaction(function () use ($id, $validated) {
-            // Update overall match scores with row locking
-            DB::table('matches')->where('id', $id)->lockForUpdate()->update([
+            // Update overall match scores
+            DB::table('matches')->where('id', $id)->update([
                 'team1_score' => $validated['team1_score'],
                 'team2_score' => $validated['team2_score'],
                 'updated_at' => now()
