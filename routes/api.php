@@ -4834,20 +4834,14 @@ Route::middleware(['auth:sanctum', 'role:admin|moderator'])->put('/admin/matches
             'team2_composition.*.role' => 'required_with:team2_composition|string'
         ]);
         
-        // Get current match
+        // Get current match first
         $match = DB::table('matches')->where('id', $id)->first();
         if (!$match) {
             return response()->json(['success' => false, 'message' => 'Match not found'], 404);
         }
         
-        // Update maps_data with new compositions
-        DB::transaction(function () use ($id, $validated) {
-            // Get FRESH match data within transaction
-            $match = DB::table('matches')->where('id', $id)->lockForUpdate()->first();
-            if (!$match) {
-                throw new \Exception('Match not found');
-            }
-            
+        // Update maps_data with new compositions using transaction
+        DB::transaction(function () use ($id, $validated, $match) {
             $mapsData = $match->maps_data ? json_decode($match->maps_data, true) : [];
             $mapIndex = $validated['map_index'];
             
@@ -4859,7 +4853,6 @@ Route::middleware(['auth:sanctum', 'role:admin|moderator'])->put('/admin/matches
                     $mapsData[$mapIndex]['team2_composition'] = $validated['team2_composition'];
                 }
                 
-                // Update with row-level locking to prevent race conditions
                 DB::table('matches')->where('id', $id)->update([
                     'maps_data' => json_encode($mapsData),
                     'updated_at' => now()
