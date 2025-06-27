@@ -4834,22 +4834,31 @@ Route::middleware(['auth:sanctum', 'role:admin|moderator'])->put('/admin/matches
         }
         
         // Update maps_data with new compositions
-        $mapsData = $match->maps_data ? json_decode($match->maps_data, true) : [];
-        $mapIndex = $validated['map_index'];
-        
-        if (isset($mapsData[$mapIndex])) {
-            if (isset($validated['team1_composition'])) {
-                $mapsData[$mapIndex]['team1_composition'] = $validated['team1_composition'];
-            }
-            if (isset($validated['team2_composition'])) {
-                $mapsData[$mapIndex]['team2_composition'] = $validated['team2_composition'];
+        DB::transaction(function () use ($id, $validated) {
+            // Get FRESH match data within transaction
+            $match = DB::table('matches')->where('id', $id)->lockForUpdate()->first();
+            if (!$match) {
+                throw new \Exception('Match not found');
             }
             
-            DB::table('matches')->where('id', $id)->update([
-                'maps_data' => json_encode($mapsData),
-                'updated_at' => now()
-            ]);
-        }
+            $mapsData = $match->maps_data ? json_decode($match->maps_data, true) : [];
+            $mapIndex = $validated['map_index'];
+            
+            if (isset($mapsData[$mapIndex])) {
+                if (isset($validated['team1_composition'])) {
+                    $mapsData[$mapIndex]['team1_composition'] = $validated['team1_composition'];
+                }
+                if (isset($validated['team2_composition'])) {
+                    $mapsData[$mapIndex]['team2_composition'] = $validated['team2_composition'];
+                }
+                
+                // Update with row-level locking to prevent race conditions
+                DB::table('matches')->where('id', $id)->update([
+                    'maps_data' => json_encode($mapsData),
+                    'updated_at' => now()
+                ]);
+            }
+        });
         
         return response()->json([
             'success' => true,
