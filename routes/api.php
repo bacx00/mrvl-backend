@@ -5028,9 +5028,6 @@ Route::middleware(['auth:sanctum', 'role:admin|moderator'])->get('/admin/matches
         ], 500);
     }
 });
-        ], 500);
-    }
-});
 
 // Marvel Heroes Database (Enhanced)
 Route::get('/heroes', function (Request $request) {
