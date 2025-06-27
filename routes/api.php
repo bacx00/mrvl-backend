@@ -2533,19 +2533,25 @@ Route::get('/matches/{matchId}/scoreboard', function (Request $request, $matchId
             ->get();
 
         // Get match statistics for players (if any exist in match_player pivot)
-        $matchStats = DB::table('match_player')
-            ->leftJoin('players', 'match_player.player_id', '=', 'players.id')
-            ->select([
-                'match_player.*',
-                'players.name as player_name',
-                'players.username',
-                'players.role',
-                'players.main_hero',
-                'players.team_id'
-            ])
-            ->where('match_player.match_id', $matchId)
-            ->get()
-            ->groupBy('team_id');
+        $matchStats = [];
+        try {
+            $matchStats = DB::table('match_player')
+                ->leftJoin('players', 'match_player.player_id', '=', 'players.id')
+                ->select([
+                    'match_player.*',
+                    'players.name as player_name',
+                    'players.username',
+                    'players.role',
+                    'players.main_hero',
+                    'players.team_id'
+                ])
+                ->where('match_player.match_id', $matchId)
+                ->get()
+                ->groupBy('team_id');
+        } catch (\Exception $e) {
+            // Table might not exist yet, continue without match statistics
+            $matchStats = [];
+        }
 
         // Format response
         $scoreboard = [
