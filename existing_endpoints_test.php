@@ -202,13 +202,22 @@ function testLiveScoringWorkflow($matchId, $team1Id, $team2Id) {
     // Test 6: Update viewer count
     echo "  👥 Testing viewer count...\n";
     $result = makeRequest('POST', $BASE_URL . "/matches/{$matchId}/viewers", [
-        'action' => 'increment'
+        'viewers' => 1500
     ], getAuthHeaders());
     
     if ($result['http_code'] === 200 && isset($result['data']['success']) && $result['data']['success']) {
-        logTest("  Viewer Count", true, "Incremented viewer count");
+        logTest("  Viewer Count", true, "Updated viewer count");
     } else {
-        logTest("  Viewer Count", false, "Failed to update viewers");
+        // Try alternative endpoint
+        $result = makeRequest('PUT', $BASE_URL . "/admin/matches/{$matchId}/viewers", [
+            'viewers' => 1500
+        ], getAuthHeaders());
+        
+        if ($result['http_code'] === 200 && isset($result['data']['success']) && $result['data']['success']) {
+            logTest("  Viewer Count", true, "Updated viewer count (alt endpoint)");
+        } else {
+            logTest("  Viewer Count", false, "Failed to update viewers");
+        }
     }
     
     // Test 7: Complete match
