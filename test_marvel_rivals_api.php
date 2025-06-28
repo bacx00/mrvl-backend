@@ -25,6 +25,30 @@ $test_results = [
     'failure' => []
 ];
 
+// Function to test basic connectivity
+function testConnection() {
+    global $BASE_URL;
+    
+    echo "🔗 Testing connection to: {$BASE_URL}\n";
+    
+    // Try a simple GET request to check if server is reachable
+    $result = makeRequest('GET', $BASE_URL . "/health");
+    
+    if (isset($result['error'])) {
+        echo "❌ Connection failed: " . $result['error'] . "\n";
+        return false;
+    }
+    
+    echo "✅ Server reachable - HTTP {$result['http_code']}\n";
+    
+    // Check if it's a Laravel app
+    if ($result['http_code'] === 404) {
+        echo "ℹ️  /health endpoint not found (this is normal)\n";
+    }
+    
+    return true;
+}
+
 // Function to log test results
 function logTest($name, $success, $message = '') {
     global $test_results;
