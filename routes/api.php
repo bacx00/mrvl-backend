@@ -6397,6 +6397,11 @@ Route::middleware(['auth:sanctum', 'role:admin|moderator'])->put('/admin/matches
         // Update scores with database transaction and PROPER AGGREGATION
         DB::transaction(function () use ($id, $validated) {
             $match = DB::table('matches')->where('id', $id)->first();
+            
+            if (!$match) {
+                throw new \Exception('Match not found');
+            }
+            
             $mapsData = $match->maps_data ? json_decode($match->maps_data, true) : [];
             
             // Update individual map scores if provided
@@ -6411,22 +6416,27 @@ Route::middleware(['auth:sanctum', 'role:admin|moderator'])->put('/admin/matches
                 }
             }
             
-            // CRITICAL: Calculate overall match scores from MAP WINS
+            // CRITICAL: Calculate overall match scores from MAP WINS (with null safety)
             $team1_total = 0;
             $team2_total = 0;
             $completed_maps = 0;
             $total_maps = count($mapsData);
             
-            foreach ($mapsData as $map) {
-                if (isset($map['status']) && $map['status'] === 'completed') {
-                    $completed_maps++;
-                    // Winner takes the map (1 point)
-                    if ($map['team1_score'] > $map['team2_score']) {
-                        $team1_total++;
-                    } elseif ($map['team2_score'] > $map['team1_score']) {
-                        $team2_total++;
+            if ($total_maps > 0) {
+                foreach ($mapsData as $map) {
+                    if (isset($map['status']) && $map['status'] === 'completed') {
+                        $completed_maps++;
+                        // Winner takes the map (1 point)
+                        $map1_score = isset($map['team1_score']) ? $map['team1_score'] : 0;
+                        $map2_score = isset($map['team2_score']) ? $map['team2_score'] : 0;
+                        
+                        if ($map1_score > $map2_score) {
+                            $team1_total++;
+                        } elseif ($map2_score > $map1_score) {
+                            $team2_total++;
+                        }
+                        // Ties don't award points
                     }
-                    // Ties don't award points
                 }
             }
             
