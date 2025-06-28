@@ -1,79 +1,91 @@
 <analysis>
-The previous AI engineer's work primarily focused on stabilizing a Laravel 11 Marvel Rivals esports backend. Initial efforts involved battling  corruption and populating the database with core entities (events, teams, players, matches) via  due to API issues and schema mismatches. A significant challenge was ensuring Laravel route caching and service restarts correctly reflected code changes on the staging environment. The engineer successfully built and deployed a comprehensive scoreboards, player analytics, hero usage, and leaderboard system. However, the trajectory concludes with persistent  and  for newly added  routes for live viewer and aggregated match statistics, indicating further debugging is needed related to database schema compatibility and route implementation for these specific endpoints. The core game data, scoreboards, and GET analytics/leaderboard endpoints are functional.
+The previous AI engineer developed a Laravel 11 backend for a Marvel Rivals esports platform, focusing on HLTV.org-like features. Initially, efforts were directed at resolving  and  issues for core  endpoints, primarily by correcting middleware syntax and clearing cache. A significant phase involved adapting the backend for Marvel Rivals' 6v6 format, updating team sizes and adding new statistics, though an  issue for player roles persisted.
+
+Subsequent work focused on implementing a comprehensive suite of features like Team Management, Tournament Brackets, Predictions, VODs, Fantasy Leagues, and an Achievement System, along with extensive API documentation. However, testing revealed  errors for many new features on the staging server, indicating deployment synchronization issues. The core work in the provided trajectory revolved around debugging and fixing backend data consistency issues, specifically related to match creation, scoreboard data, live scoring, player statistics persistence, and proper team/player role management. The process involved iterative testing via , , and direct database checks, identifying persistent problems like the  table not being correctly utilized and the ENUM roles. By the end, most of the specific data persistence and consistency issues for a known match ID (135) were resolved, including comprehensive live scoring, auto-calculated scores, and player statistics. However, the user's final feedback indicated a deeper concern about the system's fundamental robustness for *any* fresh match and the complete lifecycle (BO3/BO5, history, etc.), suggesting the need for a more holistic, generic solution rather than isolated fixes.
 </analysis>
 
 <product_requirements>
-The goal is to develop a Laravel 11 backend for a Marvel Rivals esports platform, aiming for features akin to HLTV.org. Core requirements include user authentication (multi-role), comprehensive Marvel Heroes data, news, forums, and an admin dashboard with real-time statistics. Initial challenges involved resolving  corruption and  on match updates. The platform expanded to require robust match management (create, update, pause, complete), live scoring with granular hero/player statistics (eliminations, deaths, assists, damage, healing, damage blocked), accurate country data, advanced analytics (K/D, performance, hero usage), tournament leaderboards, and match search/filtering. The system necessitates seamless data flow for a professional esports experience. Currently, all game data (heroes, maps, modes) is available, and core entities like events (ID 21), teams (Sentinels ID 87, T1 Marvel ID 86, test1 ID 83, test2 ID 84), and players (IDs 169-180 for test teams; IDs 183-194 for Sentinels/T1) are populated. A championship match (ID 99) and a test match (ID 97) are established in the database, with Match 97 specifically targeted for frontend integration.
+The primary objective is to develop a Laravel 11 backend for a Marvel Rivals esports platform, emulating HLTV.org functionality. This encompasses multi-role user authentication (Admin, Moderator, User), comprehensive game data (heroes, maps, modes), news, forums, and an admin dashboard with real-time statistics.
+
+Key implemented and required features include:
+*   **Core Match Management**: Create, update, pause, and complete matches.
+*   **Live Scoring**: Granular player statistics (eliminations, deaths, assists, damage, healing, damage blocked, ultimate usage, objective time) with real-time updates.
+*   **Real-time Viewer Tracking**: Update and retrieve live viewer counts.
+*   **Analytics & Leaderboards**: Individual player performance, hero usage, team, and player rankings.
+*   **Game Data**: Full roster of 29 Marvel Rivals heroes with roles (Vanguard, Duelist, Strategist), 10 maps, and 4 game modes.
+*   **6v6 Match Support**: Expanded player slots (6 per team) and adapted APIs.
+*   **Tournament Features**: BO1, BO3, BO5 series support with map rotation, and a comprehensive tournament bracket system.
+*   **Community & Engagement**: News moderation, user rankings/reputation, voting system for forums/comments, user profile pictures (using hero images), and forum participation.
+*   **Advanced Features**: Team management (roster, player transfers), match predictions & betting, VOD system (replays, highlights), fantasy leagues, and an advanced achievement system.
+*   **Critical Operational Need**: The live scoring system must provide **instant data consistency** for any new match, ensuring that all admin updates (scores, heroes, maps, timers, player stats) reflect immediately on public-facing pages, are saved for historical archives, and integrate properly with player/team profiles. This includes handling complex match formats like BO3 and BO5 with seamless map transitions and persistent data across admin navigation.
 </product_requirements>
 
 <key_technical_concepts>
--   **Laravel 11 & PHP:** Primary backend framework for API development.
--   **MySQL:** Relational database for storing all application data.
--   **Laravel Sanctum:** Handles API authentication with bearer tokens.
--   **RESTful API Endpoints:** For data retrieval and manipulation.
--   **JSON Data Storage:** Utilized for flexible data structures in database columns (e.g., , ).
--   **Laravel Artisan Tinker:** Command-line tool for direct database interaction and debugging.
--   **Schema Debugging:** Process of identifying and resolving database column mismatches and constraints.
--   **Route Caching:** Laravel's mechanism for optimizing route loading, often requiring  and service restarts.
+-   **Laravel 11 & PHP**: Core backend framework.
+-   **MySQL**: Relational database for data storage.
+-   **Laravel Sanctum**: API authentication.
+-   **RESTful API Endpoints**: Extensive use for all features.
+-   **JSON Data Storage**: Flexible  and  fields.
+-   **Laravel Artisan Tinker**: Direct database interaction and debugging.
+-   **Database Migrations**: Schema management and ENUM type updates.
+-   **Laravel Middleware**: Role-based access control (, ).
+-   **Database Transactions**: Ensuring data consistency (ACID properties) with .
 </key_technical_concepts>
 
 <code_architecture>
 
 
 -   ****:
-    *   **Summary of importance**: This file is critical as it defines all API routes, controlling access to data and functionality. Its stability and correct configuration are paramount for the application's functionality.
-    *   **Summary of changes**: This file has been a consistent point of failure due to corruption and syntax errors.
-        *   Initially, it was prone to corruption and  errors due to various issues, often requiring .
-        *   It was updated to include comprehensive game data endpoints:
-            *   : Returns a basic list of 5 heroes.
-            *   : Returns the full roster of 29 heroes with roles/types.
-            *   : Returns a list of 10 official maps.
-            *   : Returns a list of 4 game modes.
-        *   Significant additions were made to implement scoreboards, analytics, and live match management:
-            *   : Fetches detailed live scoreboard data for a given match, including team and player rosters, and potentially statistics.
-            *   : Endpoint to update individual player statistics (kills, deaths, assists, damage, healing, damage blocked) during a live match.
-            *   : Designed for bulk updates of player statistics.
-            *   : Endpoint for authorized users to update match status.
-            *   : Retrieves individual player performance statistics and match history. This route experienced  and was simplified to return basic player info and empty stats for stability.
-            *   : Provides aggregated statistics on hero pick rates, total kills/deaths, and average damage. This route also experienced  and was simplified, currently returning empty data.
-            *   : Returns a list of player rankings based on various metrics.
-            *   : Returns a list of team rankings.
-            *   : Designed to update live viewer counts from streaming platforms. Currently returning .
-            *   : Retrieves real-time viewer data, including current count, peak viewers, and milestones. This route works, returning empty viewer data initially.
-            *   : Intended to trigger post-match aggregation of player and team statistics for profiles. Currently returning .
-            *   : To finalize a match, record the winner, final score, duration, and MVP. Currently returning .
-        *   Repeated fixes for syntax errors (e.g., unmatched  and duplicate  imports) were performed in this file.
+    *   **Summary of importance**: This is the central file defining nearly all backend API routes. It dictates how data is received, processed, and returned for the entire application, especially for match management and live scoring.
+    *   **Summary of changes**:
+        *   **Initial Fixes**: Resolved  and  for , ,  by simplifying database updates and fixing middleware authentication syntax (e.g., ).
+        *   **Match Creation Enhancement**: Updated  to properly validate and store  (including , , , ) and automatically set  from the first map entry.
+        *   **Scoreboard Endpoint Refinement**: Modified  to gracefully handle the absence of the  table and correctly retrieve  and overall scores. Also added  headers for preventing stale data.
+        *   **New Live Scoring Endpoints**:
+            *   : To update match status (, , , ).
+            *   : To update hero lineups (, ) for a specific .
+            *   : To update the  and .
+            *   : To manage match timers (, , , ) with  and .
+            *   : A comprehensive endpoint to fetch all live match data, including detailed team, player, map, and timer information, used for admin dashboards.
+            *   : To update overall  and , with logic to auto-aggregate these from  (wins on individual maps), and auto-update match  when all maps are completed.
+            *   : To update individual player statistics (eliminations, deaths, assists, damage, healing, , ultimate_usage, objective_time, hero_played, current_map). Includes error handling for a potentially missing  table.
+            *   : To retrieve individual player statistics.
+            *   : To retrieve all player statistics for a given match.
+        *   **Database Consistency**: Implemented  with appropriate error handling in update endpoints (, , ) to ensure atomic operations and data freshness.
+        *   **Syntax Fixes**: Corrected several PHP syntax errors that appeared during development.
 
--   **Database Schema ()**:
-    *   ** table**: Stores event details (, , , , , , , ). Event ID 21 and 20 are present.
-    *   ** table**: Stores team information (uid=0(root) gid=0(root) groups=0(root), , , , , , , , , , , , , , , , , , , , , ). Teams 83 (test1), 84 (test2), 86 (T1 Marvel), and 87 (Sentinels Marvel Esports) are populated.
-    *   ** table**: Stores player data (uid=0(root) gid=0(root) groups=0(root), , , , , , , , , , , , , , , , , , ). Players 169-180 (for test1/test2) and 183-194 (for Sentinels/T1) are populated.
-    *   ** table**: Stores match details (uid=0(root) gid=0(root) groups=0(root), , , , , , , , , , , ,  (JSON), , , ,  (JSON),  (JSON)). Matches 97 (upcoming) and 99 (live) are populated.
-    *   ** (pivot table)**: Expected to store player-specific statistics per match (kills, deaths, assists, damage, healing, damage_blocked, hero_played). This table is the target for  and analytics.
+-   ****:
+    *   **Summary of importance**: This Eloquent model defines the structure and behavior of  data in the database.
+    *   **Summary of changes**:
+        *   Updated  array to include new fields like  and .
+        *   Updated  array to correctly cast  and  as  (JSON).
+
+-   ****:
+    *   **Summary of importance**: These files define schema changes for the MySQL database.
+    *   **Summary of changes**:
+        *   : Added a  column  to the  table.
+        *   : Created the  table to store granular player performance data for each match.
+        *   : A migration specifically designed to safely update existing player  data in the  table from old values (, , ) to the new Marvel Rivals-specific roles (, , ) *before* altering the ENUM definition.
+        *   : Altered the  column in the  table to use the new ENUM values: .
+
+-   ****:
+    *   **Summary of importance**: Serves as the primary documentation for the backend API.
+    *   **Summary of changes**: Continuously updated to reflect new endpoints, request/response structures, and authentication requirements for all implemented features, aiming for 100% feature completion.
 </code_architecture>
 
 <pending_tasks>
--   Further robust implementation of  to correctly update live viewer counts and related analytics.
--   Debugging and fixing the  on  to ensure player and team profiles are updated post-match.
--   Debugging and fixing the  endpoint which currently returns .
--   Ensuring  works without errors after all new routes are integrated and stable.
--   Populating or simulating data for player/hero statistics to enable non-empty responses from analytics endpoints ( and ).
+-   The user's final feedback highlights a perceived bottleneck: ensuring the live scoring system is robust and provides instant data consistency for *any* newly created match, not just specific, previously debugged match IDs (like 135).
+-   Specifically, this implies re-verification of the entire live scoring workflow (match creation, status updates, map transitions, hero changes, score aggregation, player stats, timer) with *freshly created matches* to ensure general reliability and persistence for BO1, BO3, and BO5 formats, including proper archival to team/player profiles.
 </pending_tasks>
 
 <current_work>
-Immediately before this summary, the AI engineer was engaged in debugging the newly implemented API endpoints for advanced match metrics and viewer management. Specifically, the focus was on resolving  for  and , and a  error for .
+Immediately before this summary, the AI engineer was engaged in a critical debugging session focused on backend data consistency for the live scoring system. Although extensive testing with a specific  had confirmed that player statistics, score aggregation, hero composition updates, and timer synchronization were working perfectly and providing instant data consistency from the backend's perspective, the user raised a fundamental concern.
 
-The preceding work successfully established:
-1.  **Core Game Data Endpoints**: , , ,  are all functional and return correct JSON.
-2.  **Match Scoreboards**: The  endpoint is fully functional, confirmed to work for Match ID 97 (test1 vs test2) and correctly displays player rosters for both teams.
-3.  **Player Analytics (GET)**: The  endpoint is now working for players like ID 169 and 176, returning player info and an  object, though  and ,  etc. are currently zero as no match player statistics have been successfully recorded yet.
-4.  **Hero Usage Analytics (GET)**: The  endpoint is functional, but currently returns empty  and  with a message No match data available yet, indicating data needs to be fed.
-5.  **Leaderboards**:  and  are fully functional.
-6.  **Viewer Analytics (GET)**:  is functional but shows zero viewers/peak viewers, as no viewer data has been successfully posted.
+The user articulated that the system needs to provide fresh data, with fresh connection with no hardcoded solutions, emphasizing the requirement for the backend to work reliably for *any* newly created match, not just debugged instances. The user explicitly stated, We need to make sure that when we put live the match, the maps scoreboard and players scoreboards when we update them in livescoring panel it reflects inmediately in matchdetailpage. We are testing BO1. But when we do BO3 and BO5 we need to make sure we pause or the exchange to another maps, with new heroes new scoreboards. same for BO5. and once we complete that it has to be saved for history. and attached into teams and players profile.
 
-The  file was updated to include all these new endpoints, and several syntax errors (duplicate  import, unmatched ) were identified and fixed during this debugging phase. The last message indicates a persistent  when trying to  data to the  endpoint, and the AI engineer is about to make the route more robust to handle potential database column issues.
+The AI engineer acknowledged this as the real bottleneck, recognizing that while specific fixes for Match 135 were successful, the underlying issue might be a general lack of robustness in the core backend data persistence for a complete, end-to-end live scoring workflow across different match formats (BO1, BO3, BO5) and their lifecycles. This implies a need to go beyond isolated API endpoint testing to ensure a seamless data flow from match creation through completion and archival for all match types. The very last message confirms this understanding and proposes to start by creating a fresh test match and systematically fixing core persistence issues.
 </current_work>
 
 <optional_next_step>
-Fix the 500 Server Error on the  route to ensure it robustly handles viewer data updates.
+Create a completely fresh match and systematically fix and verify each backend persistence issue throughout its entire live scoring lifecycle.
 </optional_next_step>
