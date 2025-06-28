@@ -1,4 +1,5 @@
-from fastapi import FastAPI, HTTPException, Depends, UploadFile, File, Form, Query
+# Import necessary libraries
+from fastapi import FastAPI, HTTPException, Depends, UploadFile, File, Form, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel
@@ -9,6 +10,8 @@ import os
 import json
 from uuid import uuid4
 import random
+import httpx
+import asyncio
 
 # Initialize FastAPI app
 app = FastAPI(title="Marvel Rivals Esports Platform API")
