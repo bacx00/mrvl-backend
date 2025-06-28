@@ -733,26 +733,32 @@ function testGameDataEndpoints() {
     
     // Test heroes endpoint
     $result = makeRequest('GET', $BASE_URL . "/game-data/heroes");
-    if ($result['http_code'] === 200 && $result['data']['success']) {
+    if (isset($result['error'])) {
+        logTest("Game Data - Heroes", false, "Connection error: " . $result['error']);
+    } else if ($result['http_code'] === 200 && isset($result['data']['success']) && $result['data']['success']) {
         logTest("Game Data - Heroes", true, "Successfully retrieved heroes data");
     } else {
-        logTest("Game Data - Heroes", false, "Failed to retrieve heroes data");
+        logTest("Game Data - Heroes", false, "HTTP {$result['http_code']}: " . ($result['data']['message'] ?? 'Unknown error'));
     }
     
     // Test maps endpoint
     $result = makeRequest('GET', $BASE_URL . "/game-data/maps");
-    if ($result['http_code'] === 200 && $result['data']['success']) {
+    if (isset($result['error'])) {
+        logTest("Game Data - Maps", false, "Connection error: " . $result['error']);
+    } else if ($result['http_code'] === 200 && isset($result['data']['success']) && $result['data']['success']) {
         logTest("Game Data - Maps", true, "Successfully retrieved maps data");
     } else {
-        logTest("Game Data - Maps", false, "Failed to retrieve maps data");
+        logTest("Game Data - Maps", false, "HTTP {$result['http_code']}: " . ($result['data']['message'] ?? 'Unknown error'));
     }
     
     // Test modes endpoint
     $result = makeRequest('GET', $BASE_URL . "/game-data/modes");
-    if ($result['http_code'] === 200 && $result['data']['success']) {
+    if (isset($result['error'])) {
+        logTest("Game Data - Modes", false, "Connection error: " . $result['error']);
+    } else if ($result['http_code'] === 200 && isset($result['data']['success']) && $result['data']['success']) {
         logTest("Game Data - Modes", true, "Successfully retrieved game modes data");
     } else {
-        logTest("Game Data - Modes", false, "Failed to retrieve game modes data");
+        logTest("Game Data - Modes", false, "HTTP {$result['http_code']}: " . ($result['data']['message'] ?? 'Unknown error'));
     }
 }
 
