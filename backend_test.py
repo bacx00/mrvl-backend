@@ -1291,6 +1291,46 @@ def run_all_tests():
     if match_id:
         test_scoreboard_with_maps_data(match_id)
     
+    # Professional Live Scoring System Tests
+    print("\n=== Testing Professional Live Scoring System ===")
+    
+    # Create a competitive match
+    bo3_match_id = test_create_competitive_match()
+    
+    if bo3_match_id:
+        # Test timer management
+        test_timer_management(bo3_match_id)
+        
+        # Test team composition
+        test_team_composition(bo3_match_id)
+        
+        # Test player stats update
+        test_player_stats_update(bo3_match_id)
+        
+        # Test bulk player stats update
+        test_bulk_player_stats_update(bo3_match_id)
+        
+        # Test live scoreboard
+        test_live_scoreboard(bo3_match_id)
+        
+        # Test admin live control
+        test_admin_live_control(bo3_match_id)
+        
+        # Test match status update
+        test_match_status_update(bo3_match_id)
+        
+        # Test viewer count update
+        test_viewer_count_update(bo3_match_id)
+        
+        # Test round transition
+        test_round_transition(bo3_match_id)
+    
+    # Create a BO5 match
+    bo5_match_id = test_create_bo5_match()
+    
+    # Test match history
+    test_match_history(bo3_match_id if bo3_match_id else None)
+    
     # Print summary
     print("\n=== Test Summary ===")
     print(f"Passed: {len(test_results['success'])}")
