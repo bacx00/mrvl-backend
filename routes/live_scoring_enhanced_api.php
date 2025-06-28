@@ -485,7 +485,7 @@ Route::get('/players/{playerId}/match-history', function (Request $request, $pla
 // 10. REAL-TIME MATCH STATUS UPDATES
 // ==========================================
 
-Route::middleware(['auth:sanctum', 'role:admin|moderator'])->put('/api/admin/matches/{id}/status', function (Request $request, $id) {
+Route::middleware(['auth:sanctum', 'role:admin|moderator'])->put('/admin/matches/{id}/status', function (Request $request, $id) {
     try {
         $validator = Validator::make($request->all(), [
             'status' => 'required|in:upcoming,live,paused,completed,cancelled',
