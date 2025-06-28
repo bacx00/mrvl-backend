@@ -139,7 +139,7 @@ Route::middleware(['auth:sanctum', 'role:admin|moderator'])->post('/admin/matche
 // 2. REAL-TIME TIMER MANAGEMENT SYSTEM
 // ==========================================
 
-Route::middleware(['auth:sanctum', 'role:admin|moderator'])->put('/api/admin/matches/{id}/timer/{action}', function (Request $request, $id, $action) {
+Route::middleware(['auth:sanctum', 'role:admin|moderator'])->put('/admin/matches/{id}/timer/{action}', function (Request $request, $id, $action) {
     try {
         $match = DB::table('matches')->where('id', $id)->first();
         if (!$match) {
