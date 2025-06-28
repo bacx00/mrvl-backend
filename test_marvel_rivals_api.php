@@ -788,10 +788,18 @@ function testGameDataEndpoints() {
 
 // Main execution function
 function runAllTests() {
-    global $test_results;
+    global $test_results, $BASE_URL;
     
     echo "🚀 MARVEL RIVALS PROFESSIONAL LIVE SCORING SYSTEM - COMPLETE TEST SUITE\n";
-    echo "=============================================================================\n\n";
+    echo "=============================================================================\n";
+    echo "🌐 Testing against: {$BASE_URL}\n\n";
+    
+    // Test basic connectivity first
+    if (!testConnection()) {
+        echo "❌ Cannot connect to server. Please check your URL and network connection.\n";
+        return false;
+    }
+    echo "\n";
     
     // Test game data endpoints first
     echo "🎮 Testing Game Data Endpoints...\n";
@@ -820,6 +828,8 @@ function runAllTests() {
         testViewerCountUpdate($bo3MatchId);
         testRoundTransition($bo3MatchId);
         echo "\n";
+    } else {
+        echo "⚠️  Skipping live scoring tests due to match creation failure\n\n";
     }
     
     // Test match history
@@ -844,8 +854,12 @@ function runAllTests() {
     if (empty($test_results['failure'])) {
         echo "🎉 ALL TESTS PASSED! Marvel Rivals Live Scoring System is working perfectly!\n";
         return true;
+    } else if (count($test_results['success']) > 0) {
+        echo "⚠️  Some tests failed, but some functionality is working.\n";
+        echo "🔧 Check failed tests above for issues to fix.\n";
+        return false;
     } else {
-        echo "⚠️  Some tests failed. Please check the errors above.\n";
+        echo "❌ All tests failed. Check your server configuration and API endpoints.\n";
         return false;
     }
 }
