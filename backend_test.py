@@ -70,16 +70,16 @@ BO5_MATCH_DATA = {
             "game_mode": "Convoy"
         },
         {
-            "map_name": "Klyntar: Symbiotic Surface",
-            "game_mode": "Convergence"
+            "map_name": "Wakanda: Birnin T'Challa",
+            "game_mode": "Domination"
         },
         {
-            "map_name": "Tokyo 2099: Ninomaru",
-            "game_mode": "Conquest"
+            "map_name": "Latveria: Castle Doom",
+            "game_mode": "Assault"
         },
         {
-            "map_name": "Sanctum Sanctorum",
-            "game_mode": "Doom Match"
+            "map_name": "Sakaar: Grand Arena",
+            "game_mode": "Control"
         }
     ],
     "scheduled_at": (datetime.now() + timedelta(hours=2)).isoformat()
