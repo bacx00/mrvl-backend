@@ -1447,6 +1447,7 @@ async def proxy_timer_management(id: int, action: str, request: Request):
                 'timestamp': datetime.now().isoformat()
             }
         elif action == 'pause':
+            # Create a mock response
             return {
                 'success': True,
                 'data': {'match_paused': True},
