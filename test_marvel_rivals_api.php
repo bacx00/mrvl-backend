@@ -8,10 +8,18 @@
  * Or access via web browser: http://your-domain.com/test_marvel_rivals_api.php
  */
 
-// Configuration
-$BASE_URL = "http://localhost:8001/api"; // Change to your API URL
+// Configuration - Update these for your server
+$BASE_URL = "http://localhost/api"; // Laravel default (change to your actual URL)
 $ADMIN_EMAIL = "admin@marvelrivals.com";
 $ADMIN_PASSWORD = "password123";
+
+// Alternative URLs to try if default fails
+$ALTERNATIVE_URLS = [
+    "http://localhost:8000/api",  // Laravel dev server
+    "http://127.0.0.1/api",
+    "http://127.0.0.1:8000/api",
+    "http://localhost:80/api"
+];
 
 // Test results tracking
 $test_results = [
