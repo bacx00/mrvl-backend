@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Validator;
 // 1. FRESH MATCH CREATION WITH FULL SPECIFICATIONS
 // ==========================================
 
-Route::middleware(['auth:sanctum', 'role:admin|moderator'])->post('/api/admin/matches/create-competitive', function (Request $request) {
+Route::middleware(['auth:sanctum', 'role:admin|moderator'])->post('/admin/matches/create-competitive', function (Request $request) {
     try {
         $validator = Validator::make($request->all(), [
             'team1_id' => 'required|exists:teams,id',
