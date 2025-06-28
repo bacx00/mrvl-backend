@@ -393,7 +393,7 @@ Route::get('/teams/{teamId}/match-history', function (Request $request, $teamId)
     }
 });
 
-Route::get('/api/players/{playerId}/match-history', function (Request $request, $playerId) {
+Route::get('/players/{playerId}/match-history', function (Request $request, $playerId) {
     try {
         $limit = $request->input('limit', 10);
         $page = $request->input('page', 1);
