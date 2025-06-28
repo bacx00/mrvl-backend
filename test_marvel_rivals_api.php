@@ -98,8 +98,21 @@ function getAdminToken() {
         'password' => $ADMIN_PASSWORD
     ]);
     
+    if (isset($result['error'])) {
+        echo "❌ Login Error: " . $result['error'] . "\n";
+        return null;
+    }
+    
     if ($result['http_code'] === 200 && isset($result['data']['success']) && $result['data']['success']) {
         return $result['data']['token'] ?? null;
+    }
+    
+    // Debug login failure
+    echo "❌ Login failed - HTTP Code: " . $result['http_code'] . "\n";
+    if (isset($result['data'])) {
+        echo "❌ Response: " . json_encode($result['data']) . "\n";
+    } else {
+        echo "❌ Raw Response: " . ($result['response'] ?? 'No response') . "\n";
     }
     
     return null;
