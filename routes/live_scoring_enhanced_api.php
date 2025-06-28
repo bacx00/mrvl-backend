@@ -324,7 +324,7 @@ Route::middleware(['auth:sanctum', 'role:admin|moderator'])->put('/admin/matches
 // 9. MATCH HISTORY AND PROFILE INTEGRATION
 // ==========================================
 
-Route::get('/api/teams/{teamId}/match-history', function (Request $request, $teamId) {
+Route::get('/teams/{teamId}/match-history', function (Request $request, $teamId) {
     try {
         $limit = $request->input('limit', 10);
         $page = $request->input('page', 1);
