@@ -606,7 +606,7 @@ Route::middleware(['auth:sanctum', 'role:admin|moderator'])->put('/admin/matches
 // 11. LIVE VIEWER COUNT MANAGEMENT
 // ==========================================
 
-Route::post('/api/matches/{id}/viewers/update', function (Request $request, $id) {
+Route::post('/matches/{id}/viewers/update', function (Request $request, $id) {
     try {
         $validator = Validator::make($request->all(), [
             'action' => 'required|in:increment,decrement,set',
