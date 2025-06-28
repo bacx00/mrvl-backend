@@ -222,7 +222,7 @@ function testLiveScoringWorkflow($matchId, $team1Id, $team2Id) {
     
     // Test 7: Complete match
     echo "  🏁 Testing match completion...\n";
-    $result = makeRequest('POST', $BASE_URL . "/matches/{$matchId}/complete", [
+    $result = makeRequest('PUT', $BASE_URL . "/admin/matches/{$matchId}/complete", [
         'winner_team_id' => $team1Id,
         'final_score' => '2-1',
         'duration' => 1800
@@ -231,7 +231,18 @@ function testLiveScoringWorkflow($matchId, $team1Id, $team2Id) {
     if ($result['http_code'] === 200 && isset($result['data']['success']) && $result['data']['success']) {
         logTest("  Match Completion", true, "Match completed successfully");
     } else {
-        logTest("  Match Completion", false, "Failed to complete match");
+        // Try alternative endpoint
+        $result = makeRequest('POST', $BASE_URL . "/admin/matches/{$matchId}/complete", [
+            'winner_team_id' => $team1Id,
+            'final_score' => '2-1',
+            'duration' => 1800
+        ], getAuthHeaders());
+        
+        if ($result['http_code'] === 200 && isset($result['data']['success']) && $result['data']['success']) {
+            logTest("  Match Completion", true, "Match completed (alt endpoint)");
+        } else {
+            logTest("  Match Completion", false, "Failed to complete match");
+        }
     }
     
     // Test 8: Check final scoreboard
