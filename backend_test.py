@@ -231,7 +231,7 @@ def get_admin_token():
         return None
 
 def test_create_competitive_match():
-    """Test POST /api/admin/matches/create-competitive endpoint"""
+    """Test POST /api/admin/matches/create-competitive endpoint for BO3"""
     token = get_admin_token()
     if not token:
         log_test("Create Competitive Match", False, "Failed to get admin token")
@@ -245,7 +245,14 @@ def test_create_competitive_match():
             data = response.json()
             if data.get("success"):
                 match_id = data.get("data", {}).get("match", {}).get("id")
-                log_test("Create Competitive Match", True, f"Successfully created BO3 competitive match with ID {match_id}")
+                rounds = data.get("data", {}).get("rounds", [])
+                
+                # Verify that 3 rounds were created for BO3
+                if len(rounds) == 3:
+                    log_test("Create Competitive Match", True, f"Successfully created BO3 competitive match with ID {match_id} with 3 rounds")
+                else:
+                    log_test("Create Competitive Match", False, f"Expected 3 rounds for BO3 match, got {len(rounds)}")
+                
                 return match_id
             else:
                 log_test("Create Competitive Match", False, f"API returned error: {data.get('message', 'Unknown error')}")
