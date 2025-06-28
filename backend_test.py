@@ -19,7 +19,21 @@ test_results = {
     "failure": []
 }
 
-# Test data for competitive match creation
+# Test data for BO1 competitive match creation
+BO1_MATCH_DATA = {
+    "team1_id": 87,  # Sentinels
+    "team2_id": 88,  # Another team
+    "match_format": "BO1",
+    "map_pool": [
+        {
+            "map_name": "Yggsgard: Royal Palace",
+            "game_mode": "Domination"
+        }
+    ],
+    "scheduled_at": (datetime.now() + timedelta(hours=1)).isoformat()
+}
+
+# Test data for BO3 competitive match creation
 COMPETITIVE_MATCH_DATA = {
     "team1_id": 87,  # Sentinels
     "team2_id": 86,  # T1
@@ -34,8 +48,8 @@ COMPETITIVE_MATCH_DATA = {
             "game_mode": "Convoy"
         },
         {
-            "map_name": "Klyntar: Symbiotic Surface",
-            "game_mode": "Convergence"
+            "map_name": "Wakanda: Birnin T'Challa",
+            "game_mode": "Domination"
         }
     ],
     "scheduled_at": (datetime.now() + timedelta(hours=1)).isoformat()
