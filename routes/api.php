@@ -6385,8 +6385,8 @@ Route::middleware(['auth:sanctum', 'role:user'])->get('/user/profile-picture', f
 Route::middleware(['auth:sanctum', 'role:admin|moderator'])->put('/admin/matches/{id}/scores', function (Request $request, $id) {
     try {
         $validated = $request->validate([
-            'team1_score' => 'required|integer|min:0',
-            'team2_score' => 'required|integer|min:0',
+            'team1_score' => 'sometimes|integer|min:0',
+            'team2_score' => 'sometimes|integer|min:0',
             'map_scores' => 'sometimes|array',
             'map_scores.*.map_index' => 'required_with:map_scores|integer|min:0',
             'map_scores.*.team1_score' => 'required_with:map_scores|integer|min:0',
@@ -6394,20 +6394,13 @@ Route::middleware(['auth:sanctum', 'role:admin|moderator'])->put('/admin/matches
             'map_scores.*.status' => 'required_with:map_scores|string|in:upcoming,live,completed'
         ]);
         
-        // Update scores with database transaction  
+        // Update scores with database transaction and PROPER AGGREGATION
         DB::transaction(function () use ($id, $validated) {
-            // Update overall match scores
-            DB::table('matches')->where('id', $id)->update([
-                'team1_score' => $validated['team1_score'],
-                'team2_score' => $validated['team2_score'],
-                'updated_at' => now()
-            ]);
+            $match = DB::table('matches')->where('id', $id)->first();
+            $mapsData = $match->maps_data ? json_decode($match->maps_data, true) : [];
             
             // Update individual map scores if provided
             if (isset($validated['map_scores'])) {
-                $match = DB::table('matches')->where('id', $id)->first();
-                $mapsData = $match->maps_data ? json_decode($match->maps_data, true) : [];
-                
                 foreach ($validated['map_scores'] as $mapScore) {
                     $mapIndex = $mapScore['map_index'];
                     if (isset($mapsData[$mapIndex])) {
@@ -6416,21 +6409,62 @@ Route::middleware(['auth:sanctum', 'role:admin|moderator'])->put('/admin/matches
                         $mapsData[$mapIndex]['status'] = $mapScore['status'];
                     }
                 }
-                
-                DB::table('matches')->where('id', $id)->update([
-                    'maps_data' => json_encode($mapsData),
-                    'updated_at' => now()
-                ]);
             }
+            
+            // CRITICAL: Calculate overall match scores from MAP WINS
+            $team1_total = 0;
+            $team2_total = 0;
+            $completed_maps = 0;
+            $total_maps = count($mapsData);
+            
+            foreach ($mapsData as $map) {
+                if (isset($map['status']) && $map['status'] === 'completed') {
+                    $completed_maps++;
+                    // Winner takes the map (1 point)
+                    if ($map['team1_score'] > $map['team2_score']) {
+                        $team1_total++;
+                    } elseif ($map['team2_score'] > $map['team1_score']) {
+                        $team2_total++;
+                    }
+                    // Ties don't award points
+                }
+            }
+            
+            // Use provided scores if no map_scores, otherwise use calculated
+            $final_team1_score = isset($validated['map_scores']) ? $team1_total : ($validated['team1_score'] ?? $team1_total);
+            $final_team2_score = isset($validated['map_scores']) ? $team2_total : ($validated['team2_score'] ?? $team2_total);
+            
+            // Determine match status
+            $match_status = $match->status;
+            if ($completed_maps === $total_maps && $total_maps > 0) {
+                $match_status = 'completed';
+            } elseif ($completed_maps > 0) {
+                $match_status = 'live';
+            }
+            
+            // Update match with calculated scores and status
+            DB::table('matches')->where('id', $id)->update([
+                'team1_score' => $final_team1_score,
+                'team2_score' => $final_team2_score,
+                'status' => $match_status,
+                'maps_data' => json_encode($mapsData),
+                'updated_at' => now()
+            ]);
         });
+        
+        // Get fresh data to return
+        $match = DB::table('matches')->where('id', $id)->first();
+        $mapsData = $match->maps_data ? json_decode($match->maps_data, true) : [];
         
         return response()->json([
             'success' => true,
-            'message' => 'Scores updated successfully',
+            'message' => 'Scores updated successfully with proper aggregation',
             'data' => [
-                'team1_score' => $validated['team1_score'],
-                'team2_score' => $validated['team2_score'],
-                'map_scores' => $validated['map_scores'] ?? []
+                'team1_score' => $match->team1_score,
+                'team2_score' => $match->team2_score,
+                'status' => $match->status,
+                'map_scores' => $mapsData,
+                'calculation_method' => isset($validated['map_scores']) ? 'auto_calculated_from_maps' : 'manual_override'
             ]
         ]);
         
