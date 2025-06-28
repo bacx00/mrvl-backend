@@ -7022,5 +7022,5 @@ Route::get('/analytics/matches/recent', function (Request $request) {
 // ==========================================
 
 // Include the professional live scoring API routes
-require_once __DIR__ . '/live_scoring_api.php';
-require_once __DIR__ . '/live_scoring_enhanced_api.php';
+include __DIR__ . '/live_scoring_api.php';
+include __DIR__ . '/live_scoring_enhanced_api.php';
