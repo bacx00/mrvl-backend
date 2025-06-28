@@ -12,16 +12,24 @@ class GameMatch extends Model
 
     protected $fillable = [
         'team1_id', 'team2_id', 'event_id', 'scheduled_at', 'status',
-        'team1_score', 'team2_score', 'format', 'current_map', 'viewers',
-        'stream_url', 'maps_data', 'timer_data', 'prize_pool'
+        'team1_score', 'team2_score', 'format', 'match_format', 'current_map', 
+        'current_round', 'current_mode', 'series_completed', 'series_winner_id',
+        'viewers', 'stream_url', 'maps_data', 'timer_data', 'prize_pool',
+        'competitive_settings', 'preparation_phase', 'overtime_data'
     ];
 
     protected $casts = [
         'scheduled_at' => 'datetime',
         'team1_score' => 'integer',
         'team2_score' => 'integer',
+        'current_round' => 'integer',
         'viewers' => 'integer',
-        'maps_data' => 'array'
+        'series_completed' => 'boolean',
+        'maps_data' => 'array',
+        'timer_data' => 'array',
+        'competitive_settings' => 'array',
+        'preparation_phase' => 'array',
+        'overtime_data' => 'array'
     ];
 
     protected $appends = []; // Removed problematic accessors
