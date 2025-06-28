@@ -6599,3 +6599,12 @@ Route::get('/admin/matches/{id}/player-stats', function (Request $request, $id) 
         ], 500);
     }
 });
+
+// ==========================================
+// MARVEL RIVALS PROFESSIONAL LIVE SCORING SYSTEM
+// Enhanced API Routes for Real-Time Competition
+// ==========================================
+
+// Include the professional live scoring API routes
+require_once __DIR__ . '/live_scoring_api.php';
+require_once __DIR__ . '/live_scoring_enhanced_api.php';
