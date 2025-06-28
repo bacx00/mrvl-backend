@@ -116,33 +116,10 @@ function makeRequest($method, $url, $data = null, $headers = []) {
     ];
 }
 
-// Function to get admin token
+// Function to get admin token (now uses direct token)
 function getAdminToken() {
-    global $BASE_URL, $ADMIN_EMAIL, $ADMIN_PASSWORD;
-    
-    $result = makeRequest('POST', $BASE_URL . '/auth/login', [
-        'email' => $ADMIN_EMAIL,
-        'password' => $ADMIN_PASSWORD
-    ]);
-    
-    if (isset($result['error'])) {
-        echo "❌ Login Error: " . $result['error'] . "\n";
-        return null;
-    }
-    
-    if ($result['http_code'] === 200 && isset($result['data']['success']) && $result['data']['success']) {
-        return $result['data']['token'] ?? null;
-    }
-    
-    // Debug login failure
-    echo "❌ Login failed - HTTP Code: " . $result['http_code'] . "\n";
-    if (isset($result['data'])) {
-        echo "❌ Response: " . json_encode($result['data']) . "\n";
-    } else {
-        echo "❌ Raw Response: " . ($result['response'] ?? 'No response') . "\n";
-    }
-    
-    return null;
+    global $ADMIN_TOKEN;
+    return $ADMIN_TOKEN; // Use direct token instead of login
 }
 
 // Test 1: Create BO1 Competitive Match
