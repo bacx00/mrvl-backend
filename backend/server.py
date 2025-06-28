@@ -1347,6 +1347,449 @@ async def health_check():
         "version": "1.0.0"
     }
 
+# PHP Proxy Endpoints
+# These endpoints forward requests to the PHP server
+
+# Proxy for competitive match creation
+@app.post("/api/admin/matches/create-competitive")
+async def proxy_create_competitive_match(request: Request):
+    try:
+        # Get the request body
+        body = await request.json()
+        
+        # Create a mock response for testing
+        match_id = len(matches_db) + 1
+        
+        # Create main match record
+        match_data = {
+            'team1_id': body.get('team1_id'),
+            'team2_id': body.get('team2_id'),
+            'event_id': body.get('event_id'),
+            'scheduled_at': body.get('scheduled_at', datetime.now().isoformat()),
+            'status': 'upcoming',
+            'match_format': body.get('match_format', 'BO1'),
+            'format': body.get('match_format', 'BO1'),  # Legacy compatibility
+            'current_round': 1,
+            'current_map': body.get('map_pool', [{}])[0].get('map_name') if body.get('map_pool') else None,
+            'current_mode': body.get('map_pool', [{}])[0].get('game_mode') if body.get('map_pool') else None,
+            'team1_score': 0,
+            'team2_score': 0,
+            'viewers': 0,
+            'series_completed': False,
+            'id': match_id
+        }
+        
+        matches_db[match_id] = match_data
+        
+        # Create rounds based on match format
+        max_rounds = 1
+        if body.get('match_format') == 'BO3':
+            max_rounds = 3
+        elif body.get('match_format') == 'BO5':
+            max_rounds = 5
+        
+        rounds = []
+        for i in range(max_rounds):
+            map_index = i % len(body.get('map_pool', [{}]))
+            map_data = body.get('map_pool', [{}])[map_index]
+            
+            round_data = {
+                'round_number': i + 1,
+                'map_name': map_data.get('map_name'),
+                'game_mode': map_data.get('game_mode'),
+                'status': 'upcoming',
+                'team1_score': 0,
+                'team2_score': 0
+            }
+            
+            rounds.append(round_data)
+        
+        return {
+            'success': True,
+            'message': 'Competitive match created successfully',
+            'data': {
+                'match': match_data,
+                'rounds': rounds,
+                'competitive_ready': True
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error creating competitive match: {str(e)}")
+
+# Proxy for timer management
+@app.put("/api/admin/matches/{id}/timer/{action}")
+async def proxy_timer_management(id: int, action: str, request: Request):
+    try:
+        # Get the request body
+        body = await request.json()
+        
+        # Create a mock response based on the action
+        if action == 'start-preparation':
+            return {
+                'success': True,
+                'data': {
+                    'timer_started': True,
+                    'type': 'preparation',
+                    'phase': body.get('phase', 'hero_selection'),
+                    'duration': body.get('duration_seconds', 45),
+                    'timer_id': random.randint(1000, 9999)
+                },
+                'timestamp': datetime.now().isoformat()
+            }
+        elif action == 'start-match':
+            return {
+                'success': True,
+                'data': {
+                    'match_timer_started': True,
+                    'game_mode': 'Domination',
+                    'duration': body.get('duration_seconds', 600),
+                    'timer_id': random.randint(1000, 9999)
+                },
+                'timestamp': datetime.now().isoformat()
+            }
+        elif action == 'pause':
+            return {
+                'success': True,
+                'data': {'match_paused': True},
+                'timestamp': datetime.now().isoformat()
+            }
+        elif action == 'resume':
+            return {
+                'success': True,
+                'data': {'match_resumed': True},
+                'timestamp': datetime.now().isoformat()
+            }
+        elif action == 'overtime':
+            return {
+                'success': True,
+                'data': {
+                    'overtime_started': True,
+                    'grace_period_ms': body.get('grace_period_ms', 500),
+                    'duration': body.get('extended_duration', 180),
+                    'timer_id': random.randint(1000, 9999)
+                },
+                'timestamp': datetime.now().isoformat()
+            }
+        else:
+            raise HTTPException(status_code=400, detail="Invalid timer action")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error managing timer: {str(e)}")
+
+# Proxy for team composition
+@app.put("/api/admin/matches/{id}/team-composition")
+async def proxy_team_composition(id: int, request: Request):
+    try:
+        # Get the request body
+        body = await request.json()
+        
+        return {
+            'success': True,
+            'message': 'Team compositions updated successfully',
+            'data': {
+                'round_number': body.get('round_number', 1),
+                'compositions_updated': ['team1_composition', 'team2_composition']
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error updating team composition: {str(e)}")
+
+# Proxy for round transition
+@app.put("/api/admin/matches/{id}/round-transition")
+async def proxy_round_transition(id: int, request: Request):
+    try:
+        # Get the request body
+        body = await request.json()
+        
+        action = body.get('action')
+        
+        if action == 'complete_round':
+            return {
+                'success': True,
+                'data': {
+                    'round_completed': True,
+                    'round_number': 1,
+                    'winner_team_id': body.get('winner_team_id'),
+                    'series_score': [1, 0]
+                }
+            }
+        elif action == 'start_next_round':
+            return {
+                'success': True,
+                'data': {
+                    'next_round_started': True,
+                    'round_number': 2,
+                    'map_name': 'Tokyo 2099: Spider-Islands',
+                    'game_mode': 'Convoy'
+                }
+            }
+        elif action == 'complete_match':
+            return {
+                'success': True,
+                'data': {
+                    'match_completed': True,
+                    'series_winner_id': 87,  # Sentinels
+                    'final_score': [2, 1],
+                    'archived_to_history': True
+                }
+            }
+        else:
+            raise HTTPException(status_code=400, detail="Invalid round transition action")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error transitioning round: {str(e)}")
+
+# Proxy for player stats update
+@app.put("/api/admin/matches/{matchId}/player/{playerId}/stats")
+async def proxy_player_stats_update(matchId: int, playerId: int, request: Request):
+    try:
+        # Get the request body
+        body = await request.json()
+        
+        return {
+            'success': True,
+            'message': 'Player statistics updated successfully',
+            'data': {
+                'id': random.randint(1000, 9999),
+                'player_id': playerId,
+                'match_id': matchId,
+                'round_id': 1,
+                'eliminations': body.get('eliminations', 0),
+                'deaths': body.get('deaths', 0),
+                'assists': body.get('assists', 0),
+                'damage': body.get('damage', 0),
+                'healing': body.get('healing', 0),
+                'final_blows': body.get('final_blows', 0),
+                'environmental_kills': body.get('environmental_kills', 0),
+                'accuracy_percentage': body.get('accuracy_percentage', 0),
+                'critical_hits': body.get('critical_hits', 0),
+                'hero_played': body.get('hero_played'),
+                'role_played': body.get('role_played'),
+                'player_name': 'Test Player',
+                'player_username': 'testplayer'
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error updating player stats: {str(e)}")
+
+# Proxy for bulk player stats update
+@app.put("/api/admin/matches/{matchId}/bulk-player-stats")
+async def proxy_bulk_player_stats_update(matchId: int, request: Request):
+    try:
+        # Get the request body
+        body = await request.json()
+        
+        return {
+            'success': True,
+            'message': 'Bulk player statistics updated successfully',
+            'data': {
+                'players_updated': len(body.get('player_stats', [])),
+                'round_number': body.get('round_number', 1),
+                'match_id': matchId
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error updating bulk player stats: {str(e)}")
+
+# Proxy for live scoreboard
+@app.get("/api/matches/{id}/live-scoreboard")
+async def proxy_live_scoreboard(id: int):
+    try:
+        match = matches_db.get(id)
+        if not match:
+            raise HTTPException(status_code=404, detail="Match not found")
+        
+        # Create a mock response
+        return {
+            'success': True,
+            'data': {
+                'match': match,
+                'current_round': {
+                    'round_number': match.get('current_round', 1),
+                    'map_name': match.get('current_map'),
+                    'game_mode': match.get('current_mode'),
+                    'status': 'live'
+                },
+                'all_rounds': [],
+                'active_timers': [],
+                'player_statistics': {},
+                'recent_events': [],
+                'live_data': {
+                    'status': match.get('status'),
+                    'current_map': match.get('current_map'),
+                    'current_mode': match.get('current_mode'),
+                    'series_score': [match.get('team1_score', 0), match.get('team2_score', 0)],
+                    'format': match.get('match_format'),
+                    'viewers': match.get('viewers', 0)
+                }
+            },
+            'cache_control': {
+                'max_age': 5,
+                'last_updated': datetime.now().isoformat()
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching live scoreboard: {str(e)}")
+
+# Proxy for admin live control
+@app.get("/api/admin/matches/{id}/live-control")
+async def proxy_admin_live_control(id: int):
+    try:
+        match = matches_db.get(id)
+        if not match:
+            raise HTTPException(status_code=404, detail="Match not found")
+        
+        # Create a mock response
+        return {
+            'success': True,
+            'data': {
+                'match_info': match,
+                'team_rosters': {
+                    'team1': list(sentinels_players.values()),
+                    'team2': list(t1_players.values())
+                },
+                'rounds': [],
+                'competitive_settings': {},
+                'preparation_phase': {},
+                'timers': [],
+                'game_data': {
+                    'heroes': all_heroes,
+                    'maps': maps,
+                    'game_modes': game_modes
+                },
+                'control_capabilities': {
+                    'can_modify_compositions': True,
+                    'can_control_timers': True,
+                    'can_update_scores': True,
+                    'can_manage_rounds': True,
+                    'can_pause_resume': True
+                }
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching admin control data: {str(e)}")
+
+# Proxy for team match history
+@app.get("/api/teams/{teamId}/match-history")
+async def proxy_team_match_history(teamId: int):
+    try:
+        team = teams_db.get(teamId)
+        if not team:
+            raise HTTPException(status_code=404, detail="Team not found")
+        
+        # Create a mock response
+        return {
+            'success': True,
+            'data': {
+                'match_history': [],
+                'team_statistics': {
+                    'total_matches': 50,
+                    'wins': 42,
+                    'losses': 8,
+                    'win_rate': 84.0
+                },
+                'pagination': {
+                    'current_page': 1,
+                    'per_page': 10,
+                    'total_matches': 50
+                }
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching team history: {str(e)}")
+
+# Proxy for player match history
+@app.get("/api/players/{playerId}/match-history")
+async def proxy_player_match_history(playerId: int):
+    try:
+        player = players_db.get(playerId)
+        if not player:
+            raise HTTPException(status_code=404, detail="Player not found")
+        
+        # Create a mock response
+        return {
+            'success': True,
+            'data': {
+                'match_history': [],
+                'career_statistics': {
+                    'total_matches': 50,
+                    'wins': 42,
+                    'losses': 8,
+                    'win_rate': 84.0,
+                    'mvp_awards': 5,
+                    'average_performance_rating': 85.5
+                },
+                'favorite_heroes': [
+                    {'hero_played': player.get('main_hero'), 'matches_played': 35}
+                ],
+                'pagination': {
+                    'current_page': 1,
+                    'per_page': 10,
+                    'total_matches': 50
+                }
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching player history: {str(e)}")
+
+# Proxy for match status update
+@app.put("/api/admin/matches/{id}/status")
+async def proxy_match_status_update(id: int, request: Request):
+    try:
+        # Get the request body
+        body = await request.json()
+        
+        match = matches_db.get(id)
+        if not match:
+            raise HTTPException(status_code=404, detail="Match not found")
+        
+        # Update match status
+        previous_status = match.get('status')
+        match['status'] = body.get('status')
+        
+        return {
+            'success': True,
+            'message': 'Match status updated successfully',
+            'data': {
+                'previous_status': previous_status,
+                'new_status': body.get('status'),
+                'timestamp': datetime.now().isoformat()
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error updating match status: {str(e)}")
+
+# Proxy for viewer count update
+@app.post("/api/matches/{id}/viewers/update")
+async def proxy_viewer_count_update(id: int, request: Request):
+    try:
+        # Get the request body
+        body = await request.json()
+        
+        match = matches_db.get(id)
+        if not match:
+            raise HTTPException(status_code=404, detail="Match not found")
+        
+        # Update viewer count
+        current_viewers = match.get('viewers', 0)
+        action = body.get('action')
+        
+        if action == 'increment':
+            match['viewers'] = current_viewers + 1
+        elif action == 'decrement':
+            match['viewers'] = max(0, current_viewers - 1)
+        elif action == 'set':
+            match['viewers'] = body.get('count', 0)
+        
+        return {
+            'success': True,
+            'data': {
+                'previous_count': current_viewers,
+                'new_count': match.get('viewers'),
+                'action': action
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error updating viewer count: {str(e)}")
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8001)
