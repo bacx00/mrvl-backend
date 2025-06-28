@@ -458,7 +458,7 @@ Route::middleware(['auth:sanctum', 'role:admin|moderator'])->put('/admin/matches
 // 4. ROUND TRANSITION AND MAP MANAGEMENT
 // ==========================================
 
-Route::middleware(['auth:sanctum', 'role:admin|moderator'])->put('/api/admin/matches/{id}/round-transition', function (Request $request, $id) {
+Route::middleware(['auth:sanctum', 'role:admin|moderator'])->put('/admin/matches/{id}/round-transition', function (Request $request, $id) {
     try {
         $validator = Validator::make($request->all(), [
             'action' => 'required|in:complete_round,start_next_round,complete_match',
