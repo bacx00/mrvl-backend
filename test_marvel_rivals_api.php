@@ -10,8 +10,11 @@
 
 // Configuration - Update these for your server
 $BASE_URL = "https://staging.mrvl.net/api"; // Your staging server
-$ADMIN_EMAIL = "admin@marvelrivals.com";
+$ADMIN_EMAIL = "jhonny@ar-mediia.com";
 $ADMIN_PASSWORD = "password123";
+
+// Use direct token instead of login (faster and more reliable)
+$ADMIN_TOKEN = "456|XgZ5PbsCpIVrcpjZgeRJAhHmf8RGJBNaaWXLeczI2a360ed8";
 
 // Alternative URLs to try if default fails
 $ALTERNATIVE_URLS = [
