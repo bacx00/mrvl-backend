@@ -9,16 +9,14 @@
  */
 
 // Configuration - Update these for your server
-$BASE_URL = "http://localhost/api"; // Laravel default (change to your actual URL)
+$BASE_URL = "https://staging.mrvl.net/api"; // Your staging server
 $ADMIN_EMAIL = "admin@marvelrivals.com";
 $ADMIN_PASSWORD = "password123";
 
 // Alternative URLs to try if default fails
 $ALTERNATIVE_URLS = [
-    "http://localhost:8000/api",  // Laravel dev server
-    "http://127.0.0.1/api",
-    "http://127.0.0.1:8000/api",
-    "http://localhost:80/api"
+    "http://staging.mrvl.net/api",  // HTTP version
+    "https://staging.mrvl.net/api", // HTTPS version
 ];
 
 // Test results tracking
