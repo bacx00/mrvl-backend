@@ -10,7 +10,6 @@ import os
 import json
 from uuid import uuid4
 import random
-import httpx
 import asyncio
 
 # Initialize FastAPI app
