@@ -351,7 +351,7 @@ Route::middleware(['auth:sanctum', 'role:admin|moderator'])->put('/admin/matches
 // 3. 6V6 HERO COMPOSITION MANAGEMENT
 // ==========================================
 
-Route::middleware(['auth:sanctum', 'role:admin|moderator'])->put('/api/admin/matches/{id}/team-composition', function (Request $request, $id) {
+Route::middleware(['auth:sanctum', 'role:admin|moderator'])->put('/admin/matches/{id}/team-composition', function (Request $request, $id) {
     try {
         $validator = Validator::make($request->all(), [
             'round_number' => 'required|integer|min:1',
