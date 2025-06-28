@@ -6601,6 +6601,422 @@ Route::get('/admin/matches/{id}/player-stats', function (Request $request, $id) 
 });
 
 // ==========================================
+// MISSING LIVE SCORING ENDPOINTS - VIEWER COUNT & MATCH COMPLETION
+// ==========================================
+
+// Viewer Count Management - Multiple endpoint variations for compatibility
+Route::post('/matches/{id}/viewers', function (Request $request, $id) {
+    try {
+        $match = DB::table('matches')->where('id', $id)->first();
+        if (!$match) {
+            return response()->json(['success' => false, 'message' => 'Match not found'], 404);
+        }
+
+        $currentViewers = $match->viewers ?? 0;
+        $newViewers = $request->input('viewers', $currentViewers + 1);
+
+        DB::table('matches')->where('id', $id)->update([
+            'viewers' => $newViewers,
+            'updated_at' => now()
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'match_id' => $id,
+                'viewers' => $newViewers,
+                'previous_viewers' => $currentViewers
+            ]
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error updating viewers: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// Alternative viewer count endpoint
+Route::middleware(['auth:sanctum', 'role:admin|moderator'])->put('/admin/matches/{id}/viewers', function (Request $request, $id) {
+    try {
+        $validated = $request->validate([
+            'viewers' => 'required|integer|min:0'
+        ]);
+
+        $affected = DB::table('matches')->where('id', $id)->update([
+            'viewers' => $validated['viewers'],
+            'updated_at' => now()
+        ]);
+
+        if ($affected === 0) {
+            return response()->json(['success' => false, 'message' => 'Match not found'], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'match_id' => $id,
+                'viewers' => $validated['viewers']
+            ]
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error updating viewers: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// Match Completion Endpoints - Multiple variations for compatibility
+Route::middleware(['auth:sanctum', 'role:admin|moderator'])->put('/admin/matches/{id}/complete', function (Request $request, $id) {
+    try {
+        $validated = $request->validate([
+            'winner_team_id' => 'nullable|exists:teams,id',
+            'final_score' => 'nullable|string',
+            'duration' => 'nullable|integer|min:0',
+            'mvp_player_id' => 'nullable|exists:players,id'
+        ]);
+
+        $match = DB::table('matches')->where('id', $id)->first();
+        if (!$match) {
+            return response()->json(['success' => false, 'message' => 'Match not found'], 404);
+        }
+
+        DB::beginTransaction();
+
+        // Update match as completed
+        $updateData = [
+            'status' => 'completed',
+            'updated_at' => now()
+        ];
+
+        if (isset($validated['winner_team_id'])) {
+            $updateData['winner_team_id'] = $validated['winner_team_id'];
+        }
+
+        if (isset($validated['final_score'])) {
+            // Parse final score (e.g., "2-1")
+            $scores = explode('-', $validated['final_score']);
+            if (count($scores) === 2) {
+                $updateData['team1_score'] = (int)$scores[0];
+                $updateData['team2_score'] = (int)$scores[1];
+            }
+        }
+
+        DB::table('matches')->where('id', $id)->update($updateData);
+
+        // Archive match data to history if needed
+        $finalMatch = DB::table('matches as m')
+            ->leftJoin('teams as t1', 'm.team1_id', '=', 't1.id')
+            ->leftJoin('teams as t2', 'm.team2_id', '=', 't2.id')
+            ->select([
+                'm.*',
+                't1.name as team1_name',
+                't2.name as team2_name'
+            ])
+            ->where('m.id', $id)
+            ->first();
+
+        DB::commit();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Match completed successfully',
+            'data' => $finalMatch
+        ]);
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        return response()->json([
+            'success' => false,
+            'message' => 'Error completing match: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// Alternative match completion endpoint
+Route::middleware(['auth:sanctum', 'role:admin|moderator'])->post('/admin/matches/{id}/complete', function (Request $request, $id) {
+    try {
+        $validated = $request->validate([
+            'winner_team_id' => 'nullable|exists:teams,id',
+            'final_score' => 'nullable|string',
+            'duration' => 'nullable|integer|min:0',
+            'mvp_player_id' => 'nullable|exists:players,id'
+        ]);
+
+        $match = DB::table('matches')->where('id', $id)->first();
+        if (!$match) {
+            return response()->json(['success' => false, 'message' => 'Match not found'], 404);
+        }
+
+        DB::beginTransaction();
+
+        // Update match as completed
+        $updateData = [
+            'status' => 'completed',
+            'updated_at' => now()
+        ];
+
+        if (isset($validated['winner_team_id'])) {
+            $updateData['winner_team_id'] = $validated['winner_team_id'];
+        }
+
+        if (isset($validated['final_score'])) {
+            // Parse final score (e.g., "2-1")
+            $scores = explode('-', $validated['final_score']);
+            if (count($scores) === 2) {
+                $updateData['team1_score'] = (int)$scores[0];
+                $updateData['team2_score'] = (int)$scores[1];
+            }
+        }
+
+        DB::table('matches')->where('id', $id)->update($updateData);
+
+        DB::commit();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Match completed successfully',
+            'data' => [
+                'match_id' => $id,
+                'status' => 'completed',
+                'final_score' => $validated['final_score'] ?? null
+            ]
+        ]);
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        return response()->json([
+            'success' => false,
+            'message' => 'Error completing match: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// ==========================================
+// MISSING ANALYTICS ENDPOINTS
+// ==========================================
+
+// Player Leaderboards Analytics
+Route::get('/analytics/players/leaderboards', function (Request $request) {
+    try {
+        $timeframe = $request->input('timeframe', 'all'); // all, week, month
+        $limit = $request->input('limit', 20);
+
+        // Base query for player statistics
+        $query = DB::table('player_match_stats as pms')
+            ->leftJoin('players as p', 'pms.player_id', '=', 'p.id')
+            ->leftJoin('teams as t', 'p.team_id', '=', 't.id')
+            ->leftJoin('matches as m', 'pms.match_id', '=', 'm.id')
+            ->where('m.status', 'completed');
+
+        // Apply timeframe filter
+        if ($timeframe === 'week') {
+            $query->where('m.updated_at', '>=', now()->subWeek());
+        } elseif ($timeframe === 'month') {
+            $query->where('m.updated_at', '>=', now()->subMonth());
+        }
+
+        // Get top players by different metrics
+        $topEliminations = (clone $query)
+            ->select([
+                'p.id', 'p.name', 'p.username', 'p.role', 'p.main_hero',
+                't.name as team_name', 't.short_name as team_short',
+                DB::raw('AVG(pms.eliminations) as avg_eliminations'),
+                DB::raw('COUNT(pms.match_id) as matches_played')
+            ])
+            ->groupBy('p.id', 'p.name', 'p.username', 'p.role', 'p.main_hero', 't.name', 't.short_name')
+            ->havingRaw('COUNT(pms.match_id) >= 3') // Minimum 3 matches
+            ->orderBy('avg_eliminations', 'desc')
+            ->limit($limit)
+            ->get();
+
+        $topKD = (clone $query)
+            ->select([
+                'p.id', 'p.name', 'p.username', 'p.role',
+                't.name as team_name',
+                DB::raw('AVG(pms.eliminations) as avg_eliminations'),
+                DB::raw('AVG(pms.deaths) as avg_deaths'),
+                DB::raw('CASE WHEN AVG(pms.deaths) > 0 THEN AVG(pms.eliminations) / AVG(pms.deaths) ELSE AVG(pms.eliminations) END as kd_ratio'),
+                DB::raw('COUNT(pms.match_id) as matches_played')
+            ])
+            ->groupBy('p.id', 'p.name', 'p.username', 'p.role', 't.name')
+            ->havingRaw('COUNT(pms.match_id) >= 3')
+            ->orderBy('kd_ratio', 'desc')
+            ->limit($limit)
+            ->get();
+
+        $topDamage = (clone $query)
+            ->select([
+                'p.id', 'p.name', 'p.username', 'p.role',
+                't.name as team_name',
+                DB::raw('AVG(pms.damage) as avg_damage'),
+                DB::raw('COUNT(pms.match_id) as matches_played')
+            ])
+            ->groupBy('p.id', 'p.name', 'p.username', 'p.role', 't.name')
+            ->havingRaw('COUNT(pms.match_id) >= 3')
+            ->orderBy('avg_damage', 'desc')
+            ->limit($limit)
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'timeframe' => $timeframe,
+                'leaderboards' => [
+                    'eliminations' => $topEliminations,
+                    'kd_ratio' => $topKD,
+                    'damage' => $topDamage
+                ]
+            ]
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error fetching leaderboards: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// Team Performance Analytics
+Route::get('/analytics/teams/performance', function (Request $request) {
+    try {
+        $timeframe = $request->input('timeframe', 'month');
+        $limit = $request->input('limit', 10);
+
+        $query = DB::table('matches as m')
+            ->leftJoin('teams as t1', 'm.team1_id', '=', 't1.id')
+            ->leftJoin('teams as t2', 'm.team2_id', '=', 't2.id')
+            ->where('m.status', 'completed');
+
+        // Apply timeframe filter
+        if ($timeframe === 'week') {
+            $query->where('m.updated_at', '>=', now()->subWeek());
+        } elseif ($timeframe === 'month') {
+            $query->where('m.updated_at', '>=', now()->subMonth());
+        }
+
+        // Calculate team performance
+        $teamPerformance = [];
+        $teams = DB::table('teams')->get();
+
+        foreach ($teams as $team) {
+            $totalMatches = DB::table('matches')
+                ->where('status', 'completed')
+                ->where(function($q) use ($team) {
+                    $q->where('team1_id', $team->id)->orWhere('team2_id', $team->id);
+                })
+                ->count();
+
+            $wins = DB::table('matches')
+                ->where('status', 'completed')
+                ->where('winner_team_id', $team->id)
+                ->count();
+
+            if ($totalMatches > 0) {
+                $teamPerformance[] = [
+                    'team_id' => $team->id,
+                    'team_name' => $team->name,
+                    'team_short' => $team->short_name,
+                    'total_matches' => $totalMatches,
+                    'wins' => $wins,
+                    'losses' => $totalMatches - $wins,
+                    'win_rate' => round(($wins / $totalMatches) * 100, 2),
+                    'logo' => $team->logo
+                ];
+            }
+        }
+
+        // Sort by win rate
+        usort($teamPerformance, function($a, $b) {
+            return $b['win_rate'] <=> $a['win_rate'];
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'timeframe' => $timeframe,
+                'team_performance' => array_slice($teamPerformance, 0, $limit)
+            ]
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error fetching team performance: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// Recent Matches Analytics
+Route::get('/analytics/matches/recent', function (Request $request) {
+    try {
+        $limit = $request->input('limit', 10);
+        $status = $request->input('status', 'all'); // all, live, completed
+
+        $query = DB::table('matches as m')
+            ->leftJoin('teams as t1', 'm.team1_id', '=', 't1.id')
+            ->leftJoin('teams as t2', 'm.team2_id', '=', 't2.id')
+            ->leftJoin('events as e', 'm.event_id', '=', 'e.id')
+            ->select([
+                'm.id', 'm.status', 'm.team1_score', 'm.team2_score',
+                'm.scheduled_at', 'm.updated_at', 'm.viewers',
+                't1.name as team1_name', 't1.short_name as team1_short', 't1.logo as team1_logo',
+                't2.name as team2_name', 't2.short_name as team2_short', 't2.logo as team2_logo',
+                'e.name as event_name', 'e.type as event_type'
+            ]);
+
+        if ($status !== 'all') {
+            $query->where('m.status', $status);
+        }
+
+        $matches = $query->orderBy('m.updated_at', 'desc')
+            ->limit($limit)
+            ->get();
+
+        // Add match statistics
+        foreach ($matches as $match) {
+            $match->duration = null;
+            $match->total_eliminations = null;
+
+            // Get basic stats if available
+            $stats = DB::table('player_match_stats')
+                ->where('match_id', $match->id)
+                ->select([
+                    DB::raw('SUM(eliminations) as total_eliminations'),
+                    DB::raw('SUM(deaths) as total_deaths'),
+                    DB::raw('AVG(damage) as avg_damage')
+                ])
+                ->first();
+
+            if ($stats) {
+                $match->total_eliminations = $stats->total_eliminations;
+                $match->total_deaths = $stats->total_deaths;
+                $match->avg_damage = round($stats->avg_damage ?? 0);
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'matches' => $matches,
+                'filter' => $status,
+                'total_returned' => count($matches)
+            ]
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error fetching recent matches: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// ==========================================
 // MARVEL RIVALS PROFESSIONAL LIVE SCORING SYSTEM
 // Enhanced API Routes for Real-Time Competition
 // ==========================================
