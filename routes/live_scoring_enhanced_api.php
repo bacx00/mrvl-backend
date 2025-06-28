@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Validator;
 // 6. COMPLETE LIVE MATCH DATA RETRIEVAL
 // ==========================================
 
-Route::get('/api/matches/{id}/live-scoreboard', function (Request $request, $id) {
+Route::get('/matches/{id}/live-scoreboard', function (Request $request, $id) {
     try {
         // Get main match data
         $match = DB::table('matches as m')
