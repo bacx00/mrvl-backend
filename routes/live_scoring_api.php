@@ -590,7 +590,7 @@ Route::middleware(['auth:sanctum', 'role:admin|moderator'])->put('/admin/matches
                 ]);
 
                 // Archive match history
-                $this->archiveMatchToHistory($id, $seriesWinnerId);
+                archiveMatchToHistory($id, $seriesWinnerId);
 
                 $response = [
                     'match_completed' => true,
