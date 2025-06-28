@@ -113,7 +113,7 @@ Route::get('/matches/{id}/live-scoreboard', function (Request $request, $id) {
 // 7. COMPREHENSIVE ADMIN LIVE DASHBOARD
 // ==========================================
 
-Route::middleware(['auth:sanctum', 'role:admin|moderator'])->get('/api/admin/matches/{id}/live-control', function (Request $request, $id) {
+Route::middleware(['auth:sanctum', 'role:admin|moderator'])->get('/admin/matches/{id}/live-control', function (Request $request, $id) {
     try {
         // Get complete match control data
         $match = DB::table('matches as m')
