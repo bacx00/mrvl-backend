@@ -224,32 +224,37 @@ function createLiveMatch($gameMode, $mapName) {
     $team1 = $teams[0];
     $team2 = $teams[1];
     
+    // Use the NEW competitive match creation endpoint
     $matchData = [
         'team1_id' => $team1['id'],
         'team2_id' => $team2['id'],
-        'scheduled_at' => date('c'),
-        'format' => 'BO1',
-        'status' => 'upcoming',
-        'maps_data' => [
+        'match_format' => 'BO1',
+        'map_pool' => [
             [
-                'name' => $mapName,
-                'mode' => $gameMode,
-                'team1Score' => 0,
-                'team2Score' => 0,
-                'status' => 'upcoming'
+                'map_name' => $mapName,
+                'game_mode' => $gameMode
             ]
-        ]
+        ],
+        'competitive_settings' => [
+            'preparation_time' => 45,
+            'tactical_pauses_per_team' => 2,
+            'overtime_enabled' => true,
+            'hero_selection_time' => 30
+        ],
+        'scheduled_at' => date('c')
     ];
     
-    $result = makeRequest('POST', $BASE_URL . '/admin/matches', $matchData, getAuthHeaders());
+    // Use the CORRECT endpoint for competitive matches
+    $result = makeRequest('POST', $BASE_URL . '/admin/matches/create-competitive', $matchData, getAuthHeaders());
     
     if ($result['http_code'] === 201 && isset($result['data']['success']) && $result['data']['success']) {
-        $matchId = $result['data']['data']['id'];
+        $matchId = $result['data']['data']['match']['id'];
         logTest("Live Match Creation", true, 
             "Created {$gameMode} match on {$mapName} - ID: {$matchId}");
         return $matchId;
     } else {
-        logTest("Live Match Creation", false, "Failed to create match");
+        $errorMsg = isset($result['data']['message']) ? $result['data']['message'] : 'Unknown error';
+        logTest("Live Match Creation", false, "Failed to create match: {$errorMsg}");
         return null;
     }
 }
