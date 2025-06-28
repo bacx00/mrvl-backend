@@ -6532,3 +6532,60 @@ Route::middleware(['auth:sanctum', 'role:admin|moderator'])->put('/admin/matches
         ], 500);
     }
 });
+
+// Get Individual Player Statistics
+Route::get('/admin/matches/{id}/player-stats/{playerId}', function (Request $request, $id, $playerId) {
+    try {
+        $stats = DB::table('player_match_stats')
+            ->where('match_id', $id)
+            ->where('player_id', $playerId)
+            ->first();
+            
+        if (!$stats) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No statistics found for this player in this match'
+            ], 404);
+        }
+        
+        return response()->json([
+            'success' => true,
+            'data' => $stats
+        ]);
+        
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error fetching player stats: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// Get All Player Statistics for Match
+Route::get('/admin/matches/{id}/player-stats', function (Request $request, $id) {
+    try {
+        $stats = DB::table('player_match_stats')
+            ->leftJoin('players', 'player_match_stats.player_id', '=', 'players.id')
+            ->select([
+                'player_match_stats.*',
+                'players.name as player_name',
+                'players.username',
+                'players.role',
+                'players.team_id'
+            ])
+            ->where('player_match_stats.match_id', $id)
+            ->get()
+            ->groupBy('team_id');
+            
+        return response()->json([
+            'success' => true,
+            'data' => $stats
+        ]);
+        
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error fetching match stats: ' . $e->getMessage()
+        ], 500);
+    }
+});
