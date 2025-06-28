@@ -19,6 +19,176 @@ test_results = {
     "failure": []
 }
 
+# Test data for competitive match creation
+COMPETITIVE_MATCH_DATA = {
+    "team1_id": 87,  # Sentinels
+    "team2_id": 86,  # T1
+    "match_format": "BO3",
+    "map_pool": [
+        {
+            "map_name": "Yggsgard: Royal Palace",
+            "game_mode": "Domination"
+        },
+        {
+            "map_name": "Tokyo 2099: Spider-Islands",
+            "game_mode": "Convoy"
+        },
+        {
+            "map_name": "Klyntar: Symbiotic Surface",
+            "game_mode": "Convergence"
+        }
+    ],
+    "scheduled_at": (datetime.now() + timedelta(hours=1)).isoformat()
+}
+
+# Test data for BO5 match creation
+BO5_MATCH_DATA = {
+    "team1_id": 87,  # Sentinels
+    "team2_id": 86,  # T1
+    "match_format": "BO5",
+    "map_pool": [
+        {
+            "map_name": "Yggsgard: Royal Palace",
+            "game_mode": "Domination"
+        },
+        {
+            "map_name": "Tokyo 2099: Spider-Islands",
+            "game_mode": "Convoy"
+        },
+        {
+            "map_name": "Klyntar: Symbiotic Surface",
+            "game_mode": "Convergence"
+        },
+        {
+            "map_name": "Tokyo 2099: Ninomaru",
+            "game_mode": "Conquest"
+        },
+        {
+            "map_name": "Sanctum Sanctorum",
+            "game_mode": "Doom Match"
+        }
+    ],
+    "scheduled_at": (datetime.now() + timedelta(hours=2)).isoformat()
+}
+
+# Team composition data
+TEAM_COMPOSITION_DATA = {
+    "round_number": 1,
+    "team1_composition": [
+        {
+            "player_id": 183,
+            "hero": "Iron Man",
+            "role": "Duelist"
+        },
+        {
+            "player_id": 184,
+            "hero": "Black Panther",
+            "role": "Duelist"
+        },
+        {
+            "player_id": 185,
+            "hero": "Thor",
+            "role": "Vanguard"
+        },
+        {
+            "player_id": 186,
+            "hero": "Doctor Strange",
+            "role": "Vanguard"
+        },
+        {
+            "player_id": 187,
+            "hero": "Luna Snow",
+            "role": "Strategist"
+        },
+        {
+            "player_id": 188,
+            "hero": "Rocket Raccoon",
+            "role": "Strategist"
+        }
+    ],
+    "team2_composition": [
+        {
+            "player_id": 189,
+            "hero": "Iron Man",
+            "role": "Duelist"
+        },
+        {
+            "player_id": 190,
+            "hero": "Doctor Strange",
+            "role": "Vanguard"
+        },
+        {
+            "player_id": 191,
+            "hero": "Thor",
+            "role": "Vanguard"
+        },
+        {
+            "player_id": 192,
+            "hero": "Black Panther",
+            "role": "Duelist"
+        },
+        {
+            "player_id": 193,
+            "hero": "Luna Snow",
+            "role": "Strategist"
+        },
+        {
+            "player_id": 194,
+            "hero": "Hulk",
+            "role": "Vanguard"
+        }
+    ]
+}
+
+# Player stats update data
+PLAYER_STATS_DATA = {
+    "eliminations": 12,
+    "deaths": 4,
+    "assists": 8,
+    "damage": 8500,
+    "healing": 0,
+    "final_blows": 8,
+    "environmental_kills": 1,
+    "accuracy_percentage": 45.5,
+    "critical_hits": 15,
+    "hero_played": "Iron Man",
+    "role_played": "Duelist"
+}
+
+# Bulk player stats update data
+BULK_PLAYER_STATS_DATA = {
+    "player_stats": [
+        {
+            "player_id": 183,
+            "eliminations": 15,
+            "deaths": 5,
+            "assists": 10,
+            "damage": 9500,
+            "hero_played": "Iron Man",
+            "role_played": "Duelist"
+        },
+        {
+            "player_id": 184,
+            "eliminations": 18,
+            "deaths": 6,
+            "assists": 8,
+            "damage": 10200,
+            "hero_played": "Black Panther",
+            "role_played": "Duelist"
+        },
+        {
+            "player_id": 185,
+            "eliminations": 10,
+            "deaths": 7,
+            "assists": 12,
+            "damage": 7500,
+            "damage_blocked": 5000,
+            "hero_played": "Thor",
+            "role_played": "Vanguard"
+        }
+    ]
+}
+
 def log_test(name, success, message=""):
     """Log test results"""
     if success:
