@@ -221,7 +221,7 @@ Route::middleware(['auth:sanctum', 'role:admin|moderator'])->get('/admin/matches
 // 8. BULK PLAYER STATISTICS UPDATE
 // ==========================================
 
-Route::middleware(['auth:sanctum', 'role:admin|moderator'])->put('/api/admin/matches/{matchId}/bulk-player-stats', function (Request $request, $matchId) {
+Route::middleware(['auth:sanctum', 'role:admin|moderator'])->put('/admin/matches/{matchId}/bulk-player-stats', function (Request $request, $matchId) {
     try {
         $validator = Validator::make($request->all(), [
             'round_number' => 'nullable|integer|min:1',
