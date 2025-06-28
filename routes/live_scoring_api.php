@@ -618,59 +618,61 @@ Route::middleware(['auth:sanctum', 'role:admin|moderator'])->put('/admin/matches
 });
 
 // Helper function for match history archival
-function archiveMatchToHistory($matchId, $winnerId) {
-    $match = DB::table('matches')->where('id', $matchId)->first();
-    $rounds = DB::table('match_rounds')->where('match_id', $matchId)->get();
-    
-    // Archive team results
-    foreach ([$match->team1_id, $match->team2_id] as $teamId) {
-        $result = $teamId === $winnerId ? 'win' : 'loss';
+if (!function_exists('archiveMatchToHistory')) {
+    function archiveMatchToHistory($matchId, $winnerId) {
+        $match = DB::table('matches')->where('id', $matchId)->first();
+        $rounds = DB::table('match_rounds')->where('match_id', $matchId)->get();
         
-        DB::table('match_history')->insert([
-            'match_id' => $matchId,
-            'team_id' => $teamId,
-            'result' => $result,
-            'performance_data' => json_encode([
-                'rounds_won' => DB::table('match_rounds')
-                    ->where('match_id', $matchId)
-                    ->where('winner_team_id', $teamId)
-                    ->count(),
-                'total_rounds' => $rounds->count()
-            ]),
-            'created_at' => now(),
-            'updated_at' => now()
-        ]);
-    }
-    
-    // Archive player statistics
-    $playerStats = DB::table('player_match_stats')->where('match_id', $matchId)->get();
-    foreach ($playerStats as $stats) {
-        $player = DB::table('players')->where('id', $stats->player_id)->first();
-        $result = $player->team_id === $winnerId ? 'win' : 'loss';
+        // Archive team results
+        foreach ([$match->team1_id, $match->team2_id] as $teamId) {
+            $result = $teamId === $winnerId ? 'win' : 'loss';
+            
+            DB::table('match_history')->insert([
+                'match_id' => $matchId,
+                'team_id' => $teamId,
+                'result' => $result,
+                'performance_data' => json_encode([
+                    'rounds_won' => DB::table('match_rounds')
+                        ->where('match_id', $matchId)
+                        ->where('winner_team_id', $teamId)
+                        ->count(),
+                    'total_rounds' => $rounds->count()
+                ]),
+                'created_at' => now(),
+                'updated_at' => now()
+            ]);
+        }
         
-        // Calculate performance rating
-        $performanceRating = ($stats->eliminations * 1.0) + ($stats->assists * 0.5) - ($stats->deaths * 0.5) + 
-                           ($stats->damage / 100) + ($stats->healing / 50) + ($stats->objective_time / 10);
-        
-        DB::table('match_history')->insert([
-            'match_id' => $matchId,
-            'team_id' => $player->team_id,
-            'player_id' => $stats->player_id,
-            'result' => $result,
-            'performance_data' => json_encode([
-                'eliminations' => $stats->eliminations,
-                'deaths' => $stats->deaths,
-                'assists' => $stats->assists,
-                'damage' => $stats->damage,
-                'healing' => $stats->healing,
-                'hero_played' => $stats->hero_played,
-                'role_played' => $stats->role_played
-            ]),
-            'performance_rating' => $performanceRating,
-            'mvp' => false, // Will be calculated separately
-            'created_at' => now(),
-            'updated_at' => now()
-        ]);
+        // Archive player statistics
+        $playerStats = DB::table('player_match_stats')->where('match_id', $matchId)->get();
+        foreach ($playerStats as $stats) {
+            $player = DB::table('players')->where('id', $stats->player_id)->first();
+            $result = $player->team_id === $winnerId ? 'win' : 'loss';
+            
+            // Calculate performance rating
+            $performanceRating = ($stats->eliminations * 1.0) + ($stats->assists * 0.5) - ($stats->deaths * 0.5) + 
+                               ($stats->damage / 100) + ($stats->healing / 50) + ($stats->objective_time / 10);
+            
+            DB::table('match_history')->insert([
+                'match_id' => $matchId,
+                'team_id' => $player->team_id,
+                'player_id' => $stats->player_id,
+                'result' => $result,
+                'performance_data' => json_encode([
+                    'eliminations' => $stats->eliminations,
+                    'deaths' => $stats->deaths,
+                    'assists' => $stats->assists,
+                    'damage' => $stats->damage,
+                    'healing' => $stats->healing,
+                    'hero_played' => $stats->hero_played,
+                    'role_played' => $stats->role_played
+                ]),
+                'performance_rating' => $performanceRating,
+                'mvp' => false, // Will be calculated separately
+                'created_at' => now(),
+                'updated_at' => now()
+            ]);
+        }
     }
 }
 
