@@ -678,7 +678,7 @@ function archiveMatchToHistory($matchId, $winnerId) {
 // 5. REAL-TIME PLAYER STATISTICS UPDATE
 // ==========================================
 
-Route::middleware(['auth:sanctum', 'role:admin|moderator'])->put('/api/admin/matches/{matchId}/player/{playerId}/stats', function (Request $request, $matchId, $playerId) {
+Route::middleware(['auth:sanctum', 'role:admin|moderator'])->put('/admin/matches/{matchId}/player/{playerId}/stats', function (Request $request, $matchId, $playerId) {
     try {
         $validator = Validator::make($request->all(), [
             'round_number' => 'nullable|integer|min:1',
