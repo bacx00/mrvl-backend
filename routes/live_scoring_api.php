@@ -43,7 +43,7 @@ Route::middleware(['auth:sanctum', 'role:admin|moderator'])->post('/admin/matche
             'team1_id' => $validated['team1_id'],
             'team2_id' => $validated['team2_id'], 
             'event_id' => $validated['event_id'] ?? null,
-            'scheduled_at' => $validated['scheduled_at'] ?? now(),
+            'scheduled_at' => $validated['scheduled_at'] ?? now()->addMinutes(5),
             'status' => 'upcoming',
             'match_format' => $validated['match_format'],
             'format' => $validated['match_format'], // Legacy compatibility
@@ -53,6 +53,7 @@ Route::middleware(['auth:sanctum', 'role:admin|moderator'])->post('/admin/matche
             'team1_score' => 0,
             'team2_score' => 0,
             'viewers' => 0,
+            'winner_team_id' => null, // Add this field
             'series_completed' => false,
             'competitive_settings' => json_encode($validated['competitive_settings'] ?? [
                 'preparation_time' => 45,
