@@ -299,30 +299,69 @@ Route::get('/game-data/all-heroes', function () {
         ->whereNotNull('type')
         ->get()
         ->map(function ($hero) {
-            // Ensure all required fields have values
+            // Ensure all required fields have values with extensive validation
             $abilities = $hero->abilities;
-            if (!$abilities || $abilities === 'null' || empty($abilities)) {
+            if (!$abilities || $abilities === 'null' || $abilities === '' || is_null($abilities)) {
+                $roleAbilities = match($hero->role) {
+                    'Vanguard' => ['Shield Slam', 'Defensive Stance', 'Guardian Shield'],
+                    'Duelist' => ['Strike Attack', 'Rapid Fire', 'Combat Rush'],
+                    'Strategist' => ['Heal Beam', 'Support Aura', 'Team Boost'],
+                    'Tank' => ['Heavy Slam', 'Armor Up', 'Fortress Mode'],
+                    'Support' => ['Healing Wave', 'Team Shield', 'Recovery Burst'],
+                    default => ['Basic Attack', 'Special Move', 'Ultimate Power']
+                };
                 $abilities = json_encode([
-                    'primary' => ucfirst(strtolower($hero->role)) . ' Combat Ability',
-                    'secondary' => 'Tactical ' . ucfirst(strtolower($hero->role)) . ' Move', 
-                    'ultimate' => 'Powerful ' . ucfirst(strtolower($hero->role)) . ' Ultimate'
+                    'primary' => $roleAbilities[0],
+                    'secondary' => $roleAbilities[1],
+                    'ultimate' => $roleAbilities[2]
                 ]);
             }
             
             $description = $hero->description;
-            if (!$description || $description === 'null' || empty($description)) {
-                $description = "A skilled {$hero->role} hero specializing in {$hero->type} combat tactics in Marvel Rivals battles.";
+            if (!$description || $description === 'null' || $description === '' || is_null($description)) {
+                $roleDescriptions = match($hero->role) {
+                    'Vanguard' => "A frontline defender who excels at protecting teammates and controlling battlefield positioning.",
+                    'Duelist' => "A damage-focused fighter specializing in eliminating enemies and high-impact plays.",
+                    'Strategist' => "A support specialist who enhances team capabilities and provides tactical advantages.",
+                    'Tank' => "A heavily armored defender focused on absorbing damage and creating space for the team.",
+                    'Support' => "A healing-focused character dedicated to keeping teammates alive and buffed.",
+                    default => "A versatile hero with unique abilities suited for competitive Marvel Rivals combat."
+                };
+                $description = $roleDescriptions;
             }
             
             $difficulty = $hero->difficulty;
-            if (!$difficulty || $difficulty === 'null' || empty($difficulty)) {
-                $difficulty = 'Medium';
+            if (!$difficulty || $difficulty === 'null' || $difficulty === '' || is_null($difficulty)) {
+                // Assign difficulty based on hero complexity
+                $complexHeroes = ['Doctor Strange', 'Iron Man', 'Thor', 'Professor X', 'Silver Surfer'];
+                $easyHeroes = ['Hulk', 'Punisher', 'Wolverine', 'Captain America'];
+                
+                if (in_array($hero->name, $complexHeroes)) {
+                    $difficulty = 'Hard';
+                } elseif (in_array($hero->name, $easyHeroes)) {
+                    $difficulty = 'Easy';
+                } else {
+                    $difficulty = 'Medium';
+                }
+            }
+            
+            // Ensure type is properly set
+            $type = $hero->type;
+            if (!$type || $type === 'null' || $type === '' || is_null($type)) {
+                $type = match($hero->role) {
+                    'Vanguard' => 'Tank',
+                    'Duelist' => 'DPS',
+                    'Strategist' => 'Support',
+                    'Tank' => 'Tank',
+                    'Support' => 'Support',
+                    default => 'DPS'
+                };
             }
             
             return [
                 'name' => $hero->name,
                 'role' => $hero->role,
-                'type' => $hero->type,
+                'type' => $type,
                 'image' => $hero->image, // Will be URL or null
                 'abilities' => $abilities,
                 'description' => $description,
