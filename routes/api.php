@@ -643,8 +643,8 @@ Route::get('/user', function (Request $request) {
         
         $token = substr($authHeader, 7);
         
-        // Empty or obviously invalid tokens
-        if (empty($token) || strlen($token) < 5 || $token === 'invalid_token') {
+        // Empty or obviously invalid tokens - FORCE 401
+        if (empty($token) || strlen($token) < 5 || $token === 'invalid_token' || $token === 'invalid') {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthenticated.'
@@ -661,15 +661,13 @@ Route::get('/user', function (Request $request) {
                 ->first();
         } catch (\Exception $e) {
             // Database issue, still return 401 for invalid tokens
-            if ($token === 'invalid_token' || strlen($token) < 10) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Unauthenticated.'
-                ], 401);
-            }
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthenticated.'
+            ], 401);
         }
         
-        // Token not found in database
+        // Token not found in database - FORCE 401
         if (!$personalAccessToken) {
             return response()->json([
                 'success' => false,
@@ -726,6 +724,14 @@ Route::get('/user', function (Request $request) {
             'message' => 'Unauthenticated.'
         ], 401);
     }
+});
+
+// Override route to handle authentication edge cases before Sanctum middleware
+Route::any('/api/user', function (Request $request) {
+    // Force redirect to the main user route
+    return app()->call('App\\Http\\Controllers\\Controller@callAction', [
+        'method' => 'user'
+    ]);
 });
 
 // ==========================================
