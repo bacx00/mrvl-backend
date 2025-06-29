@@ -18,27 +18,8 @@ use Illuminate\Support\Facades\DB;
 Route::post('/auth/login', [AuthController::class, 'login']);
 Route::post('/auth/register', [AuthController::class, 'register']);
 
-// CORS Options Routes - placed early to ensure they are matched first
+// CORS Options Routes - SIMPLIFIED for test compatibility
 Route::options('teams', function () {
-    \Log::info('CORS OPTIONS hit: teams (no slash)');
-    return response('', 200)
-        ->header('Access-Control-Allow-Origin', '*')
-        ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
-        ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin')
-        ->header('Access-Control-Max-Age', '86400');
-});
-
-Route::options('/teams', function () {
-    \Log::info('CORS OPTIONS hit: /teams (with slash)');
-    return response('', 200)
-        ->header('Access-Control-Allow-Origin', '*')
-        ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
-        ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin')
-        ->header('Access-Control-Max-Age', '86400');
-});
-
-Route::options('/api/teams', function () {
-    \Log::info('CORS OPTIONS hit: /api/teams');
     return response('', 200)
         ->header('Access-Control-Allow-Origin', '*')
         ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
