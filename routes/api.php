@@ -561,7 +561,7 @@ Route::middleware('auth:sanctum')->get('/user-direct', function (Request $reques
     ]);
 });
 
-// Enhanced User Authentication with Error Handling
+// Enhanced User Authentication with Comprehensive Error Handling
 Route::get('/user', function (Request $request) {
     try {
         // Check if Authorization header is present
@@ -592,24 +592,44 @@ Route::get('/user', function (Request $request) {
             ], 401);
         }
         
-        // Try to authenticate with Sanctum
-        $user = auth('sanctum')->user();
-        
-        if (!$user) {
+        // Check if token exists in database
+        $personalAccessToken = DB::table('personal_access_tokens')
+            ->where('token', hash('sha256', $token))
+            ->first();
+            
+        if (!$personalAccessToken) {
             return response()->json([
                 'success' => false,
                 'message' => 'Invalid or expired token'
             ], 401);
         }
         
+        // Get user from token
+        $user = DB::table('users')->where('id', $personalAccessToken->tokenable_id)->first();
+        
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User not found for token'
+            ], 401);
+        }
+        
+        // Get user roles
+        $roles = DB::table('model_has_roles')
+            ->join('roles', 'model_has_roles.role_id', '=', 'roles.id')
+            ->where('model_has_roles.model_id', $user->id)
+            ->where('model_has_roles.model_type', 'App\\Models\\User')
+            ->pluck('roles.name')
+            ->toArray();
+        
         return response()->json([
             'data' => [
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
-                'roles' => $user->getRoleNames(),
+                'roles' => $roles,
                 'avatar' => $user->avatar,
-                'created_at' => $user->created_at->toISOString()
+                'created_at' => $user->created_at
             ],
             'success' => true
         ]);
