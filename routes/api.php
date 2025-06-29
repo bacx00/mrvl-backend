@@ -351,7 +351,8 @@ Route::get('/game-data/all-heroes', function () {
             'Duelist' => array_values(array_filter($heroes, fn($h) => $h['role'] === 'Duelist')),
             'Strategist' => array_values(array_filter($heroes, fn($h) => $h['role'] === 'Strategist')),
             'Tank' => array_values(array_filter($heroes, fn($h) => $h['role'] === 'Tank')),
-            'Support' => array_values(array_filter($heroes, fn($h) => $h['role'] === 'Support'))
+            'Support' => array_values(array_filter($heroes, fn($h) => $h['role'] === 'Support')),
+            'DPS' => array_values(array_filter($heroes, fn($h) => $h['role'] === 'DPS'))
         ],
         'team_composition' => [
             'recommended' => '2 Vanguards + 2 Duelists + 2 Strategists',
