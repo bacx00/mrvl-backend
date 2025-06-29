@@ -934,6 +934,77 @@ Route::middleware(['auth:sanctum', 'role:admin'])->get('/admin/stats', function 
     ]);
 });
 
+// Admin GET routes for listing resources
+Route::middleware(['auth:sanctum', 'role:admin'])->get('/admin/matches', function (Request $request) {
+    try {
+        $matches = DB::table('matches as m')
+            ->leftJoin('teams as t1', 'm.team1_id', '=', 't1.id')
+            ->leftJoin('teams as t2', 'm.team2_id', '=', 't2.id')
+            ->leftJoin('events as e', 'm.event_id', '=', 'e.id')
+            ->select([
+                'm.*',
+                't1.name as team1_name', 't1.logo as team1_logo',
+                't2.name as team2_name', 't2.logo as team2_logo',
+                'e.name as event_name'
+            ])
+            ->orderBy('m.created_at', 'desc')
+            ->limit(50)
+            ->get();
+
+        return response()->json([
+            'data' => $matches,
+            'success' => true
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error fetching matches: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+Route::middleware(['auth:sanctum', 'role:admin'])->get('/admin/teams', function (Request $request) {
+    try {
+        $teams = DB::table('teams')
+            ->select('*')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json([
+            'data' => $teams,
+            'success' => true
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error fetching teams: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+Route::middleware(['auth:sanctum', 'role:admin'])->get('/admin/players', function (Request $request) {
+    try {
+        $players = DB::table('players as p')
+            ->leftJoin('teams as t', 'p.team_id', '=', 't.id')
+            ->select([
+                'p.*',
+                't.name as team_name', 't.logo as team_logo'
+            ])
+            ->orderBy('p.created_at', 'desc')
+            ->get();
+
+        return response()->json([
+            'data' => $players,
+            'success' => true
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error fetching players: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
 // Working admin CRUD routes
 Route::middleware(['auth:sanctum', 'role:admin'])->post('/admin/teams', function (Request $request) {
     try {
