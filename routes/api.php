@@ -7300,3 +7300,13 @@ Route::get('/analytics/matches/recent', function (Request $request) {
 // Include the professional live scoring API routes
 include __DIR__ . '/live_scoring_api.php';
 include __DIR__ . '/live_scoring_enhanced_api.php';
+
+// Global CORS handler - must be last to catch any missed routes
+Route::options('{any}', function () {
+    \Log::info('Global CORS OPTIONS hit: ' . request()->path());
+    return response('', 200)
+        ->header('Access-Control-Allow-Origin', '*')
+        ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+        ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin')
+        ->header('Access-Control-Max-Age', '86400');
+})->where('any', '.*');
