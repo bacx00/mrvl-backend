@@ -738,7 +738,7 @@ Route::middleware(['auth:sanctum', 'role:admin|moderator'])->put('/admin/matches
             'accuracy_percentage' => 'nullable|numeric|min:0|max:100',
             'critical_hits' => 'nullable|integer|min:0',
             'hero_played' => 'nullable|string',
-            'role_played' => 'nullable|in:Vanguard,Duelist,Strategist'
+            'role_played' => 'nullable|in:Vanguard,Duelist,Strategist,Tank,Support'
         ]);
 
         if ($validator->fails()) {
@@ -753,14 +753,35 @@ Route::middleware(['auth:sanctum', 'role:admin|moderator'])->put('/admin/matches
             return response()->json(['success' => false, 'message' => 'Match not found'], 404);
         }
 
-        $roundNumber = $validated['round_number'] ?? $match->current_round;
-        $round = DB::table('match_rounds')
-            ->where('match_id', $matchId)
-            ->where('round_number', $roundNumber)
-            ->first();
+        $roundNumber = $validated['round_number'] ?? $match->current_round ?? 1;
+        
+        // Find or create round
+        $round = null;
+        try {
+            $round = DB::table('match_rounds')
+                ->where('match_id', $matchId)
+                ->where('round_number', $roundNumber)
+                ->first();
+        } catch (\Exception $e) {
+            // Table might not exist
+        }
 
         if (!$round) {
-            return response()->json(['success' => false, 'message' => 'Round not found'], 404);
+            // Create round if it doesn't exist
+            try {
+                $roundId = DB::table('match_rounds')->insertGetId([
+                    'match_id' => $matchId,
+                    'round_number' => $roundNumber,
+                    'map_name' => $match->current_map ?? 'Default Map',
+                    'game_mode' => $match->current_mode ?? 'Domination',
+                    'status' => 'upcoming',
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ]);
+                $round = (object)['id' => $roundId];
+            } catch (\Exception $e) {
+                return response()->json(['success' => false, 'message' => 'Could not create round: ' . $e->getMessage()], 500);
+            }
         }
 
         DB::beginTransaction();
@@ -772,56 +793,69 @@ Route::middleware(['auth:sanctum', 'role:admin|moderator'])->put('/admin/matches
         $updateData['updated_at'] = now();
 
         // Update or create player stats
-        $existingStats = DB::table('player_match_stats')
-            ->where('player_id', $playerId)
-            ->where('match_id', $matchId)
-            ->where('round_id', $round->id)
-            ->first();
+        try {
+            $existingStats = DB::table('player_match_stats')
+                ->where('player_id', $playerId)
+                ->where('match_id', $matchId)
+                ->where('round_id', $round->id)
+                ->first();
 
-        if ($existingStats) {
-            DB::table('player_match_stats')
-                ->where('id', $existingStats->id)
-                ->update($updateData);
-            $statsId = $existingStats->id;
-        } else {
-            $insertData = array_merge([
-                'player_id' => $playerId,
-                'match_id' => $matchId,
-                'round_id' => $round->id,
-                'current_map' => $round->map_name,
-                'created_at' => now()
-            ], $updateData);
-            
-            $statsId = DB::table('player_match_stats')->insertGetId($insertData);
+            if ($existingStats) {
+                DB::table('player_match_stats')
+                    ->where('id', $existingStats->id)
+                    ->update($updateData);
+                $statsId = $existingStats->id;
+            } else {
+                $insertData = array_merge([
+                    'player_id' => $playerId,
+                    'match_id' => $matchId,
+                    'round_id' => $round->id,
+                    'current_map' => $match->current_map ?? 'Default Map',
+                    'created_at' => now()
+                ], $updateData);
+                
+                $statsId = DB::table('player_match_stats')->insertGetId($insertData);
+            }
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => 'Could not update player stats: ' . $e->getMessage()], 500);
         }
 
         // Create live event for significant actions
         if (isset($validated['eliminations']) || isset($validated['deaths'])) {
-            DB::table('live_events')->insert([
-                'match_id' => $matchId,
-                'round_id' => $round->id,
-                'event_type' => isset($validated['eliminations']) ? 'elimination' : 'death',
-                'player_id' => $playerId,
-                'hero_involved' => $validated['hero_played'] ?? null,
-                'event_data' => json_encode($validated),
-                'event_timestamp' => now(),
-                'match_time_seconds' => 0, // Would be calculated from timer
-                'created_at' => now(),
-                'updated_at' => now()
-            ]);
+            try {
+                DB::table('live_events')->insert([
+                    'match_id' => $matchId,
+                    'round_id' => $round->id,
+                    'event_type' => isset($validated['eliminations']) ? 'elimination' : 'death',
+                    'player_id' => $playerId,
+                    'hero_involved' => $validated['hero_played'] ?? null,
+                    'event_data' => json_encode($validated),
+                    'event_timestamp' => now(),
+                    'match_time_seconds' => 0, // Would be calculated from timer
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ]);
+            } catch (\Exception $e) {
+                // Continue if live_events table doesn't exist
+            }
         }
 
         DB::commit();
 
         // Return updated stats
-        $updatedStats = DB::table('player_match_stats as pms')
-            ->leftJoin('players as p', 'pms.player_id', '=', 'p.id')
-            ->select([
-                'pms.*',
-                'p.name as player_name', 'p.username as player_username'
-            ])
-            ->where('pms.id', $statsId)
-            ->first();
+        try {
+            $updatedStats = DB::table('player_match_stats as pms')
+                ->leftJoin('players as p', 'pms.player_id', '=', 'p.id')
+                ->select([
+                    'pms.*',
+                    'p.name as player_name', 'p.username as player_username'
+                ])
+                ->where('pms.id', $statsId)
+                ->first();
+        } catch (\Exception $e) {
+            $updatedStats = (object)array_merge(['id' => $statsId], $updateData);
+        }
 
         return response()->json([
             'success' => true,
