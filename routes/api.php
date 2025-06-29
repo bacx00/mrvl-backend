@@ -7373,7 +7373,7 @@ Route::get('/analytics/matches/recent', function (Request $request) {
 include __DIR__ . '/live_scoring_api.php';
 include __DIR__ . '/live_scoring_enhanced_api.php';
 
-// Global CORS handler - must be last to catch any missed routes
+// Global CORS handler - only for OPTIONS requests, not all methods
 Route::options('{any}', function () {
     return response('', 200)
         ->header('Access-Control-Allow-Origin', '*')
