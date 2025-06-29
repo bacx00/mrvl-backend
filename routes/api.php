@@ -4506,7 +4506,8 @@ Route::middleware(['auth:sanctum', 'role:admin'])->put('/admin/forums/threads/{i
 // AUTHENTICATION ROUTE ALIASES
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout']);
-Route::get('/user', [AuthController::class, 'user'])->middleware('auth:sanctum');
+// Commented out to avoid conflict with manual auth route at line 575
+// Route::get('/user', [AuthController::class, 'user'])->middleware('auth:sanctum');
 
 // 1. MATCH COMMENTS SYSTEM (4 endpoints)
 Route::get('/matches/{id}/comments', function ($matchId) {
