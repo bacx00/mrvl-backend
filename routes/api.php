@@ -18,8 +18,17 @@ use Illuminate\Support\Facades\DB;
 Route::post('/auth/login', [AuthController::class, 'login']);
 Route::post('/auth/register', [AuthController::class, 'register']);
 
-// CORS Options Routes - SIMPLIFIED for test compatibility
+// CORS Options Routes - MUST be exact pattern match
 Route::options('teams', function () {
+    return response('', 200)
+        ->header('Access-Control-Allow-Origin', '*')
+        ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+        ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin')
+        ->header('Access-Control-Max-Age', '86400');
+});
+
+// Additional patterns to catch different URL formats
+Route::options('/teams', function () {
     return response('', 200)
         ->header('Access-Control-Allow-Origin', '*')
         ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
