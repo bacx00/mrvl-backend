@@ -299,14 +299,34 @@ Route::get('/game-data/all-heroes', function () {
         ->whereNotNull('type')
         ->get()
         ->map(function ($hero) {
+            // Ensure all required fields have values
+            $abilities = $hero->abilities;
+            if (!$abilities || $abilities === 'null' || empty($abilities)) {
+                $abilities = json_encode([
+                    'primary' => ucfirst(strtolower($hero->role)) . ' Combat Ability',
+                    'secondary' => 'Tactical ' . ucfirst(strtolower($hero->role)) . ' Move', 
+                    'ultimate' => 'Powerful ' . ucfirst(strtolower($hero->role)) . ' Ultimate'
+                ]);
+            }
+            
+            $description = $hero->description;
+            if (!$description || $description === 'null' || empty($description)) {
+                $description = "A skilled {$hero->role} hero specializing in {$hero->type} combat tactics in Marvel Rivals battles.";
+            }
+            
+            $difficulty = $hero->difficulty;
+            if (!$difficulty || $difficulty === 'null' || empty($difficulty)) {
+                $difficulty = 'Medium';
+            }
+            
             return [
                 'name' => $hero->name,
                 'role' => $hero->role,
                 'type' => $hero->type,
                 'image' => $hero->image, // Will be URL or null
-                'abilities' => $hero->abilities ?? json_encode(['primary' => 'Combat abilities', 'secondary' => 'Special moves', 'ultimate' => 'Powerful ultimate']),
-                'description' => $hero->description ?? "A powerful {$hero->role} hero with unique abilities in Marvel Rivals.",
-                'difficulty' => $hero->difficulty ?? 'Medium',
+                'abilities' => $abilities,
+                'description' => $description,
+                'difficulty' => $difficulty,
                 'fallback_text' => $hero->image ? false : true // Indicates if frontend should show text
             ];
         })
