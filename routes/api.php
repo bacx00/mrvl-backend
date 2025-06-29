@@ -364,7 +364,7 @@ Route::get('/game-data/maps', function () {
     ]);
 });
 
-// Get Marvel Rivals game modes (4 game modes)
+// Get Marvel Rivals game modes (6 game modes)
 Route::get('/game-data/modes', function () {
     $modes = [
         [
@@ -386,6 +386,16 @@ Route::get('/game-data/modes', function () {
             'name' => 'Convergence',
             'description' => 'Compete for control of a central zone that shifts dynamically throughout the match.',
             'objective' => 'Control the shifting convergence zone'
+        ],
+        [
+            'name' => 'Conquest',
+            'description' => 'Large-scale battles for territorial control across multiple strategic points.',
+            'objective' => 'Capture and maintain territorial control'
+        ],
+        [
+            'name' => 'Doom Match',
+            'description' => 'High-stakes elimination matches where every decision counts toward ultimate victory.',
+            'objective' => 'Eliminate enemy team to achieve victory'
         ]
     ];
     
