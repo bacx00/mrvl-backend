@@ -609,8 +609,9 @@ Route::middleware(['auth:sanctum', 'role:admin|moderator'])->put('/admin/matches
 Route::post('/matches/{id}/viewers/update', function (Request $request, $id) {
     try {
         $validator = Validator::make($request->all(), [
-            'action' => 'required|in:increment,decrement,set',
-            'count' => 'nullable|integer|min:0'
+            'action' => 'sometimes|in:increment,decrement,set',
+            'count' => 'nullable|integer|min:0',
+            'viewer_count' => 'nullable|integer|min:0' // For backward compatibility
         ]);
 
         if ($validator->fails()) {
@@ -627,16 +628,21 @@ Route::post('/matches/{id}/viewers/update', function (Request $request, $id) {
         $currentViewers = $match->viewers ?? 0;
         $newViewerCount = $currentViewers;
 
-        switch ($validated['action']) {
-            case 'increment':
-                $newViewerCount = $currentViewers + 1;
-                break;
-            case 'decrement':
-                $newViewerCount = max(0, $currentViewers - 1);
-                break;
-            case 'set':
-                $newViewerCount = $validated['count'] ?? 0;
-                break;
+        // Handle direct viewer_count setting (for backward compatibility)
+        if (isset($validated['viewer_count'])) {
+            $newViewerCount = $validated['viewer_count'];
+        } elseif (isset($validated['action'])) {
+            switch ($validated['action']) {
+                case 'increment':
+                    $newViewerCount = $currentViewers + 1;
+                    break;
+                case 'decrement':
+                    $newViewerCount = max(0, $currentViewers - 1);
+                    break;
+                case 'set':
+                    $newViewerCount = $validated['count'] ?? 0;
+                    break;
+            }
         }
 
         DB::table('matches')->where('id', $id)->update([
@@ -649,7 +655,7 @@ Route::post('/matches/{id}/viewers/update', function (Request $request, $id) {
             'data' => [
                 'previous_count' => $currentViewers,
                 'new_count' => $newViewerCount,
-                'action' => $validated['action']
+                'action' => $validated['action'] ?? 'set'
             ]
         ]);
 
