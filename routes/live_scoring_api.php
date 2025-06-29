@@ -23,7 +23,7 @@ Route::middleware(['auth:sanctum', 'role:admin|moderator'])->post('/admin/matche
             'map_pool.*.map_name' => 'required|string',
             'map_pool.*.game_mode' => 'required|in:Domination,Convoy,Convergence,Conquest,Doom Match',
             'competitive_settings' => 'nullable|array',
-            'scheduled_at' => 'nullable|date|after:now'
+            'scheduled_at' => 'nullable|date|after_or_equal:' . now()->subMinutes(5)->toDateTimeString() // Allow 5 minutes ago to now + future
         ]);
 
         if ($validator->fails()) {
