@@ -20,21 +20,19 @@ use Illuminate\Support\Facades\Route;
 // ==========================================
 
 Route::options('teams', function () {
-    return response('')
+    return response('', 200)
         ->header('Access-Control-Allow-Origin', '*')
         ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
         ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin')
-        ->header('Access-Control-Max-Age', '86400')
-        ->header('Content-Type', 'text/plain');
+        ->header('Access-Control-Max-Age', '86400');
 });
 
 Route::options('/teams', function () {
-    return response('')
+    return response('', 200)
         ->header('Access-Control-Allow-Origin', '*')
         ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
         ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin')
-        ->header('Access-Control-Max-Age', '86400')
-        ->header('Content-Type', 'text/plain');
+        ->header('Access-Control-Max-Age', '86400');
 });
 
 // Public Authentication Routes
