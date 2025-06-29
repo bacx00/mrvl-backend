@@ -581,7 +581,7 @@ Route::middleware('auth:sanctum')->get('/user-direct', function (Request $reques
     ]);
 });
 
-// COMPLETELY OVERRIDE USER ROUTE - BYPASS MIDDLEWARE ISSUES FOR PROPER 401 HANDLING
+// COMPLETELY OVERRIDE USER ROUTE - PROPER SANCTUM TOKEN VALIDATION
 Route::get('/user', function (Request $request) {
     // Get the Authorization header
     $authHeader = $request->header('Authorization');
@@ -600,35 +600,43 @@ Route::get('/user', function (Request $request) {
         ], 401);
     }
     
-    $token = substr($authHeader, 7);
+    $token = substr($authHeader, 7); // Remove "Bearer "
     
     // Test 3: Obviously invalid tokens
-    if (empty($token) || $token === 'invalid_token' || $token === 'invalid' || strlen($token) < 5) {
+    if (empty($token) || $token === 'invalid_token' || $token === 'invalid' || strlen($token) < 10) {
         return response()->json([
             'message' => 'Unauthenticated.'
         ], 401);
     }
     
-    // Test 4: Try to find token in database
+    // Test 4: Parse Laravel Sanctum token format (ID|TOKEN)
     try {
-        $hashedToken = hash('sha256', $token);
+        if (!str_contains($token, '|')) {
+            return response()->json(['message' => 'Unauthenticated.'], 401);
+        }
+        
+        [$tokenId, $tokenValue] = explode('|', $token, 2);
+        
+        if (!is_numeric($tokenId) || empty($tokenValue)) {
+            return response()->json(['message' => 'Unauthenticated.'], 401);
+        }
+        
+        // Find token in database using Sanctum's hashing method
+        $hashedToken = hash('sha256', $tokenValue);
         $personalAccessToken = DB::table('personal_access_tokens')
+            ->where('id', $tokenId)
             ->where('token', $hashedToken)
             ->first();
             
         if (!$personalAccessToken) {
-            return response()->json([
-                'message' => 'Unauthenticated.'
-            ], 401);
+            return response()->json(['message' => 'Unauthenticated.'], 401);
         }
         
         // Get user
         $user = DB::table('users')->where('id', $personalAccessToken->tokenable_id)->first();
         
         if (!$user) {
-            return response()->json([
-                'message' => 'Unauthenticated.'
-            ], 401);
+            return response()->json(['message' => 'Unauthenticated.'], 401);
         }
         
         // Get roles
@@ -652,9 +660,7 @@ Route::get('/user', function (Request $request) {
         ]);
         
     } catch (\Exception $e) {
-        return response()->json([
-            'message' => 'Unauthenticated.'
-        ], 401);
+        return response()->json(['message' => 'Unauthenticated.'], 401);
     }
 });
 
