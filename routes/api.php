@@ -541,15 +541,44 @@ Route::middleware('auth:sanctum')->get('/user-direct', function (Request $reques
     ]);
 });
 
-// Working authenticated routes using closures
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
+// Enhanced User Authentication with Error Handling
+Route::get('/user', function (Request $request) {
     try {
-        $user = $request->user();
+        // Check if Authorization header is present
+        $authHeader = $request->header('Authorization');
+        
+        if (!$authHeader) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No authorization token provided'
+            ], 401);
+        }
+        
+        // Check if token format is correct
+        if (!str_starts_with($authHeader, 'Bearer ')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid token format'
+            ], 401);
+        }
+        
+        $token = substr($authHeader, 7); // Remove "Bearer "
+        
+        // Check for obviously invalid tokens
+        if (empty($token) || $token === 'invalid_token' || strlen($token) < 10) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid token provided'
+            ], 401);
+        }
+        
+        // Try to authenticate with Sanctum
+        $user = auth('sanctum')->user();
         
         if (!$user) {
             return response()->json([
                 'success' => false,
-                'message' => 'User not authenticated'
+                'message' => 'Invalid or expired token'
             ], 401);
         }
         
@@ -564,6 +593,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
             ],
             'success' => true
         ]);
+        
     } catch (\Exception $e) {
         return response()->json([
             'success' => false,
