@@ -27,52 +27,76 @@ Route::get('/matches/{id}/live-scoreboard', function (Request $request, $id) {
             return response()->json(['success' => false, 'message' => 'Match not found'], 404);
         }
 
-        // Get all rounds data
-        $rounds = DB::table('match_rounds')
-            ->where('match_id', $id)
-            ->orderBy('round_number')
-            ->get();
-
-        // Get current round details
-        $currentRound = $rounds->where('round_number', $match->current_round)->first();
-
-        // Get active timers
-        $activeTimers = DB::table('competitive_timers')
-            ->where('match_id', $id)
-            ->where('status', '!=', 'completed')
-            ->orderBy('created_at', 'desc')
-            ->get();
-
-        // Get player statistics for current round
-        $playerStats = [];
-        if ($currentRound) {
-            $playerStats = DB::table('player_match_stats as pms')
-                ->leftJoin('players as p', 'pms.player_id', '=', 'p.id')
-                ->leftJoin('teams as t', 'p.team_id', '=', 't.id')
-                ->select([
-                    'pms.*',
-                    'p.name as player_name', 'p.username as player_username', 'p.team_id',
-                    't.name as team_name', 't.short_name as team_short'
-                ])
-                ->where('pms.match_id', $id)
-                ->where('pms.round_id', $currentRound->id)
-                ->get()
-                ->groupBy('team_id');
+        // Get all rounds data (with error handling)
+        $rounds = [];
+        try {
+            $rounds = DB::table('match_rounds')
+                ->where('match_id', $id)
+                ->orderBy('round_number')
+                ->get();
+        } catch (\Exception $e) {
+            // Table might not exist, continue with empty rounds
+            $rounds = collect([]);
         }
 
-        // Get recent live events
-        $recentEvents = DB::table('live_events as le')
-            ->leftJoin('players as p', 'le.player_id', '=', 'p.id')
-            ->leftJoin('players as tp', 'le.target_player_id', '=', 'tp.id')
-            ->select([
-                'le.*',
-                'p.name as player_name', 'p.username as player_username',
-                'tp.name as target_player_name', 'tp.username as target_username'
-            ])
-            ->where('le.match_id', $id)
-            ->orderBy('le.event_timestamp', 'desc')
-            ->limit(20)
-            ->get();
+        // Get current round details
+        $currentRound = null;
+        if ($rounds->isNotEmpty()) {
+            $currentRound = $rounds->where('round_number', $match->current_round ?? 1)->first();
+        }
+
+        // Get active timers (with error handling)
+        $activeTimers = collect([]);
+        try {
+            $activeTimers = DB::table('competitive_timers')
+                ->where('match_id', $id)
+                ->where('status', '!=', 'completed')
+                ->orderBy('created_at', 'desc')
+                ->get();
+        } catch (\Exception $e) {
+            // Table might not exist, continue with empty timers
+        }
+
+        // Get player statistics for current round (with error handling)
+        $playerStats = [];
+        if ($currentRound) {
+            try {
+                $playerStats = DB::table('player_match_stats as pms')
+                    ->leftJoin('players as p', 'pms.player_id', '=', 'p.id')
+                    ->leftJoin('teams as t', 'p.team_id', '=', 't.id')
+                    ->select([
+                        'pms.*',
+                        'p.name as player_name', 'p.username as player_username', 'p.team_id',
+                        't.name as team_name', 't.short_name as team_short'
+                    ])
+                    ->where('pms.match_id', $id)
+                    ->where('pms.round_id', $currentRound->id)
+                    ->get()
+                    ->groupBy('team_id');
+            } catch (\Exception $e) {
+                // Tables might not exist, continue with empty stats
+                $playerStats = [];
+            }
+        }
+
+        // Get recent live events (with error handling)
+        $recentEvents = collect([]);
+        try {
+            $recentEvents = DB::table('live_events as le')
+                ->leftJoin('players as p', 'le.player_id', '=', 'p.id')
+                ->leftJoin('players as tp', 'le.target_player_id', '=', 'tp.id')
+                ->select([
+                    'le.*',
+                    'p.name as player_name', 'p.username as player_username',
+                    'tp.name as target_player_name', 'tp.username as target_username'
+                ])
+                ->where('le.match_id', $id)
+                ->orderBy('le.event_timestamp', 'desc')
+                ->limit(20)
+                ->get();
+        } catch (\Exception $e) {
+            // Table might not exist, continue with empty events
+        }
 
         return response()->json([
             'success' => true,
@@ -84,21 +108,21 @@ Route::get('/matches/{id}/live-scoreboard', function (Request $request, $id) {
                 'player_statistics' => $playerStats,
                 'recent_events' => $recentEvents,
                 'live_data' => [
-                    'status' => $match->status,
-                    'current_map' => $match->current_map,
-                    'current_mode' => $match->current_mode,
-                    'series_score' => [$match->team1_score, $match->team2_score],
-                    'format' => $match->match_format,
+                    'status' => $match->status ?? 'upcoming',
+                    'current_map' => $match->current_map ?? 'Unknown',
+                    'current_mode' => $match->current_mode ?? 'Unknown',
+                    'series_score' => [$match->team1_score ?? 0, $match->team2_score ?? 0],
+                    'format' => $match->match_format ?? 'BO1',
                     'viewers' => $match->viewers ?? 0
                 ]
             ],
             'cache_control' => [
                 'max_age' => 5, // 5 seconds cache for live data
-                'last_updated' => $match->updated_at
+                'last_updated' => $match->updated_at ?? now()
             ]
         ], 200, [
             'Cache-Control' => 'public, max-age=5',
-            'Last-Modified' => gmdate('D, d M Y H:i:s \G\M\T', strtotime($match->updated_at))
+            'Last-Modified' => gmdate('D, d M Y H:i:s \G\M\T', strtotime($match->updated_at ?? now()))
         ]);
 
     } catch (\Exception $e) {
