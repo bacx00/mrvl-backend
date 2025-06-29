@@ -304,9 +304,9 @@ Route::get('/game-data/all-heroes', function () {
                 'role' => $hero->role,
                 'type' => $hero->type,
                 'image' => $hero->image, // Will be URL or null
-                'abilities' => $hero->abilities,
-                'description' => $hero->description,
-                'difficulty' => $hero->difficulty,
+                'abilities' => $hero->abilities ?? json_encode(['primary' => 'Combat abilities', 'secondary' => 'Special moves', 'ultimate' => 'Powerful ultimate']),
+                'description' => $hero->description ?? "A powerful {$hero->role} hero with unique abilities in Marvel Rivals.",
+                'difficulty' => $hero->difficulty ?? 'Medium',
                 'fallback_text' => $hero->image ? false : true // Indicates if frontend should show text
             ];
         })
