@@ -571,7 +571,7 @@ Route::middleware('auth:sanctum')->get('/user-direct', function (Request $reques
     ]);
 });
 
-// COMPLETELY OVERRIDE USER ROUTE - NO MIDDLEWARE
+// COMPLETELY OVERRIDE USER ROUTE - BYPASS MIDDLEWARE ISSUES
 Route::get('/user', function (Request $request) {
     // Get the Authorization header
     $authHeader = $request->header('Authorization');
@@ -646,7 +646,7 @@ Route::get('/user', function (Request $request) {
             'message' => 'Unauthenticated.'
         ], 401);
     }
-})->withoutMiddleware();
+});
 
 
 
