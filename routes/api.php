@@ -597,82 +597,8 @@ Route::middleware('auth:sanctum')->get('/user-direct', function (Request $reques
     ]);
 });
 
-// COMPLETELY OVERRIDE USER ROUTE - BYPASS MIDDLEWARE ISSUES
-Route::get('/user', function (Request $request) {
-    // Get the Authorization header
-    $authHeader = $request->header('Authorization');
-    
-    // Test 1: No token at all
-    if (!$authHeader) {
-        return response()->json([
-            'message' => 'Unauthenticated.'
-        ], 401);
-    }
-    
-    // Test 2: Invalid Bearer format
-    if (!str_starts_with($authHeader, 'Bearer ')) {
-        return response()->json([
-            'message' => 'Unauthenticated.'
-        ], 401);
-    }
-    
-    $token = substr($authHeader, 7);
-    
-    // Test 3: Obviously invalid tokens
-    if (empty($token) || $token === 'invalid_token' || $token === 'invalid' || strlen($token) < 5) {
-        return response()->json([
-            'message' => 'Unauthenticated.'
-        ], 401);
-    }
-    
-    // Test 4: Try to find token in database
-    try {
-        $hashedToken = hash('sha256', $token);
-        $personalAccessToken = DB::table('personal_access_tokens')
-            ->where('token', $hashedToken)
-            ->first();
-            
-        if (!$personalAccessToken) {
-            return response()->json([
-                'message' => 'Unauthenticated.'
-            ], 401);
-        }
-        
-        // Get user
-        $user = DB::table('users')->where('id', $personalAccessToken->tokenable_id)->first();
-        
-        if (!$user) {
-            return response()->json([
-                'message' => 'Unauthenticated.'
-            ], 401);
-        }
-        
-        // Get roles
-        $roles = DB::table('model_has_roles')
-            ->join('roles', 'model_has_roles.role_id', '=', 'roles.id')
-            ->where('model_has_roles.model_id', $user->id)
-            ->where('model_has_roles.model_type', 'App\\Models\\User')
-            ->pluck('roles.name')
-            ->toArray();
-        
-        return response()->json([
-            'data' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'roles' => $roles,
-                'avatar' => $user->avatar,
-                'created_at' => $user->created_at
-            ],
-            'success' => true
-        ]);
-        
-    } catch (\Exception $e) {
-        return response()->json([
-            'message' => 'Unauthenticated.'
-        ], 401);
-    }
-});
+// User route with proper Sanctum authentication (restored)
+Route::get('/user', [AuthController::class, 'user'])->middleware('auth:sanctum');
 
 
 
