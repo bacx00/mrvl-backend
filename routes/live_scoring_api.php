@@ -874,7 +874,7 @@ Route::middleware(['auth:sanctum', 'role:admin|moderator'])->put('/admin/matches
 // 8. PREPARATION PHASE TIMER MANAGEMENT
 // ==========================================
 
-Route::middleware(['auth:sanctum', 'role:admin|moderator'])->put('/admin/matches/{id}/preparation-phase', function (Request $request, $id) {
+Route::put('/admin/matches/{id}/preparation-phase', function (Request $request, $id) {
     try {
         $validator = Validator::make($request->all(), [
             'duration' => 'nullable|integer|min:5|max:300' // 5 seconds to 5 minutes
