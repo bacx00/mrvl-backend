@@ -455,46 +455,6 @@ Route::middleware(['auth:sanctum', 'role:admin|moderator'])->put('/admin/matches
     }
 });
 
-        foreach (['team1_composition', 'team2_composition'] as $teamKey) {
-            if (isset($validated[$teamKey])) {
-                foreach ($validated[$teamKey] as $playerData) {
-                    DB::table('player_match_stats')->updateOrInsert(
-                        [
-                            'player_id' => $playerData['player_id'],
-                            'match_id' => $id,
-                            'round_id' => $round->id
-                        ],
-                        [
-                            'hero_played' => $playerData['hero'],
-                            'role_played' => $playerData['role'],
-                            'current_map' => $round->map_name,
-                            'updated_at' => now()
-                        ]
-                    );
-                }
-            }
-        }
-
-        DB::commit();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Team compositions updated successfully',
-            'data' => [
-                'round_number' => $validated['round_number'],
-                'compositions_updated' => array_keys(array_intersect_key($validated, array_flip(['team1_composition', 'team2_composition'])))
-            ]
-        ]);
-
-    } catch (\Exception $e) {
-        DB::rollBack();
-        return response()->json([
-            'success' => false,
-            'message' => 'Composition update error: ' . $e->getMessage()
-        ], 500);
-    }
-});
-
 // ==========================================
 // 4. ROUND TRANSITION AND MAP MANAGEMENT
 // ==========================================
