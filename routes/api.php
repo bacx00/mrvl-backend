@@ -20,6 +20,7 @@ Route::post('/auth/register', [AuthController::class, 'register']);
 
 // CORS Options Routes - placed early to ensure they are matched first
 Route::options('teams', function () {
+    \Log::info('CORS OPTIONS hit: teams (no slash)');
     return response('', 200)
         ->header('Access-Control-Allow-Origin', '*')
         ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
@@ -28,6 +29,7 @@ Route::options('teams', function () {
 });
 
 Route::options('/teams', function () {
+    \Log::info('CORS OPTIONS hit: /teams (with slash)');
     return response('', 200)
         ->header('Access-Control-Allow-Origin', '*')
         ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
@@ -36,6 +38,7 @@ Route::options('/teams', function () {
 });
 
 Route::options('/api/teams', function () {
+    \Log::info('CORS OPTIONS hit: /api/teams');
     return response('', 200)
         ->header('Access-Control-Allow-Origin', '*')
         ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
