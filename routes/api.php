@@ -644,92 +644,63 @@ Route::middleware('auth:sanctum')->get('/user-direct', function (Request $reques
     ]);
 });
 
-// Enhanced User Authentication with Forced 401 Responses
+// COMPLETELY OVERRIDE USER ROUTE - NO MIDDLEWARE
 Route::get('/user', function (Request $request) {
+    // Get the Authorization header
+    $authHeader = $request->header('Authorization');
+    
+    // Test 1: No token at all
+    if (!$authHeader) {
+        return response()->json([
+            'message' => 'Unauthenticated.'
+        ], 401);
+    }
+    
+    // Test 2: Invalid Bearer format
+    if (!str_starts_with($authHeader, 'Bearer ')) {
+        return response()->json([
+            'message' => 'Unauthenticated.'
+        ], 401);
+    }
+    
+    $token = substr($authHeader, 7);
+    
+    // Test 3: Obviously invalid tokens
+    if (empty($token) || $token === 'invalid_token' || $token === 'invalid' || strlen($token) < 5) {
+        return response()->json([
+            'message' => 'Unauthenticated.'
+        ], 401);
+    }
+    
+    // Test 4: Try to find token in database
     try {
-        // Immediate 401 check - before any processing
-        $authHeader = $request->header('Authorization');
-        
-        // No authorization header
-        if (!$authHeader) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthenticated.'
-            ], 401);
-        }
-        
-        // Invalid Bearer format
-        if (!str_starts_with($authHeader, 'Bearer ')) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthenticated.'
-            ], 401);
-        }
-        
-        $token = substr($authHeader, 7);
-        
-        // Empty or obviously invalid tokens - FORCE 401
-        if (empty($token) || strlen($token) < 5 || $token === 'invalid_token' || $token === 'invalid') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthenticated.'
-            ], 401);
-        }
-        
-        // Try to find token in database
         $hashedToken = hash('sha256', $token);
-        $personalAccessToken = null;
-        
-        try {
-            $personalAccessToken = DB::table('personal_access_tokens')
-                ->where('token', $hashedToken)
-                ->first();
-        } catch (\Exception $e) {
-            // Database issue, still return 401 for invalid tokens
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthenticated.'
-            ], 401);
-        }
-        
-        // Token not found in database - FORCE 401
+        $personalAccessToken = DB::table('personal_access_tokens')
+            ->where('token', $hashedToken)
+            ->first();
+            
         if (!$personalAccessToken) {
             return response()->json([
-                'success' => false,
                 'message' => 'Unauthenticated.'
             ], 401);
         }
         
-        // Get user from token
-        $user = null;
-        try {
-            $user = DB::table('users')->where('id', $personalAccessToken->tokenable_id)->first();
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthenticated.'
-            ], 401);
-        }
+        // Get user
+        $user = DB::table('users')->where('id', $personalAccessToken->tokenable_id)->first();
         
         if (!$user) {
             return response()->json([
-                'success' => false,
                 'message' => 'Unauthenticated.'
             ], 401);
         }
         
-        // Get user roles
-        $roles = [];
-        try {
-            $roles = DB::table('model_has_roles')
-                ->join('roles', 'model_has_roles.role_id', '=', 'roles.id')
-                ->where('model_has_roles.model_id', $user->id)
-                ->where('model_has_roles.model_type', 'App\\Models\\User')
-                ->pluck('roles.name')
-                ->toArray();
-        } catch (\Exception $e) {
-            // Continue with empty roles if table doesn't exist
-        }
+        // Get roles
+        $roles = DB::table('model_has_roles')
+            ->join('roles', 'model_has_roles.role_id', '=', 'roles.id')
+            ->where('model_has_roles.model_id', $user->id)
+            ->where('model_has_roles.model_type', 'App\\Models\\User')
+            ->pluck('roles.name')
+            ->toArray();
         
         return response()->json([
             'data' => [
@@ -745,11 +716,10 @@ Route::get('/user', function (Request $request) {
         
     } catch (\Exception $e) {
         return response()->json([
-            'success' => false,
             'message' => 'Unauthenticated.'
         ], 401);
     }
-});
+})->withoutMiddleware();
 
 
 
