@@ -293,16 +293,48 @@ Route::get('/game-data/heroes', function () {
 
 // Get complete Marvel Rivals heroes roster (29 heroes) - Updated for proper roles
 Route::get('/game-data/all-heroes', function () {
-    // Get heroes from database with proper type mapping and images
+    // Get heroes from database with comprehensive fallback handling
     $heroes = DB::table('marvel_heroes')
         ->select('name', 'role', 'type', 'image', 'abilities', 'description', 'difficulty')
-        ->whereNotNull('type')
-        ->get()
+        ->get() // Remove the whereNotNull('type') constraint to get ALL heroes
         ->map(function ($hero) {
             // Ensure all required fields have values with extensive validation
+            
+            // Fix role if it's null or empty
+            $role = $hero->role;
+            if (!$role || $role === 'null' || $role === '' || is_null($role)) {
+                // Assign default role based on hero name
+                $duelistHeroes = ['Iron Man', 'Spider-Man', 'Deadpool', 'Wolverine', 'Punisher', 'Falcon'];
+                $vanguardHeroes = ['Hulk', 'Thor', 'Captain America', 'Doctor Doom', 'Thanos', 'Galactus'];
+                $strategistHeroes = ['Doctor Strange', 'Professor X', 'Storm', 'Luna Snow', 'Mantis'];
+                
+                if (in_array($hero->name, $duelistHeroes)) {
+                    $role = 'Duelist';
+                } elseif (in_array($hero->name, $vanguardHeroes)) {
+                    $role = 'Vanguard';
+                } elseif (in_array($hero->name, $strategistHeroes)) {
+                    $role = 'Strategist';
+                } else {
+                    $role = 'Duelist'; // Default fallback
+                }
+            }
+            
+            // Ensure type is properly set
+            $type = $hero->type;
+            if (!$type || $type === 'null' || $type === '' || is_null($type)) {
+                $type = match($role) {
+                    'Vanguard' => 'Tank',
+                    'Duelist' => 'DPS',
+                    'Strategist' => 'Support',
+                    'Tank' => 'Tank',
+                    'Support' => 'Support',
+                    default => 'DPS'
+                };
+            }
+            
             $abilities = $hero->abilities;
             if (!$abilities || $abilities === 'null' || $abilities === '' || is_null($abilities)) {
-                $roleAbilities = match($hero->role) {
+                $roleAbilities = match($role) {
                     'Vanguard' => ['Shield Slam', 'Defensive Stance', 'Guardian Shield'],
                     'Duelist' => ['Strike Attack', 'Rapid Fire', 'Combat Rush'],
                     'Strategist' => ['Heal Beam', 'Support Aura', 'Team Boost'],
@@ -319,7 +351,7 @@ Route::get('/game-data/all-heroes', function () {
             
             $description = $hero->description;
             if (!$description || $description === 'null' || $description === '' || is_null($description)) {
-                $roleDescriptions = match($hero->role) {
+                $roleDescriptions = match($role) {
                     'Vanguard' => "A frontline defender who excels at protecting teammates and controlling battlefield positioning.",
                     'Duelist' => "A damage-focused fighter specializing in eliminating enemies and high-impact plays.",
                     'Strategist' => "A support specialist who enhances team capabilities and provides tactical advantages.",
@@ -333,8 +365,8 @@ Route::get('/game-data/all-heroes', function () {
             $difficulty = $hero->difficulty;
             if (!$difficulty || $difficulty === 'null' || $difficulty === '' || is_null($difficulty)) {
                 // Assign difficulty based on hero complexity
-                $complexHeroes = ['Doctor Strange', 'Iron Man', 'Thor', 'Professor X', 'Silver Surfer'];
-                $easyHeroes = ['Hulk', 'Punisher', 'Wolverine', 'Captain America'];
+                $complexHeroes = ['Doctor Strange', 'Iron Man', 'Thor', 'Professor X', 'Silver Surfer', 'Doctor Doom', 'Phoenix'];
+                $easyHeroes = ['Hulk', 'Punisher', 'Wolverine', 'Captain America', 'Black Widow'];
                 
                 if (in_array($hero->name, $complexHeroes)) {
                     $difficulty = 'Hard';
@@ -345,22 +377,9 @@ Route::get('/game-data/all-heroes', function () {
                 }
             }
             
-            // Ensure type is properly set
-            $type = $hero->type;
-            if (!$type || $type === 'null' || $type === '' || is_null($type)) {
-                $type = match($hero->role) {
-                    'Vanguard' => 'Tank',
-                    'Duelist' => 'DPS',
-                    'Strategist' => 'Support',
-                    'Tank' => 'Tank',
-                    'Support' => 'Support',
-                    default => 'DPS'
-                };
-            }
-            
             return [
                 'name' => $hero->name,
-                'role' => $hero->role,
+                'role' => $role,
                 'type' => $type,
                 'image' => $hero->image, // Will be URL or null
                 'abilities' => $abilities,
