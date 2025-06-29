@@ -293,16 +293,21 @@ Route::get('/game-data/heroes', function () {
 
 // Get complete Marvel Rivals heroes roster (29 heroes) - Updated for proper roles
 Route::get('/game-data/all-heroes', function () {
-    // Get heroes from database with proper type mapping
+    // Get heroes from database with proper type mapping and images
     $heroes = DB::table('marvel_heroes')
-        ->select('name', 'role', 'type', 'abilities', 'description', 'difficulty')
+        ->select('name', 'role', 'type', 'image', 'abilities', 'description', 'difficulty')
         ->whereNotNull('type')
         ->get()
         ->map(function ($hero) {
             return [
                 'name' => $hero->name,
                 'role' => $hero->role,
-                'type' => $hero->type
+                'type' => $hero->type,
+                'image' => $hero->image, // Will be URL or null
+                'abilities' => $hero->abilities,
+                'description' => $hero->description,
+                'difficulty' => $hero->difficulty,
+                'fallback_text' => $hero->image ? false : true // Indicates if frontend should show text
             ];
         })
         ->toArray();
@@ -322,6 +327,12 @@ Route::get('/game-data/all-heroes', function () {
             'recommended' => '2 Vanguards + 2 Duelists + 2 Strategists',
             'total_players' => 6,
             'format' => '6v6'
+        ],
+        'image_info' => [
+            'base_url' => env('APP_URL', 'https://staging.mrvl.net'),
+            'with_images' => count(array_filter($heroes, fn($h) => $h['image'] !== null)),
+            'without_images' => count(array_filter($heroes, fn($h) => $h['image'] === null)),
+            'fallback_strategy' => 'Show hero name as text when image is null'
         ]
     ]);
 });
