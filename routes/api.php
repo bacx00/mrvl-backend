@@ -39,18 +39,8 @@ Route::options('/teams', function () {
 Route::post('/auth/login', [AuthController::class, 'login']);
 Route::post('/auth/register', [AuthController::class, 'register']);
 
-// Public Data Routes with CORS headers
-Route::get('/teams', function () {
-    $controller = new TeamController();
-    $response = $controller->index(request());
-    
-    return response($response->content())
-        ->header('Access-Control-Allow-Origin', '*')
-        ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
-        ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin')
-        ->header('Content-Type', 'application/json');
-});
-
+// Public Data Routes
+Route::get('/teams', [TeamController::class, 'index']);
 Route::get('/teams/{team}', [TeamController::class, 'show']);
 
 // Hero Image Endpoint - Individual hero images
