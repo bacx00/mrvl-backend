@@ -7359,7 +7359,6 @@ include __DIR__ . '/live_scoring_enhanced_api.php';
 
 // Global CORS handler - must be last to catch any missed routes
 Route::options('{any}', function () {
-    \Log::info('Global CORS OPTIONS hit: ' . request()->path());
     return response('', 200)
         ->header('Access-Control-Allow-Origin', '*')
         ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
