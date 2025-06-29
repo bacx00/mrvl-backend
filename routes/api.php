@@ -6872,6 +6872,111 @@ Route::middleware(['auth:sanctum', 'role:admin|moderator'])->post('/admin/matche
 // MISSING ANALYTICS ENDPOINTS
 // ==========================================
 
+// Live Matches Analytics
+Route::get('/analytics/matches/live', function (Request $request) {
+    try {
+        $liveMatches = DB::table('matches as m')
+            ->leftJoin('teams as t1', 'm.team1_id', '=', 't1.id')
+            ->leftJoin('teams as t2', 'm.team2_id', '=', 't2.id')
+            ->leftJoin('events as e', 'm.event_id', '=', 'e.id')
+            ->select([
+                'm.id', 'm.status', 'm.viewers', 'm.team1_score', 'm.team2_score',
+                't1.name as team1_name', 't1.logo as team1_logo',
+                't2.name as team2_name', 't2.logo as team2_logo',
+                'e.name as event_name'
+            ])
+            ->where('m.status', 'live')
+            ->orderBy('m.viewers', 'desc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'live_matches' => $liveMatches,
+                'total_live_matches' => count($liveMatches),
+                'total_live_viewers' => $liveMatches->sum('viewers')
+            ]
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error fetching live matches analytics: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// Hero Usage Statistics
+Route::get('/analytics/heroes/usage', function (Request $request) {
+    try {
+        $heroUsage = DB::table('player_match_stats as pms')
+            ->leftJoin('matches as m', 'pms.match_id', '=', 'm.id')
+            ->select([
+                'pms.hero_played',
+                'pms.role_played',
+                DB::raw('COUNT(*) as times_played'),
+                DB::raw('AVG(pms.eliminations) as avg_eliminations'),
+                DB::raw('AVG(pms.deaths) as avg_deaths'),
+                DB::raw('AVG(pms.damage) as avg_damage'),
+                DB::raw('AVG(pms.healing) as avg_healing')
+            ])
+            ->where('m.status', 'completed')
+            ->whereNotNull('pms.hero_played')
+            ->groupBy('pms.hero_played', 'pms.role_played')
+            ->orderBy('times_played', 'desc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'hero_usage' => $heroUsage,
+                'total_picks' => $heroUsage->sum('times_played'),
+                'unique_heroes_played' => $heroUsage->count()
+            ]
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error fetching hero usage statistics: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// Map Performance Data
+Route::get('/analytics/maps/performance', function (Request $request) {
+    try {
+        $mapPerformance = DB::table('match_rounds as mr')
+            ->leftJoin('matches as m', 'mr.match_id', '=', 'm.id')
+            ->select([
+                'mr.map_name',
+                'mr.game_mode',
+                DB::raw('COUNT(*) as times_played'),
+                DB::raw('AVG(CASE WHEN mr.status = "completed" THEN 1 ELSE 0 END) as completion_rate'),
+                DB::raw('COUNT(CASE WHEN mr.status = "completed" THEN 1 END) as completed_rounds')
+            ])
+            ->where('m.status', '!=', 'cancelled')
+            ->groupBy('mr.map_name', 'mr.game_mode')
+            ->orderBy('times_played', 'desc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'map_performance' => $mapPerformance,
+                'total_rounds_tracked' => $mapPerformance->sum('times_played'),
+                'unique_map_mode_combinations' => $mapPerformance->count()
+            ]
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error fetching map performance data: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
 // Player Leaderboards Analytics
 Route::get('/analytics/players/leaderboards', function (Request $request) {
     try {
