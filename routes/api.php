@@ -505,13 +505,28 @@ Route::get('/forums/categories', function () {
     }
 });
 
-// Test authentication endpoint
+// Test authentication endpoint with proper error handling
 Route::middleware('auth:sanctum')->get('/test-auth', function (Request $request) {
-    return response()->json([
-        'message' => 'Authentication working!',
-        'user_id' => $request->user()->id,
-        'success' => true
-    ]);
+    try {
+        $user = $request->user();
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Authentication failed'
+            ], 401);
+        }
+        
+        return response()->json([
+            'message' => 'Authentication working!',
+            'user_id' => $user->id,
+            'success' => true
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Authentication error: ' . $e->getMessage()
+        ], 401);
+    }
 });
 
 // Direct authenticated routes
