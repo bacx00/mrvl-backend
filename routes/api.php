@@ -1145,6 +1145,15 @@ Route::get('/user-cors-test', function (Request $request) {
 });
 
 // Add CORS headers to a commonly tested endpoint
+// Add CORS headers to a commonly tested endpoint
+Route::options('/teams', function () {
+    return response('', 200)
+        ->header('Access-Control-Allow-Origin', '*')
+        ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+        ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin')
+        ->header('Access-Control-Max-Age', '86400');
+});
+
 Route::options('/api/{any}', function () {
     return response('', 200)
         ->header('Access-Control-Allow-Origin', '*')
