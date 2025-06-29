@@ -528,18 +528,33 @@ Route::middleware('auth:sanctum')->get('/user-direct', function (Request $reques
 
 // Working authenticated routes using closures
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    $user = $request->user();
-    return response()->json([
-        'data' => [
-            'id' => $user->id,
-            'name' => $user->name,
-            'email' => $user->email,
-            'roles' => $user->getRoleNames(),
-            'avatar' => $user->avatar,
-            'created_at' => $user->created_at->toISOString()
-        ],
-        'success' => true
-    ]);
+    try {
+        $user = $request->user();
+        
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User not authenticated'
+            ], 401);
+        }
+        
+        return response()->json([
+            'data' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'roles' => $user->getRoleNames(),
+                'avatar' => $user->avatar,
+                'created_at' => $user->created_at->toISOString()
+            ],
+            'success' => true
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Authentication error: ' . $e->getMessage()
+        ], 401);
+    }
 });
 
 // ==========================================
