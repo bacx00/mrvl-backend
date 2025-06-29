@@ -14,6 +14,11 @@ use App\Http\Controllers\{
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
+// Add CORS middleware to all API routes
+Route::middleware('cors')->group(function () {
+    // All existing routes will be wrapped in this group
+});
+
 // Public Authentication Routes
 Route::post('/auth/login', [AuthController::class, 'login']);
 Route::post('/auth/register', [AuthController::class, 'register']);
