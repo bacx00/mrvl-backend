@@ -27,9 +27,22 @@ Route::options('teams', function () {
         ->header('Access-Control-Max-Age', '86400');
 });
 
-// Public Data Routes
-Route::get('/teams', [TeamController::class, 'index']);
-Route::get('/teams/{team}', [TeamController::class, 'show']);
+// Add CORS headers to all Teams routes
+Route::get('/teams', function () {
+    $teams = \App\Http\Controllers\TeamController::index(request())->getData();
+    return response()->json($teams)
+        ->header('Access-Control-Allow-Origin', '*')
+        ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+        ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+});
+
+Route::get('/teams/{team}', function ($team) {
+    $teamData = \App\Http\Controllers\TeamController::show(request(), $team)->getData();
+    return response()->json($teamData)
+        ->header('Access-Control-Allow-Origin', '*')
+        ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+        ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+});
 
 // Hero Image Endpoint - Individual hero images
 Route::get('/heroes/{name}/image', function ($name) {
