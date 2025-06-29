@@ -1052,16 +1052,43 @@ Route::middleware('auth:sanctum')->post('/forums/threads', function (Request $re
 // Forum Write Operations - EXISTING
 Route::post('/forum/threads', [ForumController::class, 'store'])->middleware('auth:sanctum');
 
-// Test admin endpoint with CORS headers
+// Test admin endpoint with comprehensive CORS headers
 Route::middleware(['auth:sanctum', 'role:admin'])->get('/test-admin', function (Request $request) {
-    return response()->json([
+    $response = response()->json([
         'message' => 'Admin access working!',
         'user' => $request->user()->name,
         'roles' => $request->user()->getRoleNames(),
         'success' => true
-    ])->header('Access-Control-Allow-Origin', '*')
-      ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
-      ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+    ]);
+
+    // Add comprehensive CORS headers
+    $response->header('Access-Control-Allow-Origin', '*');
+    $response->header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    $response->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+    $response->header('Access-Control-Expose-Headers', 'Content-Length, Content-Type, Date, Server, X-RateLimit-Limit, X-RateLimit-Remaining');
+    $response->header('Access-Control-Allow-Credentials', 'true');
+    $response->header('Access-Control-Max-Age', '86400');
+
+    return $response;
+});
+
+// Add CORS to main user endpoint
+Route::get('/user-cors-test', function (Request $request) {
+    $response = response()->json([
+        'success' => true,
+        'message' => 'CORS test endpoint',
+        'headers_present' => true
+    ]);
+
+    // Add comprehensive CORS headers
+    $response->header('Access-Control-Allow-Origin', '*');
+    $response->header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    $response->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+    $response->header('Access-Control-Expose-Headers', 'Content-Length, Content-Type, Date, Server');
+    $response->header('Access-Control-Allow-Credentials', 'true');
+    $response->header('Access-Control-Max-Age', '86400');
+
+    return $response;
 });
 
 // Working admin routes using closures
