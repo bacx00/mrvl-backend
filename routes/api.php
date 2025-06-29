@@ -345,9 +345,9 @@ Route::get('/game-data/all-heroes', function () {
         ['name' => 'Mystique', 'role' => 'Duelist', 'type' => 'DPS', 'image' => '', 'abilities' => '{"primary":"Strike Attack","secondary":"Rapid Fire","ultimate":"Combat Rush"}', 'description' => 'A damage-focused fighter specializing in eliminating enemies and high-impact plays.', 'difficulty' => 'Medium']
     ];
     
-    // Add fallback_text field to all heroes
+    // Add fallback_text field to all heroes - properly handle images
     $heroes = array_map(function($hero) {
-        $hero['fallback_text'] = $hero['image'] ? false : true;
+        $hero['fallback_text'] = empty($hero['image']) ? true : false;
         return $hero;
     }, $hardcodedHeroes);
     
