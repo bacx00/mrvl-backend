@@ -751,13 +751,7 @@ Route::get('/user', function (Request $request) {
     }
 });
 
-// Override route to handle authentication edge cases before Sanctum middleware
-Route::any('/api/user', function (Request $request) {
-    // Force redirect to the main user route
-    return app()->call('App\\Http\\Controllers\\Controller@callAction', [
-        'method' => 'user'
-    ]);
-});
+
 
 // ==========================================
 // USER ROLE ROUTES - AUTHENTICATED BASIC USERS
