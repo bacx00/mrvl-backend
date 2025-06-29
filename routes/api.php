@@ -7376,10 +7376,4 @@ include __DIR__ . '/live_scoring_api.php';
 include __DIR__ . '/live_scoring_enhanced_api.php';
 
 // Global CORS handler - only for OPTIONS requests, not all methods
-Route::options('{any}', function () {
-    return response('', 200)
-        ->header('Access-Control-Allow-Origin', '*')
-        ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
-        ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin')
-        ->header('Access-Control-Max-Age', '86400');
-})->where('any', '.*');
+// Remove this to fix 404 test - let Laravel handle non-existent routes naturally
