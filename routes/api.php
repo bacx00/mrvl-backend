@@ -913,14 +913,16 @@ Route::middleware('auth:sanctum')->post('/forums/threads', function (Request $re
 // Forum Write Operations - EXISTING
 Route::post('/forum/threads', [ForumController::class, 'store'])->middleware('auth:sanctum');
 
-// Test admin endpoint
+// Test admin endpoint with CORS headers
 Route::middleware(['auth:sanctum', 'role:admin'])->get('/test-admin', function (Request $request) {
     return response()->json([
         'message' => 'Admin access working!',
         'user' => $request->user()->name,
         'roles' => $request->user()->getRoleNames(),
         'success' => true
-    ]);
+    ])->header('Access-Control-Allow-Origin', '*')
+      ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+      ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
 });
 
 // Working admin routes using closures
