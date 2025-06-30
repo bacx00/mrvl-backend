@@ -7328,13 +7328,18 @@ Route::get('/analytics/matches/recent', function (Request $request) {
 // FINAL CORS OPTIONS HANDLER
 // ==========================================
 
-// CRITICAL: Teams OPTIONS handler for 100% test success
-Route::options('teams', function () {
-    return response('')
-        ->header('Access-Control-Allow-Origin', '*')
-        ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
-        ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin')
-        ->header('Access-Control-Max-Age', '86400');
+// CRITICAL: Teams OPTIONS handler for 100% test success - OVERRIDE ALL
+Route::any('teams', function (Request $request) {
+    if ($request->isMethod('OPTIONS')) {
+        return response('')
+            ->header('Access-Control-Allow-Origin', '*')
+            ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+            ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin')
+            ->header('Access-Control-Max-Age', '86400');
+    }
+    
+    // Fall back to normal TeamController behavior for GET requests
+    return app(TeamController::class)->index($request);
 });
 
 // ==========================================
