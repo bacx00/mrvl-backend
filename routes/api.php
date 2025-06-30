@@ -16,24 +16,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 
 // ==========================================
-// CORS PREFLIGHT - MUST BE FIRST
+// API ROUTES - MARVEL RIVALS PLATFORM
 // ==========================================
-
-Route::options('teams', function () {
-    return response('', 200)
-        ->header('Access-Control-Allow-Origin', '*')
-        ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
-        ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin')
-        ->header('Access-Control-Max-Age', '86400');
-});
-
-Route::options('/teams', function () {
-    return response('', 200)
-        ->header('Access-Control-Allow-Origin', '*')
-        ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
-        ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin')
-        ->header('Access-Control-Max-Age', '86400');
-});
 
 // Public Authentication Routes
 Route::post('/auth/login', [AuthController::class, 'login']);
