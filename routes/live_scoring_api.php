@@ -3,6 +3,15 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
+// CRITICAL: CORS OPTIONS handler for teams endpoint
+Route::options('teams', function () {
+    return response('')
+        ->header('Access-Control-Allow-Origin', '*')
+        ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+        ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin')
+        ->header('Access-Control-Max-Age', '86400');
+});
+
 // ==========================================
 // MARVEL RIVALS PROFESSIONAL LIVE SCORING SYSTEM
 // Complete API Routes for Real-Time Competition
