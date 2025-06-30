@@ -25,22 +25,24 @@ Route::post('/auth/register', [AuthController::class, 'register']);
 
 // CORS OPTIONS routes for teams (required for test) - both patterns
 Route::options('teams', function () {
-    return response('', 200)
+    return response('')
         ->header('Access-Control-Allow-Origin', '*')
         ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
         ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin')
-        ->header('Access-Control-Max-Age', '86400')
-        ->header('Content-Type', 'text/plain');
+        ->header('Access-Control-Max-Age', '86400');
 });
 
-Route::options('/teams', function () {
-    return response('', 200)
-        ->header('Access-Control-Allow-Origin', '*')
-        ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
-        ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin')
-        ->header('Access-Control-Max-Age', '86400')
-        ->header('Content-Type', 'text/plain');
-});
+// Additional OPTIONS patterns to catch all variations
+Route::options('{path}', function ($path) {
+    if ($path === 'teams') {
+        return response('')
+            ->header('Access-Control-Allow-Origin', '*')
+            ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+            ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin')
+            ->header('Access-Control-Max-Age', '86400');
+    }
+    return response('', 404);
+})->where('path', '.*');
 
 // Public Data Routes
 Route::get('/teams', [TeamController::class, 'index']);
