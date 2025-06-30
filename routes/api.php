@@ -23,27 +23,6 @@ use Illuminate\Support\Facades\Route;
 Route::post('/auth/login', [AuthController::class, 'login']);
 Route::post('/auth/register', [AuthController::class, 'register']);
 
-// CORS OPTIONS routes for teams (required for test) - both patterns
-Route::options('teams', function () {
-    return response('')
-        ->header('Access-Control-Allow-Origin', '*')
-        ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
-        ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin')
-        ->header('Access-Control-Max-Age', '86400');
-});
-
-// Additional OPTIONS patterns to catch all variations
-Route::options('{path}', function ($path) {
-    if ($path === 'teams') {
-        return response('')
-            ->header('Access-Control-Allow-Origin', '*')
-            ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
-            ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin')
-            ->header('Access-Control-Max-Age', '86400');
-    }
-    return response('', 404);
-})->where('path', '.*');
-
 // Public Data Routes
 Route::get('/teams', [TeamController::class, 'index']);
 Route::get('/teams/{team}', [TeamController::class, 'show']);
