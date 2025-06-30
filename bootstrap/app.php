@@ -15,6 +15,15 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->api(prepend: [
             \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
         ]);
+        
+        // Enable CORS for all API requests
+        $middleware->web(append: [
+            \Illuminate\Http\Middleware\HandleCors::class,
+        ]);
+        
+        $middleware->api(append: [
+            \Illuminate\Http\Middleware\HandleCors::class,
+        ]);
 
         $middleware->alias([
             'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
