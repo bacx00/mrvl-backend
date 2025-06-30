@@ -5,7 +5,7 @@ import sys
 from datetime import datetime, timedelta
 
 # Base URL for API requests
-BASE_URL = "https://d876dd51-a890-4bc9-9ed5-d343c97bc74d.preview.emergentagent.com/api"
+BASE_URL = "https://7b733485-216f-4018-9476-1323dedf25fe.preview.emergentagent.com/api"
 
 # Admin credentials for authentication
 ADMIN_CREDENTIALS = {
