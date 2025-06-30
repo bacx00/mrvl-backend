@@ -23,7 +23,8 @@ use Illuminate\Support\Facades\Route;
 Route::post('/auth/login', [AuthController::class, 'login']);
 Route::post('/auth/register', [AuthController::class, 'register']);
 
-// Public Data Routes - teams handled at end of file for CORS
+// Public Data Routes
+Route::get('/teams', [TeamController::class, 'index']);
 Route::get('/teams/{team}', [TeamController::class, 'show']);
 
 // Hero Image Endpoint - Individual hero images
