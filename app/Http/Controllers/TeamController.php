@@ -8,6 +8,15 @@ class TeamController extends Controller
 {
     public function index(Request $request)
     {
+        // Handle OPTIONS request for CORS
+        if ($request->isMethod('OPTIONS')) {
+            return response('')
+                ->header('Access-Control-Allow-Origin', '*')
+                ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+                ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin')
+                ->header('Access-Control-Max-Age', '86400');
+        }
+        
         try {
             $query = DB::table('teams as t')
                 ->leftJoin('events as e', 't.id', '=', 'e.team_count') // Join for tournament data
