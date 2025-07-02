@@ -1028,10 +1028,18 @@ Route::middleware('auth:sanctum')->post('/forums/threads', function (Request $re
         ], 201);
         
     } catch (\Illuminate\Validation\ValidationException $e) {
+        // Get available events for better error messages
+        $availableEvents = DB::table('events')->select('id', 'name')->get();
+        $eventsList = $availableEvents->map(function($event) {
+            return "ID: {$event->id}, Name: {$event->name}";
+        })->implode('; ');
+        
         return response()->json([
             'success' => false,
             'message' => 'Validation failed',
-            'errors' => $e->errors()
+            'errors' => $e->errors(),
+            'available_events' => $eventsList ?: 'No events available',
+            'debug_info' => 'Use valid event_id from available events above'
         ], 422);
     } catch (\Exception $e) {
         return response()->json([
