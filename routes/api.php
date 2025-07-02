@@ -375,29 +375,59 @@ Route::get('/game-data/all-heroes', function () {
     ]);
 });
 
-// Get Marvel Rivals maps data (10 official maps) - Updated for competitive formats
+// Get Marvel Rivals maps data (12 official maps) - Updated for 2025 COMPLETE DATA
 Route::get('/game-data/maps', function () {
     $maps = [
-        ['name' => 'Asgard: Royal Palace', 'modes' => ['Domination', 'Convergence'], 'type' => 'competitive'],
-        ['name' => 'Birnin Zana: Golden City', 'modes' => ['Convoy', 'Convergence'], 'type' => 'competitive'],
-        ['name' => 'Klyntar', 'modes' => ['Convoy', 'Domination'], 'type' => 'competitive'],
-        ['name' => 'Midtown: Times Square', 'modes' => ['Domination', 'Convoy'], 'type' => 'competitive'],
-        ['name' => 'Moon Base: Artiluna-1', 'modes' => ['Convoy', 'Convergence'], 'type' => 'competitive'],
-        ['name' => 'Sanctum Sanctorum', 'modes' => ['Domination', 'Convoy'], 'type' => 'competitive'],
-        ['name' => 'Throne Room of Asgard', 'modes' => ['Convergence', 'Convoy'], 'type' => 'competitive'],
-        ['name' => 'Tokyo 2099: Spider Islands', 'modes' => ['Convoy', 'Domination'], 'type' => 'competitive'],
-        ['name' => 'Wakanda', 'modes' => ['Convoy', 'Convergence'], 'type' => 'competitive'],
-        ['name' => 'Yggsgard', 'modes' => ['Domination', 'Convoy'], 'type' => 'competitive']
+        // Tokyo 2099 District
+        ['name' => 'Tokyo 2099: Shibuya Sky', 'modes' => ['Convoy'], 'type' => 'competitive', 'duration' => 18, 'color' => 'blue'],
+        ['name' => 'Tokyo 2099: Shin-Shibuya Station', 'modes' => ['Convoy'], 'type' => 'competitive', 'duration' => 18, 'color' => 'blue'],
+        
+        // Manhattan Sector
+        ['name' => 'Midtown Manhattan: Oscorp Tower', 'modes' => ['Convoy'], 'type' => 'competitive', 'duration' => 18, 'color' => 'blue'],
+        
+        // Mystical Realms
+        ['name' => 'Sanctum Sanctorum: Astral Plane', 'modes' => ['Convoy'], 'type' => 'competitive', 'duration' => 18, 'color' => 'blue'],
+        ['name' => 'Asgard: Royal Palace', 'modes' => ['Convergence'], 'type' => 'competitive', 'duration' => 15, 'color' => 'purple'],
+        ['name' => 'Yggsgard: Yggdrasil', 'modes' => ['Convergence'], 'type' => 'competitive', 'duration' => 15, 'color' => 'purple'],
+        
+        // Alien Worlds
+        ['name' => 'Klyntar: Symbiote Planet', 'modes' => ['Domination'], 'type' => 'competitive', 'duration' => 12, 'color' => 'red'],
+        
+        // Wakanda Territory
+        ['name' => 'Wakanda: Golden City', 'modes' => ['Domination'], 'type' => 'competitive', 'duration' => 12, 'color' => 'red'],
+        ['name' => 'Intergalactic Empire of Wakanda', 'modes' => ['Conquest'], 'type' => 'competitive', 'duration' => 20, 'color' => 'gold'],
+        
+        // Space Stations
+        ['name' => 'Moon Base: Lunar Colony', 'modes' => ['Conquest'], 'type' => 'competitive', 'duration' => 20, 'color' => 'gold'],
+        
+        // Street Level
+        ['name' => 'Hell\'s Kitchen: Daredevil Territory', 'modes' => ['Doom Match'], 'type' => 'competitive', 'duration' => 8, 'color' => 'orange'],
+        
+        // Training Facilities
+        ['name' => 'X-Mansion: Training Grounds', 'modes' => ['Escort'], 'type' => 'competitive', 'duration' => 16, 'color' => 'green']
     ];
     
     return response()->json([
         'success' => true,
         'data' => $maps,
-        'total' => count($maps),
-        'competitive_rotation' => [
-            'domination_pool' => array_values(array_filter($maps, fn($m) => in_array('Domination', $m['modes']))),
-            'convoy_pool' => array_values(array_filter($maps, fn($m) => in_array('Convoy', $m['modes']))),
-            'convergence_pool' => array_values(array_filter($maps, fn($m) => in_array('Convergence', $m['modes'])))
+        'total' => 12, // Updated count
+        'by_mode' => [
+            'Convoy' => array_values(array_filter($maps, fn($m) => in_array('Convoy', $m['modes']))),
+            'Domination' => array_values(array_filter($maps, fn($m) => in_array('Domination', $m['modes']))),
+            'Convergence' => array_values(array_filter($maps, fn($m) => in_array('Convergence', $m['modes']))),
+            'Conquest' => array_values(array_filter($maps, fn($m) => in_array('Conquest', $m['modes']))),
+            'Doom Match' => array_values(array_filter($maps, fn($m) => in_array('Doom Match', $m['modes']))),
+            'Escort' => array_values(array_filter($maps, fn($m) => in_array('Escort', $m['modes'])))
+        ],
+        'map_regions' => [
+            'Tokyo 2099 District' => 2,
+            'Manhattan Sector' => 1,
+            'Mystical Realms' => 3,
+            'Alien Worlds' => 1,
+            'Wakanda Territory' => 2,
+            'Space Stations' => 1,
+            'Street Level' => 1,
+            'Training Facilities' => 1
         ]
     ]);
 });
