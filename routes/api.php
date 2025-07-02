@@ -2421,12 +2421,6 @@ Route::middleware(['auth:sanctum', 'role:admin'])->post('/admin/events', functio
             'available_events' => $eventsList ?: 'No events available',
             'debug_info' => 'Use valid event_id from available events above'
         ], 422);
-    } catch (\Illuminate\Validation\ValidationException $e) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Validation failed',
-            'errors' => $e->errors()
-        ], 422);
     } catch (\Exception $e) {
         return response()->json([
             'success' => false,
