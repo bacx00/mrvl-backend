@@ -300,49 +300,59 @@ Route::get('/game-data/heroes', function () {
 // MARVEL RIVALS GAME DATA - ENHANCED FOR 6V6
 // ==========================================
 
-// Get complete Marvel Rivals heroes roster (29 heroes) - Updated for proper roles
+// Get complete Marvel Rivals heroes roster (39 heroes) - Updated for 2025 OFFICIAL DATA
 Route::get('/game-data/all-heroes', function () {
     $heroes = [
-        // Vanguard (Tanks) - 8 heroes
+        // Vanguard (Tanks) - 10 heroes
+        ['name' => 'Captain America', 'role' => 'Vanguard', 'type' => 'Tank'],
         ['name' => 'Doctor Strange', 'role' => 'Vanguard', 'type' => 'Tank'],
+        ['name' => 'Emma Frost', 'role' => 'Vanguard', 'type' => 'Tank'], // NEW 2025
         ['name' => 'Groot', 'role' => 'Vanguard', 'type' => 'Tank'],
         ['name' => 'Hulk', 'role' => 'Vanguard', 'type' => 'Tank'],
         ['name' => 'Magneto', 'role' => 'Vanguard', 'type' => 'Tank'],
         ['name' => 'Peni Parker', 'role' => 'Vanguard', 'type' => 'Tank'],
+        ['name' => 'The Thing', 'role' => 'Vanguard', 'type' => 'Tank'], // NEW 2025
         ['name' => 'Thor', 'role' => 'Vanguard', 'type' => 'Tank'],
         ['name' => 'Venom', 'role' => 'Vanguard', 'type' => 'Tank'],
-        ['name' => 'Captain America', 'role' => 'Vanguard', 'type' => 'Tank'],
 
-        // Duelist (DPS) - 14 heroes
+        // Duelist (DPS) - 20 heroes  
         ['name' => 'Black Panther', 'role' => 'Duelist', 'type' => 'DPS'],
+        ['name' => 'Black Widow', 'role' => 'Duelist', 'type' => 'DPS'],
         ['name' => 'Hawkeye', 'role' => 'Duelist', 'type' => 'DPS'],
         ['name' => 'Hela', 'role' => 'Duelist', 'type' => 'DPS'],
+        ['name' => 'Human Torch', 'role' => 'Duelist', 'type' => 'DPS'], // NEW 2025
+        ['name' => 'Iron Fist', 'role' => 'Duelist', 'type' => 'DPS'], // NEW 2025
         ['name' => 'Iron Man', 'role' => 'Duelist', 'type' => 'DPS'],
         ['name' => 'Magik', 'role' => 'Duelist', 'type' => 'DPS'],
+        ['name' => 'Mister Fantastic', 'role' => 'Duelist', 'type' => 'DPS'], // NEW 2025
+        ['name' => 'Moon Knight', 'role' => 'Duelist', 'type' => 'DPS'], // NEW 2025
         ['name' => 'Namor', 'role' => 'Duelist', 'type' => 'DPS'],
         ['name' => 'Psylocke', 'role' => 'Duelist', 'type' => 'DPS'],
-        ['name' => 'Punisher', 'role' => 'Duelist', 'type' => 'DPS'],
         ['name' => 'Scarlet Witch', 'role' => 'Duelist', 'type' => 'DPS'],
         ['name' => 'Spider-Man', 'role' => 'Duelist', 'type' => 'DPS'],
+        ['name' => 'Squirrel Girl', 'role' => 'Duelist', 'type' => 'DPS'],
         ['name' => 'Star-Lord', 'role' => 'Duelist', 'type' => 'DPS'],
         ['name' => 'Storm', 'role' => 'Duelist', 'type' => 'DPS'],
+        ['name' => 'The Punisher', 'role' => 'Duelist', 'type' => 'DPS'],
         ['name' => 'Winter Soldier', 'role' => 'Duelist', 'type' => 'DPS'],
         ['name' => 'Wolverine', 'role' => 'Duelist', 'type' => 'DPS'],
 
-        // Strategist (Support) - 7 heroes
+        // Strategist (Support) - 9 heroes
         ['name' => 'Adam Warlock', 'role' => 'Strategist', 'type' => 'Support'],
         ['name' => 'Cloak & Dagger', 'role' => 'Strategist', 'type' => 'Support'],
+        ['name' => 'Invisible Woman', 'role' => 'Strategist', 'type' => 'Support'], // NEW 2025
         ['name' => 'Jeff the Land Shark', 'role' => 'Strategist', 'type' => 'Support'],
         ['name' => 'Loki', 'role' => 'Strategist', 'type' => 'Support'],
         ['name' => 'Luna Snow', 'role' => 'Strategist', 'type' => 'Support'],
         ['name' => 'Mantis', 'role' => 'Strategist', 'type' => 'Support'],
-        ['name' => 'Rocket Raccoon', 'role' => 'Strategist', 'type' => 'Support']
+        ['name' => 'Rocket Raccoon', 'role' => 'Strategist', 'type' => 'Support'],
+        ['name' => 'Ultron', 'role' => 'Strategist', 'type' => 'Support'] // NEW 2025
     ];
     
     return response()->json([
         'success' => true,
         'data' => $heroes,
-        'total' => count($heroes),
+        'total' => 39, // Updated count
         'by_role' => [
             'Vanguard' => array_values(array_filter($heroes, fn($h) => $h['role'] === 'Vanguard')),
             'Duelist' => array_values(array_filter($heroes, fn($h) => $h['role'] === 'Duelist')),
@@ -352,6 +362,15 @@ Route::get('/game-data/all-heroes', function () {
             'recommended' => '2 Vanguards + 2 Duelists + 2 Strategists',
             'total_players' => 6,
             'format' => '6v6'
+        ],
+        'new_heroes_2025' => [
+            'Emma Frost', 'The Thing', 'Human Torch', 'Iron Fist', 
+            'Mister Fantastic', 'Moon Knight', 'Invisible Woman', 'Ultron'
+        ],
+        'role_distribution' => [
+            'Vanguard' => 10,
+            'Duelist' => 20, 
+            'Strategist' => 9
         ]
     ]);
 });
