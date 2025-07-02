@@ -530,6 +530,244 @@ def test_complete_match():
     except Exception as e:
         log_test("Complete Match", False, f"Exception: {str(e)}")
 
+def test_live_scoreboard_data_consistency():
+    """Test GET /api/matches/99/live-scoreboard endpoint for data consistency"""
+    try:
+        # First, get the current scoreboard data
+        response = requests.get(f"{BASE_URL}/matches/99/scoreboard")
+        
+        if response.status_code != 200:
+            log_test("Live Scoreboard Data Consistency", False, f"Initial scoreboard request failed with status code {response.status_code}")
+            return
+            
+        initial_data = response.json()
+        if not initial_data.get("success"):
+            log_test("Live Scoreboard Data Consistency", False, f"Initial API returned error: {initial_data.get('message', 'Unknown error')}")
+            return
+            
+        initial_map = initial_data.get("data", {}).get("current_map")
+        initial_mode = initial_data.get("data", {}).get("current_mode")
+        
+        # Now update the current map and mode
+        token = get_admin_token()
+        if not token:
+            log_test("Live Scoreboard Data Consistency", False, "Failed to get admin token")
+            return
+            
+        # Update to a different map
+        new_map = "Tokyo" if initial_map != "Tokyo" else "Wakanda"
+        update_data = {"current_map": new_map}
+        
+        headers = {"Authorization": f"Bearer {token}"}
+        update_response = requests.put(f"{BASE_URL}/admin/matches/99/current-map", json=update_data, headers=headers)
+        
+        if update_response.status_code != 200:
+            log_test("Live Scoreboard Data Consistency", False, f"Map update request failed with status code {update_response.status_code}: {update_response.text}")
+            return
+            
+        # Now get the scoreboard again to verify the update
+        updated_response = requests.get(f"{BASE_URL}/matches/99/scoreboard")
+        
+        if updated_response.status_code != 200:
+            log_test("Live Scoreboard Data Consistency", False, f"Updated scoreboard request failed with status code {updated_response.status_code}")
+            return
+            
+        updated_data = updated_response.json()
+        if not updated_data.get("success"):
+            log_test("Live Scoreboard Data Consistency", False, f"Updated API returned error: {updated_data.get('message', 'Unknown error')}")
+            return
+            
+        updated_map = updated_data.get("data", {}).get("current_map")
+        updated_mode = updated_data.get("data", {}).get("current_mode")
+        
+        # Check if the map was updated correctly
+        if updated_map == new_map:
+            # Check if the mode was updated to match the map
+            map_mode_mapping = {
+                "Asgard": "Control",
+                "Wakanda": "Escort",
+                "New York": "Hybrid",
+                "Tokyo": "Control",
+                "Latveria": "Assault",
+                "Sakaar": "Escort",
+                "Knowhere": "Control",
+                "Madripoor": "Hybrid",
+                "Attilan": "Assault",
+                "Savage Land": "Control"
+            }
+            
+            expected_mode = map_mode_mapping.get(new_map)
+            
+            if updated_mode == expected_mode:
+                log_test("Live Scoreboard Data Consistency", True, 
+                         f"Successfully verified map/mode consistency. Map updated from '{initial_map}' to '{updated_map}' and mode updated from '{initial_mode}' to '{updated_mode}'")
+            else:
+                log_test("Live Scoreboard Data Consistency", False, 
+                         f"Map updated correctly to '{updated_map}', but mode '{updated_mode}' doesn't match expected '{expected_mode}'")
+        else:
+            log_test("Live Scoreboard Data Consistency", False, 
+                     f"Map not updated correctly. Expected '{new_map}', got '{updated_map}'")
+    except Exception as e:
+        log_test("Live Scoreboard Data Consistency", False, f"Exception: {str(e)}")
+
+def test_match_creation_with_valid_event():
+    """Test POST /api/admin/matches with valid event ID"""
+    token = get_admin_token()
+    if not token:
+        log_test("Match Creation With Valid Event", False, "Failed to get admin token")
+        return
+
+    # Test data for match creation with valid event_id
+    match_data = {
+        "team1_id": 87,  # Sentinels
+        "team2_id": 86,  # T1
+        "event_id": 22,  # Valid event ID
+        "scheduled_at": (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%dT10:00:00Z"),
+        "format": "BO5",
+        "status": "upcoming",
+        "stream_url": "https://twitch.tv/marvel_rivals_official"
+    }
+
+    try:
+        headers = {"Authorization": f"Bearer {token}"}
+        response = requests.post(f"{BASE_URL}/admin/matches", json=match_data, headers=headers)
+        
+        if response.status_code in [200, 201]:
+            data = response.json()
+            if data.get("success"):
+                log_test("Match Creation With Valid Event", True, f"Successfully created match with event_id: {match_data['event_id']}")
+            else:
+                log_test("Match Creation With Valid Event", False, f"API returned error: {data.get('message', 'Unknown error')}")
+        else:
+            log_test("Match Creation With Valid Event", False, f"Request failed with status code {response.status_code}: {response.text}")
+    except Exception as e:
+        log_test("Match Creation With Valid Event", False, f"Exception: {str(e)}")
+
+def test_match_creation_with_invalid_event():
+    """Test POST /api/admin/matches with invalid event ID to verify error message"""
+    token = get_admin_token()
+    if not token:
+        log_test("Match Creation With Invalid Event", False, "Failed to get admin token")
+        return
+
+    # Test data for match creation with invalid event_id
+    match_data = {
+        "team1_id": 87,  # Sentinels
+        "team2_id": 86,  # T1
+        "event_id": 20,  # Invalid event ID
+        "scheduled_at": (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%dT10:00:00Z"),
+        "format": "BO5",
+        "status": "upcoming",
+        "stream_url": "https://twitch.tv/marvel_rivals_official"
+    }
+
+    try:
+        headers = {"Authorization": f"Bearer {token}"}
+        response = requests.post(f"{BASE_URL}/admin/matches", json=match_data, headers=headers)
+        
+        # We expect this to fail with a 400 or 404 status code
+        if response.status_code in [400, 404, 422]:
+            data = response.json()
+            error_message = data.get("detail", "") if isinstance(data, dict) else str(data)
+            
+            # Check if the error message mentions available events
+            if "22" in error_message and "event" in error_message.lower():
+                log_test("Match Creation With Invalid Event", True, 
+                         f"Received appropriate error message for invalid event ID: {error_message}")
+            else:
+                log_test("Match Creation With Invalid Event", False, 
+                         f"Error message doesn't mention available events: {error_message}")
+        else:
+            # If it succeeded, that's unexpected
+            if response.status_code in [200, 201]:
+                log_test("Match Creation With Invalid Event", False, 
+                         "Request unexpectedly succeeded with invalid event ID")
+            else:
+                log_test("Match Creation With Invalid Event", False, 
+                         f"Request failed with unexpected status code {response.status_code}: {response.text}")
+    except Exception as e:
+        log_test("Match Creation With Invalid Event", False, f"Exception: {str(e)}")
+
+def test_player_statistics_update():
+    """Test POST /api/matches/99/players/{player_id}/stats endpoint"""
+    token = get_admin_token()
+    if not token:
+        log_test("Player Statistics Update", False, "Failed to get admin token")
+        return
+
+    # Test data for updating player statistics
+    player_id = 183  # SicK from Sentinels
+    stats_data = {
+        "kills": 30,
+        "deaths": 8,
+        "assists": 15,
+        "damage": 20000,
+        "healing": 0,
+        "score": 98,
+        "hero": "Iron Man"
+    }
+
+    try:
+        headers = {"Authorization": f"Bearer {token}"}
+        response = requests.post(f"{BASE_URL}/matches/99/players/{player_id}/stats", json=stats_data, headers=headers)
+        
+        if response.status_code == 200:
+            data = response.json()
+            if data.get("success"):
+                log_test("Player Statistics Update", True, f"Successfully updated statistics for player ID {player_id}")
+            else:
+                log_test("Player Statistics Update", False, f"API returned error: {data.get('message', 'Unknown error')}")
+        else:
+            log_test("Player Statistics Update", False, f"Request failed with status code {response.status_code}: {response.text}")
+    except Exception as e:
+        log_test("Player Statistics Update", False, f"Exception: {str(e)}")
+
+def test_player_statistics_update_invalid_player():
+    """Test POST /api/matches/99/players/{player_id}/stats with invalid player ID"""
+    token = get_admin_token()
+    if not token:
+        log_test("Player Statistics Update - Invalid Player", False, "Failed to get admin token")
+        return
+
+    # Test data for updating player statistics with invalid player ID
+    invalid_player_id = 999  # Non-existent player ID
+    stats_data = {
+        "kills": 30,
+        "deaths": 8,
+        "assists": 15,
+        "damage": 20000,
+        "healing": 0,
+        "score": 98,
+        "hero": "Iron Man"
+    }
+
+    try:
+        headers = {"Authorization": f"Bearer {token}"}
+        response = requests.post(f"{BASE_URL}/matches/99/players/{invalid_player_id}/stats", json=stats_data, headers=headers)
+        
+        # We expect this to fail with a 400 or 404 status code
+        if response.status_code in [400, 404, 422]:
+            data = response.json()
+            error_message = data.get("detail", "") if isinstance(data, dict) else str(data)
+            
+            # Check if the error message mentions valid player ID ranges
+            if ("183-188" in error_message or "189-194" in error_message) and "player" in error_message.lower():
+                log_test("Player Statistics Update - Invalid Player", True, 
+                         f"Received appropriate error message for invalid player ID: {error_message}")
+            else:
+                log_test("Player Statistics Update - Invalid Player", False, 
+                         f"Error message doesn't mention valid player ID ranges: {error_message}")
+        else:
+            # If it succeeded, that's unexpected
+            if response.status_code in [200, 201]:
+                log_test("Player Statistics Update - Invalid Player", False, 
+                         "Request unexpectedly succeeded with invalid player ID")
+            else:
+                log_test("Player Statistics Update - Invalid Player", False, 
+                         f"Request failed with unexpected status code {response.status_code}: {response.text}")
+    except Exception as e:
+        log_test("Player Statistics Update - Invalid Player", False, f"Exception: {str(e)}")
+
 def run_all_tests():
     """Run all tests"""
     print("Starting Marvel Rivals Esports Platform API Tests...")
