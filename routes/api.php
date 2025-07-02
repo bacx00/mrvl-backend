@@ -1647,7 +1647,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->put('/admin/players/{playerId
 // 🚨 PERSISTENT LIVE MATCH STATE MANAGEMENT - CRITICAL FOR REAL-TIME SYNC
 // ==========================================
 
-// 📍 **SET MATCH AS LIVE** - Persistent State Management
+// 📍 **SET MATCH AS LIVE** - Persistent State Management (FIXED WITH DATABASE SCHEMA)
 Route::middleware(['auth:sanctum', 'role:admin|moderator'])->post('/admin/matches/{matchId}/set-live', function (Request $request, $matchId) {
     try {
         $validated = $request->validate([
@@ -1674,13 +1674,18 @@ Route::middleware(['auth:sanctum', 'role:admin|moderator'])->post('/admin/matche
             return $configs[$mode] ?? $configs['Convoy'];
         };
 
-        // Set match as LIVE using existing columns only
+        // Set match as LIVE with full database persistence
         DB::table('matches')->where('id', $matchId)->update([
             'status' => 'live',
             'format' => $validated['format'],
+            'current_map' => $validated['current_map'],
+            'current_mode' => $validated['current_mode'],
             'current_round' => 1,
             'team1_score' => 0,
             'team2_score' => 0,
+            'current_timer' => '0:00',
+            'timer_running' => false,
+            'live_start_time' => now(),
             'updated_at' => now()
         ]);
 
@@ -1695,7 +1700,7 @@ Route::middleware(['auth:sanctum', 'role:admin|moderator'])->post('/admin/matche
                 'current_mode' => $validated['current_mode'],
                 'timer_config' => $getTimerConfig($validated['current_mode']),
                 'live_start_time' => now()->toISOString(),
-                'note' => 'Live state initialized with existing database schema'
+                'note' => 'Full database persistence enabled!'
             ]
         ]);
 
