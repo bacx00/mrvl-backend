@@ -432,35 +432,108 @@ Route::get('/game-data/maps', function () {
     ]);
 });
 
-// Get Marvel Rivals game modes (4 game modes)
+// Get Marvel Rivals game modes (6 official modes) - Updated for 2025 COMPLETE TIMER DATA
 Route::get('/game-data/modes', function () {
     $modes = [
         [
-            'name' => 'Domination',
-            'description' => 'Control strategic points across the battlefield to secure victory for your team.',
-            'objective' => 'Capture and hold control points'
-        ],
-        [
-            'name' => 'Escort',
-            'description' => 'Guide the payload through checkpoints while the enemy team tries to stop your advance.',
-            'objective' => 'Escort payload to destination'
-        ],
-        [
             'name' => 'Convoy',
-            'description' => 'Coordinate your team to move multiple objectives simultaneously across the map.',
-            'objective' => 'Move convoy vehicles to endpoints'
+            'description' => 'Escort the payload to victory',
+            'icon' => '🚚',
+            'color' => 'blue',
+            'duration' => 18 * 60, // 1080 seconds
+            'setupTime' => 45,
+            'overtimeMax' => 2 * 60, // 120 seconds
+            'phases' => ['setup', 'attack', 'defense', 'overtime'],
+            'type' => 'Payload Escort',
+            'team_size' => 6,
+            'rules' => 'Attack/Defense rounds with overtime if contested'
+        ],
+        [
+            'name' => 'Domination',
+            'description' => 'Control strategic points',
+            'icon' => '🏁',
+            'color' => 'red',
+            'duration' => 12 * 60, // 720 seconds
+            'setupTime' => 30,
+            'scoreTarget' => 100, // 100% control
+            'phases' => ['setup', 'control', 'overtime'],
+            'type' => 'Control Points',
+            'team_size' => 6,
+            'rules' => 'Point capture with team fights for control'
         ],
         [
             'name' => 'Convergence',
-            'description' => 'Compete for control of a central zone that shifts dynamically throughout the match.',
-            'objective' => 'Control the shifting convergence zone'
+            'description' => 'Capture then escort',
+            'icon' => '🔮',
+            'color' => 'purple',
+            'duration' => 15 * 60, // 900 seconds
+            'captureTime' => 7 * 60, // 420 seconds
+            'escortTime' => 8 * 60, // 480 seconds
+            'phases' => ['setup', 'capture', 'escort', 'overtime'],
+            'type' => 'Hybrid',
+            'team_size' => 6,
+            'rules' => 'Capture phase followed by escort phase'
+        ],
+        [
+            'name' => 'Conquest',
+            'description' => 'Control multiple zones',
+            'icon' => '🌌',
+            'color' => 'gold',
+            'duration' => 20 * 60, // 1200 seconds
+            'zoneCount' => 3,
+            'phases' => ['early', 'mid', 'late', 'overtime'],
+            'type' => 'Territory Control',
+            'team_size' => 6,
+            'rules' => 'Zone control with territory expansion'
+        ],
+        [
+            'name' => 'Doom Match',
+            'description' => 'Elimination-based combat',
+            'icon' => '🔥',
+            'color' => 'orange',
+            'roundDuration' => 90, // 90 seconds per round
+            'roundsToWin' => 3, // Best of 5 (first to 3)
+            'maxRounds' => 5,
+            'phases' => ['round', 'elimination'],
+            'type' => 'Elimination',
+            'team_size' => 6,
+            'rules' => 'Best of rounds, last team standing wins'
+        ],
+        [
+            'name' => 'Escort',
+            'description' => 'Linear payload escort',
+            'icon' => '🎓',
+            'color' => 'green',
+            'duration' => 16 * 60, // 960 seconds
+            'checkpoints' => 3,
+            'phases' => ['setup', 'escort', 'overtime'],
+            'type' => 'Linear Payload',
+            'team_size' => 6,
+            'rules' => 'Single direction escort with checkpoints'
         ]
     ];
     
     return response()->json([
         'success' => true,
         'data' => $modes,
-        'total' => count($modes)
+        'total' => 6,
+        'timer_configurations' => [
+            'Convoy' => ['duration' => 1080, 'setup' => 45, 'overtime' => 120],
+            'Domination' => ['duration' => 720, 'setup' => 30, 'score_target' => 100],
+            'Convergence' => ['duration' => 900, 'capture' => 420, 'escort' => 480],
+            'Conquest' => ['duration' => 1200, 'zones' => 3, 'phases' => 4],
+            'Doom Match' => ['round_duration' => 90, 'rounds_to_win' => 3, 'max_rounds' => 5],
+            'Escort' => ['duration' => 960, 'checkpoints' => 3, 'overtime' => 120]
+        ],
+        'competitive_pool' => [
+            'primary' => ['Convoy', 'Domination', 'Convergence'],
+            'secondary' => ['Conquest', 'Escort'],
+            'special' => ['Doom Match']
+        ],
+        'phase_timers' => [
+            'setup_phases' => ['Convoy' => 45, 'Domination' => 30, 'Convergence' => 45, 'Conquest' => 60, 'Escort' => 45],
+            'overtime_rules' => ['Convoy' => '2min max', 'Domination' => 'until clear', 'Convergence' => '90sec', 'Conquest' => 'sudden death', 'Escort' => '2min max']
+        ]
     ]);
 });
 
