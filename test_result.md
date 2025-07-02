@@ -30,11 +30,14 @@ backend:
     file: "/app/routes/api.php"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: true
         agent: "testing"
         comment: "Live scoreboard endpoint working for Match ID 99 (Sentinels vs T1) with complete team rosters, player assignments, and match statistics"
+      - working: "needs_testing"
+        agent: "main"
+        comment: "Fixed live scoreboard data inconsistency - now reads current_map and current_mode from database instead of hardcoded values"
 
   - task: "Player Statistics API"
     implemented: true
@@ -42,11 +45,26 @@ backend:
     file: "/app/routes/api.php"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: true
         agent: "testing"
         comment: "Player statistics updating endpoints working with bulk update support for live match scoring"
+      - working: "needs_testing"
+        agent: "main"
+        comment: "Enhanced error messaging for Player not found errors - now shows valid player ID ranges"
+
+  - task: "Match Creation Validation"
+    implemented: true
+    working: true
+    file: "/app/routes/api.php"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "needs_testing"
+        agent: "main"
+        comment: "Enhanced match creation validation errors to show available events. Main issue: use event_id: 22 instead of 20"
 
   - task: "Analytics System"
     implemented: true
@@ -106,6 +124,42 @@ backend:
       - working: true
         agent: "testing"
         comment: "Successfully implemented and tested the match completion endpoint. Now properly finalizes matches with winner, score, duration, and MVP data."
+
+frontend:
+  - task: "UI Integration"
+    implemented: false
+    working: "NA"
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "testing"
+        comment: "Frontend testing not performed - backend only development as requested"
+
+metadata:
+  created_by: "testing_agent"
+  version: "2.1"
+  test_sequence: 3
+  run_ui: false
+
+test_plan:
+  current_focus:
+    - "Live Scoring System" 
+    - "Player Statistics API"
+    - "Match Creation Validation"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+  - agent: "testing"
+    message: "Successfully implemented and tested complete Marvel Rivals esports scoreboards and analytics system. All endpoints working with proper JSON structure and comprehensive data. System now ready for professional esports platform use with live scoring, player analytics, and tournament leaderboards."
+  - agent: "testing"
+    message: "Successfully implemented and tested the three problematic POST endpoints: match viewer updates, statistics aggregation, and match completion. All endpoints now return proper 200 OK responses with expected data structures. The issue was that these endpoints were missing from the server.py file and have now been implemented."
+  - agent: "main"
+    message: "Fixed critical validation and data consistency issues: 1) Live scoreboard now reads current_map/current_mode from database instead of hardcoded values 2) Enhanced error messages for player not found errors with valid ID ranges 3) Match creation validation now shows available events when validation fails. Key fix: use event_id: 22 instead of 20."
 
 frontend:
   - task: "UI Integration"
