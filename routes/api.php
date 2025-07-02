@@ -1854,20 +1854,6 @@ Route::middleware(['auth:sanctum', 'role:admin|moderator'])->post('/admin/matche
     }
 });
 
-// 🎮 **GAME MODE TIMER HELPER** - Get Timer Configuration
-function getTimerConfig($mode) {
-    $configs = [
-        'Convoy' => ['duration' => 1080, 'setup' => 45, 'overtime' => 120, 'phases' => ['setup', 'attack', 'defense', 'overtime']],
-        'Domination' => ['duration' => 720, 'setup' => 30, 'score_target' => 100, 'phases' => ['setup', 'control', 'overtime']],
-        'Convergence' => ['duration' => 900, 'capture' => 420, 'escort' => 480, 'phases' => ['setup', 'capture', 'escort', 'overtime']],
-        'Conquest' => ['duration' => 1200, 'zones' => 3, 'phases' => ['early', 'mid', 'late', 'overtime']],
-        'Doom Match' => ['round_duration' => 90, 'rounds_to_win' => 3, 'max_rounds' => 5, 'phases' => ['round', 'elimination']],
-        'Escort' => ['duration' => 960, 'checkpoints' => 3, 'overtime' => 120, 'phases' => ['setup', 'escort', 'overtime']]
-    ];
-    
-    return $configs[$mode] ?? $configs['Convoy'];
-}
-
 Route::middleware(['auth:sanctum', 'role:admin'])->delete('/admin/players/{player}', function (Request $request, $playerId) {
     $player = \App\Models\Player::findOrFail($playerId);
     $playerName = $player->name;
