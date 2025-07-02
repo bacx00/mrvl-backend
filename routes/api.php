@@ -1402,7 +1402,7 @@ Route::middleware(['auth:sanctum', 'role:admin|moderator'])->put('/admin/matches
             return response()->json(['success' => false, 'message' => 'Match not found'], 404);
         }
 
-        // Update match timer info
+        // Update match timer info using proper database columns (after schema update)
         DB::table('matches')->where('id', $matchId)->update([
             'current_timer' => $validated['timer'],
             'timer_running' => $validated['is_running'],
@@ -1418,7 +1418,8 @@ Route::middleware(['auth:sanctum', 'role:admin|moderator'])->put('/admin/matches
                 'timer' => $validated['timer'],
                 'is_running' => $validated['is_running'],
                 'round_number' => $validated['round_number'] ?? $match->current_round ?? 1,
-                'updated_at' => now()->toISOString()
+                'updated_at' => now()->toISOString(),
+                'note' => 'Using updated database schema'
             ]
         ]);
 
