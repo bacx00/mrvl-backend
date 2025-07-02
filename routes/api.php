@@ -1719,14 +1719,9 @@ Route::middleware(['auth:sanctum', 'role:admin|moderator'])->post('/admin/matche
             return response()->json(['success' => false, 'message' => 'Match not found'], 404);
         }
 
-        // Complete the match and clear live state
+        // Complete the match using existing columns only
         DB::table('matches')->where('id', $matchId)->update([
             'status' => 'completed',
-            'winning_team' => $validated['winning_team'],
-            'final_score' => $validated['final_score'] ?? $match->team1_score . '-' . $match->team2_score,
-            'match_duration' => $validated['match_duration'] ?? '45:30',
-            'timer_running' => false,
-            'completed_at' => now(),
             'updated_at' => now()
         ]);
 
@@ -1737,7 +1732,7 @@ Route::middleware(['auth:sanctum', 'role:admin|moderator'])->post('/admin/matche
                 'match_id' => $matchId,
                 'status' => 'completed',
                 'winning_team' => $validated['winning_team'],
-                'final_score' => $validated['final_score'] ?? $match->team1_score . '-' . $match->team2_score,
+                'final_score' => $validated['final_score'] ?? ($match->team1_score ?? 0) . '-' . ($match->team2_score ?? 0),
                 'completed_at' => now()->toISOString()
             ]
         ]);
