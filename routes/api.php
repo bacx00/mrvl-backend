@@ -1175,8 +1175,15 @@ Route::get('/matches/{matchId}/live-scoreboard', function (Request $request, $ma
         $scoreboard = [
             'match_id' => (int)$match->id,
             'status' => $match->status ?? 'live',
+            
+            // Team data at root level for frontend compatibility
+            'team1_id' => (int)$match->team1_id,
+            'team2_id' => (int)$match->team2_id,
+            'team1_name' => $match->team1_name,
+            'team2_name' => $match->team2_name,
             'team1_score' => (int)$match->team1_score,
             'team2_score' => (int)$match->team2_score,
+            
             'current_round' => (int)($match->current_round ?? 1),
             'timer' => $match->current_timer ?? '15:42',
             'timer_running' => (bool)($match->timer_running ?? true),
@@ -1184,6 +1191,18 @@ Route::get('/matches/{matchId}/live-scoreboard', function (Request $request, $ma
             'current_mode' => $match->current_mode ?? 'Control',
             'format' => $match->format ?? 'BO3',
             'viewer_count' => rand(70000, 95000),
+            
+            // Maps data for frontend compatibility
+            'maps_data' => [
+                [
+                    'name' => $match->current_map ?? 'Asgard Throne Room',
+                    'mode' => $match->current_mode ?? 'Control',
+                    'team1' => ['composition' => $team1Players],
+                    'team2' => ['composition' => $team2Players]
+                ]
+            ],
+            
+            // Nested teams structure (keeping for backward compatibility)
             'teams' => [
                 'team1' => [
                     'id' => (int)$match->team1_id,
@@ -1202,6 +1221,21 @@ Route::get('/matches/{matchId}/live-scoreboard', function (Request $request, $ma
                     'players' => $team2Players
                 ]
             ],
+            
+            // Scoreboard structure for compatibility
+            'scoreboard' => [
+                'team1' => [
+                    'name' => $match->team1_name,
+                    'score' => (int)$match->team1_score,
+                    'players' => $team1Players
+                ],
+                'team2' => [
+                    'name' => $match->team2_name,
+                    'score' => (int)$match->team2_score,
+                    'players' => $team2Players
+                ]
+            ],
+            
             'event' => [
                 'name' => $match->event_name,
                 'round' => 'Semifinals'
