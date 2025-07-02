@@ -1809,7 +1809,7 @@ Route::get('/matches/{matchId}/live-status', function (Request $request, $matchI
     }
 });
 
-// 🔄 **RESTORE LIVE MATCH** - Resume After Page Navigation
+// 🔄 **RESTORE LIVE MATCH** - Resume After Page Navigation (FIXED WITH DATABASE SCHEMA)
 Route::middleware(['auth:sanctum', 'role:admin|moderator'])->post('/admin/matches/{matchId}/restore-live', function (Request $request, $matchId) {
     try {
         $match = DB::table('matches')->where('id', $matchId)->first();
@@ -1834,21 +1834,23 @@ Route::middleware(['auth:sanctum', 'role:admin|moderator'])->post('/admin/matche
             return $configs[$mode] ?? $configs['Convoy'];
         };
 
-        // Return complete live state for restoration using existing columns
+        // Return complete live state for restoration using full database persistence
         $liveState = [
             'match_id' => $matchId,
             'status' => 'live',
             'format' => $match->format ?? 'BO3',
             'current_round' => (int)($match->current_round ?? 1),
-            'current_map' => 'Tokyo 2099: Shibuya Sky', // Static for now
-            'current_mode' => 'Convoy', // Static for now
-            'current_timer' => '0:00', // Static for now
-            'timer_running' => false, // Static for now
+            'current_map' => $match->current_map ?? 'Tokyo 2099: Shibuya Sky',
+            'current_mode' => $match->current_mode ?? 'Convoy',
+            'current_timer' => $match->current_timer ?? '0:00',
+            'timer_running' => (bool)($match->timer_running ?? false),
             'team1_score' => (int)($match->team1_score ?? 0),
             'team2_score' => (int)($match->team2_score ?? 0),
-            'timer_config' => $getTimerConfig('Convoy'),
+            'live_start_time' => $match->live_start_time,
+            'elapsed_time' => $match->live_start_time ? now()->diffInMinutes($match->live_start_time) : 0,
+            'timer_config' => $getTimerConfig($match->current_mode ?? 'Convoy'),
             'restored' => true,
-            'note' => 'Live state restored using existing schema'
+            'note' => 'Full database persistence enabled!'
         ];
 
         return response()->json([
