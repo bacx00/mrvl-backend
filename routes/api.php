@@ -1356,8 +1356,11 @@ Route::middleware(['auth:sanctum', 'role:admin|moderator'])->put('/admin/matches
             return response()->json(['success' => false, 'message' => 'Match not found'], 404);
         }
 
-        // Update match with existing columns only (no database changes needed)
+        // Update match with current map info using proper database columns (after schema update)
         DB::table('matches')->where('id', $matchId)->update([
+            'current_map_index' => $validated['mapIndex'],
+            'current_map' => $validated['mapName'],
+            'current_mode' => $validated['mode'],
             'updated_at' => now()
         ]);
 
@@ -1370,7 +1373,7 @@ Route::middleware(['auth:sanctum', 'role:admin|moderator'])->put('/admin/matches
                 'map_name' => $validated['mapName'],
                 'mode' => $validated['mode'],
                 'updated_at' => now()->toISOString(),
-                'note' => 'Map data stored in frontend state (database schema compatible)'
+                'note' => 'Using updated database schema'
             ]
         ]);
 
