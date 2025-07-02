@@ -1106,7 +1106,8 @@ Route::get('/matches/{matchId}/live-scoreboard', function (Request $request, $ma
             ->leftJoin('events as e', 'm.event_id', '=', 'e.id')
             ->select([
                 'm.id', 'm.status', 'm.team1_score', 'm.team2_score', 
-                'm.current_round', 'm.scheduled_at', 'm.format',
+                'm.current_round', 'm.scheduled_at', 'm.format', 'm.current_map', 'm.current_mode',
+                'm.current_timer', 'm.timer_running',
                 't1.id as team1_id', 't1.name as team1_name', 't1.short_name as team1_short', 't1.logo as team1_logo',
                 't2.id as team2_id', 't2.name as team2_name', 't2.short_name as team2_short', 't2.logo as team2_logo',
                 'e.name as event_name'
