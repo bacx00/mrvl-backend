@@ -1641,6 +1641,207 @@ Route::middleware(['auth:sanctum', 'role:admin'])->put('/admin/players/{playerId
     }
 });
 
+// ==========================================
+// 🚨 PERSISTENT LIVE MATCH STATE MANAGEMENT - CRITICAL FOR REAL-TIME SYNC
+// ==========================================
+
+// 📍 **SET MATCH AS LIVE** - Persistent State Management
+Route::middleware(['auth:sanctum', 'role:admin|moderator'])->post('/admin/matches/{matchId}/set-live', function (Request $request, $matchId) {
+    try {
+        $validated = $request->validate([
+            'format' => 'required|string|in:BO1,BO3,BO5,BO7',
+            'current_map' => 'required|string|max:100',
+            'current_mode' => 'required|string|in:Convoy,Domination,Convergence,Conquest,Doom Match,Escort'
+        ]);
+
+        $match = DB::table('matches')->where('id', $matchId)->first();
+        if (!$match) {
+            return response()->json(['success' => false, 'message' => 'Match not found'], 404);
+        }
+
+        // Set match as LIVE with persistent state
+        DB::table('matches')->where('id', $matchId)->update([
+            'status' => 'live',
+            'format' => $validated['format'],
+            'current_map' => $validated['current_map'],
+            'current_mode' => $validated['current_mode'],
+            'current_round' => 1,
+            'team1_score' => 0,
+            'team2_score' => 0,
+            'current_timer' => '0:00',
+            'timer_running' => false,
+            'live_start_time' => now(),
+            'updated_at' => now()
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Match set as LIVE successfully',
+            'data' => [
+                'match_id' => $matchId,
+                'status' => 'live',
+                'format' => $validated['format'],
+                'current_map' => $validated['current_map'],
+                'current_mode' => $validated['current_mode'],
+                'timer_config' => $this->getTimerConfig($validated['current_mode']),
+                'live_start_time' => now()->toISOString()
+            ]
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error setting match as live: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// 🏁 **COMPLETE MATCH** - End Live State
+Route::middleware(['auth:sanctum', 'role:admin|moderator'])->post('/admin/matches/{matchId}/complete', function (Request $request, $matchId) {
+    try {
+        $validated = $request->validate([
+            'winning_team' => 'required|integer|in:1,2',
+            'final_score' => 'nullable|string|max:20',
+            'match_duration' => 'nullable|string|max:20'
+        ]);
+
+        $match = DB::table('matches')->where('id', $matchId)->first();
+        if (!$match) {
+            return response()->json(['success' => false, 'message' => 'Match not found'], 404);
+        }
+
+        // Complete the match and clear live state
+        DB::table('matches')->where('id', $matchId)->update([
+            'status' => 'completed',
+            'winning_team' => $validated['winning_team'],
+            'final_score' => $validated['final_score'] ?? $match->team1_score . '-' . $match->team2_score,
+            'match_duration' => $validated['match_duration'] ?? '45:30',
+            'timer_running' => false,
+            'completed_at' => now(),
+            'updated_at' => now()
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Match completed successfully',
+            'data' => [
+                'match_id' => $matchId,
+                'status' => 'completed',
+                'winning_team' => $validated['winning_team'],
+                'final_score' => $validated['final_score'] ?? $match->team1_score . '-' . $match->team2_score,
+                'completed_at' => now()->toISOString()
+            ]
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error completing match: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// 📊 **GET LIVE MATCH STATUS** - Check If Match Is Currently Live
+Route::get('/matches/{matchId}/live-status', function (Request $request, $matchId) {
+    try {
+        $match = DB::table('matches')->where('id', $matchId)->first();
+        if (!$match) {
+            return response()->json(['success' => false, 'message' => 'Match not found'], 404);
+        }
+
+        $isLive = $match->status === 'live';
+        $timerConfig = null;
+        
+        if ($isLive && $match->current_mode) {
+            $timerConfig = $this->getTimerConfig($match->current_mode);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'match_id' => $matchId,
+                'is_live' => $isLive,
+                'status' => $match->status,
+                'format' => $match->format ?? 'BO3',
+                'current_round' => (int)($match->current_round ?? 1),
+                'current_map' => $match->current_map ?? 'Tokyo 2099: Shibuya Sky',
+                'current_mode' => $match->current_mode ?? 'Convoy',
+                'current_timer' => $match->current_timer ?? '0:00',
+                'timer_running' => (bool)$match->timer_running,
+                'team1_score' => (int)$match->team1_score,
+                'team2_score' => (int)$match->team2_score,
+                'live_start_time' => $match->live_start_time,
+                'timer_config' => $timerConfig,
+                'persistent_state' => true
+            ]
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error fetching live status: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// 🔄 **RESTORE LIVE MATCH** - Resume After Page Navigation
+Route::middleware(['auth:sanctum', 'role:admin|moderator'])->post('/admin/matches/{matchId}/restore-live', function (Request $request, $matchId) {
+    try {
+        $match = DB::table('matches')->where('id', $matchId)->first();
+        if (!$match) {
+            return response()->json(['success' => false, 'message' => 'Match not found'], 404);
+        }
+
+        if ($match->status !== 'live') {
+            return response()->json(['success' => false, 'message' => 'Match is not currently live'], 400);
+        }
+
+        // Return complete live state for restoration
+        $liveState = [
+            'match_id' => $matchId,
+            'status' => 'live',
+            'format' => $match->format ?? 'BO3',
+            'current_round' => (int)($match->current_round ?? 1),
+            'current_map' => $match->current_map ?? 'Tokyo 2099: Shibuya Sky',
+            'current_mode' => $match->current_mode ?? 'Convoy',
+            'current_timer' => $match->current_timer ?? '0:00',
+            'timer_running' => (bool)$match->timer_running,
+            'team1_score' => (int)$match->team1_score,
+            'team2_score' => (int)$match->team2_score,
+            'live_start_time' => $match->live_start_time,
+            'elapsed_time' => $match->live_start_time ? now()->diffInMinutes($match->live_start_time) : 0,
+            'timer_config' => $this->getTimerConfig($match->current_mode ?? 'Convoy'),
+            'restored' => true
+        ];
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Live match state restored successfully',
+            'data' => $liveState
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error restoring live match: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// 🎮 **GAME MODE TIMER HELPER** - Get Timer Configuration
+function getTimerConfig($mode) {
+    $configs = [
+        'Convoy' => ['duration' => 1080, 'setup' => 45, 'overtime' => 120, 'phases' => ['setup', 'attack', 'defense', 'overtime']],
+        'Domination' => ['duration' => 720, 'setup' => 30, 'score_target' => 100, 'phases' => ['setup', 'control', 'overtime']],
+        'Convergence' => ['duration' => 900, 'capture' => 420, 'escort' => 480, 'phases' => ['setup', 'capture', 'escort', 'overtime']],
+        'Conquest' => ['duration' => 1200, 'zones' => 3, 'phases' => ['early', 'mid', 'late', 'overtime']],
+        'Doom Match' => ['round_duration' => 90, 'rounds_to_win' => 3, 'max_rounds' => 5, 'phases' => ['round', 'elimination']],
+        'Escort' => ['duration' => 960, 'checkpoints' => 3, 'overtime' => 120, 'phases' => ['setup', 'escort', 'overtime']]
+    ];
+    
+    return $configs[$mode] ?? $configs['Convoy'];
+}
+
 Route::middleware(['auth:sanctum', 'role:admin'])->delete('/admin/players/{player}', function (Request $request, $playerId) {
     $player = \App\Models\Player::findOrFail($playerId);
     $playerName = $player->name;
