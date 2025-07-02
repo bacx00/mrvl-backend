@@ -1712,7 +1712,7 @@ Route::middleware(['auth:sanctum', 'role:admin|moderator'])->post('/admin/matche
     }
 });
 
-// 🏁 **COMPLETE MATCH** - End Live State
+// 🏁 **COMPLETE MATCH** - End Live State (FIXED WITH DATABASE SCHEMA)
 Route::middleware(['auth:sanctum', 'role:admin|moderator'])->post('/admin/matches/{matchId}/complete', function (Request $request, $matchId) {
     try {
         $validated = $request->validate([
@@ -1726,9 +1726,14 @@ Route::middleware(['auth:sanctum', 'role:admin|moderator'])->post('/admin/matche
             return response()->json(['success' => false, 'message' => 'Match not found'], 404);
         }
 
-        // Complete the match using existing columns only
+        // Complete the match and clear live state with full database persistence
         DB::table('matches')->where('id', $matchId)->update([
             'status' => 'completed',
+            'winning_team' => $validated['winning_team'],
+            'final_score' => $validated['final_score'] ?? ($match->team1_score ?? 0) . '-' . ($match->team2_score ?? 0),
+            'match_duration' => $validated['match_duration'] ?? '45:30',
+            'timer_running' => false,
+            'completed_at' => now(),
             'updated_at' => now()
         ]);
 
@@ -1740,7 +1745,8 @@ Route::middleware(['auth:sanctum', 'role:admin|moderator'])->post('/admin/matche
                 'status' => 'completed',
                 'winning_team' => $validated['winning_team'],
                 'final_score' => $validated['final_score'] ?? ($match->team1_score ?? 0) . '-' . ($match->team2_score ?? 0),
-                'completed_at' => now()->toISOString()
+                'completed_at' => now()->toISOString(),
+                'note' => 'Full database persistence enabled!'
             ]
         ]);
 
