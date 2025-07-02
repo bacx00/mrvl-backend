@@ -1135,10 +1135,12 @@ Route::get('/matches/{matchId}/live-scoreboard', function (Request $request, $ma
             ->map(function($player) use ($matchId) {
                 return [
                     'id' => $player->id,
+                    'player_id' => $player->id, // Frontend compatibility
                     'name' => $player->name,
                     'username' => $player->username ?? $player->name,
                     'role' => $player->role,
                     'main_hero' => $player->main_hero ?? 'Spider-Man',
+                    'current_hero' => $player->main_hero ?? 'Spider-Man', // Frontend compatibility
                     'eliminations' => rand(8, 20),
                     'deaths' => rand(2, 8),
                     'assists' => rand(5, 15),
@@ -1157,10 +1159,12 @@ Route::get('/matches/{matchId}/live-scoreboard', function (Request $request, $ma
             ->map(function($player) use ($matchId) {
                 return [
                     'id' => $player->id,
+                    'player_id' => $player->id, // Frontend compatibility
                     'name' => $player->name,
                     'username' => $player->username ?? $player->name,
                     'role' => $player->role,
                     'main_hero' => $player->main_hero ?? 'Luna Snow',
+                    'current_hero' => $player->main_hero ?? 'Luna Snow', // Frontend compatibility
                     'eliminations' => rand(8, 20),
                     'deaths' => rand(2, 8),
                     'assists' => rand(5, 15),
