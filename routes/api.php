@@ -1750,10 +1750,23 @@ Route::get('/matches/{matchId}/live-status', function (Request $request, $matchI
         }
 
         $isLive = $match->status === 'live';
-        $timerConfig = null;
         
+        // Timer config helper (inline)
+        $getTimerConfig = function($mode) {
+            $configs = [
+                'Convoy' => ['duration' => 1080, 'setup' => 45, 'overtime' => 120, 'phases' => ['setup', 'attack', 'defense', 'overtime']],
+                'Domination' => ['duration' => 720, 'setup' => 30, 'score_target' => 100, 'phases' => ['setup', 'control', 'overtime']],
+                'Convergence' => ['duration' => 900, 'capture' => 420, 'escort' => 480, 'phases' => ['setup', 'capture', 'escort', 'overtime']],
+                'Conquest' => ['duration' => 1200, 'zones' => 3, 'phases' => ['early', 'mid', 'late', 'overtime']],
+                'Doom Match' => ['round_duration' => 90, 'rounds_to_win' => 3, 'max_rounds' => 5, 'phases' => ['round', 'elimination']],
+                'Escort' => ['duration' => 960, 'checkpoints' => 3, 'overtime' => 120, 'phases' => ['setup', 'escort', 'overtime']]
+            ];
+            return $configs[$mode] ?? $configs['Convoy'];
+        };
+        
+        $timerConfig = null;
         if ($isLive && $match->current_mode) {
-            $timerConfig = $this->getTimerConfig($match->current_mode);
+            $timerConfig = $getTimerConfig($match->current_mode);
         }
 
         return response()->json([
@@ -1796,6 +1809,19 @@ Route::middleware(['auth:sanctum', 'role:admin|moderator'])->post('/admin/matche
             return response()->json(['success' => false, 'message' => 'Match is not currently live'], 400);
         }
 
+        // Timer config helper (inline)
+        $getTimerConfig = function($mode) {
+            $configs = [
+                'Convoy' => ['duration' => 1080, 'setup' => 45, 'overtime' => 120, 'phases' => ['setup', 'attack', 'defense', 'overtime']],
+                'Domination' => ['duration' => 720, 'setup' => 30, 'score_target' => 100, 'phases' => ['setup', 'control', 'overtime']],
+                'Convergence' => ['duration' => 900, 'capture' => 420, 'escort' => 480, 'phases' => ['setup', 'capture', 'escort', 'overtime']],
+                'Conquest' => ['duration' => 1200, 'zones' => 3, 'phases' => ['early', 'mid', 'late', 'overtime']],
+                'Doom Match' => ['round_duration' => 90, 'rounds_to_win' => 3, 'max_rounds' => 5, 'phases' => ['round', 'elimination']],
+                'Escort' => ['duration' => 960, 'checkpoints' => 3, 'overtime' => 120, 'phases' => ['setup', 'escort', 'overtime']]
+            ];
+            return $configs[$mode] ?? $configs['Convoy'];
+        };
+
         // Return complete live state for restoration
         $liveState = [
             'match_id' => $matchId,
@@ -1810,7 +1836,7 @@ Route::middleware(['auth:sanctum', 'role:admin|moderator'])->post('/admin/matche
             'team2_score' => (int)$match->team2_score,
             'live_start_time' => $match->live_start_time,
             'elapsed_time' => $match->live_start_time ? now()->diffInMinutes($match->live_start_time) : 0,
-            'timer_config' => $this->getTimerConfig($match->current_mode ?? 'Convoy'),
+            'timer_config' => $getTimerConfig($match->current_mode ?? 'Convoy'),
             'restored' => true
         ];
 
