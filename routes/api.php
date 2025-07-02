@@ -221,8 +221,8 @@ Route::get('/players/{playerId}', function (Request $request, $playerId) {
 
         if (!$player) {
             return response()->json([
-                'success' => false,
-                'message' => 'Player not found'
+                'success' => false, 
+                'message' => "Player not found. Player ID: {$playerId}. Valid player IDs are 183-188 (Sentinels) and 189-194 (T1)"
             ], 404);
         }
 
