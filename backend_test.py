@@ -780,6 +780,7 @@ def run_all_tests():
     
     # Live Scoring System
     test_match_scoreboard()
+    test_live_scoreboard_data_consistency()
     
     # Analytics Endpoints
     test_player_stats(183, "SicK")
@@ -790,6 +791,14 @@ def run_all_tests():
     test_player_leaderboards()
     test_player_leaderboards_sorted()
     test_team_leaderboards()
+    
+    # Match Creation with Valid/Invalid Event
+    test_match_creation_with_valid_event()
+    test_match_creation_with_invalid_event()
+    
+    # Player Statistics Update
+    test_player_statistics_update()
+    test_player_statistics_update_invalid_player()
     
     # Problematic POST endpoints
     test_update_match_viewers()
