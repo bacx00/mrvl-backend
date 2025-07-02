@@ -1171,8 +1171,8 @@ Route::get('/matches/{matchId}/live-scoreboard', function (Request $request, $ma
             'current_round' => (int)($match->current_round ?? 1),
             'timer' => '15:42',
             'timer_running' => true,
-            'current_map' => 'Tokyo 2099: Spider Islands',
-            'current_mode' => 'Convoy',
+            'current_map' => $match->current_map ?? 'Tokyo 2099: Spider Islands',
+            'current_mode' => $match->current_mode ?? 'Convoy',
             'format' => $match->format ?? 'BO3',
             'viewer_count' => rand(70000, 95000),
             'teams' => [
