@@ -1752,7 +1752,7 @@ Route::middleware(['auth:sanctum', 'role:admin|moderator'])->post('/admin/matche
     }
 });
 
-// 📊 **GET LIVE MATCH STATUS** - Check If Match Is Currently Live
+// 📊 **GET LIVE MATCH STATUS** - Check If Match Is Currently Live (FIXED WITH DATABASE SCHEMA)
 Route::get('/matches/{matchId}/live-status', function (Request $request, $matchId) {
     try {
         $match = DB::table('matches')->where('id', $matchId)->first();
@@ -1775,7 +1775,10 @@ Route::get('/matches/{matchId}/live-status', function (Request $request, $matchI
             return $configs[$mode] ?? $configs['Convoy'];
         };
         
-        $timerConfig = $getTimerConfig('Convoy'); // Default to Convoy
+        $timerConfig = null;
+        if ($isLive && $match->current_mode) {
+            $timerConfig = $getTimerConfig($match->current_mode);
+        }
 
         return response()->json([
             'success' => true,
@@ -1785,15 +1788,16 @@ Route::get('/matches/{matchId}/live-status', function (Request $request, $matchI
                 'status' => $match->status,
                 'format' => $match->format ?? 'BO3',
                 'current_round' => (int)($match->current_round ?? 1),
-                'current_map' => 'Tokyo 2099: Shibuya Sky', // Static for now
-                'current_mode' => 'Convoy', // Static for now
-                'current_timer' => '0:00', // Static for now
-                'timer_running' => false, // Static for now
+                'current_map' => $match->current_map ?? 'Tokyo 2099: Shibuya Sky',
+                'current_mode' => $match->current_mode ?? 'Convoy',
+                'current_timer' => $match->current_timer ?? '0:00',
+                'timer_running' => (bool)($match->timer_running ?? false),
                 'team1_score' => (int)($match->team1_score ?? 0),
                 'team2_score' => (int)($match->team2_score ?? 0),
+                'live_start_time' => $match->live_start_time,
                 'timer_config' => $timerConfig,
                 'persistent_state' => true,
-                'note' => 'Using existing database schema'
+                'note' => 'Full database persistence enabled!'
             ]
         ]);
 
