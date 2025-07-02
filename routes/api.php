@@ -2408,6 +2408,20 @@ Route::middleware(['auth:sanctum', 'role:admin'])->post('/admin/events', functio
         ], 201);
         
     } catch (\Illuminate\Validation\ValidationException $e) {
+        // Get available events for better error messages
+        $availableEvents = DB::table('events')->select('id', 'name')->get();
+        $eventsList = $availableEvents->map(function($event) {
+            return "ID: {$event->id}, Name: {$event->name}";
+        })->implode('; ');
+        
+        return response()->json([
+            'success' => false,
+            'message' => 'Validation failed',
+            'errors' => $e->errors(),
+            'available_events' => $eventsList ?: 'No events available',
+            'debug_info' => 'Use valid event_id from available events above'
+        ], 422);
+    } catch (\Illuminate\Validation\ValidationException $e) {
         return response()->json([
             'success' => false,
             'message' => 'Validation failed',
