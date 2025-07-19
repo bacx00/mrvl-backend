@@ -9,20 +9,22 @@ return new class extends Migration
 {
     public function up()
     {
-        // Update the events table 'type' column to include all valid event types
-        DB::statement("ALTER TABLE events MODIFY COLUMN type ENUM(
-            'championship',
-            'tournament', 
-            'scrim',
-            'qualifier',
-            'regional',
-            'international',
-            'invitational',
-            'community',
-            'friendly',
-            'practice',
-            'exhibition'
-        ) NOT NULL");
+        // SQLite doesn't support MODIFY COLUMN, so we skip this for SQLite
+        if (DB::connection()->getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE events MODIFY COLUMN type ENUM(
+                'championship',
+                'tournament', 
+                'scrim',
+                'qualifier',
+                'regional',
+                'international',
+                'invitational',
+                'community',
+                'friendly',
+                'practice',
+                'exhibition'
+            ) NOT NULL");
+        }
     }
 
     public function down()

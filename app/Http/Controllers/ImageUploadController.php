@@ -13,24 +13,68 @@ class ImageUploadController extends Controller
     private $maxFileSize = 5120; // 5MB in KB
 
     // Team Logo Upload
-    public function uploadTeamLogo(Request $request, Team $team)
+    public function uploadTeamLogo(Request $request, $teamId)
     {
-        $request->validate([
-            'logo' => 'required|image|mimes:jpeg,jpg,png,webp|max:' . $this->maxFileSize,
-        ]);
-
         try {
+            $team = Team::findOrFail($teamId);
+            
+            if (!$request->hasFile('logo')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No logo file provided'
+                ], 400);
+            }
+
+            $file = $request->file('logo');
+            
+            if (!$file->isValid()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid file upload. Error: ' . $file->getError()
+                ], 400);
+            }
+            
+
             // Delete old logo if exists
             if ($team->logo) {
                 Storage::disk('public')->delete($team->logo);
             }
 
-            $file = $request->file('logo');
-            $path = $this->processAndStoreImage($file, 'teams/logos', [
-                'width' => 200,
-                'height' => 200,
-                'maintain_ratio' => true
-            ]);
+            // Simple file storage without processing
+            $extension = $file->getClientOriginalExtension();
+            $filename = uniqid() . '.' . $extension;
+            $directory = 'teams/logos';
+            
+            // Use manual file move approach
+            try {
+                $finalPath = $directory . '/' . $filename;
+                $destinationPath = storage_path('app/public/' . $finalPath);
+                
+                // Ensure directory exists
+                $destinationDir = dirname($destinationPath);
+                if (!is_dir($destinationDir)) {
+                    mkdir($destinationDir, 0775, true);
+                }
+                
+                // Move uploaded file
+                if (!move_uploaded_file($file->path(), $destinationPath)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Failed to move uploaded file'
+                    ], 500);
+                }
+                
+                // Set proper permissions
+                chmod($destinationPath, 0644);
+                
+                $path = $finalPath;
+                
+            } catch (\Exception $e) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Storage exception: ' . $e->getMessage()
+                ], 500);
+            }
 
             $team->update(['logo' => $path]);
 
@@ -91,24 +135,67 @@ class ImageUploadController extends Controller
     }
 
     // Player Avatar Upload
-    public function uploadPlayerAvatar(Request $request, Player $player)
+    public function uploadPlayerAvatar(Request $request, $playerId)
     {
-        $request->validate([
-            'avatar' => 'required|image|mimes:jpeg,jpg,png,webp|max:' . $this->maxFileSize,
-        ]);
-
         try {
+            $player = Player::findOrFail($playerId);
+            
+            if (!$request->hasFile('avatar')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No avatar file provided'
+                ], 400);
+            }
+
+            $file = $request->file('avatar');
+            
+            if (!$file->isValid()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid file upload. Error: ' . $file->getError()
+                ], 400);
+            }
+
             // Delete old avatar if exists
             if ($player->avatar) {
                 Storage::disk('public')->delete($player->avatar);
             }
 
-            $file = $request->file('avatar');
-            $path = $this->processAndStoreImage($file, 'players/avatars', [
-                'width' => 300,
-                'height' => 300,
-                'maintain_ratio' => true
-            ]);
+            // Simple file storage without processing
+            $extension = $file->getClientOriginalExtension();
+            $filename = uniqid() . '.' . $extension;
+            $directory = 'players/avatars';
+            
+            // Use manual file move approach
+            try {
+                $finalPath = $directory . '/' . $filename;
+                $destinationPath = storage_path('app/public/' . $finalPath);
+                
+                // Ensure directory exists
+                $destinationDir = dirname($destinationPath);
+                if (!is_dir($destinationDir)) {
+                    mkdir($destinationDir, 0775, true);
+                }
+                
+                // Move uploaded file
+                if (!move_uploaded_file($file->path(), $destinationPath)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Failed to move uploaded file'
+                    ], 500);
+                }
+                
+                // Set proper permissions
+                chmod($destinationPath, 0644);
+                
+                $path = $finalPath;
+                
+            } catch (\Exception $e) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Storage exception: ' . $e->getMessage()
+                ], 500);
+            }
 
             $player->update(['avatar' => $path]);
 
@@ -289,11 +376,24 @@ class ImageUploadController extends Controller
         Storage::disk('public')->makeDirectory($directory);
 
         // Store original file
-        $file->storeAs($directory, $filename, 'public');
+        $result = $file->storeAs($directory, $filename, 'public');
+        
+        if (!$result) {
+            throw new \Exception('File storage failed - upload returned false');
+        }
+
+        // Verify file was stored
+        if (!Storage::disk('public')->exists($fullPath)) {
+            throw new \Exception('File storage failed - file not found after upload');
+        }
 
         // If image processing is available and options are provided, resize
         if (class_exists('Intervention\Image\Facades\Image') && !empty($options)) {
-            $this->resizeImage(Storage::disk('public')->path($fullPath), $options);
+            try {
+                $this->resizeImage(Storage::disk('public')->path($fullPath), $options);
+            } catch (\Exception $e) {
+                \Log::warning('Image resizing failed: ' . $e->getMessage());
+            }
         }
 
         return $fullPath;
@@ -320,6 +420,373 @@ class ImageUploadController extends Controller
         } catch (\Exception $e) {
             // If image processing fails, continue with original image
             \Log::warning('Image resizing failed: ' . $e->getMessage());
+        }
+    }
+
+    // Team Banner Upload
+    public function uploadTeamBanner(Request $request, $teamId)
+    {
+        try {
+            $team = Team::findOrFail($teamId);
+            
+            if (!$request->hasFile('banner')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No banner file provided'
+                ], 400);
+            }
+
+            $file = $request->file('banner');
+            
+            if (!$file->isValid()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid file upload. Error: ' . $file->getError()
+                ], 400);
+            }
+
+            // Delete old banner if exists
+            if ($team->banner) {
+                Storage::disk('public')->delete($team->banner);
+            }
+
+            // Simple file storage without processing
+            $extension = $file->getClientOriginalExtension();
+            $filename = uniqid() . '.' . $extension;
+            $directory = 'teams/banners';
+            
+            // Use manual file move approach
+            try {
+                $finalPath = $directory . '/' . $filename;
+                $destinationPath = storage_path('app/public/' . $finalPath);
+                
+                // Ensure directory exists
+                $destinationDir = dirname($destinationPath);
+                if (!is_dir($destinationDir)) {
+                    mkdir($destinationDir, 0775, true);
+                }
+                
+                // Move uploaded file
+                if (!move_uploaded_file($file->path(), $destinationPath)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Failed to move uploaded file'
+                    ], 500);
+                }
+                
+                // Set proper permissions
+                chmod($destinationPath, 0644);
+                
+                $path = $finalPath;
+                
+            } catch (\Exception $e) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Storage exception: ' . $e->getMessage()
+                ], 500);
+            }
+
+            $team->update(['banner' => $path]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Team banner uploaded successfully',
+                'data' => [
+                    'banner' => $path,
+                    'banner_url' => Storage::disk('public')->url($path)
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to upload banner: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // Event Banner Upload
+    public function uploadEventBanner(Request $request, $eventId)
+    {
+        $event = \App\Models\Event::findOrFail($eventId);
+        
+        $request->validate([
+            'banner' => 'required|image|mimes:jpeg,jpg,png,webp|max:' . $this->maxFileSize,
+        ]);
+
+        try {
+            // Delete old banner if exists
+            if ($event->image) {
+                Storage::disk('public')->delete($event->image);
+            }
+
+            $file = $request->file('banner');
+            $path = $this->processAndStoreImage($file, 'events/banners', [
+                'width' => 1200,
+                'height' => 400,
+                'maintain_ratio' => true
+            ]);
+
+            $event->update(['image' => $path]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Event banner uploaded successfully',
+                'data' => [
+                    'image' => $path,
+                    'image_url' => Storage::disk('public')->url($path)
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to upload banner: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function uploadEventLogo(Request $request, $eventId)
+    {
+        $event = \App\Models\Event::findOrFail($eventId);
+        
+        $request->validate([
+            'logo' => 'required|image|mimes:jpeg,jpg,png,webp|max:' . $this->maxFileSize,
+        ]);
+
+        try {
+            // Delete old logo if exists
+            if ($event->logo) {
+                Storage::disk('public')->delete($event->logo);
+            }
+
+            $file = $request->file('logo');
+            $path = $this->processAndStoreImage($file, 'events/logos', [
+                'width' => 200,
+                'height' => 200,
+                'maintain_ratio' => true
+            ]);
+
+            $event->update(['logo' => $path]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Event logo uploaded successfully',
+                'data' => [
+                    'logo' => $path,
+                    'logo_url' => Storage::disk('public')->url($path)
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to upload logo: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // Hero Images Upload
+    public function uploadHeroImages(Request $request, $heroId)
+    {
+        // Heroes are managed differently - they use predefined images in the public folder
+        // This method would be for custom hero images if needed
+        return response()->json([
+            'success' => false,
+            'message' => 'Hero images are managed through the system. Please contact admin for hero image updates.'
+        ], 400);
+    }
+
+    // User Avatar Upload
+    public function uploadUserAvatar(Request $request, $userId)
+    {
+        $user = \App\Models\User::findOrFail($userId);
+        
+        // Check if user can edit this profile
+        if (auth()->id() !== $user->id && !auth()->user()->hasRole('admin')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized to edit this profile'
+            ], 403);
+        }
+
+        $request->validate([
+            'avatar' => 'required|image|mimes:jpeg,jpg,png,webp|max:' . $this->maxFileSize,
+        ]);
+
+        try {
+            // Delete old avatar if exists
+            if ($user->avatar && !str_starts_with($user->avatar, '/images/heroes/')) {
+                Storage::disk('public')->delete($user->avatar);
+            }
+
+            $file = $request->file('avatar');
+            $path = $this->processAndStoreImage($file, 'users/avatars', [
+                'width' => 300,
+                'height' => 300,
+                'maintain_ratio' => true
+            ]);
+
+            $user->update(['avatar' => $path]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Avatar uploaded successfully',
+                'data' => [
+                    'avatar' => $path,
+                    'avatar_url' => Storage::disk('public')->url($path)
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to upload avatar: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // Delete Team Logo
+    public function deleteTeamLogo(Team $team)
+    {
+        try {
+            if ($team->logo) {
+                Storage::disk('public')->delete($team->logo);
+                $team->update(['logo' => null]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Team logo deleted successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete logo: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // Delete Team Flag
+    public function deleteTeamFlag(Team $team)
+    {
+        try {
+            if ($team->flag) {
+                Storage::disk('public')->delete($team->flag);
+                $team->update(['flag' => null]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Team flag deleted successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete flag: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // Delete Team Banner
+    public function deleteTeamBanner(Team $team)
+    {
+        try {
+            if ($team->banner) {
+                Storage::disk('public')->delete($team->banner);
+                $team->update(['banner' => null]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Team banner deleted successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete banner: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // Delete Player Avatar
+    public function deletePlayerAvatar(Player $player)
+    {
+        try {
+            if ($player->avatar) {
+                Storage::disk('public')->delete($player->avatar);
+                $player->update(['avatar' => null]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Player avatar deleted successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete avatar: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // Delete Event Banner
+    public function deleteEventBanner($eventId)
+    {
+        $event = \App\Models\Event::findOrFail($eventId);
+        
+        try {
+            if ($event->image) {
+                Storage::disk('public')->delete($event->image);
+                $event->update(['image' => null]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Event banner deleted successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete banner: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // Delete User Avatar
+    public function deleteUserAvatar($userId)
+    {
+        $user = \App\Models\User::findOrFail($userId);
+        
+        // Check if user can edit this profile
+        if (auth()->id() !== $user->id && !auth()->user()->hasRole('admin')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized to edit this profile'
+            ], 403);
+        }
+
+        try {
+            if ($user->avatar && !str_starts_with($user->avatar, '/images/heroes/')) {
+                Storage::disk('public')->delete($user->avatar);
+                $user->update(['avatar' => null]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Avatar deleted successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete avatar: ' . $e->getMessage()
+            ], 500);
         }
     }
 }

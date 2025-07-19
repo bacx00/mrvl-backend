@@ -12,16 +12,16 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        $middleware->api(prepend: [
-            \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
-        ]);
-
         $middleware->alias([
             'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
             'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
             'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
             'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
         ]);
+
+        // Trust proxies for reverse proxy setup
+        $middleware->trustProxies(at: '*');
+        $middleware->trustHosts(at: ['staging.mrvl.net']);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         $exceptions->render(function (\Illuminate\Auth\AuthenticationException $e, $request) {
@@ -31,6 +31,21 @@ return Application::configure(basePath: dirname(__DIR__))
                     'message' => 'Unauthenticated. Please provide a valid authentication token.',
                     'error' => 'Authentication required'
                 ], 401);
+            }
+        });
+        
+        $exceptions->render(function (\Throwable $e, $request) {
+            if ($request->expectsJson()) {
+                // Log the actual error
+                \Log::error('API Error: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
+                
+                return response()->json([
+                    'success' => false,
+                    'message' => app()->environment('production') ? 'Server Error' : $e->getMessage(),
+                    'error' => app()->environment('production') ? null : class_basename($e),
+                    'file' => app()->environment('production') ? null : $e->getFile(),
+                    'line' => app()->environment('production') ? null : $e->getLine()
+                ], 500);
             }
         });
     })->create();

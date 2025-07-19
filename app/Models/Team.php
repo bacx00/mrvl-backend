@@ -9,10 +9,11 @@ class Team extends Model
     use HasFactory;
 
     protected $fillable = [
-        'name', 'short_name', 'logo', 'region', 'country', 'flag',
-        'rating', 'rank', 'win_rate', 'points', 'record', 'peak',
-        'streak', 'last_match', 'founded', 'captain', 'coach', 
-        'website', 'earnings', 'social_media', 'achievements'
+        'name', 'short_name', 'logo', 'region', 'platform', 'game', 'division',
+        'country', 'flag', 'rating', 'rank', 'win_rate', 'points', 'record', 
+        'peak', 'streak', 'last_match', 'founded', 'captain', 'coach', 
+        'website', 'earnings', 'social_media', 'achievements', 'recent_form', 
+        'player_count'
     ];
 
     protected $casts = [
@@ -21,8 +22,10 @@ class Team extends Model
         'win_rate' => 'float',
         'points' => 'integer',
         'peak' => 'integer',
+        'player_count' => 'integer',
         'social_media' => 'array',
-        'achievements' => 'array'
+        'achievements' => 'array',
+        'recent_form' => 'array'
     ];
 
     protected $appends = []; // Removed problematic accessors

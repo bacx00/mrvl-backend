@@ -1,0 +1,1073 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
+use App\Models\User;
+use App\Models\Team;
+use Exception;
+
+class UserProfileController extends Controller
+{
+    /**
+     * Get current user's complete profile with stats
+     */
+    public function show()
+    {
+        try {
+            $user = Auth::user();
+            $user->load('teamFlair');
+            
+            // Fix avatar if it's using old PNG path
+            $this->fixUserAvatar($user);
+            
+            // Get user statistics
+            $stats = $this->getUserStats($user->id);
+            
+            // Get recent activity
+            $recentActivity = $this->getRecentActivity($user->id, 5);
+            
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'avatar' => $user->avatar,
+                    'hero_flair' => $user->hero_flair,
+                    'team_flair' => $user->teamFlair,
+                    'team_flair_id' => $user->team_flair_id,
+                    'show_hero_flair' => (bool)$user->show_hero_flair,
+                    'show_team_flair' => (bool)$user->show_team_flair,
+                    'use_hero_as_avatar' => (bool)$user->use_hero_as_avatar,
+                    'status' => $user->status,
+                    'last_login' => $user->last_login,
+                    'created_at' => $user->created_at,
+                    'roles' => $user->getRoleNames(),
+                    'permissions' => $user->getAllPermissions()->pluck('name'),
+                    'stats' => $stats,
+                    'recent_activity' => $recentActivity,
+                    'display_avatar' => $this->getDisplayAvatar($user),
+                    'display_flairs' => $this->getDisplayFlairs($user)
+                ]
+            ]);
+        } catch (Exception $e) {
+            Log::error('Error fetching user profile: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch profile data'
+            ], 500);
+        }
+    }
+
+    /**
+     * Update user profile
+     */
+    public function updateProfile(Request $request)
+    {
+        try {
+            $request->validate([
+                'name' => 'sometimes|string|max:255|unique:users,name,' . Auth::id(),
+                'avatar' => 'nullable|string|max:500',
+                'hero_flair' => 'nullable|string|exists:marvel_rivals_heroes,name',
+                'team_flair_id' => 'nullable|exists:teams,id',
+                'show_hero_flair' => 'boolean',
+                'show_team_flair' => 'boolean',
+                'use_hero_as_avatar' => 'boolean'
+            ]);
+
+            $user = Auth::user();
+            $updateData = [];
+
+            // Handle name update
+            if ($request->has('name')) {
+                $updateData['name'] = $request->name;
+            }
+
+            // Handle avatar update
+            if ($request->has('avatar')) {
+                $updateData['avatar'] = $request->avatar;
+                $updateData['use_hero_as_avatar'] = false;
+            }
+
+            // Handle hero flair
+            if ($request->has('hero_flair')) {
+                $updateData['hero_flair'] = $request->hero_flair;
+                
+                // If using hero as avatar
+                if ($request->use_hero_as_avatar) {
+                    $heroImagePath = $this->getHeroImagePath($request->hero_flair);
+                    if ($heroImagePath) {
+                        $updateData['avatar'] = $heroImagePath;
+                        $updateData['use_hero_as_avatar'] = true;
+                    }
+                }
+            }
+
+            // Handle team flair
+            if ($request->has('team_flair_id')) {
+                $updateData['team_flair_id'] = $request->team_flair_id;
+            }
+
+            // Handle display preferences
+            if ($request->has('show_hero_flair')) {
+                $updateData['show_hero_flair'] = $request->show_hero_flair;
+            }
+            if ($request->has('show_team_flair')) {
+                $updateData['show_team_flair'] = $request->show_team_flair;
+            }
+
+            $user->update($updateData);
+            $user->refresh()->load('teamFlair');
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Profile updated successfully',
+                'data' => [
+                    'user' => $user,
+                    'display_avatar' => $this->getDisplayAvatar($user),
+                    'display_flairs' => $this->getDisplayFlairs($user)
+                ]
+            ]);
+        } catch (Exception $e) {
+            Log::error('Error updating profile: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update profile'
+            ], 500);
+        }
+    }
+
+    /**
+     * Update user flairs specifically
+     */
+    public function updateFlairs(Request $request)
+    {
+        try {
+            $request->validate([
+                'hero_flair' => 'nullable|string|exists:marvel_rivals_heroes,name',
+                'team_flair_id' => 'nullable|exists:teams,id',
+                'show_hero_flair' => 'boolean',
+                'show_team_flair' => 'boolean'
+            ]);
+
+            $user = Auth::user();
+            $user->update($request->only([
+                'hero_flair', 
+                'team_flair_id', 
+                'show_hero_flair', 
+                'show_team_flair'
+            ]));
+
+            $user->refresh()->load('teamFlair');
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Flairs updated successfully',
+                'data' => [
+                    'hero_flair' => $user->hero_flair,
+                    'team_flair' => $user->teamFlair,
+                    'show_hero_flair' => $user->show_hero_flair,
+                    'show_team_flair' => $user->show_team_flair,
+                    'display_flairs' => $this->getDisplayFlairs($user)
+                ]
+            ]);
+        } catch (Exception $e) {
+            Log::error('Error updating flairs: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update flairs'
+            ], 500);
+        }
+    }
+
+    /**
+     * Get available flairs (heroes and teams)
+     */
+    public function getAvailableFlairs()
+    {
+        try {
+            // Get all heroes with image availability check
+            $heroes = DB::table('marvel_rivals_heroes')
+                ->orderBy('role')
+                ->orderBy('name')
+                ->get()
+                ->map(function($hero) {
+                    $imagePath = $this->getHeroImagePath($hero->name);
+                    $hasImage = $imagePath !== null;
+                    
+                    return [
+                        'id' => $hero->id,
+                        'name' => $hero->name,
+                        'slug' => $hero->slug,
+                        'role' => $hero->role,
+                        'season_added' => $hero->season_added ?? 'Launch',
+                        'is_new' => (bool)$hero->is_new,
+                        'has_image' => $hasImage,
+                        'image_path' => $imagePath,
+                        'display' => [
+                            'name' => $hero->name,
+                            'role' => $hero->role,
+                            'role_color' => $this->getRoleColor($hero->role),
+                            'hero_color' => $this->getHeroColor($hero->name),
+                            'initials' => $this->getHeroInitials($hero->name)
+                        ]
+                    ];
+                })
+                ->groupBy('role');
+
+            // Get all teams
+            $teams = DB::table('teams')
+                ->whereNotNull('name')
+                ->orderBy('region')
+                ->orderBy('name')
+                ->get()
+                ->map(function($team) {
+                    return [
+                        'id' => $team->id,
+                        'name' => $team->name,
+                        'short_name' => $team->short_name,
+                        'logo' => $team->logo,
+                        'region' => $team->region,
+                        'has_logo' => !empty($team->logo),
+                        'display' => [
+                            'name' => $team->name,
+                            'short_name' => $team->short_name ?: strtoupper(substr($team->name, 0, 3)),
+                            'region_color' => $this->getRegionColor($team->region)
+                        ]
+                    ];
+                })
+                ->groupBy('region');
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'heroes' => $heroes,
+                    'teams' => $teams,
+                    'stats' => [
+                        'total_heroes' => $heroes->flatten()->count(),
+                        'heroes_with_images' => $heroes->flatten()->where('has_image', true)->count(),
+                        'total_teams' => $teams->flatten()->count(),
+                        'teams_with_logos' => $teams->flatten()->where('has_logo', true)->count()
+                    ]
+                ]
+            ]);
+        } catch (Exception $e) {
+            Log::error('Error fetching available flairs: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch available flairs'
+            ], 500);
+        }
+    }
+
+    /**
+     * Set hero as avatar
+     */
+    public function setHeroAsAvatar(Request $request)
+    {
+        try {
+            $request->validate([
+                'hero_name' => 'required|string|exists:marvel_rivals_heroes,name'
+            ]);
+
+            $user = Auth::user();
+            $heroImagePath = $this->getHeroImagePath($request->hero_name);
+            
+            if (!$heroImagePath || !file_exists(public_path($heroImagePath))) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Hero image not available'
+                ], 400);
+            }
+            
+            $user->update([
+                'avatar' => $heroImagePath,
+                'hero_flair' => $request->hero_name,
+                'use_hero_as_avatar' => true
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Hero avatar set successfully',
+                'data' => [
+                    'avatar' => $user->avatar,
+                    'hero_flair' => $user->hero_flair,
+                    'use_hero_as_avatar' => $user->use_hero_as_avatar,
+                    'display_avatar' => $this->getDisplayAvatar($user)
+                ]
+            ]);
+        } catch (Exception $e) {
+            Log::error('Error setting hero avatar: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to set hero avatar'
+            ], 500);
+        }
+    }
+
+    /**
+     * Get user display data (for showing in comments, forums, etc)
+     */
+    public function getUserWithAvatarAndFlairs($userId)
+    {
+        try {
+            $user = User::with('teamFlair')->find($userId);
+            
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User not found'
+                ], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'avatar' => $this->getDisplayAvatar($user),
+                    'flairs' => $this->getDisplayFlairs($user),
+                    'roles' => $user->getRoleNames(),
+                    'is_admin' => $user->hasRole('admin'),
+                    'is_moderator' => $user->hasRole('moderator')
+                ]
+            ]);
+        } catch (Exception $e) {
+            Log::error('Error fetching user display data: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch user data'
+            ], 500);
+        }
+    }
+
+    /**
+     * Get user activity
+     */
+    public function getUserActivity(Request $request)
+    {
+        try {
+            $userId = Auth::id();
+            $limit = $request->get('limit', 50);
+            $offset = $request->get('offset', 0);
+            
+            $activities = $this->getDetailedUserActivity($userId, $limit, $offset);
+            $stats = $this->getUserStats($userId);
+            
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'activities' => $activities,
+                    'stats' => $stats,
+                    'has_more' => count($activities) === $limit
+                ]
+            ]);
+        } catch (Exception $e) {
+            Log::error('Error fetching user activity: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch user activity'
+            ], 500);
+        }
+    }
+
+    /**
+     * Change password
+     */
+    public function changePassword(Request $request)
+    {
+        try {
+            $request->validate([
+                'current_password' => 'required|string',
+                'new_password' => 'required|string|min:8|confirmed|different:current_password',
+            ]);
+
+            $user = Auth::user();
+
+            if (!Hash::check($request->current_password, $user->password)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Current password is incorrect'
+                ], 400);
+            }
+
+            $user->update([
+                'password' => Hash::make($request->new_password)
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Password changed successfully'
+            ]);
+        } catch (Exception $e) {
+            Log::error('Error changing password: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to change password'
+            ], 500);
+        }
+    }
+
+    /**
+     * Change email
+     */
+    public function changeEmail(Request $request)
+    {
+        try {
+            $request->validate([
+                'password' => 'required|string',
+                'new_email' => 'required|email|unique:users,email,' . Auth::id(),
+            ]);
+
+            $user = Auth::user();
+
+            if (!Hash::check($request->password, $user->password)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Password is incorrect'
+                ], 400);
+            }
+
+            $oldEmail = $user->email;
+            $user->update([
+                'email' => $request->new_email,
+                'email_verified_at' => null
+            ]);
+
+            // Log email change for security
+            Log::info('User email changed', [
+                'user_id' => $user->id,
+                'old_email' => $oldEmail,
+                'new_email' => $request->new_email,
+                'ip' => $request->ip()
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Email changed successfully. Please verify your new email address.',
+                'data' => [
+                    'email' => $user->email
+                ]
+            ]);
+        } catch (Exception $e) {
+            Log::error('Error changing email: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to change email'
+            ], 500);
+        }
+    }
+
+    /**
+     * Change username
+     */
+    public function changeUsername(Request $request)
+    {
+        try {
+            $request->validate([
+                'password' => 'required|string',
+                'new_name' => 'required|string|min:3|max:255|unique:users,name,' . Auth::id() . '|regex:/^[a-zA-Z0-9_-]+$/',
+            ]);
+
+            $user = Auth::user();
+
+            if (!Hash::check($request->password, $user->password)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Password is incorrect'
+                ], 400);
+            }
+
+            $oldName = $user->name;
+            $user->update([
+                'name' => $request->new_name
+            ]);
+
+            // Log username change
+            Log::info('Username changed', [
+                'user_id' => $user->id,
+                'old_name' => $oldName,
+                'new_name' => $request->new_name
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Username changed successfully',
+                'data' => [
+                    'name' => $user->name
+                ]
+            ]);
+        } catch (Exception $e) {
+            Log::error('Error changing username: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to change username'
+            ], 500);
+        }
+    }
+
+    /**
+     * Upload avatar
+     */
+    public function uploadAvatar(Request $request)
+    {
+        try {
+            $request->validate([
+                'avatar' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:2048|dimensions:min_width=100,min_height=100'
+            ]);
+
+            $user = Auth::user();
+
+            // Delete old avatar if it exists and is custom
+            if ($user->avatar && !$user->use_hero_as_avatar) {
+                $oldPath = str_replace('/storage/', '', $user->avatar);
+                Storage::disk('public')->delete($oldPath);
+            }
+
+            $file = $request->file('avatar');
+            $filename = 'avatar_' . $user->id . '_' . time() . '.' . $file->getClientOriginalExtension();
+            $path = $file->storeAs('avatars', $filename, 'public');
+            
+            $user->update([
+                'avatar' => '/storage/' . $path,
+                'use_hero_as_avatar' => false
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Avatar uploaded successfully',
+                'data' => [
+                    'avatar' => $user->avatar,
+                    'display_avatar' => $this->getDisplayAvatar($user)
+                ]
+            ]);
+        } catch (Exception $e) {
+            Log::error('Error uploading avatar: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to upload avatar'
+            ], 500);
+        }
+    }
+
+    /**
+     * Delete avatar
+     */
+    public function deleteAvatar()
+    {
+        try {
+            $user = Auth::user();
+
+            // Only delete if it's a custom avatar
+            if ($user->avatar && !$user->use_hero_as_avatar) {
+                $avatarPath = str_replace('/storage/', '', $user->avatar);
+                Storage::disk('public')->delete($avatarPath);
+            }
+
+            $user->update([
+                'avatar' => null,
+                'use_hero_as_avatar' => false
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Avatar deleted successfully',
+                'data' => [
+                    'avatar' => null,
+                    'display_avatar' => $this->getDisplayAvatar($user)
+                ]
+            ]);
+        } catch (Exception $e) {
+            Log::error('Error deleting avatar: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete avatar'
+            ], 500);
+        }
+    }
+
+    /**
+     * Helper: Get hero image path
+     */
+    private function getHeroImagePath($heroName, $type = 'portrait')
+    {
+        $slug = $this->createHeroSlug($heroName);
+        
+        // Always use the webp images
+        $webpPath = "/images/heroes/{$slug}-headbig.webp";
+        
+        if (file_exists(public_path($webpPath))) {
+            return $webpPath;
+        }
+        
+        // Check for duplicates (like adam-warlock has two files)
+        $altWebpPath = "/images/heroes/{$slug}-headbig (1).webp";
+        if (file_exists(public_path($altWebpPath))) {
+            return $webpPath; // Return the original path, not the duplicate
+        }
+        
+        return null;
+    }
+
+    /**
+     * Helper: Create hero slug
+     */
+    private function createHeroSlug($heroName)
+    {
+        $slug = strtolower($heroName);
+        
+        // Special cases
+        $specialCases = [
+            'cloak & dagger' => 'cloak-dagger',
+            'mr. fantastic' => 'mister-fantastic',
+            'the punisher' => 'the-punisher',
+            'the thing' => 'the-thing',
+            'hulk' => 'bruce-banner'
+        ];
+        
+        if (isset($specialCases[$slug])) {
+            return $specialCases[$slug];
+        }
+        
+        $slug = str_replace([' ', '&', '.', "'", '-'], ['-', '-', '', '', '-'], $slug);
+        $slug = preg_replace('/[^a-z0-9\-]/', '', $slug);
+        $slug = preg_replace('/-+/', '-', $slug);
+        return trim($slug, '-');
+    }
+
+    /**
+     * Helper: Get display avatar
+     */
+    private function getDisplayAvatar($user)
+    {
+        if ($user->avatar) {
+            return [
+                'type' => $user->use_hero_as_avatar ? 'hero' : 'custom',
+                'url' => $user->avatar,
+                'fallback' => $this->getFallbackAvatar($user)
+            ];
+        }
+        
+        return [
+            'type' => 'fallback',
+            'url' => null,
+            'fallback' => $this->getFallbackAvatar($user)
+        ];
+    }
+
+    /**
+     * Helper: Get display flairs
+     */
+    private function getDisplayFlairs($user)
+    {
+        $flairs = [];
+        
+        if ($user->show_hero_flair && $user->hero_flair) {
+            $heroImagePath = $this->getHeroImagePath($user->hero_flair);
+            $flairs['hero'] = [
+                'type' => 'hero',
+                'name' => $user->hero_flair,
+                'has_image' => $heroImagePath !== null,
+                'image' => $heroImagePath,
+                'color' => $this->getHeroColor($user->hero_flair),
+                'initials' => $this->getHeroInitials($user->hero_flair)
+            ];
+        }
+        
+        if ($user->show_team_flair && $user->teamFlair) {
+            $flairs['team'] = [
+                'type' => 'team',
+                'id' => $user->teamFlair->id,
+                'name' => $user->teamFlair->name,
+                'short_name' => $user->teamFlair->short_name,
+                'logo' => $user->teamFlair->logo,
+                'has_logo' => !empty($user->teamFlair->logo),
+                'region' => $user->teamFlair->region,
+                'initials' => $user->teamFlair->short_name ?: strtoupper(substr($user->teamFlair->name, 0, 3))
+            ];
+        }
+        
+        return $flairs;
+    }
+
+    /**
+     * Helper: Get fallback avatar
+     */
+    private function getFallbackAvatar($user)
+    {
+        return [
+            'text' => strtoupper(substr($user->name, 0, 2)),
+            'color' => $this->generateColorFromName($user->name),
+            'background' => $this->generateBackgroundFromName($user->name)
+        ];
+    }
+
+    /**
+     * Helper: Get user stats
+     */
+    private function getUserStats($userId)
+    {
+        $stats = [
+            'comments' => [
+                'news' => DB::table('news_comments')->where('user_id', $userId)->count(),
+                'matches' => DB::table('match_comments')->where('user_id', $userId)->count(),
+                'total' => 0
+            ],
+            'forum' => [
+                'threads' => DB::table('forum_threads')->where('user_id', $userId)->count(),
+                'posts' => DB::table('forum_posts')->where('user_id', $userId)->count(),
+                'total' => 0
+            ],
+            'votes' => [
+                'upvotes_given' => 0,
+                'downvotes_given' => 0,
+                'upvotes_received' => 0,
+                'downvotes_received' => 0
+            ],
+            'account' => [
+                'days_active' => 0,
+                'last_seen' => null
+            ]
+        ];
+        
+        // Calculate totals
+        $stats['comments']['total'] = $stats['comments']['news'] + $stats['comments']['matches'];
+        $stats['forum']['total'] = $stats['forum']['threads'] + $stats['forum']['posts'];
+        
+        // Get vote counts
+        $stats['votes']['upvotes_given'] = DB::table('forum_post_votes')
+            ->where('user_id', $userId)
+            ->where('vote_type', 'upvote')
+            ->count();
+            
+        $stats['votes']['downvotes_given'] = DB::table('forum_post_votes')
+            ->where('user_id', $userId)
+            ->where('vote_type', 'downvote')
+            ->count();
+            
+        // Get received votes
+        $userThreadIds = DB::table('forum_threads')->where('user_id', $userId)->pluck('id');
+        $userPostIds = DB::table('forum_posts')->where('user_id', $userId)->pluck('id');
+        
+        $stats['votes']['upvotes_received'] = DB::table('forum_thread_votes')
+            ->whereIn('thread_id', $userThreadIds)
+            ->where('vote_type', 'upvote')
+            ->count() + 
+            DB::table('forum_post_votes')
+            ->whereIn('post_id', $userPostIds)
+            ->where('vote_type', 'upvote')
+            ->count();
+            
+        $stats['votes']['downvotes_received'] = DB::table('forum_thread_votes')
+            ->whereIn('thread_id', $userThreadIds)
+            ->where('vote_type', 'downvote')
+            ->count() + 
+            DB::table('forum_post_votes')
+            ->whereIn('post_id', $userPostIds)
+            ->where('vote_type', 'downvote')
+            ->count();
+        
+        // Get account stats
+        $user = User::find($userId);
+        if ($user) {
+            $stats['account']['days_active'] = $user->created_at->diffInDays(now());
+            $stats['account']['last_seen'] = $user->last_login;
+        }
+        
+        return $stats;
+    }
+
+    /**
+     * Helper: Get detailed user activity
+     */
+    private function getDetailedUserActivity($userId, $limit = 50, $offset = 0)
+    {
+        $activities = [];
+        
+        // News comments
+        $newsComments = DB::table('news_comments as nc')
+            ->join('news as n', 'nc.news_id', '=', 'n.id')
+            ->where('nc.user_id', $userId)
+            ->select([
+                'nc.id',
+                'nc.news_id as item_id',
+                'nc.content',
+                'nc.created_at',
+                'n.title as item_title',
+                DB::raw("'news_comment' as type"),
+                DB::raw("'Commented on news' as action")
+            ]);
+            
+        // Match comments
+        $matchComments = DB::table('match_comments as mc')
+            ->join('matches as m', 'mc.match_id', '=', 'm.id')
+            ->leftJoin('teams as t1', 'm.team1_id', '=', 't1.id')
+            ->leftJoin('teams as t2', 'm.team2_id', '=', 't2.id')
+            ->where('mc.user_id', $userId)
+            ->select([
+                'mc.id',
+                'mc.match_id as item_id',
+                'mc.content',
+                'mc.created_at',
+                DB::raw("CONCAT(COALESCE(t1.name, 'Team 1'), ' vs ', COALESCE(t2.name, 'Team 2')) as item_title"),
+                DB::raw("'match_comment' as type"),
+                DB::raw("'Commented on match' as action")
+            ]);
+            
+        // Forum threads
+        $forumThreads = DB::table('forum_threads')
+            ->where('user_id', $userId)
+            ->select([
+                'id',
+                'id as item_id',
+                'title as content',
+                'created_at',
+                'title as item_title',
+                DB::raw("'forum_thread' as type"),
+                DB::raw("'Created thread' as action")
+            ]);
+            
+        // Forum posts
+        $forumPosts = DB::table('forum_posts as fp')
+            ->join('forum_threads as ft', 'fp.thread_id', '=', 'ft.id')
+            ->where('fp.user_id', $userId)
+            ->select([
+                'fp.id',
+                'fp.thread_id as item_id',
+                'fp.content',
+                'fp.created_at',
+                'ft.title as item_title',
+                DB::raw("'forum_post' as type"),
+                DB::raw("'Posted in thread' as action")
+            ]);
+            
+        // Combine and sort
+        $activities = $newsComments
+            ->union($matchComments)
+            ->union($forumThreads)
+            ->union($forumPosts)
+            ->orderBy('created_at', 'desc')
+            ->limit($limit)
+            ->offset($offset)
+            ->get();
+            
+        return $activities->map(function($activity) {
+            $activity->time_ago = $this->getTimeAgo($activity->created_at);
+            $activity->content_preview = strlen($activity->content) > 100 
+                ? substr($activity->content, 0, 100) . '...' 
+                : $activity->content;
+            return $activity;
+        });
+    }
+
+    /**
+     * Helper: Get recent activity (simplified)
+     */
+    private function getRecentActivity($userId, $limit = 5)
+    {
+        return $this->getDetailedUserActivity($userId, $limit, 0);
+    }
+
+    /**
+     * Helper: Get time ago string
+     */
+    private function getTimeAgo($datetime)
+    {
+        $time = strtotime($datetime);
+        $now = time();
+        $diff = $now - $time;
+        
+        if ($diff < 60) {
+            return 'just now';
+        } elseif ($diff < 3600) {
+            $mins = floor($diff / 60);
+            return $mins . ' minute' . ($mins > 1 ? 's' : '') . ' ago';
+        } elseif ($diff < 86400) {
+            $hours = floor($diff / 3600);
+            return $hours . ' hour' . ($hours > 1 ? 's' : '') . ' ago';
+        } elseif ($diff < 604800) {
+            $days = floor($diff / 86400);
+            return $days . ' day' . ($days > 1 ? 's' : '') . ' ago';
+        } else {
+            return date('M j, Y', $time);
+        }
+    }
+
+    /**
+     * Helper: Get hero color
+     */
+    private function getHeroColor($heroName)
+    {
+        $colors = [
+            'Spider-Man' => '#dc2626',
+            'Iron Man' => '#f59e0b',
+            'Captain America' => '#2563eb',
+            'Thor' => '#7c3aed',
+            'Hulk' => '#16a34a',
+            'Black Widow' => '#1f2937',
+            'Hawkeye' => '#7c2d12',
+            'Doctor Strange' => '#db2777',
+            'Scarlet Witch' => '#dc2626',
+            'Loki' => '#16a34a',
+            'Venom' => '#1f2937',
+            'Magneto' => '#7c3aed',
+            'Storm' => '#6b7280',
+            'Wolverine' => '#f59e0b',
+            'Groot' => '#16a34a',
+            'Rocket Raccoon' => '#f59e0b',
+            'Star-Lord' => '#dc2626',
+            'Mantis' => '#16a34a',
+            'Adam Warlock' => '#f59e0b',
+            'Luna Snow' => '#3b82f6',
+            'Jeff the Land Shark' => '#3b82f6',
+            'Cloak & Dagger' => '#6b7280',
+            'Emma Frost' => '#e5e7eb',
+            'Bruce Banner' => '#16a34a',
+            'Mr. Fantastic' => '#3b82f6',
+            'Mister Fantastic' => '#3b82f6',
+            'Black Panther' => '#7c3aed',
+            'Hela' => '#16a34a',
+            'Magik' => '#db2777',
+            'Moon Knight' => '#e5e7eb',
+            'Namor' => '#3b82f6',
+            'Psylocke' => '#7c3aed',
+            'Punisher' => '#1f2937',
+            'The Punisher' => '#1f2937',
+            'Winter Soldier' => '#6b7280',
+            'Iron Fist' => '#f59e0b',
+            'Squirrel Girl' => '#7c2d12',
+            'Peni Parker' => '#db2777',
+            'The Thing' => '#f59e0b',
+            'Human Torch' => '#dc2626',
+            'Invisible Woman' => '#3b82f6',
+            'Ultron' => '#dc2626'
+        ];
+        
+        return $colors[$heroName] ?? '#6b7280';
+    }
+
+    /**
+     * Helper: Get hero initials
+     */
+    private function getHeroInitials($heroName)
+    {
+        $parts = explode(' ', $heroName);
+        if (count($parts) >= 2) {
+            return strtoupper(substr($parts[0], 0, 1) . substr($parts[1], 0, 1));
+        }
+        return strtoupper(substr($heroName, 0, 2));
+    }
+
+    /**
+     * Helper: Get role color
+     */
+    private function getRoleColor($role)
+    {
+        $colors = [
+            'Vanguard' => '#3b82f6',
+            'Duelist' => '#dc2626',
+            'Strategist' => '#16a34a'
+        ];
+        
+        return $colors[$role] ?? '#6b7280';
+    }
+
+    /**
+     * Helper: Get region color
+     */
+    private function getRegionColor($region)
+    {
+        $colors = [
+            'Americas' => '#dc2626',
+            'EMEA' => '#3b82f6',
+            'Pacific' => '#16a34a',
+            'China' => '#f59e0b'
+        ];
+        
+        return $colors[$region] ?? '#6b7280';
+    }
+
+    /**
+     * Helper: Generate color from name
+     */
+    private function generateColorFromName($name)
+    {
+        $colors = [
+            '#ef4444', '#f97316', '#f59e0b', '#eab308', '#84cc16',
+            '#22c55e', '#10b981', '#14b8a6', '#06b6d4', '#0ea5e9',
+            '#3b82f6', '#6366f1', '#8b5cf6', '#a855f7', '#d946ef',
+            '#ec4899', '#f43f5e'
+        ];
+        
+        $hash = 0;
+        for ($i = 0; $i < strlen($name); $i++) {
+            $hash = ord($name[$i]) + (($hash << 5) - $hash);
+        }
+        
+        return $colors[abs($hash) % count($colors)];
+    }
+
+    /**
+     * Helper: Generate background from name
+     */
+    private function generateBackgroundFromName($name)
+    {
+        $backgrounds = [
+            '#fef2f2', '#fff7ed', '#fffbeb', '#fefce8', '#f7fee7',
+            '#f0fdf4', '#ecfdf5', '#f0fdfa', '#ecfeff', '#f0f9ff',
+            '#eff6ff', '#eef2ff', '#f5f3ff', '#faf5ff', '#fdf4ff',
+            '#fdf2f8', '#fff1f2'
+        ];
+        
+        $hash = 0;
+        for ($i = 0; $i < strlen($name); $i++) {
+            $hash = ord($name[$i]) + (($hash << 5) - $hash);
+        }
+        
+        return $backgrounds[abs($hash) % count($backgrounds)];
+    }
+
+    /**
+     * Helper: Fix user avatar if using old PNG path
+     */
+    private function fixUserAvatar($user)
+    {
+        // If avatar contains old portrait PNG path
+        if ($user->avatar && strpos($user->avatar, '/portraits/') !== false) {
+            // Map specific portrait names to hero names
+            $portraitToHero = [
+                'venom' => 'Venom',
+                'spider-man' => 'Spider-Man',
+                'iron-man' => 'Iron Man',
+                'captain-america' => 'Captain America',
+                'thor' => 'Thor',
+                'hulk' => 'Hulk'
+            ];
+            
+            // Extract filename from path
+            preg_match('/\/([^\/]+)\.(png|webp)$/', $user->avatar, $matches);
+            if (isset($matches[1])) {
+                $filename = $matches[1];
+                
+                // Get hero name from mapping or hero_flair
+                $heroName = isset($portraitToHero[$filename]) ? $portraitToHero[$filename] : $user->hero_flair;
+                
+                if ($heroName) {
+                    $newPath = $this->getHeroImagePath($heroName);
+                    if ($newPath) {
+                        $user->update([
+                            'avatar' => $newPath,
+                            'use_hero_as_avatar' => true
+                        ]);
+                    }
+                }
+            }
+        }
+    }
+}

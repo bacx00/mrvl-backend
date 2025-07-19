@@ -15,21 +15,33 @@ return [
     |
     */
 
-    'paths' => ['api/*', 'sanctum/csrf-cookie'],
+    'paths' => ['api/*', 'oauth/*', 'auth/*'],
 
     'allowed_methods' => ['*'],
 
     'allowed_origins' => [
-        'https://staging.mrvl.net', 
+        'https://staging.mrvl.net',
+        'https://mrvl.net',
         'http://localhost:3000',
-        'http://127.0.0.1:3000'
+        'http://127.0.0.1:3000',
+        'http://localhost:3001',
+        'http://127.0.0.1:3001'
     ],
 
     'allowed_origins_patterns' => [],
 
-    'allowed_headers' => ['*'],
+    'allowed_headers' => [
+        'Accept',
+        'Authorization',
+        'Content-Type',
+        'X-Requested-With',
+        'X-CSRF-TOKEN',
+        'X-XSRF-TOKEN'
+    ],
 
-    'exposed_headers' => [],
+    'exposed_headers' => [
+        'Authorization'
+    ],
 
     'max_age' => 0,
 

@@ -1,0 +1,30 @@
+{
+  "short_name": "MRVL",
+  "name": "MRVL - Marvel Rivals Esports Platform",
+  "description": "The premier Marvel Rivals esports platform for competitive gaming",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "favicon.ico",
+      "sizes": "32x32",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ],
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#dc2626",
+  "background_color": "#0f0f23",
+  "orientation": "portrait-primary",
+  "categories": ["games", "sports", "entertainment"],
+  "lang": "en-US"
+}
