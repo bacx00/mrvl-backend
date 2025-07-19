@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40" fill="none">
+  <rect width="40" height="40" rx="8" fill="#7579E7"/>
+  <path d="M8 20L15 10L25 10L32 20L25 30L15 30L8 20Z" fill="white"/>
+  <text x="20" y="24" text-anchor="middle" style="font-weight:bold; font-size:16px; fill:#7579E7;">MR</text>
+</svg>

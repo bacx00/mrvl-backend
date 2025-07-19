@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <!-- Marvel Rivals Dark Background -->
+    <radialGradient id="darkBg" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" style="stop-color:#1a1a2e;stop-opacity:1" />
+      <stop offset="70%" style="stop-color:#16213e;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0f0f23;stop-opacity:1" />
+    </radialGradient>
+    
+    <!-- Marvel Red Gradient -->
+    <linearGradient id="marvelRed" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#dc2626;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#b91c1c;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#991b1b;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Blue Accent -->
+    <linearGradient id="rivalBlue" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2563eb;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1d4ed8;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Gold Accent -->
+    <linearGradient id="marvelGold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#fbbf24;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f59e0b;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Dark Background -->
+  <circle cx="32" cy="32" r="30" fill="url(#darkBg)" stroke="url(#marvelRed)" stroke-width="2"/>
+  
+  <!-- VS Match Icon -->
+  <g transform="translate(32,32)">
+    <!-- Left Team Shield -->
+    <path d="M-18,-8 L-12,-12 L-8,-8 L-8,8 L-12,12 L-18,8 Z" 
+          fill="url(#marvelRed)" stroke="#ffffff" stroke-width="0.5" opacity="0.9"/>
+    
+    <!-- Right Team Shield -->
+    <path d="M18,-8 L12,-12 L8,-8 L8,8 L12,12 L18,8 Z" 
+          fill="url(#rivalBlue)" stroke="#ffffff" stroke-width="0.5" opacity="0.9"/>
+    
+    <!-- VS Lightning Bolt -->
+    <path d="M-3,-6 L1,-6 L-1,0 L3,0 L-1,6 L-3,6 L-1,2 L-5,2 Z" 
+          fill="url(#marvelGold)" stroke="#ffffff" stroke-width="0.3"/>
+    
+    <!-- Team Icons -->
+    <!-- Left Team Symbol (Fist) -->
+    <circle cx="-13" cy="0" r="3" fill="#ffffff" opacity="0.9"/>
+    <path d="M-15,-1 L-14,-2 L-12,-2 L-11,-1 L-11,1 L-15,1 Z" fill="url(#marvelRed)"/>
+    
+    <!-- Right Team Symbol (Star) -->
+    <circle cx="13" cy="0" r="3" fill="#ffffff" opacity="0.9"/>
+    <path d="M13,-2 L13.8,-0.6 L15.4,-0.6 L14.3,0.4 L14.6,2 L13,1.2 L11.4,2 L11.7,0.4 L10.6,-0.6 L12.2,-0.6 Z" 
+          fill="url(#rivalBlue)"/>
+  </g>
+  
+  <!-- Battle Sparks Effects -->
+  <g opacity="0.8">
+    <!-- Top sparks -->
+    <circle cx="22" cy="15" r="0.8" fill="#fbbf24">
+      <animate attributeName="opacity" values="0.8;0.2;0.8" dur="1.5s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="42" cy="15" r="0.6" fill="#dc2626">
+      <animate attributeName="opacity" values="0.6;0.1;0.6" dur="2s" repeatCount="indefinite"/>
+    </circle>
+    
+    <!-- Bottom sparks -->
+    <circle cx="22" cy="49" r="0.7" fill="#2563eb">
+      <animate attributeName="opacity" values="0.7;0.2;0.7" dur="1.8s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="42" cy="49" r="0.9" fill="#fbbf24">
+      <animate attributeName="opacity" values="0.9;0.3;0.9" dur="1.3s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+  
+  <!-- Side energy lines -->
+  <line x1="12" y1="32" x2="18" y2="32" stroke="url(#marvelRed)" stroke-width="1" opacity="0.6">
+    <animate attributeName="opacity" values="0.6;0.1;0.6" dur="2.5s" repeatCount="indefinite"/>
+  </line>
+  <line x1="46" y1="32" x2="52" y2="32" stroke="url(#rivalBlue)" stroke-width="1" opacity="0.6">
+    <animate attributeName="opacity" values="0.6;0.1;0.6" dur="2.2s" repeatCount="indefinite"/>
+  </line>
+  
+  <!-- MRVL Text at bottom -->
+  <text x="32" y="55" font-family="Arial, sans-serif" font-size="6" font-weight="bold" 
+        text-anchor="middle" fill="url(#marvelGold)" letter-spacing="0.5px">MRVL</text>
+</svg>

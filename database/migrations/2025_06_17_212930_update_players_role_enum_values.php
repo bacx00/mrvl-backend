@@ -8,13 +8,17 @@ use Illuminate\Support\Facades\DB;
 return new class extends Migration {
     public function up()
     {
-        // Update the enum column to support Marvel Rivals roles
-        DB::statement("ALTER TABLE players MODIFY COLUMN role ENUM('Duelist', 'Tank', 'Support', 'Flex', 'Sub')");
+        // SQLite doesn't support MODIFY COLUMN, so we skip this for SQLite
+        if (DB::connection()->getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE players MODIFY COLUMN role ENUM('Vanguard', 'Duelist', 'Strategist', 'Tank', 'Support', 'Flex', 'Sub')");
+        }
     }
 
     public function down()
     {
-        // Revert back to original enum values
-        DB::statement("ALTER TABLE players MODIFY COLUMN role ENUM('Duelist', 'Tank', 'Support', 'Controller')");
+        // SQLite doesn't support MODIFY COLUMN, so we skip this for SQLite
+        if (DB::connection()->getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE players MODIFY COLUMN role ENUM('Duelist', 'Tank', 'Support', 'Controller')");
+        }
     }
 };
