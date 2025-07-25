@@ -183,10 +183,8 @@ class HeroController extends Controller
             $type = $request->get('type', 'all'); // portrait, icon, ability, all
 
             if (!$heroName) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Hero name is required'
-                ], 400);
+                // Return all heroes' images if no specific hero requested
+                return $this->getAllHeroImages();
             }
 
             $images = [];

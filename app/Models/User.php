@@ -32,14 +32,40 @@ class User extends Authenticatable
         ];
     }
 
-    public function setPasswordAttribute($value)
-    {
-        $this->attributes['password'] = bcrypt($value);
-    }
 
     public function forumThreads()
     {
         return $this->hasMany(ForumThread::class);
+    }
+
+    public function forumPosts()
+    {
+        return $this->hasMany('App\Models\ForumPost', 'user_id');
+    }
+
+    public function newsComments()
+    {
+        return $this->hasMany('App\Models\NewsComment');
+    }
+
+    public function matchComments()
+    {
+        return $this->hasMany('App\Models\MatchComment');
+    }
+
+    public function achievements()
+    {
+        return $this->hasMany('App\Models\Achievement');
+    }
+
+    public function favoriteTeams()
+    {
+        return $this->belongsToMany(Team::class, 'user_favorite_teams');
+    }
+
+    public function favoritePlayers()
+    {
+        return $this->belongsToMany(Player::class, 'user_favorite_players');
     }
 
     public function teamFlair()

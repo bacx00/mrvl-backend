@@ -1,3 +1,5 @@
 [16-Jul-2025 02:49:23 UTC] PHP Fatal error:  Cannot redeclare App\Http\Controllers\MatchController::getMatchTimeline() in /var/www/mrvl-backend/app/Http/Controllers/MatchController.php on line 2229
 [16-Jul-2025 02:49:50 UTC] PHP Fatal error:  Cannot redeclare App\Http\Controllers\MatchController::getMatchTimeline() in /var/www/mrvl-backend/app/Http/Controllers/MatchController.php on line 2230
 [16-Jul-2025 02:49:56 UTC] PHP Fatal error:  Cannot redeclare App\Http\Controllers\MatchController::getMatchTimeline() in /var/www/mrvl-backend/app/Http/Controllers/MatchController.php on line 2230
+[22-Jul-2025 20:40:43 UTC] PHP Fatal error:  Unparenthesized `a ? b : c ? d : e` is not supported. Use either `(a ? b : c) ? d : e` or `a ? b : (c ? d : e)` in /var/www/mrvl-backend/app/Http/Controllers/TeamController.php on line 189
+[22-Jul-2025 20:40:56 UTC] PHP Fatal error:  Unparenthesized `a ? b : c ? d : e` is not supported. Use either `(a ? b : c) ? d : e` or `a ? b : (c ? d : e)` in /var/www/mrvl-backend/app/Http/Controllers/TeamController.php on line 189

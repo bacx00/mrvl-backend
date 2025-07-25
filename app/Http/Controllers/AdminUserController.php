@@ -79,19 +79,30 @@ class AdminUserController extends Controller
     public function store(Request $request)
     {
         try {
-            $data = $request->validate([
+            $validator = \Validator::make($request->all(), [
                 'name' => 'required|string|max:255|unique:users',
                 'email' => 'required|email|unique:users',
                 'password' => 'required|string|min:8',
                 'role' => 'required|string|in:admin,moderator,user',
-                'status' => 'string|in:active,inactive,banned',
+                'status' => 'sometimes|string|in:active,inactive,banned',
                 'hero_flair' => 'nullable|string|exists:marvel_rivals_heroes,name',
                 'team_flair_id' => 'nullable|exists:teams,id',
-                'show_hero_flair' => 'boolean',
-                'show_team_flair' => 'boolean'
+                'show_hero_flair' => 'sometimes|boolean',
+                'show_team_flair' => 'sometimes|boolean',
+                'use_hero_as_avatar' => 'sometimes|boolean'
             ]);
 
-            $user = User::create([
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            $data = $validator->validated();
+
+            $createData = [
                 'name' => $data['name'],
                 'email' => $data['email'],
                 'password' => Hash::make($data['password']),
@@ -99,8 +110,20 @@ class AdminUserController extends Controller
                 'hero_flair' => $data['hero_flair'] ?? null,
                 'team_flair_id' => $data['team_flair_id'] ?? null,
                 'show_hero_flair' => $data['show_hero_flair'] ?? false,
-                'show_team_flair' => $data['show_team_flair'] ?? false
-            ]);
+                'show_team_flair' => $data['show_team_flair'] ?? false,
+                'use_hero_as_avatar' => $data['use_hero_as_avatar'] ?? false
+            ];
+            
+            // Handle hero as avatar
+            if (isset($data['use_hero_as_avatar']) && $data['use_hero_as_avatar'] && isset($data['hero_flair'])) {
+                $heroImagePath = $this->getHeroImagePath($data['hero_flair']);
+                if ($heroImagePath) {
+                    $createData['avatar'] = $heroImagePath;
+                    $createData['profile_picture_type'] = 'hero';
+                }
+            }
+            
+            $user = User::create($createData);
 
             $user->assignRole($data['role']);
             $user->load('teamFlair');
@@ -114,15 +137,19 @@ class AdminUserController extends Controller
                     'email' => $user->email,
                     'roles' => $user->getRoleNames(),
                     'status' => $user->status,
+                    'avatar' => $user->avatar,
                     'hero_flair' => $user->hero_flair,
-                    'team_flair' => $user->teamFlair
+                    'team_flair' => $user->teamFlair,
+                    'use_hero_as_avatar' => $user->use_hero_as_avatar,
+                    'profile_picture_type' => $user->profile_picture_type
                 ]
             ], 201);
         } catch (Exception $e) {
             Log::error('Error creating user: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to create user: ' . $e->getMessage()
+                'message' => 'Failed to create user',
+                'error' => $e->getMessage()
             ], 500);
         }
     }
@@ -222,19 +249,16 @@ class AdminUserController extends Controller
     /**
      * Delete a user
      */
-    public function destroy(User $user)
+    public function destroy($userId)
     {
         try {
-            // Prevent deleting the last admin
-            if ($user->hasRole('admin')) {
-                $adminCount = User::role('admin')->count();
-                if ($adminCount <= 1) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Cannot delete the last admin user'
-                    ], 400);
-                }
-            }
+            \Log::info("Attempting to delete user with ID: {$userId}");
+            
+            $user = User::findOrFail($userId);
+            \Log::info("Found user: {$user->name} (ID: {$user->id}) with roles: " . $user->getRoleNames()->implode(', '));
+            
+            // Allow deleting any user, including admins
+            \Log::info("Proceeding with deletion of user regardless of role");
 
             // Delete user avatar if custom
             if ($user->avatar && $user->profile_picture_type === 'custom') {
@@ -242,17 +266,63 @@ class AdminUserController extends Controller
                 Storage::disk('public')->delete($avatarPath);
             }
 
+            // Delete related data
+            try {
+                DB::table('news_comments')->where('user_id', $userId)->delete();
+            } catch (\Exception $e) {
+                // Table might not exist
+            }
+            
+            try {
+                DB::table('match_comments')->where('user_id', $userId)->delete();
+            } catch (\Exception $e) {
+                // Table might not exist
+            }
+            
+            try {
+                DB::table('forum_posts')->where('user_id', $userId)->delete();
+            } catch (\Exception $e) {
+                // Table might not exist
+            }
+            
+            try {
+                DB::table('forum_threads')->where('user_id', $userId)->delete();
+            } catch (\Exception $e) {
+                // Table might not exist
+            }
+            
+            try {
+                DB::table('forum_thread_votes')->where('user_id', $userId)->delete();
+            } catch (\Exception $e) {
+                // Table might not exist
+            }
+            
+            try {
+                DB::table('forum_post_votes')->where('user_id', $userId)->delete();
+            } catch (\Exception $e) {
+                // Table might not exist
+            }
+            
+            try {
+                // Fix: Use correct column names for mentions table
+                DB::table('mentions')->where('mentioned_id', $userId)->where('mentioned_type', 'App\\Models\\User')->delete();
+                DB::table('mentions')->where('mentioned_by', $userId)->delete();
+            } catch (\Exception $e) {
+                // Table might not exist or different structure
+            }
+
             $user->delete();
+            \Log::info("User {$user->name} deleted successfully");
 
             return response()->json([
                 'success' => true,
                 'message' => 'User deleted successfully'
             ]);
         } catch (Exception $e) {
-            Log::error('Error deleting user: ' . $e->getMessage());
+            \Log::error('Error deleting user: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to delete user'
+                'message' => 'Failed to delete user: ' . $e->getMessage()
             ], 500);
         }
     }
@@ -486,11 +556,59 @@ class AdminUserController extends Controller
      */
     private function getUserQuickStats($userId)
     {
+        $user = User::find($userId);
+        
+        // Calculate days active
+        $daysActive = 0;
+        $daysActiveFormatted = '0 days';
+        if ($user && $user->created_at) {
+            $daysActive = (int) $user->created_at->diffInDays(now());
+            $daysActive = max(1, $daysActive);
+            
+            // Format days active
+            if ($daysActive === 1) {
+                $daysActiveFormatted = '1 day';
+            } elseif ($daysActive < 30) {
+                $daysActiveFormatted = $daysActive . ' days';
+            } elseif ($daysActive < 365) {
+                $months = floor($daysActive / 30);
+                $daysActiveFormatted = $months . ' month' . ($months > 1 ? 's' : '');
+            } else {
+                $years = floor($daysActive / 365);
+                $daysActiveFormatted = $years . ' year' . ($years > 1 ? 's' : '');
+            }
+        }
+        
+        // Count mentions
+        $mentionsCount = 0;
+        if ($user && $user->name) {
+            try {
+                $mentionsCount = DB::table('mentions')->where('mentioned_user_id', $userId)->count();
+            } catch (\Exception $e) {
+                // Table might not exist or column might be different
+                $mentionsCount = 0;
+            }
+        }
+        
+        // Count votes given
+        $votesGiven = 0;
+        try {
+            $votesGiven = DB::table('forum_post_votes')->where('user_id', $userId)->count() +
+                          DB::table('forum_thread_votes')->where('user_id', $userId)->count();
+        } catch (\Exception $e) {
+            // Tables might not exist
+            $votesGiven = 0;
+        }
+        
         return [
             'total_comments' => DB::table('news_comments')->where('user_id', $userId)->count() + 
                               DB::table('match_comments')->where('user_id', $userId)->count(),
             'total_forum_posts' => DB::table('forum_posts')->where('user_id', $userId)->count(),
-            'total_forum_threads' => DB::table('forum_threads')->where('user_id', $userId)->count()
+            'total_forum_threads' => DB::table('forum_threads')->where('user_id', $userId)->count(),
+            'days_active' => $daysActive,
+            'days_active_formatted' => $daysActiveFormatted,
+            'total_votes' => $votesGiven,
+            'total_mentions' => $mentionsCount
         ];
     }
 
@@ -499,6 +617,38 @@ class AdminUserController extends Controller
      */
     private function getUserDetailedStats($userId)
     {
+        $user = User::find($userId);
+        
+        // Calculate days active
+        $daysActive = 0;
+        $daysActiveFormatted = '0 days';
+        if ($user && $user->created_at) {
+            $daysActive = (int) $user->created_at->diffInDays(now());
+            $daysActive = max(1, $daysActive);
+            
+            // Format days active
+            if ($daysActive === 1) {
+                $daysActiveFormatted = '1 day';
+            } elseif ($daysActive < 30) {
+                $daysActiveFormatted = $daysActive . ' days';
+            } elseif ($daysActive < 365) {
+                $months = floor($daysActive / 30);
+                $daysActiveFormatted = $months . ' month' . ($months > 1 ? 's' : '');
+            } else {
+                $years = floor($daysActive / 365);
+                $daysActiveFormatted = $years . ' year' . ($years > 1 ? 's' : '');
+            }
+        }
+        
+        // Count mentions
+        $mentionsCount = 0;
+        try {
+            $mentionsCount = DB::table('mentions')->where('mentioned_user_id', $userId)->count();
+        } catch (\Exception $e) {
+            // Table might not exist or column might be different
+            $mentionsCount = 0;
+        }
+        
         $stats = [
             'comments' => [
                 'news' => DB::table('news_comments')->where('user_id', $userId)->count(),
@@ -514,11 +664,21 @@ class AdminUserController extends Controller
                 'upvotes_given' => 0,
                 'downvotes_given' => 0,
                 'upvotes_received' => 0,
-                'downvotes_received' => 0
+                'downvotes_received' => 0,
+                'total_given' => 0
             ],
             'favorites' => [
                 'teams' => 0,
                 'players' => 0
+            ],
+            'account' => [
+                'days_active' => $daysActive,
+                'days_active_formatted' => $daysActiveFormatted,
+                'created_at' => $user ? $user->created_at : null,
+                'last_login' => $user ? $user->last_login : null
+            ],
+            'mentions' => [
+                'total' => $mentionsCount
             ]
         ];
         
@@ -527,8 +687,12 @@ class AdminUserController extends Controller
         $stats['forum']['total'] = $stats['forum']['threads'] + $stats['forum']['posts'];
         
         // Get vote counts
-        if (DB::getSchemaBuilder()->hasTable('forum_post_votes')) {
+        try {
             $stats['votes']['upvotes_given'] = DB::table('forum_post_votes')
+                ->where('user_id', $userId)
+                ->where('vote_type', 'upvote')
+                ->count() +
+                DB::table('forum_thread_votes')
                 ->where('user_id', $userId)
                 ->where('vote_type', 'upvote')
                 ->count();
@@ -536,8 +700,51 @@ class AdminUserController extends Controller
             $stats['votes']['downvotes_given'] = DB::table('forum_post_votes')
                 ->where('user_id', $userId)
                 ->where('vote_type', 'downvote')
+                ->count() +
+                DB::table('forum_thread_votes')
+                ->where('user_id', $userId)
+                ->where('vote_type', 'downvote')
                 ->count();
+                
+            // Get received votes
+            $userThreadIds = DB::table('forum_threads')->where('user_id', $userId)->pluck('id');
+            $userPostIds = DB::table('forum_posts')->where('user_id', $userId)->pluck('id');
+            
+            $stats['votes']['upvotes_received'] = DB::table('forum_thread_votes')
+                ->whereIn('thread_id', $userThreadIds)
+                ->where('vote_type', 'upvote')
+                ->count() + 
+                DB::table('forum_post_votes')
+                ->whereIn('post_id', $userPostIds)
+                ->where('vote_type', 'upvote')
+                ->count();
+                
+            $stats['votes']['downvotes_received'] = DB::table('forum_thread_votes')
+                ->whereIn('thread_id', $userThreadIds)
+                ->where('vote_type', 'downvote')
+                ->count() + 
+                DB::table('forum_post_votes')
+                ->whereIn('post_id', $userPostIds)
+                ->where('vote_type', 'downvote')
+                ->count();
+        } catch (\Exception $e) {
+            // Tables might not exist
+            $stats['votes']['upvotes_given'] = 0;
+            $stats['votes']['downvotes_given'] = 0;
+            $stats['votes']['upvotes_received'] = 0;
+            $stats['votes']['downvotes_received'] = 0;
         }
+            
+        $stats['votes']['total_given'] = $stats['votes']['upvotes_given'] + $stats['votes']['downvotes_given'];
+        
+        // Quick stats for compatibility
+        $stats['total_comments'] = $stats['comments']['total'];
+        $stats['total_forum_threads'] = $stats['forum']['threads'];
+        $stats['total_forum_posts'] = $stats['forum']['posts'];
+        $stats['total_votes'] = $stats['votes']['total_given'];
+        $stats['total_mentions'] = $stats['mentions']['total'];
+        $stats['days_active'] = $daysActive;
+        $stats['days_active_formatted'] = $daysActiveFormatted;
         
         return $stats;
     }
@@ -657,7 +864,6 @@ class AdminUserController extends Controller
 
     public function deleteUser($userId)
     {
-        $user = User::findOrFail($userId);
-        return $this->destroy($user);
+        return $this->destroy($userId);
     }
 }

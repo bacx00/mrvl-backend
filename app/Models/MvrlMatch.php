@@ -52,7 +52,13 @@ class MvrlMatch extends Model
         'started_at' => 'datetime',
         'ended_at' => 'datetime',
         'overtime' => 'boolean',
-        'allow_past_date' => 'boolean'
+        'allow_past_date' => 'boolean',
+        'maps_data' => 'array',
+        'player_stats' => 'array',
+        'match_timer' => 'array',
+        'stream_urls' => 'array',
+        'betting_urls' => 'array',
+        'vod_urls' => 'array'
     ];
 
     /**************************************************************

@@ -1,0 +1,467 @@
+======================================
+MRVL BACKEND COMPREHENSIVE SYSTEM TEST
+======================================
+
+[1;33m=== PUBLIC ENDPOINTS (No Auth Required) ===[0m
+
+[1;33mTeams[0m
+[0;32m✓[0m GET /teams - List all teams (HTTP 200)
+[0;34m✓[0m GET /teams/1 - Get team details (HTTP 404 - Expected not found)
+[0;34m✓[0m GET /teams/1/mentions - Get team mentions (HTTP 404 - Expected not found)
+[0;34m✓[0m GET /teams/1/matches/upcoming - Get team upcoming matches (HTTP 404 - Expected not found)
+[0;34m✓[0m GET /teams/1/matches/live - Get team live matches (HTTP 404 - Expected not found)
+[0;34m✓[0m GET /teams/1/matches/recent - Get team recent matches (HTTP 404 - Expected not found)
+[0;34m✓[0m GET /teams/1/matches/stats - Get team match stats (HTTP 404 - Expected not found)
+
+[1;33mPlayers[0m
+[0;32m✓[0m GET /players - List all players (HTTP 200)
+[0;34m✓[0m GET /players/1 - Get player details (HTTP 404 - Expected not found)
+[0;34m✓[0m GET /players/1/mentions - Get player mentions (HTTP 404 - Expected not found)
+[0;34m✓[0m GET /players/1/match-history - Get player match history (HTTP 404 - Expected not found)
+[0;34m✓[0m GET /players/1/hero-stats - Get player hero stats (HTTP 404 - Expected not found)
+[0;34m✓[0m GET /players/1/performance-stats - Get player performance stats (HTTP 404 - Expected not found)
+[0;34m✓[0m GET /players/1/map-stats - Get player map stats (HTTP 404 - Expected not found)
+[0;34m✓[0m GET /players/1/event-stats - Get player event stats (HTTP 404 - Expected not found)
+
+[1;33mEvents[0m
+[0;32m✓[0m GET /events - List all events (HTTP 200)
+[0;34m✓[0m GET /events/1 - Get event details (HTTP 404 - Expected not found)
+
+[1;33mMatches[0m
+[0;32m✓[0m GET /matches - List all matches (HTTP 200)
+[0;32m✓[0m GET /matches/live - Get live matches (HTTP 200)
+[0;34m✓[0m GET /matches/1 - Get match details (HTTP 404 - Expected not found)
+[0;32m✓[0m GET /matches/1/comments - Get match comments (HTTP 200)
+[0;31m✗[0m GET /matches/1/timeline - Get match timeline (HTTP 500)
+  [0;31mError: Error fetching match timeline: No query results for model [App\Models\MvrlMatch] 1[0m
+[0;32m✓[0m GET /matches/head-to-head/1/2 - Get head to head (HTTP 200)
+
+[1;33mNews[0m
+[0;32m✓[0m GET /news - List all news (HTTP 200)
+[0;34m✓[0m GET /news/1 - Get news details (HTTP 404 - Expected not found)
+[0;32m✓[0m GET /news/1/comments - Get news comments (HTTP 200)
+[0;32m✓[0m GET /news/categories - Get news categories (HTTP 200)
+
+[1;33mForums[0m
+[0;32m✓[0m GET /forums/categories - Get forum categories (HTTP 200)
+[0;32m✓[0m GET /forums/threads - List forum threads (HTTP 200)
+[0;34m✓[0m GET /forums/threads/1 - Get thread details (HTTP 404 - Expected not found)
+[0;34m✓[0m GET /forums/threads/1/posts - Get thread posts (HTTP 404 - Expected not found)
+
+[1;33mPublic Prefix Routes[0m
+[0;32m✓[0m GET /public/teams - Public teams list (HTTP 200)
+[0;34m✓[0m GET /public/teams/1 - Public team details (HTTP 404 - Expected not found)
+[0;32m✓[0m GET /public/players - Public players list (HTTP 200)
+[0;34m✓[0m GET /public/players/1 - Public player details (HTTP 404 - Expected not found)
+[0;34m✓[0m GET /public/players/1/match-history - Public player match history (HTTP 404 - Expected not found)
+[0;34m✓[0m GET /public/players/1/hero-stats - Public player hero stats (HTTP 404 - Expected not found)
+[0;34m✓[0m GET /public/players/1/performance-stats - Public player performance stats (HTTP 404 - Expected not found)
+[0;34m✓[0m GET /public/players/1/map-stats - Public player map stats (HTTP 404 - Expected not found)
+[0;34m✓[0m GET /public/players/1/event-stats - Public player event stats (HTTP 404 - Expected not found)
+[0;32m✓[0m GET /public/events - Public events list (HTTP 200)
+[0;34m✓[0m GET /public/events/1 - Public event details (HTTP 404 - Expected not found)
+[0;32m✓[0m GET /public/matches - Public matches list (HTTP 200)
+[0;34m✓[0m GET /public/matches/1 - Public match details (HTTP 404 - Expected not found)
+[0;32m✓[0m GET /public/forums/categories - Public forum categories (HTTP 200)
+[0;32m✓[0m GET /public/forums/threads - Public forum threads (HTTP 200)
+[0;34m✓[0m GET /public/forums/threads/1 - Public thread details (HTTP 404 - Expected not found)
+[0;34m✓[0m GET /public/forums/threads/1/posts - Public thread posts (HTTP 404 - Expected not found)
+[0;32m✓[0m GET /public/news - Public news list (HTTP 200)
+[0;34m✓[0m GET /public/news/1 - Public news details (HTTP 404 - Expected not found)
+[0;31m✗[0m GET /public/news/categories - Public news categories (HTTP 404)
+[0;32m✓[0m GET /public/rankings - Public rankings (HTTP 200)
+[0;31m✗[0m GET /public/rankings/distribution - Public rank distribution (HTTP 404)
+[0;31m✗[0m GET /public/rankings/marvel-rivals-info - Public Marvel Rivals info (HTTP 404)
+[0;32m✓[0m GET /public/heroes - Public heroes list (HTTP 200)
+[0;32m✓[0m GET /public/heroes/roles - Public hero roles (HTTP 200)
+[0;32m✓[0m GET /public/heroes/season-2 - Public season 2 heroes (HTTP 200)
+[0;31m✗[0m GET /public/heroes/images - Public hero images (HTTP 400)
+[0;32m✓[0m GET /public/heroes/images/all - Public all hero images (HTTP 200)
+[0;32m✓[0m GET /public/heroes/images/spider-man - Public hero image by slug (HTTP 200)
+[0;32m✓[0m GET /public/heroes/spider-man - Public hero details (HTTP 200)
+[0;32m✓[0m GET /public/game-data/maps - Public game maps (HTTP 200)
+[0;32m✓[0m GET /public/game-data/modes - Public game modes (HTTP 200)
+[0;32m✓[0m GET /public/game-data/heroes - Public hero roster (HTTP 200)
+[0;32m✓[0m GET /public/game-data/rankings - Public ranking info (HTTP 200)
+[0;32m✓[0m GET /public/game-data/meta - Public current meta (HTTP 200)
+[0;32m✓[0m GET /public/game-data/tournaments - Public tournament formats (HTTP 200)
+[0;32m✓[0m GET /public/game-data/timers - Public match timers (HTTP 200)
+[0;32m✓[0m GET /public/game-data/technical - Public technical specs (HTTP 200)
+[0;32m✓[0m GET /public/game-data/complete - Public complete game data (HTTP 200)
+[0;34m✓[0m GET /public/events/1/bracket - Public event bracket (HTTP 404 - Expected not found)
+[0;31m✗[0m GET /public/search?q=test - Public search (HTTP 500)
+  [0;31mError: Undefined property: stdClass::$hero_flair[0m
+[0;32m✓[0m GET /public/mentions/search?q=test - Public mentions search (HTTP 200)
+[0;32m✓[0m GET /public/mentions/popular - Public popular mentions (HTTP 200)
+[0;32m✓[0m GET /public/users/1/profile - Public user profile (HTTP 200)
+
+[1;33mSystem Test Endpoints[0m
+[0;32m✓[0m GET /system-test - System test endpoint (HTTP 200)
+[0;32m✓[0m GET /test-forum - Forum system test (HTTP 200)
+
+[1;33m=== AUTHENTICATION ENDPOINTS ===[0m
+
+[0;31m✗[0m POST /auth/login - Login endpoint (HTTP 401)
+[0;32m✓[0m POST /auth/register - Register endpoint (HTTP 201)
+[0;31m✗[0m POST /auth/forgot-password - Forgot password (HTTP 500)
+  [0;31mError: The selected email is invalid.[0m
+[0;31m✗[0m POST /auth/reset-password - Reset password (HTTP 400)
+[0;31m✗[0m GET /auth/me - Get current user (should fail without auth) (HTTP 401)
+[0;31m✗[0m POST /auth/logout - Logout (should fail without auth) (HTTP 401)
+[0;31m✗[0m POST /auth/refresh - Refresh token (should fail without auth) (HTTP 500)
+  [0;31mError: Call to a member function token() on null[0m
+
+[1;33m=== USER ENDPOINTS (Require Authentication) ===[0m
+
+[0;31m✗[0m GET /user - Get authenticated user (HTTP 401)
+[0;31m✗[0m GET /user/profile - Get user profile (HTTP 401)
+[0;31m✗[0m PUT /user/profile - Update user profile (HTTP 401)
+[0;31m✗[0m GET /user/profile/available-flairs - Get available flairs (HTTP 401)
+[0;31m✗[0m GET /user/profile/activity - Get profile activity (HTTP 401)
+[0;31m✗[0m GET /user/profile/display/1 - Get user profile display (HTTP 401)
+[0;31m✗[0m GET /user/stats - Get user stats (HTTP 401)
+[0;31m✗[0m GET /user/activity - Get user activity (HTTP 401)
+[0;31m✗[0m GET /user/forums/threads - Get user forum threads (HTTP 500)
+  [0;31mError: The GET method is not supported for route api/user/forums/threads. Supported methods: POST.[0m
+[0;31m✗[0m POST /user/forums/threads - Create forum thread (HTTP 401)
+[0;31m✗[0m POST /user/forums/threads/1/posts - Create forum post (HTTP 401)
+[0;31m✗[0m POST /user/news/1/comments - Post news comment (HTTP 401)
+[0;31m✗[0m POST /user/matches/1/comments - Post match comment (HTTP 401)
+[0;31m✗[0m GET /user/predictions - Get user predictions (HTTP 401)
+[0;31m✗[0m POST /user/predictions - Create prediction (HTTP 500)
+  [0;31mError: The POST method is not supported for route api/user/predictions. Supported methods: GET, HEAD.[0m
+[0;31m✗[0m GET /user/favorites/teams - Get favorite teams (HTTP 401)
+[0;31m✗[0m POST /user/favorites/teams - Add favorite team (HTTP 500)
+  [0;31mError: The POST method is not supported for route api/user/favorites/teams. Supported methods: GET, HEAD.[0m
+[0;31m✗[0m DELETE /user/favorites/teams/1 - Remove favorite team (HTTP 401)
+[0;31m✗[0m GET /user/favorites/players - Get favorite players (HTTP 401)
+[0;31m✗[0m POST /user/favorites/players - Add favorite player (HTTP 500)
+  [0;31mError: The POST method is not supported for route api/user/favorites/players. Supported methods: GET, HEAD.[0m
+[0;31m✗[0m DELETE /user/favorites/players/1 - Remove favorite player (HTTP 401)
+[0;31m✗[0m GET /user/notifications - Get notifications (HTTP 401)
+[0;31m✗[0m PUT /user/notifications/1/read - Mark notification as read (HTTP 401)
+[0;31m✗[0m POST /user/notifications/mark-all-read - Mark all notifications as read (HTTP 500)
+  [0;31mError: The POST method is not supported for route api/user/notifications/mark-all-read. Supported methods: PUT, DELETE.[0m
+
+[1;33mVoting[0m
+[0;31m✗[0m POST /user/vote - Vote on content (HTTP 500)
+  [0;31mError: The route api/user/vote could not be found.[0m
+[0;31m✗[0m DELETE /user/vote - Remove vote (HTTP 500)
+  [0;31mError: The route api/user/vote could not be found.[0m
+
+[1;33m=== SEARCH ENDPOINTS ===[0m
+
+[0;31m✗[0m GET /search/advanced?q=test - Advanced search (HTTP 401)
+[0;31m✗[0m GET /search/teams?q=test - Search teams (HTTP 401)
+[0;31m✗[0m GET /search/players?q=test - Search players (HTTP 401)
+[0;31m✗[0m GET /search/matches?q=test - Search matches (HTTP 401)
+[0;31m✗[0m GET /search/events?q=test - Search events (HTTP 401)
+[0;31m✗[0m GET /search/news?q=test - Search news (HTTP 401)
+[0;31m✗[0m GET /search/forums?q=test - Search forums (HTTP 401)
+[0;31m✗[0m GET /search/users?q=test - Search users (mod/admin only) (HTTP 401)
+
+[1;33m=== MODERATOR ENDPOINTS (Require Mod/Admin Role) ===[0m
+
+[0;31m✗[0m GET /moderator/forums/threads/reported - Get reported threads (HTTP 401)
+[0;31m✗[0m GET /moderator/forums/posts/reported - Get reported posts (HTTP 401)
+[0;31m✗[0m PUT /moderator/forums/threads/1/lock - Lock thread (HTTP 500)
+  [0;31mError: The PUT method is not supported for route api/moderator/forums/threads/1/lock. Supported methods: POST.[0m
+[0;31m✗[0m PUT /moderator/forums/threads/1/unlock - Unlock thread (HTTP 500)
+  [0;31mError: The PUT method is not supported for route api/moderator/forums/threads/1/unlock. Supported methods: POST.[0m
+[0;31m✗[0m PUT /moderator/forums/threads/1/pin - Pin thread (HTTP 500)
+  [0;31mError: The PUT method is not supported for route api/moderator/forums/threads/1/pin. Supported methods: POST.[0m
+[0;31m✗[0m PUT /moderator/forums/threads/1/unpin - Unpin thread (HTTP 500)
+  [0;31mError: The PUT method is not supported for route api/moderator/forums/threads/1/unpin. Supported methods: POST.[0m
+[0;31m✗[0m DELETE /moderator/forums/threads/1 - Delete thread (HTTP 500)
+  [0;31mError: The route api/moderator/forums/threads/1 could not be found.[0m
+[0;31m✗[0m DELETE /moderator/forums/posts/1 - Delete post (HTTP 500)
+  [0;31mError: The route api/moderator/forums/posts/1 could not be found.[0m
+[0;31m✗[0m GET /moderator/news/pending - Get pending news (HTTP 401)
+[0;31m✗[0m PUT /moderator/news/1/approve - Approve news (HTTP 401)
+[0;31m✗[0m PUT /moderator/news/1/reject - Reject news (HTTP 401)
+[0;31m✗[0m GET /moderator/news/comments/reported - Get reported news comments (HTTP 401)
+[0;31m✗[0m DELETE /moderator/news/comments/1 - Delete news comment (HTTP 500)
+  [0;31mError: The route api/moderator/news/comments/1 could not be found.[0m
+[0;31m✗[0m GET /moderator/matches/comments/reported - Get reported match comments (HTTP 401)
+[0;31m✗[0m DELETE /moderator/matches/comments/1 - Delete match comment (HTTP 500)
+  [0;31mError: The route api/moderator/matches/comments/1 could not be found.[0m
+[0;31m✗[0m GET /moderator/users/reported - Get reported users (HTTP 401)
+[0;31m✗[0m PUT /moderator/users/1/warn - Warn user (HTTP 500)
+  [0;31mError: The PUT method is not supported for route api/moderator/users/1/warn. Supported methods: POST.[0m
+[0;31m✗[0m PUT /moderator/users/1/ban - Ban user (HTTP 500)
+  [0;31mError: The PUT method is not supported for route api/moderator/users/1/ban. Supported methods: POST.[0m
+[0;31m✗[0m PUT /moderator/users/1/unban - Unban user (HTTP 500)
+  [0;31mError: The PUT method is not supported for route api/moderator/users/1/unban. Supported methods: POST.[0m
+[0;31m✗[0m GET /moderator/dashboard/stats - Get moderator stats (HTTP 401)
+[0;31m✗[0m GET /moderator/dashboard/recent-activity - Get recent mod activity (HTTP 401)
+
+[1;33m=== ADMIN ENDPOINTS (Require Admin Role) ===[0m
+
+
+[1;33mAdmin Dashboard[0m
+[0;31m✗[0m GET /admin/stats - Get admin stats (HTTP 401)
+[0;31m✗[0m GET /admin/analytics - Get analytics (HTTP 401)
+[0;31m✗[0m GET /admin/dashboard - Get admin dashboard (HTTP 401)
+[0;31m✗[0m GET /admin/live-scoring - Get live scoring dashboard (HTTP 401)
+[0;31m✗[0m GET /admin/content-moderation - Get content moderation (HTTP 401)
+[0;31m✗[0m GET /admin/user-management - Get user management (HTTP 401)
+[0;31m✗[0m GET /admin/system-settings - Get system settings (HTTP 401)
+[0;31m✗[0m GET /admin/analytics-dashboard - Get analytics dashboard (HTTP 401)
+[0;31m✗[0m GET /admin/analytics/overview - Get analytics overview (HTTP 401)
+[0;31m✗[0m GET /admin/analytics/users - Get user analytics (HTTP 401)
+[0;31m✗[0m GET /admin/analytics/content - Get content analytics (HTTP 401)
+[0;31m✗[0m GET /admin/analytics/engagement - Get engagement analytics (HTTP 401)
+
+[1;33mUser Management[0m
+[0;31m✗[0m GET /admin/users - Get all users (HTTP 401)
+[0;31m✗[0m GET /admin/users/1 - Get specific user (HTTP 401)
+[0;31m✗[0m PUT /admin/users/1 - Update user (HTTP 401)
+[0;31m✗[0m DELETE /admin/users/1 - Delete user (HTTP 401)
+[0;31m✗[0m GET /admin/users/1/activity - Get user activity (HTTP 401)
+[0;31m✗[0m PUT /admin/users/1/roles - Update user roles (HTTP 500)
+  [0;31mError: The PUT method is not supported for route api/admin/users/1/roles. Supported methods: POST.[0m
+[0;31m✗[0m PUT /admin/users/1/permissions - Update user permissions (HTTP 500)
+  [0;31mError: The route api/admin/users/1/permissions could not be found.[0m
+
+[1;33mTeam Management[0m
+[0;31m✗[0m GET /admin/teams - Get all teams (HTTP 401)
+[0;31m✗[0m GET /admin/teams/1 - Get specific team (HTTP 401)
+[0;31m✗[0m POST /admin/teams - Create team (HTTP 401)
+[0;31m✗[0m PUT /admin/teams/1 - Update team (HTTP 401)
+[0;31m✗[0m DELETE /admin/teams/1 - Delete team (HTTP 401)
+[0;31m✗[0m POST /admin/teams/1/players - Add player to team (HTTP 401)
+[0;31m✗[0m DELETE /admin/teams/1/players/1 - Remove player from team (HTTP 401)
+
+[1;33mPlayer Management[0m
+[0;31m✗[0m GET /admin/players - Get all players (HTTP 401)
+[0;31m✗[0m GET /admin/players/1 - Get specific player (HTTP 401)
+[0;31m✗[0m POST /admin/players - Create player (HTTP 401)
+[0;31m✗[0m PUT /admin/players/1 - Update player (HTTP 401)
+[0;31m✗[0m DELETE /admin/players/1 - Delete player (HTTP 401)
+
+[1;33mEvent Management[0m
+[0;31m✗[0m GET /admin/events - Get all events (HTTP 401)
+[0;31m✗[0m GET /admin/events/1 - Get specific event (HTTP 401)
+[0;31m✗[0m POST /admin/events - Create event (HTTP 401)
+[0;31m✗[0m PUT /admin/events/1 - Update event (HTTP 401)
+[0;31m✗[0m DELETE /admin/events/1 - Delete event (HTTP 401)
+[0;31m✗[0m GET /admin/events/1/teams - Get event teams (HTTP 401)
+[0;31m✗[0m POST /admin/events/1/teams/1 - Add team to event (HTTP 401)
+[0;31m✗[0m DELETE /admin/events/1/teams/1 - Remove team from event (HTTP 401)
+[0;31m✗[0m PUT /admin/events/1/teams/1/seed - Update team seed (HTTP 401)
+[0;31m✗[0m PUT /admin/events/1/status - Update event status (HTTP 500)
+  [0;31mError: The route api/admin/events/1/status could not be found.[0m
+
+[1;33mMatch Management[0m
+[0;31m✗[0m GET /admin/matches - Get all matches (HTTP 401)
+[0;31m✗[0m GET /admin/matches/1 - Get specific match (HTTP 401)
+[0;31m✗[0m POST /admin/matches - Create match (HTTP 401)
+[0;31m✗[0m PUT /admin/matches/1 - Update match (HTTP 401)
+[0;31m✗[0m DELETE /admin/matches/1 - Delete match (HTTP 401)
+[0;31m✗[0m PUT /admin/matches/1/status - Update match status (HTTP 500)
+  [0;31mError: The route api/admin/matches/1/status could not be found.[0m
+[0;31m✗[0m POST /admin/matches/1/results - Submit match results (HTTP 500)
+  [0;31mError: The route api/admin/matches/1/results could not be found.[0m
+
+[1;33mNews Management[0m
+[0;31m✗[0m GET /admin/news - Get all news (admin) (HTTP 401)
+[0;31m✗[0m GET /admin/news/1 - Get specific news (admin) (HTTP 401)
+[0;31m✗[0m POST /admin/news - Create news (HTTP 401)
+[0;31m✗[0m PUT /admin/news/1 - Update news (HTTP 401)
+[0;31m✗[0m DELETE /admin/news/1 - Delete news (HTTP 401)
+[0;31m✗[0m PUT /admin/news/1/publish - Publish news (HTTP 500)
+  [0;31mError: The route api/admin/news/1/publish could not be found.[0m
+[0;31m✗[0m PUT /admin/news/1/unpublish - Unpublish news (HTTP 500)
+  [0;31mError: The route api/admin/news/1/unpublish could not be found.[0m
+
+[1;33mForum Management[0m
+[0;31m✗[0m GET /admin/forums/categories - Get forum categories (admin) (HTTP 401)
+[0;31m✗[0m POST /admin/forums/categories - Create forum category (HTTP 401)
+[0;31m✗[0m PUT /admin/forums/categories/1 - Update forum category (HTTP 401)
+[0;31m✗[0m DELETE /admin/forums/categories/1 - Delete forum category (HTTP 401)
+[0;31m✗[0m GET /admin/forums/threads - Get forum threads (admin) (HTTP 401)
+[0;31m✗[0m GET /admin/forums/posts - Get forum posts (admin) (HTTP 401)
+[0;31m✗[0m GET /admin/forums/reports - Get forum reports (HTTP 401)
+
+[1;33mSystem Management[0m
+[0;31m✗[0m GET /admin/system/stats - Get system stats (HTTP 401)
+[0;31m✗[0m GET /admin/system/health - Get system health (HTTP 401)
+[0;31m✗[0m GET /admin/system/logs - Get system logs (HTTP 401)
+[0;31m✗[0m POST /admin/system/cache/clear - Clear system cache (HTTP 401)
+[0;31m✗[0m POST /admin/system/maintenance/enable - Enable maintenance mode (HTTP 500)
+  [0;31mError: The route api/admin/system/maintenance/enable could not be found.[0m
+[0;31m✗[0m POST /admin/system/maintenance/disable - Disable maintenance mode (HTTP 500)
+  [0;31mError: The route api/admin/system/maintenance/disable could not be found.[0m
+
+[1;33mBulk Operations[0m
+[0;31m✗[0m POST /admin/bulk/users - Bulk user operations (HTTP 500)
+  [0;31mError: The route api/admin/bulk/users could not be found.[0m
+[0;31m✗[0m POST /admin/bulk/teams - Bulk team operations (HTTP 500)
+  [0;31mError: The route api/admin/bulk/teams could not be found.[0m
+[0;31m✗[0m POST /admin/bulk/players - Bulk player operations (HTTP 500)
+  [0;31mError: The route api/admin/bulk/players could not be found.[0m
+[0;31m✗[0m POST /admin/bulk/matches - Bulk match operations (HTTP 500)
+  [0;31mError: The route api/admin/bulk/matches could not be found.[0m
+
+[1;33m=== ROLE TEST ENDPOINTS ===[0m
+
+[0;31m✗[0m GET /test-admin - Test admin access (HTTP 401)
+[0;31m✗[0m GET /test-moderator - Test moderator access (HTTP 401)
+[0;31m✗[0m GET /test-user - Test user access (HTTP 401)
+
+======================================
+TEST SUMMARY
+======================================
+[0;32mPassed:[0m 72
+[0;31mFailed:[0m 142
+Total: 214
+
+[0;31mSome endpoints are failing:[0m
+
+  [0;31m•[0m GET /matches/1/timeline - HTTP 500
+  [0;31m•[0m GET /public/news/categories - HTTP 404
+  [0;31m•[0m GET /public/rankings/distribution - HTTP 404
+  [0;31m•[0m GET /public/rankings/marvel-rivals-info - HTTP 404
+  [0;31m•[0m GET /public/heroes/images - HTTP 400
+  [0;31m•[0m GET /public/search?q=test - HTTP 500
+  [0;31m•[0m POST /auth/login - HTTP 401
+  [0;31m•[0m POST /auth/forgot-password - HTTP 500
+  [0;31m•[0m POST /auth/reset-password - HTTP 400
+  [0;31m•[0m GET /auth/me - HTTP 401
+  [0;31m•[0m POST /auth/logout - HTTP 401
+  [0;31m•[0m POST /auth/refresh - HTTP 500
+  [0;31m•[0m GET /user - HTTP 401
+  [0;31m•[0m GET /user/profile - HTTP 401
+  [0;31m•[0m PUT /user/profile - HTTP 401
+  [0;31m•[0m GET /user/profile/available-flairs - HTTP 401
+  [0;31m•[0m GET /user/profile/activity - HTTP 401
+  [0;31m•[0m GET /user/profile/display/1 - HTTP 401
+  [0;31m•[0m GET /user/stats - HTTP 401
+  [0;31m•[0m GET /user/activity - HTTP 401
+  [0;31m•[0m GET /user/forums/threads - HTTP 500
+  [0;31m•[0m POST /user/forums/threads - HTTP 401
+  [0;31m•[0m POST /user/forums/threads/1/posts - HTTP 401
+  [0;31m•[0m POST /user/news/1/comments - HTTP 401
+  [0;31m•[0m POST /user/matches/1/comments - HTTP 401
+  [0;31m•[0m GET /user/predictions - HTTP 401
+  [0;31m•[0m POST /user/predictions - HTTP 500
+  [0;31m•[0m GET /user/favorites/teams - HTTP 401
+  [0;31m•[0m POST /user/favorites/teams - HTTP 500
+  [0;31m•[0m DELETE /user/favorites/teams/1 - HTTP 401
+  [0;31m•[0m GET /user/favorites/players - HTTP 401
+  [0;31m•[0m POST /user/favorites/players - HTTP 500
+  [0;31m•[0m DELETE /user/favorites/players/1 - HTTP 401
+  [0;31m•[0m GET /user/notifications - HTTP 401
+  [0;31m•[0m PUT /user/notifications/1/read - HTTP 401
+  [0;31m•[0m POST /user/notifications/mark-all-read - HTTP 500
+  [0;31m•[0m POST /user/vote - HTTP 500
+  [0;31m•[0m DELETE /user/vote - HTTP 500
+  [0;31m•[0m GET /search/advanced?q=test - HTTP 401
+  [0;31m•[0m GET /search/teams?q=test - HTTP 401
+  [0;31m•[0m GET /search/players?q=test - HTTP 401
+  [0;31m•[0m GET /search/matches?q=test - HTTP 401
+  [0;31m•[0m GET /search/events?q=test - HTTP 401
+  [0;31m•[0m GET /search/news?q=test - HTTP 401
+  [0;31m•[0m GET /search/forums?q=test - HTTP 401
+  [0;31m•[0m GET /search/users?q=test - HTTP 401
+  [0;31m•[0m GET /moderator/forums/threads/reported - HTTP 401
+  [0;31m•[0m GET /moderator/forums/posts/reported - HTTP 401
+  [0;31m•[0m PUT /moderator/forums/threads/1/lock - HTTP 500
+  [0;31m•[0m PUT /moderator/forums/threads/1/unlock - HTTP 500
+  [0;31m•[0m PUT /moderator/forums/threads/1/pin - HTTP 500
+  [0;31m•[0m PUT /moderator/forums/threads/1/unpin - HTTP 500
+  [0;31m•[0m DELETE /moderator/forums/threads/1 - HTTP 500
+  [0;31m•[0m DELETE /moderator/forums/posts/1 - HTTP 500
+  [0;31m•[0m GET /moderator/news/pending - HTTP 401
+  [0;31m•[0m PUT /moderator/news/1/approve - HTTP 401
+  [0;31m•[0m PUT /moderator/news/1/reject - HTTP 401
+  [0;31m•[0m GET /moderator/news/comments/reported - HTTP 401
+  [0;31m•[0m DELETE /moderator/news/comments/1 - HTTP 500
+  [0;31m•[0m GET /moderator/matches/comments/reported - HTTP 401
+  [0;31m•[0m DELETE /moderator/matches/comments/1 - HTTP 500
+  [0;31m•[0m GET /moderator/users/reported - HTTP 401
+  [0;31m•[0m PUT /moderator/users/1/warn - HTTP 500
+  [0;31m•[0m PUT /moderator/users/1/ban - HTTP 500
+  [0;31m•[0m PUT /moderator/users/1/unban - HTTP 500
+  [0;31m•[0m GET /moderator/dashboard/stats - HTTP 401
+  [0;31m•[0m GET /moderator/dashboard/recent-activity - HTTP 401
+  [0;31m•[0m GET /admin/stats - HTTP 401
+  [0;31m•[0m GET /admin/analytics - HTTP 401
+  [0;31m•[0m GET /admin/dashboard - HTTP 401
+  [0;31m•[0m GET /admin/live-scoring - HTTP 401
+  [0;31m•[0m GET /admin/content-moderation - HTTP 401
+  [0;31m•[0m GET /admin/user-management - HTTP 401
+  [0;31m•[0m GET /admin/system-settings - HTTP 401
+  [0;31m•[0m GET /admin/analytics-dashboard - HTTP 401
+  [0;31m•[0m GET /admin/analytics/overview - HTTP 401
+  [0;31m•[0m GET /admin/analytics/users - HTTP 401
+  [0;31m•[0m GET /admin/analytics/content - HTTP 401
+  [0;31m•[0m GET /admin/analytics/engagement - HTTP 401
+  [0;31m•[0m GET /admin/users - HTTP 401
+  [0;31m•[0m GET /admin/users/1 - HTTP 401
+  [0;31m•[0m PUT /admin/users/1 - HTTP 401
+  [0;31m•[0m DELETE /admin/users/1 - HTTP 401
+  [0;31m•[0m GET /admin/users/1/activity - HTTP 401
+  [0;31m•[0m PUT /admin/users/1/roles - HTTP 500
+  [0;31m•[0m PUT /admin/users/1/permissions - HTTP 500
+  [0;31m•[0m GET /admin/teams - HTTP 401
+  [0;31m•[0m GET /admin/teams/1 - HTTP 401
+  [0;31m•[0m POST /admin/teams - HTTP 401
+  [0;31m•[0m PUT /admin/teams/1 - HTTP 401
+  [0;31m•[0m DELETE /admin/teams/1 - HTTP 401
+  [0;31m•[0m POST /admin/teams/1/players - HTTP 401
+  [0;31m•[0m DELETE /admin/teams/1/players/1 - HTTP 401
+  [0;31m•[0m GET /admin/players - HTTP 401
+  [0;31m•[0m GET /admin/players/1 - HTTP 401
+  [0;31m•[0m POST /admin/players - HTTP 401
+  [0;31m•[0m PUT /admin/players/1 - HTTP 401
+  [0;31m•[0m DELETE /admin/players/1 - HTTP 401
+  [0;31m•[0m GET /admin/events - HTTP 401
+  [0;31m•[0m GET /admin/events/1 - HTTP 401
+  [0;31m•[0m POST /admin/events - HTTP 401
+  [0;31m•[0m PUT /admin/events/1 - HTTP 401
+  [0;31m•[0m DELETE /admin/events/1 - HTTP 401
+  [0;31m•[0m GET /admin/events/1/teams - HTTP 401
+  [0;31m•[0m POST /admin/events/1/teams/1 - HTTP 401
+  [0;31m•[0m DELETE /admin/events/1/teams/1 - HTTP 401
+  [0;31m•[0m PUT /admin/events/1/teams/1/seed - HTTP 401
+  [0;31m•[0m PUT /admin/events/1/status - HTTP 500
+  [0;31m•[0m GET /admin/matches - HTTP 401
+  [0;31m•[0m GET /admin/matches/1 - HTTP 401
+  [0;31m•[0m POST /admin/matches - HTTP 401
+  [0;31m•[0m PUT /admin/matches/1 - HTTP 401
+  [0;31m•[0m DELETE /admin/matches/1 - HTTP 401
+  [0;31m•[0m PUT /admin/matches/1/status - HTTP 500
+  [0;31m•[0m POST /admin/matches/1/results - HTTP 500
+  [0;31m•[0m GET /admin/news - HTTP 401
+  [0;31m•[0m GET /admin/news/1 - HTTP 401
+  [0;31m•[0m POST /admin/news - HTTP 401
+  [0;31m•[0m PUT /admin/news/1 - HTTP 401
+  [0;31m•[0m DELETE /admin/news/1 - HTTP 401
+  [0;31m•[0m PUT /admin/news/1/publish - HTTP 500
+  [0;31m•[0m PUT /admin/news/1/unpublish - HTTP 500
+  [0;31m•[0m GET /admin/forums/categories - HTTP 401
+  [0;31m•[0m POST /admin/forums/categories - HTTP 401
+  [0;31m•[0m PUT /admin/forums/categories/1 - HTTP 401
+  [0;31m•[0m DELETE /admin/forums/categories/1 - HTTP 401
+  [0;31m•[0m GET /admin/forums/threads - HTTP 401
+  [0;31m•[0m GET /admin/forums/posts - HTTP 401
+  [0;31m•[0m GET /admin/forums/reports - HTTP 401
+  [0;31m•[0m GET /admin/system/stats - HTTP 401
+  [0;31m•[0m GET /admin/system/health - HTTP 401
+  [0;31m•[0m GET /admin/system/logs - HTTP 401
+  [0;31m•[0m POST /admin/system/cache/clear - HTTP 401
+  [0;31m•[0m POST /admin/system/maintenance/enable - HTTP 500
+  [0;31m•[0m POST /admin/system/maintenance/disable - HTTP 500
+  [0;31m•[0m POST /admin/bulk/users - HTTP 500
+  [0;31m•[0m POST /admin/bulk/teams - HTTP 500
+  [0;31m•[0m POST /admin/bulk/players - HTTP 500
+  [0;31m•[0m POST /admin/bulk/matches - HTTP 500
+  [0;31m•[0m GET /test-admin - HTTP 401
+  [0;31m•[0m GET /test-moderator - HTTP 401
+  [0;31m•[0m GET /test-user - HTTP 401
+
+Note: Some failures may be expected (e.g., auth required, validation errors)
+
+Saving detailed results to test-results.txt...
+Done!

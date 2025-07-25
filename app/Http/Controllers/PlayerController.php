@@ -41,7 +41,7 @@ class PlayerController extends Controller
                     'id' => $player->id,
                     'username' => $player->username,
                     'real_name' => $player->real_name,
-                    'avatar' => $player->avatar,
+                    'avatar' => $player->avatar ? asset('storage/' . ltrim($player->avatar, '/')) : null,
                     'role' => $player->role,
                     'main_hero' => $player->main_hero,
                     'rating' => $player->rating ?? 1000,
@@ -129,7 +129,7 @@ class PlayerController extends Controller
                 'id' => $playerData->id,
                 'username' => $playerData->username,
                 'real_name' => $playerData->real_name,
-                'avatar' => $playerData->avatar,
+                'avatar' => $playerData->avatar ? asset('storage/' . ltrim($playerData->avatar, '/')) : null,
                 'country' => $playerData->country,
                 'flag' => $this->getCountryFlag($playerData->country),
                 'age' => $playerData->age,
@@ -237,6 +237,7 @@ class PlayerController extends Controller
             'country' => 'sometimes|string',
             'rating' => 'nullable|numeric|min:0',
             'age' => 'nullable|integer|min:13|max:50',
+            'earnings' => 'nullable|numeric|min:0',
             'social_media' => 'nullable|array',
             'biography' => 'nullable|string',
             'past_teams' => 'nullable|array'
@@ -288,7 +289,7 @@ class PlayerController extends Controller
                 'id' => $player->id,
                 'username' => $player->username,
                 'real_name' => $player->real_name,
-                'avatar' => $player->avatar,
+                'avatar' => $player->avatar ? asset('storage/' . ltrim($player->avatar, '/')) : null,
                 'role' => $player->role,
                 'main_hero' => $player->main_hero,
                 'alt_heroes' => $player->alt_heroes ? json_decode($player->alt_heroes, true) : [],
@@ -828,7 +829,7 @@ class PlayerController extends Controller
     private function calculatePlayerEarnings($eventPlacements)
     {
         // Calculate total earnings from event placements
-        return '$0'; // Placeholder
+        return 0; // Placeholder - should sum from event placements
     }
 
     private function getStreamingInfo($socialMedia)
@@ -1063,6 +1064,57 @@ class PlayerController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error fetching mentions: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function deleteMention($playerId, $mentionId, Request $request)
+    {
+        try {
+            // Verify player exists
+            $player = DB::table('players')->where('id', $playerId)->first();
+            if (!$player) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Player not found'
+                ], 404);
+            }
+
+            // Find the mention
+            $mention = Mention::where('id', $mentionId)
+                             ->where('mentioned_type', 'player')
+                             ->where('mentioned_id', $playerId)
+                             ->first();
+
+            if (!$mention) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Mention not found'
+                ], 404);
+            }
+
+            // Check if user has permission (admin/moderator or mention creator)
+            $user = $request->user();
+            if (!$user || (!in_array($user->role, ['admin', 'super_admin', 'moderator']) && $user->id !== $mention->mentioned_by)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized to delete this mention'
+                ], 403);
+            }
+
+            // Soft delete the mention
+            $mention->update(['is_active' => false]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Mention deleted successfully',
+                'deleted_mention_id' => $mentionId
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error deleting mention: ' . $e->getMessage()
             ], 500);
         }
     }
@@ -1586,7 +1638,7 @@ class PlayerController extends Controller
                 ->join('matches as m', 'mps.match_id', '=', 'm.id')
                 ->join('match_maps as mm', function($join) {
                     $join->on('mm.match_id', '=', 'm.id')
-                         ->on('mm.map_number', '=', 'mps.map_number');
+                         ->on('mm.map_name', '=', 'mps.current_map');
                 })
                 ->where('mps.player_id', $playerId)
                 ->where('m.status', 'completed')
@@ -1631,8 +1683,49 @@ class PlayerController extends Controller
             ->orderBy('matches_played', 'desc')
             ->get();
 
-            // Format map stats
-            $formattedMapStats = $mapStats->map(function($stats) {
+            // If no map stats available, return sample data with common Marvel Rivals maps
+            if ($mapStats->isEmpty()) {
+                $sampleMaps = [
+                    'Hellfire Gala: Krakoa',
+                    'Hydra Charteris Base: Hell\'s Heaven',
+                    'Intergalactic Empire of Wakanda: Birnin T\'Challa',
+                    'Klyntar',
+                    'New York Sanctum',
+                    'Asgard: Royal Palace',
+                ];
+                
+                $formattedMapStats = collect($sampleMaps)->map(function($mapName) {
+                    return [
+                        'map' => $mapName,
+                        'matches_played' => 0,
+                        'wins' => 0,
+                        'losses' => 0,
+                        'win_rate' => 0,
+                        'performance' => [
+                            'avg_rating' => 0,
+                            'avg_kd' => 0,
+                            'avg_accuracy' => 0,
+                            'avg_objective_time' => 0
+                        ],
+                        'combat' => [
+                            'avg_eliminations' => 0,
+                            'avg_deaths' => 0,
+                            'avg_assists' => 0,
+                            'avg_damage_dealt' => 0,
+                            'avg_damage_taken' => 0,
+                            'avg_healing_done' => 0
+                        ],
+                        'impact' => [
+                            'total_final_blows' => 0,
+                            'total_solo_kills' => 0,
+                            'ultimate_efficacy' => 0,
+                            'total_ultimates_earned' => 0
+                        ]
+                    ];
+                });
+            } else {
+                // Format map stats
+                $formattedMapStats = $mapStats->map(function($stats) {
                 $winRate = $stats->matches_played > 0 ? round(($stats->wins / $stats->matches_played) * 100, 1) : 0;
                 $kd = $stats->avg_deaths > 0 ? round($stats->avg_eliminations / $stats->avg_deaths, 2) : $stats->avg_eliminations;
                 $ultEfficacy = $stats->total_ultimates_earned > 0 ? round(($stats->total_ultimates_used / $stats->total_ultimates_earned) * 100, 1) : 0;
@@ -1665,6 +1758,7 @@ class PlayerController extends Controller
                     ]
                 ];
             });
+            }
 
             // Get map type statistics (attack/defense sided maps)
             $mapTypeStats = $this->getMapTypeStats($playerId, $request);
@@ -2165,7 +2259,7 @@ class PlayerController extends Controller
                         'id' => $player->id,
                         'username' => $player->username,
                         'real_name' => $player->real_name,
-                        'avatar' => $player->avatar,
+                        'avatar' => $player->avatar ? asset('storage/' . ltrim($player->avatar, '/')) : null,
                         'main_hero' => $player->main_hero
                     ],
                     'hero_performance' => $heroPerformance,
@@ -2233,5 +2327,242 @@ class PlayerController extends Controller
         $slug = preg_replace('/[^a-z0-9\-]/', '', $slug);
         $slug = preg_replace('/-+/', '-', $slug);
         return trim($slug, '-');
+    }
+
+    // Team History Management Methods
+    public function addTeamHistory(Request $request, $playerId)
+    {
+        try {
+            $player = Player::findOrFail($playerId);
+            
+            $request->validate([
+                'team_id' => 'required|exists:teams,id',
+                'start_date' => 'required|date',
+                'end_date' => 'nullable|date|after:start_date'
+            ]);
+
+            // For now, we'll store team history in the player's metadata or create a separate table later
+            // This is a simplified implementation that stores in JSON format
+            $teamHistory = $player->team_history ?? [];
+            
+            $teamHistory[] = [
+                'team_id' => $request->team_id,
+                'start_date' => $request->start_date,
+                'end_date' => $request->end_date,
+                'created_at' => now()
+            ];
+
+            $player->update(['team_history' => $teamHistory]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Team history added successfully',
+                'data' => $teamHistory
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to add team history: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function updateTeamHistory(Request $request, $playerId, $historyId)
+    {
+        try {
+            $player = Player::findOrFail($playerId);
+            
+            $request->validate([
+                'team_id' => 'required|exists:teams,id',
+                'start_date' => 'required|date',
+                'end_date' => 'nullable|date|after:start_date'
+            ]);
+
+            $teamHistory = $player->team_history ?? [];
+            
+            if (!isset($teamHistory[$historyId])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Team history record not found'
+                ], 404);
+            }
+
+            $teamHistory[$historyId] = [
+                'team_id' => $request->team_id,
+                'start_date' => $request->start_date,
+                'end_date' => $request->end_date,
+                'updated_at' => now()
+            ] + ($teamHistory[$historyId]['created_at'] ? ['created_at' => $teamHistory[$historyId]['created_at']] : ['created_at' => now()]);
+
+            $player->update(['team_history' => $teamHistory]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Team history updated successfully',
+                'data' => $teamHistory
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update team history: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function removeTeamHistory($playerId, $historyId)
+    {
+        try {
+            $player = Player::findOrFail($playerId);
+            
+            $teamHistory = $player->team_history ?? [];
+            
+            if (!isset($teamHistory[$historyId])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Team history record not found'
+                ], 404);
+            }
+
+            unset($teamHistory[$historyId]);
+            $teamHistory = array_values($teamHistory); // Re-index array
+
+            $player->update(['team_history' => $teamHistory]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Team history removed successfully',
+                'data' => $teamHistory
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to remove team history: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function getUserFavoritePlayers(Request $request)
+    {
+        try {
+            $user = $request->user();
+            
+            $favorites = DB::table('user_favorite_players as ufp')
+                ->join('players as p', 'ufp.player_id', '=', 'p.id')
+                ->leftJoin('teams as t', 'p.team_id', '=', 't.id')
+                ->where('ufp.user_id', $user->id)
+                ->select([
+                    'p.id',
+                    'p.name',
+                    'p.username as ign',
+                    'p.avatar',
+                    'p.country_code as flag',
+                    'p.role',
+                    'p.rating',
+                    't.name as team_name',
+                    't.logo as team_logo',
+                    'ufp.created_at as favorited_at'
+                ])
+                ->orderBy('ufp.created_at', 'desc')
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => $favorites
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error fetching favorite players: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch favorite players'
+            ], 500);
+        }
+    }
+
+    public function addFavoritePlayer(Request $request, $playerId = null)
+    {
+        try {
+            $user = $request->user();
+            
+            // If playerId not in URL, get from request body
+            if (!$playerId) {
+                $validated = $request->validate([
+                    'player_id' => 'required|integer'
+                ]);
+                $playerId = $validated['player_id'];
+            }
+            
+            // Check if player exists
+            $player = DB::table('players')->where('id', $playerId)->first();
+            if (!$player) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Player not found'
+                ], 404);
+            }
+
+            // Check if already favorited
+            $existing = DB::table('user_favorite_players')
+                ->where('user_id', $user->id)
+                ->where('player_id', $playerId)
+                ->first();
+
+            if ($existing) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Player is already in your favorites'
+                ], 400);
+            }
+
+            DB::table('user_favorite_players')->insert([
+                'user_id' => $user->id,
+                'player_id' => $playerId,
+                'created_at' => now(),
+                'updated_at' => now()
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Player added to favorites'
+            ], 201);
+        } catch (\Exception $e) {
+            \Log::error('Error adding favorite player: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to add player to favorites'
+            ], 500);
+        }
+    }
+
+    public function removeFavoritePlayer(Request $request, $playerId)
+    {
+        try {
+            $user = $request->user();
+            
+            $deleted = DB::table('user_favorite_players')
+                ->where('user_id', $user->id)
+                ->where('player_id', $playerId)
+                ->delete();
+
+            if (!$deleted) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Player not found in favorites'
+                ], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Player removed from favorites'
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error removing favorite player: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to remove player from favorites'
+            ], 500);
+        }
     }
 }

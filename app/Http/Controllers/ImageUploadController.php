@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 use App\Models\{Team, Player, News};
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use Intervention\Image\Facades\Image;
 
 class ImageUploadController extends Controller
 {
@@ -96,13 +96,15 @@ class ImageUploadController extends Controller
     }
 
     // Team Flag Upload
-    public function uploadTeamFlag(Request $request, Team $team)
+    public function uploadTeamFlag(Request $request, $teamId)
     {
         $request->validate([
             'flag' => 'required|image|mimes:jpeg,jpg,png,webp|max:' . $this->maxFileSize,
         ]);
 
         try {
+            $team = Team::findOrFail($teamId);
+            
             // Delete old flag if exists
             if ($team->flag) {
                 Storage::disk('public')->delete($team->flag);
@@ -130,6 +132,51 @@ class ImageUploadController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to upload flag: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // Team Coach Picture Upload
+    public function uploadTeamCoach(Request $request, $teamId)
+    {
+        $request->validate([
+            'coach_picture' => 'required|image|mimes:jpeg,jpg,png,webp|max:' . $this->maxFileSize,
+        ]);
+
+        try {
+            $team = Team::findOrFail($teamId);
+            
+            // Delete old coach picture if exists
+            if (isset($team->coach_picture) && $team->coach_picture) {
+                Storage::disk('public')->delete($team->coach_picture);
+            }
+
+            $file = $request->file('coach_picture');
+            $path = $this->processAndStoreImage($file, 'teams/coaches', [
+                'width' => 128,
+                'height' => 128,
+                'maintain_ratio' => true // Coach pictures should be square
+            ]);
+
+            // Use database query instead of Eloquent to avoid potential column issues
+            DB::table('teams')->where('id', $teamId)->update([
+                'coach_picture' => $path,
+                'updated_at' => now()
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Team coach picture uploaded successfully',
+                'data' => [
+                    'coach_picture' => $path,
+                    'coach_picture_url' => Storage::disk('public')->url($path)
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to upload coach picture: ' . $e->getMessage()
             ], 500);
         }
     }
@@ -217,13 +264,15 @@ class ImageUploadController extends Controller
     }
 
     // News Featured Image Upload
-    public function uploadNewsFeaturedImage(Request $request, News $news)
+    public function uploadNewsFeaturedImage(Request $request, $newsId)
     {
         $request->validate([
             'featured_image' => 'required|image|mimes:jpeg,jpg,png,webp|max:' . $this->maxFileSize,
         ]);
 
         try {
+            $news = News::findOrFail($newsId);
+            
             // Check permissions
             if (!$news->canBeEditedBy(auth()->user())) {
                 return response()->json([
@@ -367,61 +416,85 @@ class ImageUploadController extends Controller
     // Private helper method to process and store images
     private function processAndStoreImage($file, $directory, $options = [])
     {
-        // Generate unique filename
-        $extension = $file->getClientOriginalExtension();
-        $filename = Str::random(40) . '.' . $extension;
-        $fullPath = $directory . '/' . $filename;
-
-        // Create directory if it doesn't exist
-        Storage::disk('public')->makeDirectory($directory);
-
-        // Store original file
-        $result = $file->storeAs($directory, $filename, 'public');
-        
-        if (!$result) {
-            throw new \Exception('File storage failed - upload returned false');
-        }
-
-        // Verify file was stored
-        if (!Storage::disk('public')->exists($fullPath)) {
-            throw new \Exception('File storage failed - file not found after upload');
-        }
-
-        // If image processing is available and options are provided, resize
-        if (class_exists('Intervention\Image\Facades\Image') && !empty($options)) {
-            try {
-                $this->resizeImage(Storage::disk('public')->path($fullPath), $options);
-            } catch (\Exception $e) {
-                \Log::warning('Image resizing failed: ' . $e->getMessage());
-            }
-        }
-
-        return $fullPath;
-    }
-
-    // Private helper method to resize images (optional - requires intervention/image)
-    private function resizeImage($fullPath, $options)
-    {
         try {
-            $image = Image::make($fullPath);
+            // Validate file
+            if (!$file || !$file->isValid()) {
+                throw new \Exception('Invalid file upload');
+            }
+
+            // Generate unique filename
+            $extension = $file->getClientOriginalExtension();
+            if (empty($extension)) {
+                $extension = 'png'; // Default extension
+            }
             
-            if (isset($options['width']) && isset($options['height'])) {
-                if ($options['maintain_ratio'] ?? true) {
-                    $image->resize($options['width'], $options['height'], function ($constraint) {
-                        $constraint->aspectRatio();
-                        $constraint->upsize();
-                    });
-                } else {
-                    $image->resize($options['width'], $options['height']);
+            $filename = Str::random(40) . '.' . $extension;
+            $fullPath = $directory . '/' . $filename;
+
+            // Create directory if it doesn't exist
+            $fullDirectoryPath = storage_path('app/public/' . $directory);
+            if (!file_exists($fullDirectoryPath)) {
+                mkdir($fullDirectoryPath, 0755, true);
+            }
+
+            // Try multiple methods to store the file
+            $stored = false;
+            
+            // Method 1: Use Laravel's storeAs
+            try {
+                $result = $file->storeAs($directory, $filename, 'public');
+                if ($result) {
+                    $stored = true;
+                }
+            } catch (\Exception $e) {
+                \Log::warning('storeAs failed: ' . $e->getMessage());
+            }
+            
+            // Method 2: Use move method if storeAs failed
+            if (!$stored) {
+                try {
+                    $destinationPath = storage_path('app/public/' . $fullPath);
+                    if ($file->move(dirname($destinationPath), basename($destinationPath))) {
+                        $stored = true;
+                    }
+                } catch (\Exception $e) {
+                    \Log::warning('move failed: ' . $e->getMessage());
                 }
             }
             
-            $image->save($fullPath, 85); // Save with 85% quality
+            // Method 3: Use file_put_contents as last resort
+            if (!$stored) {
+                try {
+                    $destinationPath = storage_path('app/public/' . $fullPath);
+                    $contents = file_get_contents($file->getRealPath());
+                    if ($contents !== false && file_put_contents($destinationPath, $contents) !== false) {
+                        $stored = true;
+                    }
+                } catch (\Exception $e) {
+                    \Log::warning('file_put_contents failed: ' . $e->getMessage());
+                }
+            }
+            
+            if (!$stored) {
+                throw new \Exception('All file storage methods failed');
+            }
+
+            // Verify file was stored
+            $finalPath = storage_path('app/public/' . $fullPath);
+            if (!file_exists($finalPath)) {
+                throw new \Exception('File not found after upload: ' . $finalPath);
+            }
+
+            // Set proper permissions
+            chmod($finalPath, 0644);
+
+            return $fullPath;
         } catch (\Exception $e) {
-            // If image processing fails, continue with original image
-            \Log::warning('Image resizing failed: ' . $e->getMessage());
+            \Log::error('processAndStoreImage error: ' . $e->getMessage());
+            throw $e;
         }
     }
+
 
     // Team Banner Upload
     public function uploadTeamBanner(Request $request, $teamId)
@@ -516,8 +589,8 @@ class ImageUploadController extends Controller
 
         try {
             // Delete old banner if exists
-            if ($event->image) {
-                Storage::disk('public')->delete($event->image);
+            if ($event->banner) {
+                Storage::disk('public')->delete($event->banner);
             }
 
             $file = $request->file('banner');
@@ -527,14 +600,14 @@ class ImageUploadController extends Controller
                 'maintain_ratio' => true
             ]);
 
-            $event->update(['image' => $path]);
+            $event->update(['banner' => $path]);
 
             return response()->json([
                 'success' => true,
                 'message' => 'Event banner uploaded successfully',
                 'data' => [
-                    'image' => $path,
-                    'image_url' => Storage::disk('public')->url($path)
+                    'banner' => $path,
+                    'banner_url' => Storage::disk('public')->url($path)
                 ]
             ]);
 
@@ -548,26 +621,84 @@ class ImageUploadController extends Controller
 
     public function uploadEventLogo(Request $request, $eventId)
     {
-        $event = \App\Models\Event::findOrFail($eventId);
-        
-        $request->validate([
-            'logo' => 'required|image|mimes:jpeg,jpg,png,webp|max:' . $this->maxFileSize,
-        ]);
-
         try {
+            $event = \App\Models\Event::findOrFail($eventId);
+            
+            // Check if file exists
+            if (!$request->hasFile('logo')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No logo file provided'
+                ], 400);
+            }
+            
+            $file = $request->file('logo');
+            
+            // Validate file
+            if (!$file->isValid()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid file upload'
+                ], 400);
+            }
+            
+            // Validate file type and size
+            $validation = validator(['logo' => $file], [
+                'logo' => 'required|image|mimes:jpeg,jpg,png,webp|max:' . $this->maxFileSize
+            ]);
+            
+            if ($validation->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors' => $validation->errors()
+                ], 422);
+            }
+
             // Delete old logo if exists
-            if ($event->logo) {
+            if ($event->logo && Storage::disk('public')->exists($event->logo)) {
                 Storage::disk('public')->delete($event->logo);
             }
 
-            $file = $request->file('logo');
-            $path = $this->processAndStoreImage($file, 'events/logos', [
-                'width' => 200,
-                'height' => 200,
-                'maintain_ratio' => true
-            ]);
+            // Simple direct storage method
+            $extension = $file->getClientOriginalExtension() ?: 'png';
+            $filename = 'event_' . $eventId . '_' . time() . '_' . Str::random(10) . '.' . $extension;
+            $directory = 'events/logos';
+            $fullPath = $directory . '/' . $filename;
+            
+            // Ensure directory exists
+            $fullDirectoryPath = storage_path('app/public/' . $directory);
+            if (!file_exists($fullDirectoryPath)) {
+                mkdir($fullDirectoryPath, 0755, true);
+            }
+            
+            // Store the file using Laravel's storage
+            $stored = false;
+            try {
+                $path = $file->storeAs($directory, $filename, 'public');
+                if ($path) {
+                    $stored = true;
+                }
+            } catch (\Exception $e) {
+                \Log::error('storeAs failed: ' . $e->getMessage());
+            }
+            
+            // Fallback: Direct file move
+            if (!$stored) {
+                $destinationPath = storage_path('app/public/' . $fullPath);
+                if ($file->move(dirname($destinationPath), basename($destinationPath))) {
+                    $path = $fullPath;
+                    $stored = true;
+                }
+            }
+            
+            if (!$stored) {
+                throw new \Exception('Failed to store file after trying multiple methods');
+            }
 
-            $event->update(['logo' => $path]);
+            // Update event with new logo path
+            $event->logo = $path;
+            $event->save();
 
             return response()->json([
                 'success' => true,
@@ -579,6 +710,7 @@ class ImageUploadController extends Controller
             ]);
 
         } catch (\Exception $e) {
+            \Log::error('Event logo upload error: ' . $e->getMessage() . ' - ' . $e->getTraceAsString());
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to upload logo: ' . $e->getMessage()

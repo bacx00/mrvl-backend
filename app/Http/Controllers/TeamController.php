@@ -59,7 +59,7 @@ class TeamController extends Controller
                     'captain' => $team->captain,
                     'coach' => $team->coach,
                     'website' => $team->website,
-                    'earnings' => $team->earnings ?? '$0',
+                    'earnings' => $team->earnings ?? 0,
                     'social_media' => $team->social_media ? json_decode($team->social_media, true) : [],
                     'achievements' => $team->achievements ? json_decode($team->achievements, true) : [],
                     // Marvel Rivals specific data
@@ -175,21 +175,25 @@ class TeamController extends Controller
                 'name' => $team->name,
                 'short_name' => $team->short_name,
                 'logo' => $team->logo,
+                'logo_url' => $team->logo ? asset('storage/' . $team->logo) : null,
                 'region' => $team->region,
                 'country' => $team->country,
                 'flag' => $team->flag ?: $this->getCountryFlag($team->country),
                 'founded' => $team->founded,
                 'captain' => $team->captain,
                 'coach' => $team->coach,
+                'coach_picture' => $team->coach_picture,
+                'coach_picture_url' => $team->coach_picture ? asset('storage/' . $team->coach_picture) : null,
                 'website' => $team->website,
                 'social_media' => $team->social_media ? json_decode($team->social_media, true) : [],
+                'social_links' => $team->social_links ? json_decode($team->social_links, true) : ($team->social_media ? json_decode($team->social_media, true) : []),
                 
                 // Performance metrics
                 'rating' => $team->rating ?? 1000,
                 'rank' => $team->rank ?? 999,
                 'peak_rating' => $team->peak ?? $team->rating ?? 1000,
                 'division' => $this->getDivisionByRating($team->rating ?? 1000),
-                'earnings' => $team->earnings ?? '$0',
+                'earnings' => $team->earnings ?? 0,
                 
                 // Comprehensive stats
                 'stats' => $stats,
@@ -624,37 +628,64 @@ class TeamController extends Controller
             'region' => 'required|string|max:10',
             'country' => 'nullable|string|max:100',
             'rating' => 'nullable|integer|min:0|max:5000',
-            'description' => 'nullable|string',
-            'social_links' => 'nullable|array'
+            'earnings' => 'nullable|numeric|min:0',
+            'description' => 'nullable|string|max:1000',
+            'coach' => 'nullable|string|max:255',
+            'coach_picture' => 'nullable|string|max:500',
+            'social_links' => 'nullable|array|max:10'
         ]);
         
         try {
-            $teamId = DB::table('teams')->insertGetId([
-                'name' => $request->name,
-                'short_name' => $request->short_name,
-                'region' => $request->region,
-                'country' => $request->country,
-                'rating' => $request->rating ?? 1000,
-                'rank' => 999,
-                'win_rate' => 0,
-                'points' => 0,
-                'record' => '0-0',
-                'peak' => $request->rating ?? 1000,
-                'social_media' => json_encode($request->social_links ?? []),
-                'created_at' => now(),
-                'updated_at' => now()
-            ]);
+            // Use database transaction for safe creation
+            DB::beginTransaction();
             
-            // Update team ranks after adding new team
-            $this->updateAllTeamRanks();
-            
-            $team = DB::table('teams')->where('id', $teamId)->first();
-            
-            return response()->json([
-                'data' => $team,
-                'success' => true,
-                'message' => 'Team created successfully'
-            ], 201);
+            try {
+                $insertData = [
+                    'name' => $request->name,
+                    'short_name' => $request->short_name,
+                    'region' => $request->region,
+                    'country' => $request->country,
+                    'rating' => $request->rating ?? 1000,
+                    'rank' => 999,
+                    'win_rate' => 0,
+                    'points' => 0,
+                    'record' => '0-0',
+                    'peak' => $request->rating ?? 1000,
+                    'earnings' => $request->earnings ?? 0,
+                    'coach' => $request->coach,
+                    'social_media' => json_encode($request->social_links ?? []),
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ];
+
+                // Only include coach_picture if provided and column exists
+                if ($request->has('coach_picture') && $request->coach_picture !== null) {
+                    $insertData['coach_picture'] = $request->coach_picture;
+                }
+
+                $teamId = DB::table('teams')->insertGetId($insertData);
+                
+                if (!$teamId) {
+                    throw new \Exception('Failed to create team in database');
+                }
+                
+                // Update team ranks after adding new team
+                $this->updateAllTeamRanks();
+                
+                $team = DB::table('teams')->where('id', $teamId)->first();
+                
+                DB::commit();
+                
+                return response()->json([
+                    'data' => $team,
+                    'success' => true,
+                    'message' => 'Team created successfully'
+                ], 201);
+                
+            } catch (\Exception $transactionError) {
+                DB::rollback();
+                throw $transactionError;
+            }
             
         } catch (\Exception $e) {
             return response()->json([
@@ -668,16 +699,27 @@ class TeamController extends Controller
     {
         $this->authorize('manage-teams');
         
+        // Validate team ID
+        if (!is_numeric($teamId) || $teamId <= 0) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid team ID provided'
+            ], 400);
+        }
+        
         $request->validate([
             'name' => 'required|string|max:255|unique:teams,name,' . $teamId,
             'short_name' => 'required|string|max:10|unique:teams,short_name,' . $teamId,
             'region' => 'required|string|max:10',
             'country' => 'nullable|string|max:100',
             'rating' => 'nullable|integer|min:0|max:5000',
-            'description' => 'nullable|string',
-            'social_links' => 'nullable|array',
-            'logo' => 'nullable|string',
-            'flag' => 'nullable|string'
+            'earnings' => 'nullable|numeric|min:0',
+            'description' => 'nullable|string|max:1000',
+            'coach' => 'nullable|string|max:255',
+            'coach_picture' => 'nullable|string|max:500',
+            'social_links' => 'nullable|array|max:10',
+            'logo' => 'nullable|string|max:500',
+            'flag' => 'nullable|string|max:500'
         ]);
         
         try {
@@ -690,36 +732,62 @@ class TeamController extends Controller
                 ], 404);
             }
             
-            // Update peak rating if new rating is higher
-            $newRating = $request->rating ?? $team->rating;
-            $peakRating = max($newRating, $team->peak ?? 0);
+            // Use database transaction for safe update
+            DB::beginTransaction();
             
-            DB::table('teams')->where('id', $teamId)->update([
-                'name' => $request->name,
-                'short_name' => $request->short_name,
-                'region' => $request->region,
-                'country' => $request->country,
-                'rating' => $newRating,
-                'peak' => $peakRating,
-                'description' => $request->description,
-                'social_media' => json_encode($request->social_links ?? []),
-                'logo' => $request->logo ?? $team->logo,
-                'flag' => $request->flag ?? $team->flag,
-                'updated_at' => now()
-            ]);
-            
-            // Update team ranks after rating change
-            $this->updateAllTeamRanks();
-            
-            $updatedTeam = DB::table('teams')->where('id', $teamId)->first();
-            
-            return response()->json([
-                'data' => $updatedTeam,
-                'success' => true,
-                'message' => 'Team updated successfully'
-            ]);
+            try {
+                // Update peak rating if new rating is higher
+                $newRating = $request->rating ?? $team->rating;
+                $peakRating = max($newRating, $team->peak ?? 0);
+                
+                $updateData = [
+                    'name' => $request->name,
+                    'short_name' => $request->short_name,
+                    'region' => $request->region,
+                    'country' => $request->country,
+                    'rating' => $newRating,
+                    'peak' => $peakRating,
+                    'earnings' => $request->earnings ?? $team->earnings ?? 0,
+                    'description' => $request->description,
+                    'coach' => $request->coach ?? $team->coach,
+                    'social_media' => json_encode($request->social_links ?? []),
+                    'social_links' => json_encode($request->social_links ?? []),
+                    'logo' => $request->logo ?? $team->logo,
+                    'flag' => $request->flag ?? $team->flag,
+                    'coach_picture' => $request->coach_picture,
+                    'updated_at' => now()
+                ];
+
+                \Log::info('Team update - About to update team', ['teamId' => $teamId, 'updateData' => $updateData]);
+                
+                $updated = DB::table('teams')->where('id', $teamId)->update($updateData);
+                
+                \Log::info('Team update - Update result', ['updated' => $updated]);
+                
+                if ($updated === false) {
+                    throw new \Exception('Failed to update team in database');
+                }
+                
+                // Update team ranks after rating change
+                $this->updateAllTeamRanks();
+                
+                $updatedTeam = DB::table('teams')->where('id', $teamId)->first();
+                
+                DB::commit();
+                
+                return response()->json([
+                    'data' => $updatedTeam,
+                    'success' => true,
+                    'message' => 'Team updated successfully'
+                ]);
+                
+            } catch (\Exception $transactionError) {
+                DB::rollback();
+                throw $transactionError;
+            }
             
         } catch (\Exception $e) {
+            \Log::error('Team update failed', ['teamId' => $teamId, 'error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return response()->json([
                 'success' => false,
                 'message' => 'Error updating team: ' . $e->getMessage()
@@ -727,9 +795,17 @@ class TeamController extends Controller
         }
     }
 
-    public function destroy($teamId)
+    public function destroy(Request $request, $teamId)
     {
         $this->authorize('manage-teams');
+        
+        // Validate team ID
+        if (!is_numeric($teamId) || $teamId <= 0) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid team ID provided'
+            ], 400);
+        }
         
         try {
             $team = DB::table('teams')->where('id', $teamId)->first();
@@ -741,36 +817,80 @@ class TeamController extends Controller
                 ], 404);
             }
             
+            // Validate force parameter - accept both boolean and string values
+            $force = filter_var($request->input('force', false), FILTER_VALIDATE_BOOLEAN);
+            
             // Check if team has players
             $playerCount = DB::table('players')->where('team_id', $teamId)->count();
-            if ($playerCount > 0) {
+            if ($playerCount > 0 && !$force) {
+                \Log::info("Team deletion blocked for team {$teamId}: has {$playerCount} active players");
                 return response()->json([
                     'success' => false,
-                    'message' => 'Cannot delete team with active players. Remove players first.'
+                    'message' => 'Cannot delete team with active players. Use force delete to move players to Free Agent status.',
+                    'player_count' => $playerCount,
+                    'can_force' => true
                 ], 400);
             }
             
             // Check if team has matches
             $matchCount = DB::table('matches')
-                ->where('team1_id', $teamId)
-                ->orWhere('team2_id', $teamId)
+                ->where(function($query) use ($teamId) {
+                    $query->where('team1_id', $teamId)
+                          ->orWhere('team2_id', $teamId);
+                })
                 ->count();
-            if ($matchCount > 0) {
+            if ($matchCount > 0 && !$force) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Cannot delete team with match history.'
+                    'message' => 'Cannot delete team with match history. Use force delete to proceed.',
+                    'match_count' => $matchCount,
+                    'can_force' => true
                 ], 400);
             }
             
-            DB::table('teams')->where('id', $teamId)->delete();
+            // Use database transaction for safe deletion
+            DB::beginTransaction();
             
-            // Update team ranks after deletion
-            $this->updateAllTeamRanks();
-            
-            return response()->json([
-                'success' => true,
-                'message' => 'Team deleted successfully'
-            ]);
+            try {
+                // If force delete, move players to Free Agent status
+                if ($force && $playerCount > 0) {
+                    DB::table('players')
+                        ->where('team_id', $teamId)
+                        ->update([
+                            'team_id' => null,
+                            'status' => 'free_agent',
+                            'updated_at' => now()
+                        ]);
+                        
+                    \Log::info("Force delete: Moved {$playerCount} players from team {$teamId} to Free Agent status");
+                }
+                
+                // Delete the team
+                $deleted = DB::table('teams')->where('id', $teamId)->delete();
+                
+                if (!$deleted) {
+                    throw new \Exception('Failed to delete team from database');
+                }
+                
+                // Update team ranks after deletion
+                $this->updateAllTeamRanks();
+                
+                DB::commit();
+                
+                $message = $force && $playerCount > 0 
+                    ? "Team deleted successfully. {$playerCount} players moved to Free Agent status."
+                    : 'Team deleted successfully';
+                
+                return response()->json([
+                    'success' => true,
+                    'message' => $message,
+                    'players_moved' => $force ? $playerCount : 0
+                ]);
+                
+            } catch (\Exception $transactionError) {
+                DB::rollback();
+                throw $transactionError;
+            }
             
         } catch (\Exception $e) {
             return response()->json([
@@ -795,7 +915,7 @@ class TeamController extends Controller
         }
     }
 
-    public function getMentions($teamId)
+    public function getMentions($teamId, Request $request = null)
     {
         try {
             // Get team info
@@ -907,10 +1027,23 @@ class TeamController extends Controller
                 ];
             });
 
+            // Add pagination info
+            $page = $request ? $request->get('page', 1) : 1;
+            $perPage = $request ? $request->get('per_page', 10) : 10;
+            $total = $formattedMentions->count();
+            
+            // Simple pagination for now
+            $paginatedMentions = $formattedMentions->forPage($page, $perPage);
+
             return response()->json([
-                'data' => $formattedMentions->values(),
+                'data' => $paginatedMentions->values(),
                 'success' => true,
-                'total_mentions' => $formattedMentions->count()
+                'pagination' => [
+                    'current_page' => (int)$page,
+                    'last_page' => ceil($total / $perPage),
+                    'per_page' => (int)$perPage,
+                    'total' => $total
+                ]
             ]);
 
         } catch (\Exception $e) {
@@ -980,6 +1113,57 @@ class TeamController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error fetching mentions: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function deleteMention($teamId, $mentionId, Request $request)
+    {
+        try {
+            // Verify team exists
+            $team = DB::table('teams')->where('id', $teamId)->first();
+            if (!$team) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Team not found'
+                ], 404);
+            }
+
+            // Find the mention
+            $mention = Mention::where('id', $mentionId)
+                             ->where('mentioned_type', 'team')
+                             ->where('mentioned_id', $teamId)
+                             ->first();
+
+            if (!$mention) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Mention not found'
+                ], 404);
+            }
+
+            // Check if user has permission (admin/moderator or mention creator)
+            $user = $request->user();
+            if (!$user || (!in_array($user->role, ['admin', 'super_admin', 'moderator']) && $user->id !== $mention->mentioned_by)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized to delete this mention'
+                ], 403);
+            }
+
+            // Soft delete the mention
+            $mention->update(['is_active' => false]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Mention deleted successfully',
+                'deleted_mention_id' => $mentionId
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error deleting mention: ' . $e->getMessage()
             ], 500);
         }
     }
@@ -2012,5 +2196,124 @@ class TeamController extends Controller
         ];
         
         return $flags[$country] ?? '🌍';
+    }
+
+    public function getUserFavoriteTeams(Request $request)
+    {
+        try {
+            $user = $request->user();
+            
+            $favorites = DB::table('user_favorite_teams as uft')
+                ->join('teams as t', 'uft.team_id', '=', 't.id')
+                ->where('uft.user_id', $user->id)
+                ->select([
+                    't.id',
+                    't.name',
+                    't.short_name',
+                    't.logo',
+                    't.region',
+                    't.rating',
+                    't.rank',
+                    'uft.created_at as favorited_at'
+                ])
+                ->orderBy('uft.created_at', 'desc')
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => $favorites
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error fetching favorite teams: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch favorite teams'
+            ], 500);
+        }
+    }
+
+    public function addFavoriteTeam(Request $request, $teamId = null)
+    {
+        try {
+            $user = $request->user();
+            
+            // If teamId not in URL, get from request body
+            if (!$teamId) {
+                $validated = $request->validate([
+                    'team_id' => 'required|integer'
+                ]);
+                $teamId = $validated['team_id'];
+            }
+            
+            // Check if team exists
+            $team = DB::table('teams')->where('id', $teamId)->first();
+            if (!$team) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Team not found'
+                ], 404);
+            }
+
+            // Check if already favorited
+            $existing = DB::table('user_favorite_teams')
+                ->where('user_id', $user->id)
+                ->where('team_id', $teamId)
+                ->first();
+
+            if ($existing) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Team is already in your favorites'
+                ], 400);
+            }
+
+            DB::table('user_favorite_teams')->insert([
+                'user_id' => $user->id,
+                'team_id' => $teamId,
+                'created_at' => now(),
+                'updated_at' => now()
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Team added to favorites'
+            ], 201);
+        } catch (\Exception $e) {
+            \Log::error('Error adding favorite team: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to add team to favorites'
+            ], 500);
+        }
+    }
+
+    public function removeFavoriteTeam(Request $request, $teamId)
+    {
+        try {
+            $user = $request->user();
+            
+            $deleted = DB::table('user_favorite_teams')
+                ->where('user_id', $user->id)
+                ->where('team_id', $teamId)
+                ->delete();
+
+            if (!$deleted) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Team not found in favorites'
+                ], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Team removed from favorites'
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error removing favorite team: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to remove team from favorites'
+            ], 500);
+        }
     }
 }

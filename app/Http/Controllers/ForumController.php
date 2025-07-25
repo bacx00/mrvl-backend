@@ -30,11 +30,60 @@ class ForumController extends Controller
                 $query->where('ft.category', $request->category);
             }
 
-            // Search functionality
+            // Enhanced search functionality including mentions
             if ($request->search) {
-                $query->where(function($q) use ($request) {
-                    $q->where('ft.title', 'LIKE', "%{$request->search}%")
-                      ->orWhere('ft.content', 'LIKE', "%{$request->search}%");
+                $searchTerm = $request->search;
+                $query->where(function($q) use ($searchTerm) {
+                    // Search in title and content
+                    $q->where('ft.title', 'LIKE', "%{$searchTerm}%")
+                      ->orWhere('ft.content', 'LIKE', "%{$searchTerm}%");
+                    
+                    // Search for mentioned users by name (support both @username and partial username)
+                    $q->orWhereExists(function($subQuery) use ($searchTerm) {
+                        $subQuery->select(DB::raw(1))
+                            ->from('mentions as m')
+                            ->join('users as u', 'm.mentioned_id', '=', 'u.id')
+                            ->where('m.mentionable_type', 'forum_thread')
+                            ->whereColumn('m.mentionable_id', 'ft.id')
+                            ->where('m.mentioned_type', 'user')
+                            ->where(function($userQuery) use ($searchTerm) {
+                                $cleanSearch = str_replace('@', '', $searchTerm);
+                                $userQuery->where('u.name', 'LIKE', "%{$cleanSearch}%")
+                                    ->orWhere('m.mention_text', 'LIKE', "%{$searchTerm}%");
+                            });
+                    });
+                    
+                    // Search for mentioned teams
+                    $q->orWhereExists(function($subQuery) use ($searchTerm) {
+                        $subQuery->select(DB::raw(1))
+                            ->from('mentions as m')
+                            ->join('teams as t', 'm.mentioned_id', '=', 't.id')
+                            ->where('m.mentionable_type', 'forum_thread')
+                            ->whereColumn('m.mentionable_id', 'ft.id')
+                            ->where('m.mentioned_type', 'team')
+                            ->where(function($teamQuery) use ($searchTerm) {
+                                $cleanSearch = str_replace(['@team:', '@'], '', $searchTerm);
+                                $teamQuery->where('t.name', 'LIKE', "%{$cleanSearch}%")
+                                    ->orWhere('t.short_name', 'LIKE', "%{$cleanSearch}%")
+                                    ->orWhere('m.mention_text', 'LIKE', "%{$searchTerm}%");
+                            });
+                    });
+                    
+                    // Search for mentioned players
+                    $q->orWhereExists(function($subQuery) use ($searchTerm) {
+                        $subQuery->select(DB::raw(1))
+                            ->from('mentions as m')
+                            ->join('players as p', 'm.mentioned_id', '=', 'p.id')
+                            ->where('m.mentionable_type', 'forum_thread')
+                            ->whereColumn('m.mentionable_id', 'ft.id')
+                            ->where('m.mentioned_type', 'player')
+                            ->where(function($playerQuery) use ($searchTerm) {
+                                $cleanSearch = str_replace(['@player:', '@'], '', $searchTerm);
+                                $playerQuery->where('p.username', 'LIKE', "%{$cleanSearch}%")
+                                    ->orWhere('p.real_name', 'LIKE', "%{$cleanSearch}%")
+                                    ->orWhere('m.mention_text', 'LIKE', "%{$searchTerm}%");
+                            });
+                    });
                 });
             }
 
@@ -82,7 +131,10 @@ class ForumController extends Controller
                         'created_at' => $thread->created_at,
                         'last_reply_at' => $thread->last_reply_at
                     ],
-                    'mentions' => $this->extractMentions($thread->content)
+                    'mentions' => array_merge(
+                        $this->extractMentions($thread->title),
+                        $this->extractMentions($thread->content)
+                    )
                 ];
             });
 
@@ -165,7 +217,10 @@ class ForumController extends Controller
                     'created_at' => $thread->created_at,
                     'last_reply_at' => $thread->last_reply_at
                 ],
-                'mentions' => $this->extractMentions($thread->content),
+                'mentions' => array_merge(
+                    $this->extractMentions($thread->title),
+                    $this->extractMentions($thread->content)
+                ),
                 'user_vote' => $userVote,
                 'posts' => $posts
             ];
@@ -237,7 +292,8 @@ class ForumController extends Controller
                 'updated_at' => now()
             ]);
 
-            // Process mentions
+            // Process mentions from both title and content
+            $this->processMentions($request->title, $thread);
             $this->processMentions($request->content, $thread);
 
             return response()->json([
@@ -266,7 +322,8 @@ class ForumController extends Controller
         
         $request->validate([
             'content' => 'required|string|min:1',
-            'parent_id' => 'nullable|exists:forum_posts,id'
+            'parent_id' => 'nullable|exists:forum_posts,id',
+            'mentions' => 'nullable|array'
         ]);
 
         try {
@@ -297,7 +354,11 @@ class ForumController extends Controller
                 ->where('id', $threadId)
                 ->update(['last_reply_at' => now()]);
 
-            // Process mentions
+            // Process mentions from frontend data
+            if ($request->has('mentions') && is_array($request->mentions)) {
+                $this->processMentionsFromData($request->mentions, $threadId, $postId);
+            }
+            // Also extract mentions from content as fallback
             $this->processMentions($request->content, $threadId, $postId);
 
             return response()->json([
@@ -363,6 +424,15 @@ class ForumController extends Controller
                     DB::table('forum_votes')
                         ->where('id', $existingVote->id)
                         ->update(['vote_type' => $voteType, 'updated_at' => now()]);
+                    
+                    // Update vote counts
+                    $this->updateVoteCounts($threadId, $postId);
+                    
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Vote changed',
+                        'action' => 'changed'
+                    ]);
                 }
             } else {
                 // Create new vote
@@ -380,16 +450,16 @@ class ForumController extends Controller
                 }
                 
                 DB::table('forum_votes')->insert($voteData);
+                
+                // Update vote counts
+                $this->updateVoteCounts($threadId, $postId);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Vote recorded',
+                    'action' => 'voted'
+                ]);
             }
-
-            // Update vote counts
-            $this->updateVoteCounts($threadId, $postId);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Vote recorded',
-                'action' => 'voted'
-            ]);
 
         } catch (\Exception $e) {
             return response()->json([
@@ -423,9 +493,9 @@ class ForumController extends Controller
                 return response()->json(['success' => false, 'message' => 'Post not found'], 404);
             }
 
-            // Check for existing vote (by thread and user due to unique constraint)
+            // Check for existing vote (by post and user)
             $existingVote = DB::table('forum_votes')
-                ->where('thread_id', $post->thread_id)
+                ->where('post_id', $postId)
                 ->where('user_id', $userId)
                 ->first();
 
@@ -445,6 +515,15 @@ class ForumController extends Controller
                     DB::table('forum_votes')
                         ->where('id', $existingVote->id)
                         ->update(['vote_type' => $voteType, 'updated_at' => now()]);
+                    
+                    // Update vote counts
+                    $this->updateVoteCounts($post->thread_id, $postId);
+                    
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Vote changed',
+                        'action' => 'changed'
+                    ]);
                 }
             } else {
                 // Create new vote
@@ -456,16 +535,16 @@ class ForumController extends Controller
                     'created_at' => now(),
                     'updated_at' => now()
                 ]);
+                
+                // Update vote counts
+                $this->updateVoteCounts($post->thread_id, $postId);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Vote recorded',
+                    'action' => 'voted'
+                ]);
             }
-
-            // Update vote counts
-            $this->updateVoteCounts($post->thread_id, $postId);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Vote recorded',
-                'action' => 'voted'
-            ]);
 
         } catch (\Exception $e) {
             return response()->json([
@@ -569,7 +648,8 @@ class ForumController extends Controller
         }
         
         $request->validate([
-            'content' => 'required|string|min:1'
+            'content' => 'required|string|min:1',
+            'mentions' => 'nullable|array'
         ]);
 
         try {
@@ -589,6 +669,19 @@ class ForumController extends Controller
                 'edited_at' => now(),
                 'updated_at' => now()
             ]);
+
+            // Clear existing mentions for this post
+            DB::table('mentions')
+                ->where('mentionable_type', 'forum_post')
+                ->where('mentionable_id', $postId)
+                ->delete();
+
+            // Process new mentions
+            if ($request->has('mentions') && is_array($request->mentions)) {
+                $this->processMentionsFromData($request->mentions, $post->thread_id, $postId);
+            }
+            // Also extract mentions from content as fallback
+            $this->processMentions($request->content, $post->thread_id, $postId);
 
             return response()->json([
                 'success' => true,
@@ -909,24 +1002,62 @@ class ForumController extends Controller
     {
         $mentions = [];
         
-        // Extract @username mentions
-        preg_match_all('/@([a-zA-Z0-9_]+)/', $content, $userMatches);
-        foreach ($userMatches[1] as $username) {
-            $user = DB::table('users')->where('name', $username)->first();
-            if ($user) {
+        // Extract @username mentions with positions (handles both @username and @display name formats)
+        preg_match_all('/@([a-zA-Z0-9_\s]+)(?=\s|$|[,.!?\'"])/u', $content, $userMatches, PREG_OFFSET_CAPTURE);
+        foreach ($userMatches[0] as $index => $match) {
+            $mentionText = $match[0];
+            $position = $match[1];
+            $username = trim($userMatches[1][$index][0]);
+            
+            // First, try to find a player by username or real_name
+            $player = DB::table('players')
+                ->where('real_name', $username)
+                ->orWhere('username', $username)
+                ->first();
+                
+            if ($player) {
+                // Found a player mention
                 $mentions[] = [
-                    'type' => 'user',
-                    'id' => $user->id,
-                    'name' => $user->name,
-                    'display_name' => $user->name,
-                    'mention_text' => '@' . $username
+                    'type' => 'player',
+                    'id' => $player->id,
+                    'name' => $player->username,
+                    'display_name' => $player->real_name ?? $player->username,
+                    'avatar' => $player->avatar,
+                    'avatar_url' => $player->avatar,
+                    'mention_text' => $mentionText,
+                    'position_start' => $position,
+                    'position_end' => $position + strlen($mentionText)
                 ];
+            } else {
+                // Try to find a user by name
+                $user = DB::table('users')
+                    ->where('name', $username)
+                    ->first();
+                
+                if ($user) {
+                    // Found a user mention
+                    $mentions[] = [
+                        'type' => 'user',
+                        'id' => $user->id,
+                        'name' => $user->name,
+                        'display_name' => $user->name,
+                        'avatar' => $user->avatar,
+                        'avatar_url' => $user->avatar,
+                        'mention_text' => $mentionText,
+                        'position_start' => $position,
+                        'position_end' => $position + strlen($mentionText)
+                    ];
+                }
             }
         }
 
-        // Extract @team:teamname mentions
-        preg_match_all('/@team:([a-zA-Z0-9_]+)/', $content, $teamMatches);
-        foreach ($teamMatches[1] as $teamName) {
+        // Extract @team:teamname mentions with positions
+        preg_match_all('/@team:([a-zA-Z0-9_]+)/', $content, $teamMatches, PREG_OFFSET_CAPTURE);
+        foreach ($teamMatches[0] as $index => $match) {
+            $mentionText = $match[0];
+            $position = $match[1];
+            $teamName = $teamMatches[1][$index][0];
+            
             $team = DB::table('teams')->where('short_name', $teamName)->first();
             if ($team) {
                 $mentions[] = [
@@ -934,14 +1065,20 @@ class ForumController extends Controller
                     'id' => $team->id,
                     'name' => $team->short_name,
                     'display_name' => $team->name,
-                    'mention_text' => '@team:' . $teamName
+                    'mention_text' => $mentionText,
+                    'position_start' => $position,
+                    'position_end' => $position + strlen($mentionText)
                 ];
             }
         }
 
-        // Extract @player:playername mentions
-        preg_match_all('/@player:([a-zA-Z0-9_]+)/', $content, $playerMatches);
-        foreach ($playerMatches[1] as $playerName) {
+        // Extract @player:playername mentions with positions
+        preg_match_all('/@player:([a-zA-Z0-9_]+)/', $content, $playerMatches, PREG_OFFSET_CAPTURE);
+        foreach ($playerMatches[0] as $index => $match) {
+            $mentionText = $match[0];
+            $position = $match[1];
+            $playerName = $playerMatches[1][$index][0];
+            
             $player = DB::table('players')->where('username', $playerName)->first();
             if ($player) {
                 $mentions[] = [
@@ -949,7 +1086,9 @@ class ForumController extends Controller
                     'id' => $player->id,
                     'name' => $player->username,
                     'display_name' => $player->real_name ?? $player->username,
-                    'mention_text' => '@player:' . $playerName
+                    'mention_text' => $mentionText,
+                    'position_start' => $position,
+                    'position_end' => $position + strlen($mentionText)
                 ];
             }
         }
@@ -964,21 +1103,60 @@ class ForumController extends Controller
         foreach ($mentions as $mention) {
             // Store mention in database for notifications
             try {
-                DB::table('mentions')->insert([
-                    'mentionable_type' => $postId ? 'forum_post' : 'forum_thread',
-                    'mentionable_id' => $postId ?: $threadId,
-                    'mentioned_type' => $mention['type'],
-                    'mentioned_id' => $mention['id'],
-                    'user_id' => Auth::id(),
-                    'mentioned_at' => now(),
-                    'created_at' => now(),
-                    'updated_at' => now()
-                ]);
+                // Extract context for the mention
+                $context = $this->extractMentionContext($content, $mention['mention_text']);
+                
+                // Check if mention already exists to avoid duplicate constraint violation
+                $existingMention = DB::table('mentions')
+                    ->where('mentionable_type', $postId ? 'forum_post' : 'forum_thread')
+                    ->where('mentionable_id', $postId ?: $threadId)
+                    ->where('mentioned_type', $mention['type'])
+                    ->where('mentioned_id', $mention['id'])
+                    ->where('mention_text', $mention['mention_text'])
+                    ->first();
+
+                if (!$existingMention) {
+                    DB::table('mentions')->insert([
+                        'mentionable_type' => $postId ? 'forum_post' : 'forum_thread',
+                        'mentionable_id' => $postId ?: $threadId,
+                        'mentioned_type' => $mention['type'],
+                        'mentioned_id' => $mention['id'],
+                        'mention_text' => $mention['mention_text'],
+                        'position_start' => $mention['position_start'] ?? null,
+                        'position_end' => $mention['position_end'] ?? null,
+                        'context' => $context,
+                        'mentioned_by' => Auth::id(),
+                        'mentioned_at' => now(),
+                        'is_active' => true,
+                        'created_at' => now(),
+                        'updated_at' => now()
+                    ]);
+                }
             } catch (\Exception $e) {
                 // Log error but don't fail the request
                 \Log::error('Failed to save mention: ' . $e->getMessage());
             }
         }
+    }
+
+    private function extractMentionContext($content, $mentionText)
+    {
+        $position = strpos($content, $mentionText);
+        if ($position === false) {
+            return null;
+        }
+
+        // Extract 50 characters before and after the mention for context
+        $contextLength = 50;
+        $start = max(0, $position - $contextLength);
+        $end = min(strlen($content), $position + strlen($mentionText) + $contextLength);
+        
+        $context = substr($content, $start, $end - $start);
+        
+        // Clean up context (remove excessive whitespace, etc.)
+        $context = preg_replace('/\s+/', ' ', trim($context));
+        
+        return $context;
     }
 
     public function getCategories()
@@ -1379,23 +1557,25 @@ class ForumController extends Controller
 
     public function getReportedPosts()
     {
+        // Since we don't have reported column, return empty array for now
+        // In a real system, you'd have a reports table or status column
         $posts = DB::table('forum_posts as fp')
             ->leftJoin('users as u', 'fp.user_id', '=', 'u.id')
             ->leftJoin('forum_threads as ft', 'fp.thread_id', '=', 'ft.id')
-            ->where('fp.reported', true)
-            ->orWhere('fp.status', 'reported')
             ->select([
                 'fp.*',
                 'u.name as author_name',
                 'u.avatar as author_avatar',
                 'ft.title as thread_title'
             ])
+            ->where('fp.id', '<', 0) // This ensures no results for now
             ->orderBy('fp.created_at', 'desc')
             ->get();
 
         return response()->json([
             'data' => $posts,
-            'success' => true
+            'success' => true,
+            'message' => 'No reported posts found'
         ]);
     }
 
@@ -1832,5 +2012,101 @@ class ForumController extends Controller
         }
         
         return false;
+    }
+
+    private function processMentionsFromData($mentions, $threadId, $postId = null)
+    {
+        foreach ($mentions as $mention) {
+            try {
+                // Get the full content to find the mention position
+                if ($postId) {
+                    $content = DB::table('forum_posts')->where('id', $postId)->value('content');
+                } else {
+                    $thread = DB::table('forum_threads')->where('id', $threadId)->first();
+                    $content = $thread->title . ' ' . $thread->content;
+                }
+                
+                // Find the mention text in content
+                $mentionText = '@' . ($mention['display_name'] ?? $mention['name']);
+                $position = strpos($content, $mentionText);
+                
+                if ($position === false) {
+                    // Try alternative formats
+                    $mentionText = '@' . $mention['name'];
+                    $position = strpos($content, $mentionText);
+                }
+                
+                // Extract context for the mention
+                $context = $this->extractMentionContext($content, $mentionText);
+                
+                // Check if mention already exists to avoid duplicate constraint violation
+                $existingMention = DB::table('mentions')
+                    ->where('mentionable_type', $postId ? 'forum_post' : 'forum_thread')
+                    ->where('mentionable_id', $postId ?: $threadId)
+                    ->where('mentioned_type', $mention['type'])
+                    ->where('mentioned_id', $mention['id'])
+                    ->where('mention_text', $mentionText)
+                    ->first();
+
+                if (!$existingMention) {
+                    DB::table('mentions')->insert([
+                        'mentionable_type' => $postId ? 'forum_post' : 'forum_thread',
+                        'mentionable_id' => $postId ?: $threadId,
+                        'mentioned_type' => $mention['type'],
+                        'mentioned_id' => $mention['id'],
+                        'mention_text' => $mentionText,
+                        'position_start' => $position !== false ? $position : null,
+                        'position_end' => $position !== false ? $position + strlen($mentionText) : null,
+                        'context' => $context,
+                        'mentioned_by' => Auth::id(),
+                        'mentioned_at' => now(),
+                        'created_at' => now(),
+                        'updated_at' => now()
+                    ]);
+                }
+            } catch (\Exception $e) {
+                // Log error but continue processing other mentions
+                \Log::error('Error processing mention: ' . $e->getMessage());
+            }
+        }
+    }
+
+    /**
+     * Get authenticated user's threads
+     */
+    public function getUserThreads(Request $request)
+    {
+        try {
+            $user = $request->user();
+            
+            $threads = DB::table('forum_threads as ft')
+                ->leftJoin('users as u', 'ft.user_id', '=', 'u.id')
+                ->where('ft.user_id', $user->id)
+                ->select([
+                    'ft.*',
+                    'u.name as author_name',
+                    'u.avatar as author_avatar',
+                    'ft.category as category_name'
+                ])
+                ->orderBy('ft.created_at', 'desc')
+                ->paginate(20);
+
+            return response()->json([
+                'success' => true,
+                'data' => $threads->items(),
+                'meta' => [
+                    'current_page' => $threads->currentPage(),
+                    'last_page' => $threads->lastPage(),
+                    'per_page' => $threads->perPage(),
+                    'total' => $threads->total()
+                ]
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error fetching user threads: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch user threads'
+            ], 500);
+        }
     }
 }

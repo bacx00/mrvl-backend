@@ -11,6 +11,7 @@ use App\Models\Mention;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 class NewsController extends Controller
@@ -32,12 +33,61 @@ class NewsController extends Controller
                 $query->where('n.category', $request->category);
             }
 
-            // Search functionality
+            // Enhanced search functionality including mentions
             if ($request->search) {
-                $query->where(function($q) use ($request) {
-                    $q->where('n.title', 'LIKE', "%{$request->search}%")
-                      ->orWhere('n.content', 'LIKE', "%{$request->search}%")
-                      ->orWhere('n.excerpt', 'LIKE', "%{$request->search}%");
+                $searchTerm = $request->search;
+                $query->where(function($q) use ($searchTerm) {
+                    // Search in title, content, and excerpt
+                    $q->where('n.title', 'LIKE', "%{$searchTerm}%")
+                      ->orWhere('n.content', 'LIKE', "%{$searchTerm}%")
+                      ->orWhere('n.excerpt', 'LIKE', "%{$searchTerm}%");
+                    
+                    // Search for mentioned users by name (support both @username and partial username)
+                    $q->orWhereExists(function($subQuery) use ($searchTerm) {
+                        $subQuery->select(DB::raw(1))
+                            ->from('mentions as m')
+                            ->join('users as u', 'm.mentioned_id', '=', 'u.id')
+                            ->where('m.mentionable_type', 'news')
+                            ->whereColumn('m.mentionable_id', 'n.id')
+                            ->where('m.mentioned_type', 'user')
+                            ->where(function($userQuery) use ($searchTerm) {
+                                $cleanSearch = str_replace('@', '', $searchTerm);
+                                $userQuery->where('u.name', 'LIKE', "%{$cleanSearch}%")
+                                    ->orWhere('m.mention_text', 'LIKE', "%{$searchTerm}%");
+                            });
+                    });
+                    
+                    // Search for mentioned teams
+                    $q->orWhereExists(function($subQuery) use ($searchTerm) {
+                        $subQuery->select(DB::raw(1))
+                            ->from('mentions as m')
+                            ->join('teams as t', 'm.mentioned_id', '=', 't.id')
+                            ->where('m.mentionable_type', 'news')
+                            ->whereColumn('m.mentionable_id', 'n.id')
+                            ->where('m.mentioned_type', 'team')
+                            ->where(function($teamQuery) use ($searchTerm) {
+                                $cleanSearch = str_replace(['@team:', '@'], '', $searchTerm);
+                                $teamQuery->where('t.name', 'LIKE', "%{$cleanSearch}%")
+                                    ->orWhere('t.short_name', 'LIKE', "%{$cleanSearch}%")
+                                    ->orWhere('m.mention_text', 'LIKE', "%{$searchTerm}%");
+                            });
+                    });
+                    
+                    // Search for mentioned players
+                    $q->orWhereExists(function($subQuery) use ($searchTerm) {
+                        $subQuery->select(DB::raw(1))
+                            ->from('mentions as m')
+                            ->join('players as p', 'm.mentioned_id', '=', 'p.id')
+                            ->where('m.mentionable_type', 'news')
+                            ->whereColumn('m.mentionable_id', 'n.id')
+                            ->where('m.mentioned_type', 'player')
+                            ->where(function($playerQuery) use ($searchTerm) {
+                                $cleanSearch = str_replace(['@player:', '@'], '', $searchTerm);
+                                $playerQuery->where('p.username', 'LIKE', "%{$cleanSearch}%")
+                                    ->orWhere('p.real_name', 'LIKE', "%{$cleanSearch}%")
+                                    ->orWhere('m.mention_text', 'LIKE', "%{$searchTerm}%");
+                            });
+                    });
                 });
             }
 
@@ -97,7 +147,11 @@ class NewsController extends Controller
                         'updated_at' => $article->updated_at,
                         'read_time' => $this->calculateReadTime($article->content)
                     ],
-                    'mentions' => $this->extractMentions($article->content),
+                    'mentions' => array_merge(
+                        $this->extractMentions($article->title),
+                        $this->extractMentions($article->excerpt ?? ''),
+                        $this->extractMentions($article->content)
+                    ),
                     'tags' => $article->tags ? json_decode($article->tags, true) : []
                 ];
             });
@@ -239,7 +293,7 @@ class NewsController extends Controller
             'title' => 'required|string|max:255',
             'content' => 'required|string|min:50',
             'excerpt' => 'nullable|string|max:500',
-            'category_id' => 'required|exists:news_categories,id',
+            'category' => 'required|string',
             'featured_image' => 'nullable|url',
             'tags' => 'nullable|array',
             'featured' => 'boolean',
@@ -264,7 +318,7 @@ class NewsController extends Controller
                 'slug' => $slug,
                 'content' => $request->content,
                 'excerpt' => $request->excerpt,
-                'category_id' => $request->category_id,
+                'category' => $request->category,
                 'author_id' => Auth::id(),
                 'featured_image' => $request->featured_image,
                 'tags' => $request->tags ? json_encode($request->tags) : null,
@@ -276,7 +330,11 @@ class NewsController extends Controller
                 'updated_at' => now()
             ]);
 
-            // Process mentions in content
+            // Process mentions from title, excerpt and content
+            $this->processMentions($request->title, $newsId);
+            if ($request->excerpt) {
+                $this->processMentions($request->excerpt, $newsId);
+            }
             $this->processMentions($request->content, $newsId);
 
             return response()->json([
@@ -305,7 +363,8 @@ class NewsController extends Controller
         
         $request->validate([
             'content' => 'required|string|min:1',
-            'parent_id' => 'nullable|exists:news_comments,id'
+            'parent_id' => 'nullable|exists:news_comments,id',
+            'mentions' => 'nullable|array'
         ]);
 
         try {
@@ -329,7 +388,11 @@ class NewsController extends Controller
                 ->where('id', $newsId)
                 ->increment('comments_count');
 
-            // Process mentions in comment
+            // Process mentions from frontend data
+            if ($request->has('mentions') && is_array($request->mentions)) {
+                $this->processMentionsFromData($request->mentions, $newsId, $commentId);
+            }
+            // Also extract mentions from content as fallback
             $this->processMentions($request->content, $newsId, $commentId);
 
             return response()->json([
@@ -367,11 +430,21 @@ class NewsController extends Controller
             $commentId = $request->comment_id;
 
             // Check for existing vote
-            $existingVote = DB::table('news_votes')
-                ->where('news_id', $newsId)
-                ->where('user_id', $userId)
-                ->where('comment_id', $commentId)
-                ->first();
+            if ($commentId) {
+                // Voting on a comment - check by comment_id only
+                $existingVote = DB::table('news_votes')
+                    ->where('user_id', $userId)
+                    ->where('comment_id', $commentId)
+                    ->whereNull('news_id')
+                    ->first();
+            } else {
+                // Voting on article - check by news_id only  
+                $existingVote = DB::table('news_votes')
+                    ->where('news_id', $newsId)
+                    ->where('user_id', $userId)
+                    ->whereNull('comment_id')
+                    ->first();
+            }
 
             if ($existingVote) {
                 if ($existingVote->vote_type === $voteType) {
@@ -389,27 +462,84 @@ class NewsController extends Controller
                     DB::table('news_votes')
                         ->where('id', $existingVote->id)
                         ->update(['vote_type' => $voteType, 'updated_at' => now()]);
+                    
+                    // Update vote counts
+                    $this->updateNewsVoteCounts($newsId, $commentId);
+                    
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Vote changed',
+                        'action' => 'changed'
+                    ]);
                 }
             } else {
-                // Create new vote
-                DB::table('news_votes')->insert([
-                    'news_id' => $newsId,
-                    'comment_id' => $commentId,
-                    'user_id' => $userId,
-                    'vote_type' => $voteType,
-                    'created_at' => now(),
-                    'updated_at' => now()
-                ]);
+                // Create new vote with duplicate protection
+                try {
+                    if ($commentId) {
+                        // Voting on a comment - only set comment_id
+                        DB::table('news_votes')->insert([
+                            'news_id' => null,
+                            'comment_id' => $commentId,
+                            'user_id' => $userId,
+                            'vote_type' => $voteType,
+                            'created_at' => now(),
+                            'updated_at' => now()
+                        ]);
+                    } else {
+                        // Voting on article - only set news_id
+                        DB::table('news_votes')->insert([
+                            'news_id' => $newsId,
+                            'comment_id' => null,
+                            'user_id' => $userId,
+                            'vote_type' => $voteType,
+                            'created_at' => now(),
+                            'updated_at' => now()
+                        ]);
+                    }
+                    
+                    // Update vote counts
+                    $this->updateNewsVoteCounts($newsId, $commentId);
+
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Vote recorded',
+                        'action' => 'voted'
+                    ]);
+                } catch (\Illuminate\Database\QueryException $e) {
+                    // Handle duplicate key constraint
+                    if ($e->getCode() === '23000') {
+                        // Re-check for existing vote and update it
+                        if ($commentId) {
+                            $existingVote = DB::table('news_votes')
+                                ->where('user_id', $userId)
+                                ->where('comment_id', $commentId)
+                                ->whereNull('news_id')
+                                ->first();
+                        } else {
+                            $existingVote = DB::table('news_votes')
+                                ->where('news_id', $newsId)
+                                ->where('user_id', $userId)
+                                ->whereNull('comment_id')
+                                ->first();
+                        }
+                        
+                        if ($existingVote) {
+                            DB::table('news_votes')
+                                ->where('id', $existingVote->id)
+                                ->update(['vote_type' => $voteType, 'updated_at' => now()]);
+                            
+                            $this->updateNewsVoteCounts($newsId, $commentId);
+                            
+                            return response()->json([
+                                'success' => true,
+                                'message' => 'Vote updated',
+                                'action' => 'changed'
+                            ]);
+                        }
+                    }
+                    throw $e; // Re-throw if not a duplicate key error
+                }
             }
-
-            // Update vote counts
-            $this->updateNewsVoteCounts($newsId, $commentId);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Vote recorded',
-                'action' => 'voted'
-            ]);
 
         } catch (\Exception $e) {
             return response()->json([
@@ -418,6 +548,7 @@ class NewsController extends Controller
             ], 500);
         }
     }
+
 
     // Missing CRUD methods for comments
     public function updateComment(Request $request, $commentId)
@@ -452,8 +583,6 @@ class NewsController extends Controller
                 ->where('id', $commentId)
                 ->update([
                     'content' => $request->content,
-                    'is_edited' => true,
-                    'edited_at' => now(),
                     'updated_at' => now()
                 ]);
 
@@ -499,11 +628,11 @@ class NewsController extends Controller
                 ], 403);
             }
 
-            // Soft delete by updating status
+            // Soft delete by updating deleted_at
             DB::table('news_comments')
                 ->where('id', $commentId)
                 ->update([
-                    'status' => 'deleted',
+                    'deleted_at' => now(),
                     'updated_at' => now()
                 ]);
 
@@ -552,10 +681,11 @@ class NewsController extends Controller
             $userId = Auth::id();
             $voteType = $request->vote_type;
 
-            // Check for existing vote
+            // Check for existing vote on this specific comment
             $existingVote = DB::table('news_votes')
-                ->where('comment_id', $commentId)
                 ->where('user_id', $userId)
+                ->where('comment_id', $commentId)
+                ->whereNull('news_id') // Only comment votes, not article votes
                 ->first();
 
             if ($existingVote) {
@@ -574,27 +704,63 @@ class NewsController extends Controller
                     DB::table('news_votes')
                         ->where('id', $existingVote->id)
                         ->update(['vote_type' => $voteType, 'updated_at' => now()]);
+                    
+                    // Update vote counts
+                    $this->updateNewsVoteCounts($comment->news_id, $commentId);
+                    
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Vote changed',
+                        'action' => 'changed'
+                    ]);
                 }
             } else {
-                // Create new vote
-                DB::table('news_votes')->insert([
-                    'news_id' => $comment->news_id,
-                    'comment_id' => $commentId,
-                    'user_id' => $userId,
-                    'vote_type' => $voteType,
-                    'created_at' => now(),
-                    'updated_at' => now()
-                ]);
+                // Create new vote with duplicate protection
+                try {
+                    DB::table('news_votes')->insert([
+                        'news_id' => null, // Don't include news_id for comment votes to avoid constraint conflicts
+                        'comment_id' => $commentId,
+                        'user_id' => $userId,
+                        'vote_type' => $voteType,
+                        'created_at' => now(),
+                        'updated_at' => now()
+                    ]);
+                    
+                    // Update vote counts
+                    $this->updateNewsVoteCounts($comment->news_id, $commentId);
+
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Vote recorded',
+                        'action' => 'voted'
+                    ]);
+                } catch (\Illuminate\Database\QueryException $e) {
+                    // Handle duplicate key constraint
+                    if ($e->getCode() === '23000') {
+                        // Re-check for existing vote and update it
+                        $existingVote = DB::table('news_votes')
+                            ->where('user_id', $userId)
+                            ->where('comment_id', $commentId)
+                            ->whereNull('news_id') // Only comment votes
+                            ->first();
+                        
+                        if ($existingVote) {
+                            DB::table('news_votes')
+                                ->where('id', $existingVote->id)
+                                ->update(['vote_type' => $voteType, 'updated_at' => now()]);
+                            
+                            $this->updateNewsVoteCounts($comment->news_id, $commentId);
+                            
+                            return response()->json([
+                                'success' => true,
+                                'message' => 'Vote updated',
+                                'action' => 'changed'
+                            ]);
+                        }
+                    }
+                    throw $e; // Re-throw if not a duplicate key error
+                }
             }
-
-            // Update vote counts
-            $this->updateNewsVoteCounts($comment->news_id, $commentId);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Vote recorded',
-                'action' => 'voted'
-            ]);
 
         } catch (\Exception $e) {
             return response()->json([
@@ -611,50 +777,60 @@ class NewsController extends Controller
         $comments = DB::table('news_comments as nc')
             ->leftJoin('users as u', 'nc.user_id', '=', 'u.id')
             ->where('nc.news_id', $newsId)
-            ->where('nc.status', 'active')
+            ->whereNull('nc.deleted_at')
             ->select([
                 'nc.*',
                 'u.name as author_name',
                 'u.avatar as author_avatar'
             ])
-            ->orderBy('nc.created_at', 'asc')
+            ->orderBy('nc.created_at', 'desc')
             ->get();
 
         // Build nested structure with flairs and profile pictures
         $nestedComments = [];
         $commentMap = [];
 
+        // First pass: Build all comment objects
         foreach ($comments as $comment) {
             $commentData = [
                 'id' => $comment->id,
                 'content' => $comment->content,
                 'author' => $this->getUserWithFlairs($comment->user_id),
                 'stats' => [
-                    'score' => $comment->score ?? 0,
-                    'upvotes' => $comment->upvotes ?? 0,
-                    'downvotes' => $comment->downvotes ?? 0
+                    'score' => ($comment->likes ?? 0) - ($comment->dislikes ?? 0),
+                    'upvotes' => $comment->likes ?? 0,
+                    'downvotes' => $comment->dislikes ?? 0
                 ],
                 'meta' => [
                     'created_at' => $comment->created_at,
                     'updated_at' => $comment->updated_at,
-                    'edited' => $comment->created_at !== $comment->updated_at
+                    'edited' => false
                 ],
                 'mentions' => $this->extractMentions($comment->content),
                 'user_vote' => $this->getUserCommentVote($comment->id),
-                'replies' => []
+                'replies' => [],
+                'parent_id' => $comment->parent_id
             ];
 
             $commentMap[$comment->id] = $commentData;
+        }
 
-            if ($comment->parent_id) {
-                // This is a reply
-                if (isset($commentMap[$comment->parent_id])) {
-                    $commentMap[$comment->parent_id]['replies'][] = &$commentMap[$comment->id];
+        // Second pass: Build relationships and collect top-level comments
+        foreach ($commentMap as $commentId => &$commentData) {
+            if ($commentData['parent_id']) {
+                // This is a reply - add to parent's replies
+                if (isset($commentMap[$commentData['parent_id']])) {
+                    $commentMap[$commentData['parent_id']]['replies'][] = &$commentData;
                 }
             } else {
                 // This is a top-level comment
-                $nestedComments[] = &$commentMap[$comment->id];
+                $nestedComments[] = &$commentData;
             }
+        }
+        
+        // Remove parent_id from final output as it's not needed on frontend
+        foreach ($commentMap as &$commentData) {
+            unset($commentData['parent_id']);
         }
 
         return $nestedComments;
@@ -687,9 +863,8 @@ class NewsController extends Controller
                 ->count();
 
             DB::table('news_comments')->where('id', $commentId)->update([
-                'upvotes' => $upvotes,
-                'downvotes' => $downvotes,
-                'score' => $upvotes - $downvotes
+                'likes' => $upvotes,
+                'dislikes' => $downvotes
             ]);
         } else {
             // Update news vote counts
@@ -716,11 +891,22 @@ class NewsController extends Controller
     public function getCategories()
     {
         try {
-            $categories = DB::table('news_categories')
-                ->where('active', true)
-                ->orderBy('sort_order')
-                ->orderBy('name')
-                ->get();
+            // Check if table exists
+            if (!Schema::hasTable('news_categories')) {
+                // Return default categories
+                $categories = collect([
+                    ['id' => 1, 'name' => 'General', 'slug' => 'general', 'icon' => 'newspaper', 'color' => '#3B82F6', 'sort_order' => 1],
+                    ['id' => 2, 'name' => 'Patch Notes', 'slug' => 'patch-notes', 'icon' => 'wrench', 'color' => '#10B981', 'sort_order' => 2],
+                    ['id' => 3, 'name' => 'Esports', 'slug' => 'esports', 'icon' => 'trophy', 'color' => '#F59E0B', 'sort_order' => 3],
+                    ['id' => 4, 'name' => 'Community', 'slug' => 'community', 'icon' => 'users', 'color' => '#8B5CF6', 'sort_order' => 4],
+                    ['id' => 5, 'name' => 'Updates', 'slug' => 'updates', 'icon' => 'sparkles', 'color' => '#EF4444', 'sort_order' => 5],
+                ]);
+            } else {
+                $categories = DB::table('news_categories')
+                    ->orderBy('sort_order')
+                    ->orderBy('name')
+                    ->get();
+            }
 
             return response()->json([
                 'data' => $categories,
@@ -739,36 +925,64 @@ class NewsController extends Controller
     {
         $mentions = [];
         
-        // Extract @username mentions (users)
-        preg_match_all('/@([a-zA-Z0-9_]+)/', $content, $userMatches, PREG_OFFSET_CAPTURE);
-        foreach ($userMatches[1] as $match) {
-            $username = $match[0];
-            $position = $userMatches[0][array_search($match, $userMatches[1])][1];
+        // Extract @username mentions with positions (handles both @username and @display name formats)
+        preg_match_all('/@([a-zA-Z0-9_\s]+)(?=\s|$|[,.!?\'"])/u', $content, $userMatches, PREG_OFFSET_CAPTURE);
+        foreach ($userMatches[0] as $index => $match) {
+            $mentionText = $match[0];
+            $position = $match[1];
+            $username = trim($userMatches[1][$index][0]);
             
-            $user = DB::table('users')->where('name', $username)->first();
-            if ($user) {
-                $mentionText = "@{$username}";
+            // First, try to find a player by username or real_name
+            $player = DB::table('players')
+                ->where('real_name', $username)
+                ->orWhere('username', $username)
+                ->first();
+                
+            if ($player) {
+                // Found a player mention
                 $mentions[] = [
-                    'type' => 'user',
-                    'id' => $user->id,
-                    'name' => $user->name,
-                    'display_name' => $user->name,
+                    'type' => 'player',
+                    'id' => $player->id,
+                    'name' => $player->username,
+                    'display_name' => $player->real_name ?? $player->username,
+                    'avatar' => $player->avatar,
+                    'avatar_url' => $player->avatar,
                     'mention_text' => $mentionText,
                     'position_start' => $position,
                     'position_end' => $position + strlen($mentionText)
                 ];
+            } else {
+                // Try to find a user by name
+                $user = DB::table('users')
+                    ->where('name', $username)
+                    ->first();
+                
+                if ($user) {
+                    // Found a user mention
+                    $mentions[] = [
+                        'type' => 'user',
+                        'id' => $user->id,
+                        'name' => $user->name,
+                        'display_name' => $user->name,
+                        'avatar' => $user->avatar,
+                        'avatar_url' => $user->avatar,
+                        'mention_text' => $mentionText,
+                        'position_start' => $position,
+                        'position_end' => $position + strlen($mentionText)
+                    ];
+                }
             }
         }
 
-        // Extract @team:teamname mentions
+        // Extract @team:teamname mentions with positions
         preg_match_all('/@team:([a-zA-Z0-9_]+)/', $content, $teamMatches, PREG_OFFSET_CAPTURE);
-        foreach ($teamMatches[1] as $match) {
-            $teamName = $match[0];
-            $position = $teamMatches[0][array_search($match, $teamMatches[1])][1];
+        foreach ($teamMatches[0] as $index => $match) {
+            $mentionText = $match[0];
+            $position = $match[1];
+            $teamName = $teamMatches[1][$index][0];
             
             $team = DB::table('teams')->where('short_name', $teamName)->first();
             if ($team) {
-                $mentionText = "@team:{$teamName}";
                 $mentions[] = [
                     'type' => 'team',
                     'id' => $team->id,
@@ -781,15 +995,15 @@ class NewsController extends Controller
             }
         }
 
-        // Extract @player:playername mentions
+        // Extract @player:playername mentions with positions
         preg_match_all('/@player:([a-zA-Z0-9_]+)/', $content, $playerMatches, PREG_OFFSET_CAPTURE);
-        foreach ($playerMatches[1] as $match) {
-            $playerName = $match[0];
-            $position = $playerMatches[0][array_search($match, $playerMatches[1])][1];
+        foreach ($playerMatches[0] as $index => $match) {
+            $mentionText = $match[0];
+            $position = $match[1];
+            $playerName = $playerMatches[1][$index][0];
             
             $player = DB::table('players')->where('username', $playerName)->first();
             if ($player) {
-                $mentionText = "@player:{$playerName}";
                 $mentions[] = [
                     'type' => 'player',
                     'id' => $player->id,
@@ -844,20 +1058,32 @@ class NewsController extends Controller
                 $context = $this->extractMentionContext($content, $mention['mention_text']);
                 
                 // Store mention in database
-                DB::table('mentions')->insert([
-                    'mentionable_type' => $commentId ? 'news_comment' : 'news',
-                    'mentionable_id' => $commentId ?: $newsId,
-                    'mentioned_type' => $mention['type'],
-                    'mentioned_id' => $mention['id'],
-                    'mention_text' => $mention['mention_text'],
-                    'position_start' => $mention['position_start'] ?? null,
-                    'position_end' => $mention['position_end'] ?? null,
-                    'context' => $context,
-                    'mentioned_by' => Auth::id(),
-                    'mentioned_at' => now(),
-                    'created_at' => now(),
-                    'updated_at' => now()
-                ]);
+                // Check if mention already exists to avoid duplicate constraint violation
+                $existingMention = DB::table('mentions')
+                    ->where('mentionable_type', $commentId ? 'news_comment' : 'news')
+                    ->where('mentionable_id', $commentId ?: $newsId)
+                    ->where('mentioned_type', $mention['type'])
+                    ->where('mentioned_id', $mention['id'])
+                    ->where('mention_text', $mention['mention_text'])
+                    ->first();
+
+                if (!$existingMention) {
+                    DB::table('mentions')->insert([
+                        'mentionable_type' => $commentId ? 'news_comment' : 'news',
+                        'mentionable_id' => $commentId ?: $newsId,
+                        'mentioned_type' => $mention['type'],
+                        'mentioned_id' => $mention['id'],
+                        'mention_text' => $mention['mention_text'],
+                        'position_start' => $mention['position_start'] ?? null,
+                        'position_end' => $mention['position_end'] ?? null,
+                        'context' => $context,
+                        'mentioned_by' => Auth::id(),
+                        'mentioned_at' => now(),
+                        'is_active' => true,
+                        'created_at' => now(),
+                        'updated_at' => now()
+                    ]);
+                }
             } catch (\Exception $e) {
                 \Log::error('Error processing mention: ' . $e->getMessage());
             }
@@ -1133,7 +1359,7 @@ class NewsController extends Controller
                 ->leftJoin('users as u', 'nc.user_id', '=', 'u.id')
                 ->leftJoin('teams as t', 'u.team_flair_id', '=', 't.id')
                 ->where('nc.news_id', $newsId)
-                ->where('nc.status', 'active')
+                ->whereNull('nc.deleted_at')
                 ->select([
                     'nc.*',
                     'u.name as author_name',
@@ -1186,8 +1412,8 @@ class NewsController extends Controller
                     'created_at' => $comment->created_at,
                     'updated_at' => $comment->updated_at,
                     'parent_id' => $comment->parent_id,
-                    'upvotes' => $votes->upvotes ?? 0,
-                    'downvotes' => $votes->downvotes ?? 0,
+                    'upvotes' => $votes->upvotes ?? ($comment->likes ?? 0),
+                    'downvotes' => $votes->downvotes ?? ($comment->dislikes ?? 0),
                     'user_vote' => $voteData[$commentId] ?? null,
                     'author' => [
                         'id' => $comment->user_id,
@@ -1276,7 +1502,6 @@ class NewsController extends Controller
                 ->where('id', $newsId)
                 ->update([
                     'featured' => true,
-                    'featured_at' => now(),
                     'updated_at' => now()
                 ]);
 
@@ -1314,7 +1539,6 @@ class NewsController extends Controller
                 ->where('id', $newsId)
                 ->update([
                     'featured' => false,
-                    'featured_at' => null,
                     'updated_at' => now()
                 ]);
 
@@ -1470,7 +1694,7 @@ class NewsController extends Controller
                     DB::table('news_comments')
                         ->where('id', $commentId)
                         ->update([
-                            'status' => 'moderated',
+                            'deleted_at' => now(),
                             'updated_at' => now()
                         ]);
 
@@ -1492,8 +1716,6 @@ class NewsController extends Controller
                         ->where('id', $commentId)
                         ->update([
                             'content' => $request->content,
-                            'is_edited' => true,
-                            'edited_at' => now(),
                             'updated_at' => now()
                         ]);
 
@@ -1734,5 +1956,289 @@ class NewsController extends Controller
     public function getAllNews(Request $request)
     {
         return $this->adminIndex($request);
+    }
+
+    // ========================================
+    // NEWS CATEGORIES MANAGEMENT
+    // ========================================
+
+    public function getCategoriesAdmin(Request $request)
+    {
+        try {
+            $categories = DB::table('news_categories')
+                ->orderBy('sort_order')
+                ->orderBy('name')
+                ->get();
+
+            return response()->json([
+                'data' => $categories,
+                'success' => true
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching categories: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function storeCategory(Request $request)
+    {
+        // Check if user has admin/moderator permissions
+        if (!Auth::check() || !in_array(Auth::user()->role, ['admin', 'moderator'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized - Admin or Moderator access required'
+            ], 403);
+        }
+
+        $request->validate([
+            'name' => 'required|string|max:255|unique:news_categories,name',
+            'description' => 'nullable|string|max:500',
+            'sort_order' => 'nullable|integer|min:0'
+        ]);
+
+        try {
+            $slug = Str::slug($request->name);
+            $counter = 1;
+            $originalSlug = $slug;
+            
+            // Ensure unique slug
+            while (DB::table('news_categories')->where('slug', $slug)->exists()) {
+                $slug = $originalSlug . '-' . $counter;
+                $counter++;
+            }
+
+            $categoryId = DB::table('news_categories')->insertGetId([
+                'name' => $request->name,
+                'slug' => $slug,
+                'description' => $request->description,
+                'sort_order' => $request->sort_order ?? 999,
+                'is_default' => 0,
+                'created_by' => Auth::id(),
+                'created_at' => now(),
+                'updated_at' => now()
+            ]);
+
+            return response()->json([
+                'data' => ['id' => $categoryId, 'slug' => $slug],
+                'success' => true,
+                'message' => 'Category created successfully'
+            ], 201);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error creating category: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function updateCategory(Request $request, $categoryId)
+    {
+        // Check if user has admin/moderator permissions
+        if (!Auth::check() || !in_array(Auth::user()->role, ['admin', 'moderator'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized - Admin or Moderator access required'
+            ], 403);
+        }
+
+        $request->validate([
+            'name' => 'required|string|max:255|unique:news_categories,name,' . $categoryId,
+            'description' => 'nullable|string|max:500',
+            'sort_order' => 'nullable|integer|min:0'
+        ]);
+
+        try {
+            $category = DB::table('news_categories')->where('id', $categoryId)->first();
+            if (!$category) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Category not found'
+                ], 404);
+            }
+
+            // Generate new slug if name changed
+            $slug = $category->slug;
+            if ($request->name !== $category->name) {
+                $slug = Str::slug($request->name);
+                $counter = 1;
+                $originalSlug = $slug;
+                
+                while (DB::table('news_categories')->where('slug', $slug)->where('id', '!=', $categoryId)->exists()) {
+                    $slug = $originalSlug . '-' . $counter;
+                    $counter++;
+                }
+            }
+
+            DB::table('news_categories')->where('id', $categoryId)->update([
+                'name' => $request->name,
+                'slug' => $slug,
+                'description' => $request->description,
+                'sort_order' => $request->sort_order ?? $category->sort_order,
+                'updated_at' => now()
+            ]);
+
+            return response()->json([
+                'data' => ['id' => $categoryId, 'slug' => $slug],
+                'success' => true,
+                'message' => 'Category updated successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating category: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function destroyCategory($categoryId)
+    {
+        // Check if user has admin permissions (only admin can delete categories)
+        if (!Auth::check() || Auth::user()->role !== 'admin') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized - Admin access required'
+            ], 403);
+        }
+
+        try {
+            $category = DB::table('news_categories')->where('id', $categoryId)->first();
+            if (!$category) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Category not found'
+                ], 404);
+            }
+
+            // Check if category is a default category
+            if ($category->is_default) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot delete default categories'
+                ], 400);
+            }
+
+            // Check if category is in use
+            $newsCount = DB::table('news')->where('category', $category->name)->count();
+            if ($newsCount > 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Cannot delete category: {$newsCount} news articles are using this category. Please reassign them first."
+                ], 400);
+            }
+
+            DB::table('news_categories')->where('id', $categoryId)->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Category deleted successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error deleting category: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function reorderCategories(Request $request)
+    {
+        // Check if user has admin/moderator permissions
+        if (!Auth::check() || !in_array(Auth::user()->role, ['admin', 'moderator'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized - Admin or Moderator access required'
+            ], 403);
+        }
+
+        $request->validate([
+            'categories' => 'required|array',
+            'categories.*.id' => 'required|integer|exists:news_categories,id',
+            'categories.*.sort_order' => 'required|integer|min:0'
+        ]);
+
+        try {
+            foreach ($request->categories as $categoryData) {
+                DB::table('news_categories')
+                    ->where('id', $categoryData['id'])
+                    ->update([
+                        'sort_order' => $categoryData['sort_order'],
+                        'updated_at' => now()
+                    ]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Categories reordered successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error reordering categories: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    private function processMentionsFromData($mentions, $newsId, $commentId = null)
+    {
+        foreach ($mentions as $mention) {
+            try {
+                // Get the full content to find the mention position
+                if ($commentId) {
+                    $content = DB::table('news_comments')->where('id', $commentId)->value('content');
+                } else {
+                    $article = DB::table('news')->where('id', $newsId)->first();
+                    $content = $article->title . ' ' . $article->content;
+                }
+                
+                // Find the mention text in content
+                $mentionText = '@' . ($mention['display_name'] ?? $mention['name']);
+                $position = strpos($content, $mentionText);
+                
+                if ($position === false) {
+                    // Try alternative formats
+                    $mentionText = '@' . $mention['name'];
+                    $position = strpos($content, $mentionText);
+                }
+                
+                // Extract context for the mention
+                $context = $this->extractMentionContext($content, $mentionText);
+                
+                // Check if mention already exists to avoid duplicate constraint violation
+                $existingMention = DB::table('mentions')
+                    ->where('mentionable_type', $commentId ? 'news_comment' : 'news')
+                    ->where('mentionable_id', $commentId ?: $newsId)
+                    ->where('mentioned_type', $mention['type'])
+                    ->where('mentioned_id', $mention['id'])
+                    ->where('mention_text', $mentionText)
+                    ->first();
+
+                if (!$existingMention) {
+                    DB::table('mentions')->insert([
+                        'mentionable_type' => $commentId ? 'news_comment' : 'news',
+                        'mentionable_id' => $commentId ?: $newsId,
+                        'mentioned_type' => $mention['type'],
+                        'mentioned_id' => $mention['id'],
+                        'mention_text' => $mentionText,
+                        'position_start' => $position !== false ? $position : null,
+                        'position_end' => $position !== false ? $position + strlen($mentionText) : null,
+                        'context' => $context,
+                        'mentioned_by' => Auth::id(),
+                        'mentioned_at' => now(),
+                        'is_active' => true,
+                        'created_at' => now(),
+                        'updated_at' => now()
+                    ]);
+                }
+            } catch (\Exception $e) {
+                // Log error but continue processing other mentions
+                \Log::error('Error processing mention: ' . $e->getMessage());
+            }
+        }
     }
 }

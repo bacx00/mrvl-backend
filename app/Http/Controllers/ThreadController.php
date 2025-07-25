@@ -3,23 +3,22 @@
 namespace App\Http\Controllers;
 
 use App\Models\Thread;
-use App\Models\Post;
 use Illuminate\Http\Request;
 
 class ThreadController extends Controller
 {
     public function index()
     {
-        // List all threads with author and post count
-        $threads = Thread::with('user')->withCount('posts')
+        // List all threads with author information
+        $threads = Thread::with('user')
                          ->orderBy('created_at', 'desc')->get();
         return response()->json($threads);
     }
 
     public function show(Thread $thread)
     {
-        // Load thread author and all posts (with each post's author)
-        $thread->load(['user', 'posts.user']);
+        // Load thread with author information
+        $thread->load('user');
         return response()->json($thread);
     }
 
@@ -30,15 +29,11 @@ class ThreadController extends Controller
             'content' => 'required|string'
         ]);
         $user = $request->user();
-        // Create the thread and its first post atomically
+        // Create the thread with content
         $thread = Thread::create([
             'title'   => $data['title'],
+            'content' => $data['content'],
             'user_id' => $user->id
-        ]);
-        Post::create([
-            'thread_id' => $thread->id,
-            'user_id'   => $user->id,
-            'content'   => $data['content']
         ]);
         return response()->json([
             'message'   => 'Thread created',

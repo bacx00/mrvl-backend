@@ -65,6 +65,9 @@ class EventController extends Controller
                 case 'oldest':
                     $query->orderBy('e.start_date', 'asc');
                     break;
+                case 'all': // NEW: Show all events without date filtering
+                    $query->orderBy('e.start_date', 'desc');
+                    break;
                 default: // upcoming
                     $query->where('e.start_date', '>=', now())
                           ->orderBy('e.start_date', 'asc');
@@ -140,13 +143,49 @@ class EventController extends Controller
         }
     }
 
-    public function show($slug)
+    /**
+     * Get active events suitable for match creation
+     * Returns upcoming and ongoing events
+     */
+    public function getActiveEvents()
     {
         try {
-            // Get event by slug
+            $events = DB::table('events')
+                ->whereIn('status', ['upcoming', 'ongoing'])
+                ->orWhere(function($query) {
+                    // Also include events where current date is between start and end
+                    $query->where('start_date', '<=', now())
+                          ->where('end_date', '>=', now());
+                })
+                ->orderBy('start_date', 'desc')
+                ->get(['id', 'name', 'status', 'start_date', 'end_date', 'type', 'region']);
+
+            return response()->json([
+                'data' => $events,
+                'success' => true
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching active events: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function show($idOrSlug)
+    {
+        try {
+            // Get event by ID or slug
             $event = DB::table('events as e')
                 ->leftJoin('users as u', 'e.organizer_id', '=', 'u.id')
-                ->where('e.slug', $slug)
+                ->where(function($query) use ($idOrSlug) {
+                    // Check if it's numeric (ID) or string (slug)
+                    if (is_numeric($idOrSlug)) {
+                        $query->where('e.id', $idOrSlug);
+                    } else {
+                        $query->where('e.slug', $idOrSlug);
+                    }
+                })
                 ->select([
                     'e.*',
                     'u.name as organizer_name',
@@ -336,53 +375,142 @@ class EventController extends Controller
         $this->authorize('register-team');
         
         $request->validate([
-            'team_id' => 'required|exists:teams,id'
+            'team_id' => 'required|exists:teams,id',
+            'contact_email' => 'nullable|email',
+            'contact_phone' => 'nullable|string|max:20',
+            'notes' => 'nullable|string|max:500'
         ]);
 
+        DB::beginTransaction();
         try {
-            $event = DB::table('events')->where('id', $eventId)->first();
+            // Use Eloquent for consistency
+            $event = Event::find($eventId);
             if (!$event) {
-                return response()->json(['success' => false, 'message' => 'Event not found'], 404);
+                return response()->json([
+                    'success' => false, 
+                    'message' => 'Event not found'
+                ], 404);
             }
 
-            // Check if registration is open
-            if (!$this->isRegistrationOpen($event)) {
-                return response()->json(['success' => false, 'message' => 'Registration is closed'], 400);
+            // Verify the team belongs to the authenticated user or they have permission
+            $team = Team::findOrFail($request->team_id);
+            if ($team->owner_id !== auth()->id() && !auth()->user()->can('manage-all-teams')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You do not have permission to register this team'
+                ], 403);
+            }
+
+            // Check if registration is open using Event model method
+            if (!$event->canRegisterTeam()) {
+                $reasons = [];
+                if (!$event->isRegistrationOpen()) {
+                    $reasons[] = 'Registration period has ended or not started';
+                }
+                if ($event->current_team_count >= $event->max_teams) {
+                    $reasons[] = 'Event is full';
+                }
+                
+                return response()->json([
+                    'success' => false, 
+                    'message' => 'Cannot register team',
+                    'reasons' => $reasons,
+                    'data' => [
+                        'registration_start' => $event->registration_start,
+                        'registration_end' => $event->registration_end,
+                        'current_teams' => $event->current_team_count,
+                        'max_teams' => $event->max_teams
+                    ]
+                ], 400);
             }
 
             // Check if team is already registered
-            $existingRegistration = DB::table('event_teams')
-                ->where('event_id', $eventId)
-                ->where('team_id', $request->team_id)
-                ->first();
-
-            if ($existingRegistration) {
-                return response()->json(['success' => false, 'message' => 'Team already registered'], 400);
+            if ($event->teams()->where('team_id', $request->team_id)->exists()) {
+                return response()->json([
+                    'success' => false, 
+                    'message' => 'Team is already registered for this event'
+                ], 400);
             }
 
-            // Check if event is full
-            $currentTeamCount = DB::table('event_teams')->where('event_id', $eventId)->count();
-            if ($currentTeamCount >= $event->max_teams) {
-                return response()->json(['success' => false, 'message' => 'Event is full'], 400);
-            }
+            // Calculate seed automatically
+            $maxSeed = $event->teams()->max('event_teams.seed') ?? 0;
+            $seed = $maxSeed + 1;
 
-            // Register team
-            DB::table('event_teams')->insert([
-                'event_id' => $eventId,
-                'team_id' => $request->team_id,
+            // Register team with all required fields
+            $event->teams()->attach($request->team_id, [
+                'seed' => $seed,
+                'status' => 'pending', // Start as pending, admin can confirm
                 'registered_at' => now(),
-                'status' => 'confirmed',
-                'seed' => $currentTeamCount + 1,
-                'created_at' => now(),
-                'updated_at' => now()
+                'registration_data' => json_encode([
+                    'contact_email' => $request->contact_email,
+                    'contact_phone' => $request->contact_phone,
+                    'notes' => $request->notes,
+                    'registered_by' => auth()->id()
+                ]),
+                'placement' => null,
+                'prize_money' => 0,
+                'points' => 0
             ]);
+
+            // Create initial standing
+            EventStanding::create([
+                'event_id' => $event->id,
+                'team_id' => $request->team_id,
+                'position' => $event->teams()->count(),
+                'wins' => 0,
+                'losses' => 0,
+                'maps_won' => 0,
+                'maps_lost' => 0,
+                'map_differential' => 0,
+                'points' => 0,
+                'status' => 'active'
+            ]);
+
+            DB::commit();
+
+            // Send notification to event organizer
+            try {
+                if ($event->organizer) {
+                    // You can implement notification logic here
+                    \Log::info('Team registration notification', [
+                        'event_id' => $event->id,
+                        'team_id' => $team->id,
+                        'organizer_id' => $event->organizer_id
+                    ]);
+                }
+            } catch (\Exception $e) {
+                // Don't fail the registration if notification fails
+                \Log::error('Failed to send registration notification: ' . $e->getMessage());
+            }
 
             return response()->json([
                 'success' => true,
-                'message' => 'Team registered successfully'
+                'message' => 'Team registered successfully',
+                'data' => [
+                    'team' => [
+                        'id' => $team->id,
+                        'name' => $team->name,
+                        'seed' => $seed,
+                        'status' => 'pending'
+                    ],
+                    'event' => [
+                        'id' => $event->id,
+                        'name' => $event->name,
+                        'current_teams' => $event->teams()->count(),
+                        'max_teams' => $event->max_teams
+                    ]
+                ]
             ], 201);
 
         } catch (\Exception $e) {
+            DB::rollback();
+            \Log::error('Error registering team: ' . $e->getMessage(), [
+                'event_id' => $eventId,
+                'team_id' => $request->team_id,
+                'user_id' => auth()->id(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
             return response()->json([
                 'success' => false,
                 'message' => 'Error registering team: ' . $e->getMessage()
@@ -397,7 +525,7 @@ class EventController extends Controller
         return DB::table('event_teams as et')
             ->leftJoin('teams as t', 'et.team_id', '=', 't.id')
             ->where('et.event_id', $eventId)
-            ->select(['t.id', 't.name', 't.short_name', 't.logo', 't.region', 'et.seed', 'et.status'])
+            ->select(['t.id', 't.name', 't.short_name', 't.logo', 't.region', 't.country', 'et.seed', 'et.status'])
             ->orderBy('et.seed')
             ->get()
             ->toArray();
@@ -409,7 +537,7 @@ class EventController extends Controller
             ->leftJoin('teams as t', 'et.team_id', '=', 't.id')
             ->where('et.event_id', $eventId)
             ->select([
-                't.id', 't.name', 't.short_name', 't.logo', 't.region', 't.rating',
+                't.id', 't.name', 't.short_name', 't.logo', 't.region', 't.country', 't.rating',
                 'et.seed', 'et.status', 'et.registered_at'
             ])
             ->orderBy('et.seed')
@@ -421,6 +549,7 @@ class EventController extends Controller
                     'short_name' => $team->short_name,
                     'logo' => $team->logo,
                     'region' => $team->region,
+                    'country' => $team->country,
                     'rating' => $team->rating,
                     'seed' => $team->seed,
                     'status' => $team->status,
@@ -449,7 +578,8 @@ class EventController extends Controller
             ->where('m.event_id', $eventId)
             ->select([
                 'm.id', 'm.round', 'm.bracket_position', 'm.status', 'm.format',
-                'm.team1_score', 'm.team2_score', 'm.scheduled_at', 'm.completed_at',
+                'm.team1_id', 'm.team2_id', 'm.team1_score', 'm.team2_score', 
+                'm.scheduled_at', 'm.completed_at',
                 't1.name as team1_name', 't1.short_name as team1_short', 't1.logo as team1_logo',
                 't2.name as team2_name', 't2.short_name as team2_short', 't2.logo as team2_logo',
                 'm.maps_data', 'm.stream_url'
@@ -601,18 +731,33 @@ class EventController extends Controller
     {
         $request->validate([
             'team_id' => 'required|exists:teams,id',
-            'seed' => 'nullable|integer|min:1'
+            'seed' => 'nullable|integer|min:1',
+            'notes' => 'nullable|string|max:500',
+            'contact_info' => 'nullable|string|max:255'
         ]);
 
+        DB::beginTransaction();
         try {
-            $event = Event::findOrFail($eventId);
+            $event = Event::find($eventId);
+            if (!$event) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Event not found'
+                ], 404);
+            }
+
             $this->authorize('update', $event);
 
             // Check if event can accept more teams
             if (!$event->canRegisterTeam()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Event registration is closed or full'
+                    'message' => 'Event registration is closed or full',
+                    'data' => [
+                        'registration_open' => $event->isRegistrationOpen(),
+                        'current_teams' => $event->current_team_count,
+                        'max_teams' => $event->max_teams
+                    ]
                 ], 400);
             }
 
@@ -624,12 +769,22 @@ class EventController extends Controller
                 ], 400);
             }
 
+            // Calculate seed if not provided
+            $seed = $request->seed;
+            if (!$seed) {
+                $maxSeed = $event->teams()->max('event_teams.seed') ?? 0;
+                $seed = $maxSeed + 1;
+            }
+
             // Add team to event
             $event->teams()->attach($request->team_id, [
-                'seed' => $request->seed,
+                'seed' => $seed,
                 'status' => 'confirmed',
                 'registered_at' => now(),
-                'registration_data' => $request->only(['notes', 'contact_info'])
+                'registration_data' => json_encode($request->only(['notes', 'contact_info'])),
+                'placement' => null,
+                'prize_money' => 0,
+                'points' => 0
             ]);
 
             // Initialize standing for the team
@@ -641,19 +796,42 @@ class EventController extends Controller
                 'losses' => 0,
                 'maps_won' => 0,
                 'maps_lost' => 0,
+                'map_differential' => 0,
+                'points' => 0,
                 'status' => 'active'
             ]);
+
+            // Load team details
+            $team = Team::find($request->team_id);
+
+            DB::commit();
 
             return response()->json([
                 'success' => true,
                 'message' => 'Team added to event successfully',
                 'data' => [
-                    'team_count' => $event->teams()->count(),
-                    'max_teams' => $event->max_teams
+                    'team' => [
+                        'id' => $team->id,
+                        'name' => $team->name,
+                        'seed' => $seed
+                    ],
+                    'event' => [
+                        'id' => $event->id,
+                        'name' => $event->name,
+                        'current_teams' => $event->teams()->count(),
+                        'max_teams' => $event->max_teams
+                    ]
                 ]
             ]);
 
         } catch (\Exception $e) {
+            DB::rollback();
+            \Log::error('Error adding team to event by request: ' . $e->getMessage(), [
+                'event_id' => $eventId,
+                'team_id' => $request->team_id,
+                'user_id' => auth()->id()
+            ]);
+            
             return response()->json([
                 'success' => false,
                 'message' => 'Error adding team: ' . $e->getMessage()
@@ -707,12 +885,14 @@ class EventController extends Controller
     {
         $request->validate([
             'team_id' => 'required|exists:teams,id',
-            'seed' => 'nullable|integer|min:1'
+            'seed' => 'nullable|integer|min:1',
+            'force' => 'nullable|boolean' // Allow forcing team addition even if registration is closed
         ]);
 
+        DB::beginTransaction();
         try {
-            // Check if event exists
-            $event = DB::table('events')->where('id', $eventId)->first();
+            // Use Eloquent model for consistency
+            $event = Event::find($eventId);
             if (!$event) {
                 return response()->json([
                     'success' => false,
@@ -721,60 +901,100 @@ class EventController extends Controller
             }
 
             // Check if team is already registered
-            $existingRegistration = DB::table('event_teams')
-                ->where('event_id', $eventId)
-                ->where('team_id', $request->team_id)
-                ->exists();
-
-            if ($existingRegistration) {
+            if ($event->teams()->where('team_id', $request->team_id)->exists()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Team is already registered for this event'
                 ], 400);
             }
 
-            // Get current team count
-            $currentTeamCount = DB::table('event_teams')
-                ->where('event_id', $eventId)
-                ->count();
+            // Check max teams limit (unless forced)
+            $currentTeamCount = $event->teams()->count();
+            if (!$request->force && $currentTeamCount >= $event->max_teams) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Event has reached maximum team capacity',
+                    'data' => [
+                        'current_teams' => $currentTeamCount,
+                        'max_teams' => $event->max_teams
+                    ]
+                ], 400);
+            }
 
-            // Add team to event
-            DB::table('event_teams')->insert([
-                'event_id' => $eventId,
-                'team_id' => $request->team_id,
-                'seed' => $request->seed ?? ($currentTeamCount + 1),
+            // Check if event has already started (unless forced)
+            if (!$request->force && in_array($event->status, ['ongoing', 'completed'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot add teams to ' . $event->status . ' events without force flag'
+                ], 400);
+            }
+
+            // Add team to event with proper seed calculation
+            $seed = $request->seed;
+            if (!$seed) {
+                // Auto-calculate seed based on existing teams
+                $maxSeed = $event->teams()->max('event_teams.seed') ?? 0;
+                $seed = $maxSeed + 1;
+            }
+
+            $event->teams()->attach($request->team_id, [
+                'seed' => $seed,
                 'status' => 'confirmed',
                 'registered_at' => now(),
-                'created_at' => now(),
-                'updated_at' => now()
+                'placement' => null,
+                'prize_money' => 0,
+                'points' => 0
             ]);
 
-            // Create initial standing
-            DB::table('event_standings')->insert([
-                'event_id' => $eventId,
-                'team_id' => $request->team_id,
-                'position' => $currentTeamCount + 1,
-                'wins' => 0,
-                'losses' => 0,
-                'maps_won' => 0,
-                'maps_lost' => 0,
-                'map_differential' => 0,
-                'points' => 0,
-                'status' => 'active',
-                'created_at' => now(),
-                'updated_at' => now()
-            ]);
+            // Create or update standing
+            EventStanding::updateOrCreate(
+                [
+                    'event_id' => $event->id,
+                    'team_id' => $request->team_id
+                ],
+                [
+                    'position' => $currentTeamCount + 1,
+                    'wins' => 0,
+                    'losses' => 0,
+                    'maps_won' => 0,
+                    'maps_lost' => 0,
+                    'map_differential' => 0,
+                    'points' => 0,
+                    'status' => 'active'
+                ]
+            );
+
+            // Load team details for response
+            $team = Team::find($request->team_id);
+
+            DB::commit();
 
             return response()->json([
                 'success' => true,
                 'message' => 'Team added to event successfully',
                 'data' => [
-                    'team_count' => $currentTeamCount + 1,
-                    'max_teams' => $event->max_teams
+                    'team' => [
+                        'id' => $team->id,
+                        'name' => $team->name,
+                        'seed' => $seed
+                    ],
+                    'event' => [
+                        'id' => $event->id,
+                        'name' => $event->name,
+                        'current_teams' => $currentTeamCount + 1,
+                        'max_teams' => $event->max_teams
+                    ]
                 ]
             ]);
 
         } catch (\Exception $e) {
+            DB::rollback();
+            \Log::error('Error adding team to event: ' . $e->getMessage(), [
+                'event_id' => $eventId,
+                'team_id' => $request->team_id,
+                'trace' => $e->getTraceAsString()
+            ]);
+            
             return response()->json([
                 'success' => false,
                 'message' => 'Error adding team: ' . $e->getMessage()
@@ -827,6 +1047,140 @@ class EventController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error removing team: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Admin method to confirm/approve team registrations
+     */
+    public function confirmTeamRegistration(Request $request, $eventId, $teamId)
+    {
+        $request->validate([
+            'status' => 'required|in:confirmed,rejected',
+            'reason' => 'required_if:status,rejected|string|max:255'
+        ]);
+
+        DB::beginTransaction();
+        try {
+            $event = Event::find($eventId);
+            if (!$event) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Event not found'
+                ], 404);
+            }
+
+            // Check if team is registered
+            $registration = $event->teams()->where('team_id', $teamId)->first();
+            if (!$registration) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Team is not registered for this event'
+                ], 404);
+            }
+
+            // Update team registration status
+            $event->teams()->updateExistingPivot($teamId, [
+                'status' => $request->status,
+                'updated_at' => now()
+            ]);
+
+            // If rejected, remove from standings and add reason to registration data
+            if ($request->status === 'rejected') {
+                EventStanding::where('event_id', $eventId)
+                            ->where('team_id', $teamId)
+                            ->delete();
+
+                // Update registration data with rejection reason
+                $registrationData = json_decode($registration->pivot->registration_data ?? '{}', true);
+                $registrationData['rejection_reason'] = $request->reason;
+                $registrationData['rejected_at'] = now();
+                $registrationData['rejected_by'] = auth()->id();
+
+                $event->teams()->updateExistingPivot($teamId, [
+                    'registration_data' => json_encode($registrationData)
+                ]);
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Team registration ' . $request->status . ' successfully',
+                'data' => [
+                    'team_id' => $teamId,
+                    'status' => $request->status,
+                    'event_id' => $eventId
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            \Log::error('Error confirming team registration: ' . $e->getMessage(), [
+                'event_id' => $eventId,
+                'team_id' => $teamId,
+                'status' => $request->status
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating team registration: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get list of pending team registrations for an event
+     */
+    public function getPendingRegistrations($eventId)
+    {
+        try {
+            $event = Event::find($eventId);
+            if (!$event) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Event not found'
+                ], 404);
+            }
+
+            $this->authorize('update', $event);
+
+            $pendingTeams = $event->teams()
+                ->wherePivot('status', 'pending')
+                ->with(['owner:id,username,email'])
+                ->get()
+                ->map(function($team) {
+                    $registrationData = json_decode($team->pivot->registration_data ?? '{}', true);
+                    return [
+                        'team' => [
+                            'id' => $team->id,
+                            'name' => $team->name,
+                            'logo' => $team->logo,
+                            'region' => $team->region,
+                            'owner' => $team->owner
+                        ],
+                        'registration' => [
+                            'registered_at' => $team->pivot->registered_at,
+                            'seed' => $team->pivot->seed,
+                            'contact_email' => $registrationData['contact_email'] ?? null,
+                            'contact_phone' => $registrationData['contact_phone'] ?? null,
+                            'notes' => $registrationData['notes'] ?? null,
+                            'registered_by' => $registrationData['registered_by'] ?? null
+                        ]
+                    ];
+                });
+
+            return response()->json([
+                'success' => true,
+                'data' => $pendingTeams,
+                'count' => $pendingTeams->count()
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching pending registrations: ' . $e->getMessage()
             ], 500);
         }
     }
@@ -1205,8 +1559,8 @@ class EventController extends Controller
             'prize_pool' => 'nullable|numeric|min:0',
             'currency' => 'nullable|string|max:3',
             'prize_distribution' => 'nullable|array',
-            'logo' => 'nullable|url',
-            'banner' => 'nullable|url',
+            'logo' => 'nullable|string',
+            'banner' => 'nullable|string',
             'rules' => 'nullable|string',
             'registration_requirements' => 'nullable|array',
             'streams' => 'nullable|array',
@@ -1575,6 +1929,41 @@ class EventController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error rejecting team registration: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Update event statuses based on dates
+     * This can be called by a cron job or manually
+     */
+    public function updateEventStatuses()
+    {
+        try {
+            $now = now();
+            
+            // Update events that should be ongoing
+            DB::table('events')
+                ->where('status', 'upcoming')
+                ->where('start_date', '<=', $now)
+                ->where('end_date', '>=', $now)
+                ->update(['status' => 'ongoing', 'updated_at' => $now]);
+            
+            // Update events that should be completed
+            DB::table('events')
+                ->whereIn('status', ['upcoming', 'ongoing'])
+                ->where('end_date', '<', $now)
+                ->update(['status' => 'completed', 'updated_at' => $now]);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Event statuses updated successfully'
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating event statuses: ' . $e->getMessage()
             ], 500);
         }
     }

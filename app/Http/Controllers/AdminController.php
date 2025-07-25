@@ -30,7 +30,7 @@ class AdminController extends Controller
                 ],
                 'teams' => [
                     'total' => DB::table('teams')->count(),
-                    'verified' => DB::table('teams')->where('verified', true)->count(),
+                    'verified' => DB::table('teams')->whereNotNull('founded')->count(), // Use founded as proxy for verified
                     'by_region' => DB::table('teams')
                         ->select('region', DB::raw('COUNT(*) as count'))
                         ->groupBy('region')

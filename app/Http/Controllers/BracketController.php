@@ -48,14 +48,103 @@ class BracketController extends Controller
         }
     }
 
+    /**
+     * Get bracket generation history for an event
+     */
+    public function getBracketHistory(Request $request, $eventId)
+    {
+        try {
+            $history = DB::table('bracket_history')
+                ->where('event_id', $eventId)
+                ->orderBy('created_at', 'desc')
+                ->limit(10)
+                ->get()
+                ->map(function ($item) {
+                    return [
+                        'id' => $item->id,
+                        'event_id' => $item->event_id,
+                        'generated_at' => $item->created_at,
+                        'generated_by' => $item->generated_by,
+                        'seeding_method' => $item->seeding_method,
+                        'teams_count' => $item->teams_count,
+                        'format' => $item->format,
+                        'bracket_data' => json_decode($item->bracket_data, true)
+                    ];
+                });
+
+            return response()->json([
+                'success' => true,
+                'data' => $history
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching bracket history: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Reset bracket - removes all matches and results
+     */
+    public function resetBracket(Request $request, $eventId)
+    {
+        $this->authorize('manage-events');
+        
+        try {
+            DB::beginTransaction();
+
+            // Delete all matches for this event
+            DB::table('matches')->where('event_id', $eventId)->delete();
+            
+            // Reset event status
+            DB::table('events')->where('id', $eventId)->update([
+                'status' => 'upcoming',
+                'current_round' => null,
+                'updated_at' => now()
+            ]);
+            
+            // Clear standings
+            DB::table('event_standings')->where('event_id', $eventId)->delete();
+            
+            // Log the reset
+            DB::table('event_logs')->insert([
+                'event_id' => $eventId,
+                'user_id' => Auth::id(),
+                'action' => 'bracket_reset',
+                'description' => 'Bracket was reset',
+                'created_at' => now()
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Bracket reset successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Error resetting bracket: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function generate(Request $request, $eventId)
     {
         $this->authorize('manage-events');
         
         $request->validate([
-            'format' => 'required|in:single_elimination,double_elimination,round_robin,swiss',
-            'seeding_method' => 'required|in:random,rating,manual',
-            'randomize_seeds' => 'boolean'
+            'format' => 'sometimes|in:single_elimination,double_elimination,round_robin,swiss',
+            'seeding_method' => 'sometimes|in:random,rating,manual',
+            'seeding_type' => 'sometimes|in:random,rating,manual', // Alternative field name
+            'randomize_seeds' => 'boolean',
+            'team_ids' => 'sometimes|array',
+            'include_third_place' => 'boolean',
+            'save_history' => 'boolean'
         ]);
 
         try {
@@ -73,21 +162,57 @@ class BracketController extends Controller
             // Clear existing matches
             DB::table('matches')->where('event_id', $eventId)->delete();
 
+            // Use provided team order or fetch all teams
+            if ($request->has('team_ids')) {
+                $teams = collect($request->team_ids)->map(function($teamId) use ($teams) {
+                    return collect($teams)->firstWhere('id', $teamId);
+                })->filter()->values()->toArray();
+            }
+
+            // Determine seeding method (handle both field names)
+            $seedingMethod = $request->seeding_method ?? $request->seeding_type ?? 'rating';
+            
             // Apply seeding
-            $seededTeams = $this->applySeedingMethod($teams, $request->seeding_method, $request->randomize_seeds);
+            $seededTeams = $this->applySeedingMethod($teams, $seedingMethod, $request->randomize_seeds);
+
+            // Determine format (use event format if not provided)
+            $format = $request->format ?? $event->format ?? 'single_elimination';
 
             // Generate bracket based on format
-            $matches = $this->createBracketMatches($eventId, $seededTeams, $request->format);
+            $matches = $this->createBracketMatches($eventId, $seededTeams, $format);
+
+            // Add third place match if requested
+            if ($request->include_third_place && $format === 'single_elimination' && count($seededTeams) >= 4) {
+                $thirdPlaceMatch = $this->createThirdPlaceMatch($eventId, count($matches));
+                $matches[] = $thirdPlaceMatch;
+            }
 
             // Save matches to database
             foreach ($matches as $match) {
                 DB::table('matches')->insert($match);
             }
 
+            // Save bracket history if requested
+            if ($request->save_history) {
+                DB::table('bracket_history')->insert([
+                    'event_id' => $eventId,
+                    'generated_by' => Auth::id(),
+                    'seeding_method' => $seedingMethod,
+                    'teams_count' => count($seededTeams),
+                    'format' => $format,
+                    'bracket_data' => json_encode([
+                        'teams' => $seededTeams,
+                        'matches' => $matches
+                    ]),
+                    'created_at' => now()
+                ]);
+            }
+
             // Update event status
             DB::table('events')->where('id', $eventId)->update([
                 'status' => 'ongoing',
-                'format' => $request->format,
+                'format' => $format,
+                'current_round' => 1,
                 'updated_at' => now()
             ]);
 
@@ -96,7 +221,7 @@ class BracketController extends Controller
                 'message' => 'Bracket generated successfully',
                 'data' => [
                     'matches_created' => count($matches),
-                    'format' => $request->format,
+                    'format' => $format,
                     'teams_count' => count($seededTeams)
                 ]
             ], 201);
@@ -617,6 +742,28 @@ class BracketController extends Controller
     private function getEventTeamCount($eventId)
     {
         return DB::table('event_teams')->where('event_id', $eventId)->count();
+    }
+
+    /**
+     * Create third place match for single elimination brackets
+     */
+    private function createThirdPlaceMatch($eventId, $matchCount)
+    {
+        return [
+            'event_id' => $eventId,
+            'match_number' => $matchCount + 1,
+            'round' => 'third_place',
+            'round_match_number' => 1,
+            'team1_id' => null, // Will be filled when semi-final losers are determined
+            'team2_id' => null,
+            'status' => 'pending',
+            'scheduled_at' => null,
+            'created_at' => now(),
+            'updated_at' => now(),
+            'is_third_place' => true,
+            'format' => 'BO3', // Standard for third place matches
+            'next_match_id' => null // Third place match has no next match
+        ];
     }
 
     private function getCompletedMatchesCount($eventId)

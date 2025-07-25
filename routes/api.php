@@ -7,7 +7,6 @@ use App\Http\Controllers\{
     PlayerController,
     MatchController,
     EventController,
-    EventControllerTemp,
     SearchController,
     ForumController,
     AdminStatsController,
@@ -81,8 +80,8 @@ Route::prefix('public')->group(function () {
     Route::get('/players/{player}/event-stats', [PlayerController::class, 'getEventStats']);
     
     // Events - Using temporary controller
-    Route::get('/events', [EventControllerTemp::class, 'index']);
-    Route::get('/events/{id}', [EventControllerTemp::class, 'show']);
+    Route::get('/events', [EventController::class, 'index']);
+    Route::get('/events/{id}', [EventController::class, 'show']);
     
     // Matches
     Route::get('/matches', [MatchController::class, 'index']);
@@ -96,11 +95,13 @@ Route::prefix('public')->group(function () {
     
     // News (Read Only)
     Route::get('/news', [NewsController::class, 'index']);
-    Route::get('/news/{id}', [NewsController::class, 'show']);
     Route::get('/news/categories', [NewsController::class, 'getCategories']);
+    Route::get('/news/{id}', [NewsController::class, 'show']);
     
     // Rankings
     Route::get('/rankings', [RankingController::class, 'index']);
+    Route::get('/rankings/teams', [RankingController::class, 'getTeamRankings']);
+    Route::get('/rankings/players', [RankingController::class, 'getPlayerRankings']);
     Route::get('/rankings/{id}', [RankingController::class, 'show']);
     Route::get('/rankings/distribution', [RankingController::class, 'getRankDistribution']);
     Route::get('/rankings/marvel-rivals-info', [RankingController::class, 'getMarvelRivalsInfo']);
@@ -132,8 +133,8 @@ Route::prefix('public')->group(function () {
     Route::get('/search', [SearchController::class, 'search']);
     
     // Mentions autocomplete (public access for better UX)
-    Route::get('/mentions/search', [MentionController::class, 'searchMentions']);
-    Route::get('/mentions/popular', [MentionController::class, 'getPopularMentions']);
+    Route::get('/mentions/search', [MentionController::class, 'search']);
+    Route::get('/mentions/popular', [MentionController::class, 'popular']);
     
     // Public user profiles
     Route::get('/users/{userId}/profile', [UserProfileController::class, 'getUserWithAvatarAndFlairs']);
@@ -158,8 +159,8 @@ Route::get('/players/{player}/performance-stats', [PlayerController::class, 'get
 Route::get('/players/{player}/hero-performance', [PlayerController::class, 'getHeroPerformance']);
 Route::get('/players/{player}/map-stats', [PlayerController::class, 'getMapStats']);
 Route::get('/players/{player}/event-stats', [PlayerController::class, 'getEventStats']);
-Route::get('/events', [EventControllerTemp::class, 'index']);
-Route::get('/events/{event}', [EventControllerTemp::class, 'show']);
+Route::get('/events', [EventController::class, 'index']);
+Route::get('/events/{event}', [EventController::class, 'show']);
 Route::get('/matches', [MatchController::class, 'index']);
 Route::get('/matches/live', [MatchController::class, 'live']);
 Route::get('/matches/{match}', [MatchController::class, 'show']);
@@ -167,9 +168,9 @@ Route::get('/matches/{match}/comments', [MatchController::class, 'getComments'])
 Route::get('/matches/{match}/timeline', [MatchController::class, 'getMatchTimeline']);
 Route::get('/matches/head-to-head/{team1Id}/{team2Id}', [MatchController::class, 'getHeadToHead']);
 Route::get('/news', [NewsController::class, 'index']);
+Route::get('/news/categories', [NewsController::class, 'getCategories']);
 Route::get('/news/{news}', [NewsController::class, 'show']);
 Route::get('/news/{newsId}/comments', [NewsController::class, 'getCommentsWithNesting']);
-Route::get('/news/categories', [NewsController::class, 'getCategories']);
 
 // Forum routes (for frontend compatibility)
 Route::get('/forums/categories', [ForumController::class, 'getCategories']);
@@ -203,6 +204,7 @@ Route::middleware(['auth:api', 'role:user|moderator|admin'])->prefix('user')->gr
     // Forum CRUD Operations
     Route::prefix('forums')->group(function () {
         // Threads
+        Route::get('/threads', [ForumController::class, 'getUserThreads']); // Get user's threads
         Route::post('/threads', [ForumController::class, 'store']);
         Route::put('/threads/{id}', [ForumController::class, 'update']);
         Route::delete('/threads/{id}', [ForumController::class, 'destroy']);
@@ -237,6 +239,7 @@ Route::middleware(['auth:api', 'role:user|moderator|admin'])->prefix('user')->gr
     // User Predictions & Favorites
     Route::prefix('predictions')->group(function () {
         Route::get('/', [MatchController::class, 'getUserPredictions']);
+        Route::post('/', [MatchController::class, 'storePrediction']); // Generic create prediction
         Route::post('/matches/{matchId}', [MatchController::class, 'storePrediction']);
         Route::put('/{predictionId}', [MatchController::class, 'updatePrediction']);
         Route::delete('/{predictionId}', [MatchController::class, 'destroyPrediction']);
@@ -244,10 +247,12 @@ Route::middleware(['auth:api', 'role:user|moderator|admin'])->prefix('user')->gr
     
     Route::prefix('favorites')->group(function () {
         Route::get('/teams', [TeamController::class, 'getUserFavoriteTeams']);
+        Route::post('/teams', [TeamController::class, 'addFavoriteTeam']); // Generic add favorite
         Route::post('/teams/{teamId}', [TeamController::class, 'addFavoriteTeam']);
         Route::delete('/teams/{teamId}', [TeamController::class, 'removeFavoriteTeam']);
         
         Route::get('/players', [PlayerController::class, 'getUserFavoritePlayers']);
+        Route::post('/players', [PlayerController::class, 'addFavoritePlayer']); // Generic add favorite
         Route::post('/players/{playerId}', [PlayerController::class, 'addFavoritePlayer']);
         Route::delete('/players/{playerId}', [PlayerController::class, 'removeFavoritePlayer']);
     });
@@ -257,7 +262,14 @@ Route::middleware(['auth:api', 'role:user|moderator|admin'])->prefix('user')->gr
         Route::get('/', [AuthController::class, 'getUserNotifications']);
         Route::put('/{notificationId}/read', [AuthController::class, 'markNotificationRead']);
         Route::put('/mark-all-read', [AuthController::class, 'markAllNotificationsRead']);
+        Route::post('/mark-all-read', [AuthController::class, 'markAllNotificationsRead']); // Allow POST too
         Route::delete('/{notificationId}', [AuthController::class, 'deleteNotification']);
+    });
+    
+    // User Votes
+    Route::prefix('vote')->group(function () {
+        Route::post('/', [VoteController::class, 'store']);
+        Route::delete('/', [VoteController::class, 'destroy']);
     });
 });
 
@@ -276,6 +288,8 @@ Route::middleware(['auth:api', 'role:moderator|admin'])->prefix('moderator')->gr
         Route::post('/threads/{threadId}/unpin', [ForumController::class, 'unpinThread']);
         Route::post('/threads/{threadId}/lock', [ForumController::class, 'lockThread']);
         Route::post('/threads/{threadId}/unlock', [ForumController::class, 'unlockThread']);
+        Route::delete('/threads/{threadId}', [ForumController::class, 'deleteThread']); // Regular delete
+        Route::delete('/posts/{postId}', [ForumController::class, 'deletePost']); // Regular delete
         Route::delete('/threads/{threadId}/force', [ForumController::class, 'forceDeleteThread']);
         Route::delete('/posts/{postId}/force', [ForumController::class, 'forceDeletePost']);
     });
@@ -427,6 +441,8 @@ Route::middleware(['auth:api', 'role:admin'])->prefix('admin')->group(function (
         // Bracket Management
         Route::post('/{eventId}/generate-bracket', [BracketController::class, 'generate']);
         Route::put('/{eventId}/bracket/matches/{matchId}', [BracketController::class, 'updateMatch']);
+        Route::get('/{eventId}/bracket-history', [BracketController::class, 'getBracketHistory']);
+        Route::post('/{eventId}/reset-bracket', [BracketController::class, 'resetBracket']);
         
         // Event Images
         Route::post('/{eventId}/logo', [ImageUploadController::class, 'uploadEventLogo']);
@@ -473,6 +489,18 @@ Route::middleware(['auth:api', 'role:admin'])->prefix('admin')->group(function (
         
         // Comprehensive live control endpoint
         Route::post('/{matchId}/live-control', [MatchController::class, 'liveControl']);
+        
+        // 🔥 ENHANCED LIVE UPDATE ENDPOINTS - Real-time sync between livescoring panel and match detail page
+        Route::post('/{matchId}/live-update-control', [MatchController::class, 'updateLiveControl']);
+        Route::post('/{matchId}/bulk-player-stats', [MatchController::class, 'updateBulkPlayerStats']);
+        Route::put('/{matchId}/players/{playerId}/live-stats', [MatchController::class, 'updatePlayerStats']);
+        Route::post('/{matchId}/simple-scoring', [MatchController::class, 'simpleLiveScoring']);
+        Route::get('/{matchId}/live-scoreboard', [MatchController::class, 'getLiveScoreboard']);
+        
+        // 🚀 IMMEDIATE LIVE UPDATES (Zero delay)
+        Route::get('/{matchId}/live-updates', [MatchController::class, 'getLiveUpdates']);
+        Route::get('/{matchId}/stream', [MatchController::class, 'streamLiveUpdates']);
+        Route::post('/{matchId}/optimistic-update', [MatchController::class, 'optimisticUpdate']);
     });
     
     // News Management - Full CRUD
@@ -564,17 +592,62 @@ Route::middleware(['auth:api', 'role:admin'])->prefix('admin')->group(function (
 });
 
 // ===================================
-// SEARCH ROUTES (All Authenticated Users)
+// ANALYTICS ROUTES (with Real Data)
 // ===================================
-Route::middleware('auth:api')->prefix('search')->group(function () {
-    Route::get('/advanced', [SearchController::class, 'advancedSearch']);
+use App\Http\Controllers\AnalyticsController;
+
+Route::middleware(['auth:api'])->prefix('analytics')->group(function () {
+    // Platform-wide analytics (admin only)
+    Route::middleware(['role:admin'])->group(function () {
+        Route::get('/platform', [AnalyticsController::class, 'getPlatformAnalytics']);
+        Route::get('/live-dashboard', [AnalyticsController::class, 'getLiveDashboard']);
+    });
+    
+    // Public analytics endpoints
+    Route::get('/user/{userId?}', [AnalyticsController::class, 'getUserAnalytics']);
+    Route::get('/match/{matchId}', [AnalyticsController::class, 'getMatchAnalytics']);
+    Route::get('/team/{teamId}', [AnalyticsController::class, 'getTeamAnalytics']);
+    Route::get('/heroes', [AnalyticsController::class, 'getHeroAnalytics']);
+});
+
+// ===================================
+// PROFILE ROUTES (Enhanced with Real Analytics)
+// ===================================
+use App\Http\Controllers\ProfileController;
+
+Route::prefix('profile')->group(function () {
+    // Public profile endpoints
+    Route::get('/{userId}', [ProfileController::class, 'getProfile']);
+    Route::post('/{userId}/view', [ProfileController::class, 'trackProfileView'])->middleware('auth:api');
+    
+    // Authenticated user profile management
+    Route::middleware('auth:api')->group(function () {
+        Route::get('/me/stats', [AuthController::class, 'getUserStats']);
+        Route::get('/me/activity', [AuthController::class, 'getUserProfileActivity']);
+        Route::get('/me/notifications', [AuthController::class, 'getUserNotifications']);
+    });
+});
+
+// ===================================
+// SEARCH ROUTES (Enhanced with Mentions)
+// ===================================
+Route::prefix('search')->group(function () {
+    // Public search endpoints (no auth required for basic search)
+    Route::get('/', [SearchController::class, 'search']);
     Route::get('/teams', [SearchController::class, 'searchTeams']);
     Route::get('/players', [SearchController::class, 'searchPlayers']);
     Route::get('/matches', [SearchController::class, 'searchMatches']);
     Route::get('/events', [SearchController::class, 'searchEvents']);
     Route::get('/news', [SearchController::class, 'searchNews']);
     Route::get('/forums', [SearchController::class, 'searchForums']);
-    Route::get('/users', [SearchController::class, 'searchUsers'])->middleware('role:moderator|admin');
+    Route::get('/heroes', [SearchController::class, 'searchHeroes']);
+    Route::get('/mentions', [SearchController::class, 'searchMentions']);
+    
+    // Advanced search requires auth
+    Route::middleware('auth:api')->group(function () {
+        Route::get('/advanced', [SearchController::class, 'advancedSearch']);
+        Route::get('/users', [SearchController::class, 'searchUsers'])->middleware('role:moderator|admin');
+    });
 });
 
 // ===================================
@@ -602,9 +675,11 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
             'email' => $user->email,
             'avatar' => $user->avatar,
             'hero_flair' => $user->hero_flair,
+            'team_flair_id' => $user->team_flair_id,
             'team_flair' => $user->teamFlair,
             'show_hero_flair' => $user->show_hero_flair,
             'show_team_flair' => $user->show_team_flair,
+            'use_hero_as_avatar' => $user->use_hero_as_avatar,
             'status' => $user->status,
             'last_login' => $user->last_login,
             'roles' => $user->getRoleNames(),
@@ -651,8 +726,9 @@ Route::middleware(['auth:api', 'role:user'])->get('/test-user', function (Reques
     ]);
 });
 
-// System test route
+// System test routes
 Route::get('/system-test', [\App\Http\Controllers\SystemTestController::class, 'testAllSystems']);
+Route::get('/api-test', [\App\Http\Controllers\ApiTestController::class, 'testEndpoints']);
 
 // Upload route aliases for frontend compatibility
 Route::middleware(['auth:api', 'role:admin'])->group(function () {

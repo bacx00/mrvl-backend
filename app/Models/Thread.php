@@ -9,15 +9,11 @@ class Thread extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['title', 'user_id'];
+    protected $table = 'forum_threads';
+    protected $fillable = ['title', 'content', 'user_id', 'category'];
 
     public function user()
     {
         return $this->belongsTo(User::class);
-    }
-
-    public function posts()
-    {
-        return $this->hasMany(Post::class);
     }
 }

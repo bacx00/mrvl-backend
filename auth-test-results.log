@@ -1,0 +1,101 @@
+======================================
+Testing Authenticated API Endpoints
+======================================
+
+[1;33m=== AUTHENTICATION TEST ===[0m
+[0;32m✓[0m GET /auth/me - Get current user info (HTTP 200)
+
+[1;33m=== USER ENDPOINTS ===[0m
+[0;32m✓[0m GET /user - Get authenticated user (HTTP 200)
+[0;32m✓[0m GET /user/profile - Get user profile (HTTP 200)
+[0;32m✓[0m PUT /user/profile - Update user profile (HTTP 200)
+[0;32m✓[0m GET /user/profile/available-flairs - Get available flairs (HTTP 200)
+[0;32m✓[0m GET /user/profile/activity - Get profile activity (HTTP 200)
+[0;31m✗[0m GET /user/stats - Get user stats (HTTP 500)
+  [0;31mError: Method App\Http\Controllers\AuthController::getUserStats does not exist.[0m
+[0;31m✗[0m GET /user/activity - Get user activity (HTTP 500)
+  [0;31mError: Method App\Http\Controllers\AuthController::getUserProfileActivity does not exist.[0m
+
+[1;33m=== FORUM ENDPOINTS ===[0m
+[0;31m✗[0m GET /user/forums/threads - Get user forum threads (HTTP 500)
+  [0;31mError: The GET method is not supported for route api/user/forums/threads. Supported methods: POST.[0m
+[0;32m✓[0m POST /user/forums/threads - Create forum thread (HTTP 201)
+[0;34m✓[0m POST /user/forums/threads/1/posts - Create forum post (HTTP 404 - Resource not found)
+
+[1;33m=== NEWS ENDPOINTS ===[0m
+[0;34m✓[0m POST /user/news/1/comments - Post news comment (HTTP 404 - Resource not found)
+[0;31m✗[0m POST /user/news/1/vote - Vote on news (HTTP 500)
+  [0;31mError: The vote type field is required.[0m
+
+[1;33m=== MATCH ENDPOINTS ===[0m
+[0;32m✓[0m POST /user/matches/1/comments - Post match comment (HTTP 200)
+
+[1;33m=== PREDICTIONS ===[0m
+[0;31m✗[0m GET /user/predictions - Get user predictions (HTTP 500)
+  [0;31mError: Method App\Http\Controllers\MatchController::getUserPredictions does not exist.[0m
+[0;31m✗[0m POST /user/predictions - Create prediction (HTTP 500)
+  [0;31mError: The POST method is not supported for route api/user/predictions. Supported methods: GET, HEAD.[0m
+
+[1;33m=== FAVORITES ===[0m
+[0;31m✗[0m GET /user/favorites/teams - Get favorite teams (HTTP 500)
+  [0;31mError: Method App\Http\Controllers\TeamController::getUserFavoriteTeams does not exist.[0m
+[0;31m✗[0m POST /user/favorites/teams - Add favorite team (HTTP 500)
+  [0;31mError: The POST method is not supported for route api/user/favorites/teams. Supported methods: GET, HEAD.[0m
+[0;31m✗[0m DELETE /user/favorites/teams/1 - Remove favorite team (HTTP 500)
+  [0;31mError: Method App\Http\Controllers\TeamController::removeFavoriteTeam does not exist.[0m
+[0;31m✗[0m GET /user/favorites/players - Get favorite players (HTTP 500)
+  [0;31mError: Method App\Http\Controllers\PlayerController::getUserFavoritePlayers does not exist.[0m
+[0;31m✗[0m POST /user/favorites/players - Add favorite player (HTTP 500)
+  [0;31mError: The POST method is not supported for route api/user/favorites/players. Supported methods: GET, HEAD.[0m
+[0;31m✗[0m DELETE /user/favorites/players/1 - Remove favorite player (HTTP 500)
+  [0;31mError: Method App\Http\Controllers\PlayerController::removeFavoritePlayer does not exist.[0m
+
+[1;33m=== NOTIFICATIONS ===[0m
+[0;31m✗[0m GET /user/notifications - Get notifications (HTTP 500)
+  [0;31mError: Method App\Http\Controllers\AuthController::getUserNotifications does not exist.[0m
+[0;31m✗[0m PUT /user/notifications/1/read - Mark notification as read (HTTP 500)
+  [0;31mError: Method App\Http\Controllers\AuthController::markNotificationRead does not exist.[0m
+[0;31m✗[0m POST /user/notifications/mark-all-read - Mark all notifications as read (HTTP 500)
+  [0;31mError: The POST method is not supported for route api/user/notifications/mark-all-read. Supported methods: PUT, DELETE.[0m
+
+[1;33m=== SEARCH ENDPOINTS ===[0m
+[0;32m✓[0m GET /search/advanced?q=test - Advanced search (HTTP 200)
+[0;32m✓[0m GET /search/teams?q=test - Search teams (HTTP 200)
+[0;32m✓[0m GET /search/players?q=test - Search players (HTTP 200)
+
+[1;33m=== MODERATOR ENDPOINTS ===[0m
+[0;32m✓[0m GET /moderator/forums/threads/reported - Get reported threads (HTTP 200)
+[0;31m✗[0m GET /moderator/forums/posts/reported - Get reported posts (HTTP 500)
+  [0;31mError: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'fp.reported' in 'where clause' (Connection: mysql, SQL: select `fp`.*, `u`.`name` as `author_name`, `u`.`avatar` as `author_avatar`, `ft`.`title` as `thread_title` from `forum_posts` as `fp` left join `users` as `u` on `fp`.`user_id` = `u`.`id` left join `forum_threads` as `ft` on `fp`.`thread_id` = `ft`.`id` where `fp`.`reported` = 1 or `fp`.`status` = reported order by `fp`.`created_at` desc)[0m
+[0;32m✓[0m GET /moderator/news/pending - Get pending news (HTTP 200)
+[0;32m✓[0m GET /moderator/news/comments/reported - Get reported news comments (HTTP 200)
+[0;31m✗[0m GET /moderator/dashboard/stats - Get moderator stats (HTTP 500)
+  [0;31mError: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'is_reported' in 'where clause' (Connection: mysql, SQL: select count(*) as aggregate from `forum_threads` where `is_reported` = 1 and `is_reviewed` = 0)[0m
+
+[1;33m=== ADMIN ENDPOINTS ===[0m
+[0;32m✓[0m GET /admin/stats - Get admin stats (HTTP 200)
+[0;31m✗[0m GET /admin/analytics - Get analytics (HTTP 500)
+  [0;31mError: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'mrvl_production.user_activities' doesn't exist (Connection: mysql, SQL: select count(*) as aggregate from `user_activities` where date(`created_at`) = 2025-06-26)[0m
+[0;31m✗[0m GET /admin/dashboard - Get admin dashboard (HTTP 500)
+  [0;31mError: Error fetching dashboard stats: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'verified' in 'where clause' (Connection: mysql, SQL: select count(*) as aggregate from `teams` where `verified` = 1)[0m
+[0;32m✓[0m GET /admin/users - Get all users (HTTP 200)
+[0;32m✓[0m GET /admin/teams - Get all teams (HTTP 200)
+[0;32m✓[0m GET /admin/players - Get all players (HTTP 200)
+[0;32m✓[0m GET /admin/events - Get all events (HTTP 200)
+[0;32m✓[0m GET /admin/matches - Get all matches (HTTP 200)
+[0;32m✓[0m GET /admin/news - Get all news (HTTP 200)
+
+[1;33m=== ROLE TEST ENDPOINTS ===[0m
+[0;32m✓[0m GET /test-admin - Test admin access (HTTP 200)
+[0;32m✓[0m GET /test-moderator - Test moderator access (HTTP 200)
+[0;31m✗[0m GET /test-user - Test user access (HTTP 500)
+  [0;31mError: User does not have the right roles.[0m
+
+======================================
+TEST SUMMARY
+======================================
+[0;32mPassed:[0m 25
+[0;31mFailed:[0m 20
+Total: 45
+
+[0;31mSome endpoints are failing. Check the errors above.[0m

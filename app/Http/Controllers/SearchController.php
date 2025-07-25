@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
+use Carbon\Carbon;
 
 class SearchController extends Controller
 {
@@ -337,20 +339,23 @@ class SearchController extends Controller
         
         return DB::table('events as e')
             ->leftJoin('event_teams as et', 'e.id', '=', 'et.event_id')
+            ->leftJoin('users as u', 'e.organizer_id', '=', 'u.id')
             ->select([
                 'e.id', 'e.name', 'e.type', 'e.status', 'e.start_date', 'e.end_date',
-                'e.prize_pool', 'e.team_count', 'e.location', 'e.organizer', 'e.image',
+                'e.prize_pool', 'e.max_teams', 'e.region', 'e.logo', 'e.banner',
                 'e.created_at',
-                DB::raw('COUNT(et.team_id) as registered_teams')
+                'u.name as organizer_name',
+                DB::raw('COUNT(DISTINCT et.team_id) as registered_teams')
             ])
             ->where(function($q) use ($query) {
                 $q->where('e.name', 'LIKE', "%{$query}%")
                   ->orWhere('e.type', 'LIKE', "%{$query}%")
-                  ->orWhere('e.location', 'LIKE', "%{$query}%")
-                  ->orWhere('e.organizer', 'LIKE', "%{$query}%")
+                  ->orWhere('e.region', 'LIKE', "%{$query}%")
                   ->orWhere('e.description', 'LIKE', "%{$query}%");
             })
-            ->groupBy('e.id', 'e.name', 'e.type', 'e.status', 'e.start_date', 'e.end_date', 'e.prize_pool', 'e.team_count', 'e.location', 'e.organizer', 'e.image', 'e.created_at')
+            ->groupBy('e.id', 'e.name', 'e.type', 'e.status', 'e.start_date', 'e.end_date', 
+                      'e.prize_pool', 'e.max_teams', 'e.region', 'e.logo', 'e.banner', 
+                      'e.created_at', 'u.name')
             ->orderBy('e.start_date', 'desc')
             ->offset($offset)
             ->limit($limit)
@@ -364,12 +369,12 @@ class SearchController extends Controller
                     'start_date' => $event->start_date,
                     'end_date' => $event->end_date,
                     'prize_pool' => $event->prize_pool,
-                    'team_count' => $event->team_count,
+                    'max_teams' => $event->max_teams,
                     'registered_teams' => $event->registered_teams,
-                    'location' => $event->location,
-                    'organizer' => $event->organizer,
-                    'image' => $event->image,
-                    'type' => 'event',
+                    'region' => $event->region,
+                    'organizer' => $event->organizer_name,
+                    'logo' => $event->logo,
+                    'banner' => $event->banner,
                     'url' => "/events/{$event->id}",
                     'created_at' => $event->created_at
                 ];
@@ -426,18 +431,18 @@ class SearchController extends Controller
             ->leftJoin('users as u', 'ft.user_id', '=', 'u.id')
             ->leftJoin('forum_categories as fc', 'ft.category_id', '=', 'fc.id')
             ->select([
-                'ft.id', 'ft.title', 'ft.content', 'ft.upvotes', 'ft.downvotes',
-                'ft.is_pinned', 'ft.is_locked', 'ft.created_at',
+                'ft.id', 'ft.title', 'ft.content', 
+                'ft.upvotes', 'ft.downvotes', 'ft.views', 'ft.replies',
+                'ft.pinned', 'ft.locked', 'ft.created_at',
                 'u.name as author_name', 'u.avatar as author_avatar', 'u.hero_flair',
                 'fc.name as category_name', 'fc.color as category_color'
             ])
             ->where(function($q) use ($query) {
                 $q->where('ft.title', 'LIKE', "%{$query}%")
                   ->orWhere('ft.content', 'LIKE', "%{$query}%")
-                  ->orWhere('u.name', 'LIKE', "%{$query}%")
-                  ->orWhere('fc.name', 'LIKE', "%{$query}%");
+                  ->orWhere('u.name', 'LIKE', "%{$query}%");
             })
-            ->orderBy('ft.is_pinned', 'desc')
+            ->orderBy('ft.pinned', 'desc')
             ->orderBy('ft.created_at', 'desc')
             ->offset($offset)
             ->limit($limit)
@@ -449,16 +454,18 @@ class SearchController extends Controller
                     'content' => substr($thread->content, 0, 200) . '...',
                     'upvotes' => $thread->upvotes,
                     'downvotes' => $thread->downvotes,
-                    'is_pinned' => $thread->is_pinned,
-                    'is_locked' => $thread->is_locked,
+                    'views' => $thread->views,
+                    'replies' => $thread->replies,
+                    'is_pinned' => $thread->pinned,
+                    'is_locked' => $thread->locked,
                     'author' => [
-                        'name' => $thread->author_name,
-                        'avatar' => $thread->author_avatar,
-                        'hero_flair' => $thread->hero_flair
+                        'name' => $thread->author_name ?? 'Unknown',
+                        'avatar' => $thread->author_avatar ?? null,
+                        'hero_flair' => isset($thread->hero_flair) ? $thread->hero_flair : null
                     ],
                     'category' => [
-                        'name' => $thread->category_name,
-                        'color' => $thread->category_color
+                        'name' => $thread->category_name ?? 'General',
+                        'color' => $thread->category_color ?? '#000000'
                     ],
                     'type' => 'forum_thread',
                     'url' => "/forums/threads/{$thread->id}",
@@ -555,74 +562,186 @@ class SearchController extends Controller
     public function searchMentions($query, $limit = 10, $page = 1)
     {
         $offset = ($page - 1) * $limit;
+        
+        // Search for users, teams, and players that match the query
+        $users = DB::table('users')
+            ->where('name', 'LIKE', "%{$query}%")
+            ->where('status', 'active')
+            ->select(['id', 'name', 'avatar'])
+            ->limit(5)
+            ->get();
+            
+        $teams = DB::table('teams')
+            ->where(function($q) use ($query) {
+                $q->where('name', 'LIKE', "%{$query}%")
+                  ->orWhere('short_name', 'LIKE', "%{$query}%");
+            })
+            ->select(['id', 'name', 'short_name', 'logo'])
+            ->limit(5)
+            ->get();
+            
+        $players = DB::table('players as p')
+            ->leftJoin('teams as t', 'p.team_id', '=', 't.id')
+            ->where(function($q) use ($query) {
+                $q->where('p.username', 'LIKE', "%{$query}%")
+                  ->orWhere('p.real_name', 'LIKE', "%{$query}%");
+            })
+            ->select(['p.id', 'p.username', 'p.real_name', 'p.avatar', 'p.role', 't.name as team_name'])
+            ->limit(5)
+            ->get();
+        
+        // Now search for content where these entities are mentioned
         $mentions = [];
-
-        // Search in forum threads
-        $forumMentions = DB::table('forum_threads as ft')
-            ->leftJoin('users as u', 'ft.user_id', '=', 'u.id')
-            ->select([
-                'ft.id', 'ft.title', 'ft.content', 'ft.mentions', 'ft.created_at',
-                'u.name as author_name', 'u.avatar as author_avatar',
-                DB::raw("'forum_thread' as source_type")
-            ])
-            ->whereNotNull('ft.mentions')
-            ->where('ft.mentions', 'LIKE', "%{$query}%")
-            ->get();
-
-        // Search in forum posts
-        $postMentions = DB::table('forum_posts as fp')
-            ->leftJoin('users as u', 'fp.user_id', '=', 'u.id')
-            ->leftJoin('forum_threads as ft', 'fp.thread_id', '=', 'ft.id')
-            ->select([
-                'fp.id', 'fp.content', 'fp.mentions', 'fp.created_at',
-                'u.name as author_name', 'u.avatar as author_avatar',
-                'ft.title as thread_title',
-                DB::raw("'forum_post' as source_type")
-            ])
-            ->whereNotNull('fp.mentions')
-            ->where('fp.mentions', 'LIKE', "%{$query}%")
-            ->get();
-
-        // Search in news comments
-        $newsCommentMentions = DB::table('news_comments as nc')
-            ->leftJoin('users as u', 'nc.user_id', '=', 'u.id')
+        
+        // Search mentions table
+        if (Schema::hasTable('mentions')) {
+            // User mentions
+            foreach ($users as $user) {
+                $userMentions = DB::table('mentions as m')
+                    ->leftJoin('news_comments as nc', function($join) {
+                        $join->on('m.mentionable_id', '=', 'nc.id')
+                             ->where('m.mentionable_type', '=', 'news_comment');
+                    })
+                    ->leftJoin('news as n', 'nc.news_id', '=', 'n.id')
+                    ->leftJoin('users as u', 'm.mentioned_by', '=', 'u.id')
+                    ->where('m.mentioned_id', $user->id)
+                    ->where('m.mentioned_type', 'user')
+                    ->select([
+                        'm.id',
+                        'nc.content',
+                        'm.created_at',
+                        'n.title as context_title',
+                        'u.name as mentioned_by_name',
+                        'u.avatar as mentioned_by_avatar',
+                        DB::raw("'news_comment' as source_type"),
+                        DB::raw("'@{$user->name}' as mention_text")
+                    ])
+                    ->orderBy('m.created_at', 'desc')
+                    ->limit(3)
+                    ->get();
+                    
+                $mentions = array_merge($mentions, $userMentions->toArray());
+            }
+            
+            // Team mentions
+            foreach ($teams as $team) {
+                $teamMentions = DB::table('mentions as m')
+                    ->leftJoin('forum_posts as fp', function($join) {
+                        $join->on('m.mentionable_id', '=', 'fp.id')
+                             ->where('m.mentionable_type', '=', 'forum_post');
+                    })
+                    ->leftJoin('forum_threads as ft', 'fp.thread_id', '=', 'ft.id')
+                    ->leftJoin('users as u', 'm.mentioned_by', '=', 'u.id')
+                    ->where('m.mentioned_id', $team->id)
+                    ->where('m.mentioned_type', 'team')
+                    ->select([
+                        'm.id',
+                        'fp.content',
+                        'm.created_at',
+                        'ft.title as context_title',
+                        'u.name as mentioned_by_name',
+                        'u.avatar as mentioned_by_avatar',
+                        DB::raw("'forum_post' as source_type"),
+                        DB::raw("'@team:{$team->short_name}' as mention_text")
+                    ])
+                    ->orderBy('m.created_at', 'desc')
+                    ->limit(3)
+                    ->get();
+                    
+                $mentions = array_merge($mentions, $teamMentions->toArray());
+            }
+            
+            // Player mentions
+            foreach ($players as $player) {
+                $playerMentions = DB::table('mentions as m')
+                    ->leftJoin('match_comments as mc', function($join) {
+                        $join->on('m.mentionable_id', '=', 'mc.id')
+                             ->where('m.mentionable_type', '=', 'match_comment');
+                    })
+                    ->leftJoin('matches as match', 'mc.match_id', '=', 'match.id')
+                    ->leftJoin('teams as t1', 'match.team1_id', '=', 't1.id')
+                    ->leftJoin('teams as t2', 'match.team2_id', '=', 't2.id')
+                    ->leftJoin('users as u', 'm.mentioned_by', '=', 'u.id')
+                    ->where('m.mentioned_id', $player->id)
+                    ->where('m.mentioned_type', 'player')
+                    ->select([
+                        'm.id',
+                        'mc.content',
+                        'm.created_at',
+                        DB::raw("CONCAT(t1.name, ' vs ', t2.name) as context_title"),
+                        'u.name as mentioned_by_name',
+                        'u.avatar as mentioned_by_avatar',
+                        DB::raw("'match_comment' as source_type"),
+                        DB::raw("'@player:{$player->username}' as mention_text")
+                    ])
+                    ->orderBy('m.created_at', 'desc')
+                    ->limit(3)
+                    ->get();
+                    
+                $mentions = array_merge($mentions, $playerMentions->toArray());
+            }
+        }
+        
+        // Also search for @mentions in content directly
+        $contentMentions = DB::table('news_comments as nc')
             ->leftJoin('news as n', 'nc.news_id', '=', 'n.id')
+            ->leftJoin('users as u', 'nc.user_id', '=', 'u.id')
+            ->where('nc.content', 'LIKE', "%@{$query}%")
             ->select([
-                'nc.id', 'nc.content', 'nc.mentions', 'nc.created_at',
-                'u.name as author_name', 'u.avatar as author_avatar',
-                'n.title as news_title',
-                DB::raw("'news_comment' as source_type")
+                'nc.id',
+                'nc.content',
+                'nc.created_at',
+                'n.title as context_title',
+                'u.name as mentioned_by_name',
+                'u.avatar as mentioned_by_avatar',
+                DB::raw("'news_comment' as source_type"),
+                DB::raw("'@mention' as mention_text")
             ])
-            ->whereNotNull('nc.mentions')
-            ->where('nc.mentions', 'LIKE', "%{$query}%")
+            ->orderBy('nc.created_at', 'desc')
+            ->limit(5)
             ->get();
-
-        // Combine and format all mentions
-        $allMentions = $forumMentions->merge($postMentions)->merge($newsCommentMentions);
-
-        return $allMentions->map(function($mention) use ($query) {
-            $mentionsArray = json_decode($mention->mentions, true) ?? [];
-            $relevantMentions = array_filter($mentionsArray, function($m) use ($query) {
-                return stripos($m['text'] ?? '', $query) !== false;
-            });
-
+            
+        $mentions = array_merge($mentions, $contentMentions->toArray());
+        
+        // Sort by date and paginate
+        usort($mentions, function($a, $b) {
+            return strtotime($b->created_at) - strtotime($a->created_at);
+        });
+        
+        $mentions = array_slice($mentions, $offset, $limit);
+        
+        // Format results
+        return collect($mentions)->map(function($mention) {
             return [
                 'id' => $mention->id,
-                'content' => isset($mention->title) ? $mention->title : substr($mention->content, 0, 200) . '...',
-                'mentions' => $relevantMentions,
+                'content' => \Str::limit($mention->content, 200),
+                'mention_text' => $mention->mention_text,
                 'source_type' => $mention->source_type,
-                'author' => [
-                    'name' => $mention->author_name,
-                    'avatar' => $mention->author_avatar
-                ],
-                'context' => [
-                    'thread_title' => $mention->thread_title ?? null,
-                    'news_title' => $mention->news_title ?? null
+                'context_title' => $mention->context_title,
+                'mentioned_by' => [
+                    'name' => $mention->mentioned_by_name,
+                    'avatar' => $mention->mentioned_by_avatar
                 ],
                 'type' => 'mention',
-                'created_at' => $mention->created_at
+                'url' => $this->getMentionUrl($mention),
+                'created_at' => $mention->created_at,
+                'time_ago' => Carbon::parse($mention->created_at)->diffForHumans()
             ];
-        })->sortByDesc('created_at')->slice($offset, $limit)->values();
+        });
+    }
+    
+    private function getMentionUrl($mention)
+    {
+        switch ($mention->source_type) {
+            case 'news_comment':
+                return "/news/article#{$mention->id}";
+            case 'forum_post':
+                return "/forums/thread#{$mention->id}";
+            case 'match_comment':
+                return "/matches/match#{$mention->id}";
+            default:
+                return "#";
+        }
     }
 
     public function searchHeroes($query, $limit = 10, $page = 1)
@@ -960,7 +1079,7 @@ class SearchController extends Controller
         }
 
         if (isset($filters['is_pinned'])) {
-            $queryBuilder->where('ft.is_pinned', $filters['is_pinned']);
+            $queryBuilder->where('ft.pinned', $filters['is_pinned']);
         }
 
         if ($dateRange) {

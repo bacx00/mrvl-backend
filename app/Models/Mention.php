@@ -130,18 +130,21 @@ class Mention extends Model
                 ] : null;
             
             case 'news_comment':
-                $comment = \App\Models\NewsComment::find($this->mentionable_id);
-                if ($comment && $comment->news) {
-                    return [
-                        'type' => 'news_comment',
-                        'title' => "Comment on: {$comment->news->title}",
-                        'url' => "/news/{$comment->news->slug}#comment-{$comment->id}"
-                    ];
+                $comment = \DB::table('news_comments')->where('id', $this->mentionable_id)->first();
+                if ($comment) {
+                    $news = \DB::table('news')->where('id', $comment->news_id)->first();
+                    if ($news) {
+                        return [
+                            'type' => 'news_comment',
+                            'title' => "Comment on: {$news->title}",
+                            'url' => "/news/{$news->slug}#comment-{$comment->id}"
+                        ];
+                    }
                 }
                 return null;
             
             case 'match':
-                $match = \App\Models\Match::find($this->mentionable_id);
+                $match = \DB::table('matches')->where('id', $this->mentionable_id)->first();
                 if ($match) {
                     return [
                         'type' => 'match',
@@ -160,13 +163,16 @@ class Mention extends Model
                 ] : null;
             
             case 'forum_post':
-                $post = \App\Models\ForumPost::find($this->mentionable_id);
-                if ($post && $post->thread) {
-                    return [
-                        'type' => 'forum_post',
-                        'title' => "Reply in: {$post->thread->title}",
-                        'url' => "/forums/threads/{$post->thread->id}#post-{$post->id}"
-                    ];
+                $post = \DB::table('forum_posts')->where('id', $this->mentionable_id)->first();
+                if ($post) {
+                    $thread = \DB::table('forum_threads')->where('id', $post->thread_id)->first();
+                    if ($thread) {
+                        return [
+                            'type' => 'forum_post',
+                            'title' => "Reply in: {$thread->title}",
+                            'url' => "/forums/threads/{$thread->id}#post-{$post->id}"
+                        ];
+                    }
                 }
                 return null;
             

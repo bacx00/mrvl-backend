@@ -11,8 +11,8 @@ class Team extends Model
     protected $fillable = [
         'name', 'short_name', 'logo', 'region', 'platform', 'game', 'division',
         'country', 'flag', 'rating', 'rank', 'win_rate', 'points', 'record', 
-        'peak', 'streak', 'last_match', 'founded', 'captain', 'coach', 
-        'website', 'earnings', 'social_media', 'achievements', 'recent_form', 
+        'peak', 'streak', 'last_match', 'founded', 'captain', 'coach', 'coach_picture',
+        'website', 'earnings', 'social_media', 'social_links', 'achievements', 'recent_form', 
         'player_count'
     ];
 

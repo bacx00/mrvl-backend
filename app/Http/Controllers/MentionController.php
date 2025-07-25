@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\DB;
 
 class MentionController extends Controller
 {
-    public function searchMentions(Request $request)
+    public function search(Request $request)
     {
         $query = $request->get('q', '');
         $type = $request->get('type', 'all'); // 'all', 'user', 'team', 'player'
@@ -32,13 +32,24 @@ class MentionController extends Controller
                 ->get();
 
             foreach ($users as $user) {
+                // Process avatar URL
+                $avatarUrl = null;
+                if ($user->avatar) {
+                    // Handle hero images differently - they're in public/images/heroes/
+                    if (strpos($user->avatar, '/images/heroes/') !== false) {
+                        $avatarUrl = asset(ltrim($user->avatar, '/'));
+                    } else {
+                        $avatarUrl = asset('storage/' . ltrim($user->avatar, '/'));
+                    }
+                }
+
                 $results[] = [
                     'id' => $user->id,
                     'type' => 'user',
                     'name' => $user->name,
                     'display_name' => $user->name,
                     'mention_text' => "@{$user->name}",
-                    'avatar' => $user->avatar,
+                    'avatar' => $avatarUrl,
                     'subtitle' => 'User',
                     'icon' => 'user'
                 ];
@@ -57,13 +68,19 @@ class MentionController extends Controller
                 ->get();
 
             foreach ($teams as $team) {
+                // Process team logo URL
+                $logoUrl = null;
+                if ($team->logo) {
+                    $logoUrl = asset('storage/' . ltrim($team->logo, '/'));
+                }
+
                 $results[] = [
                     'id' => $team->id,
                     'type' => 'team',
                     'name' => $team->short_name,
                     'display_name' => $team->name,
                     'mention_text' => "@team:{$team->short_name}",
-                    'avatar' => $team->logo,
+                    'avatar' => $logoUrl,
                     'subtitle' => "Team • {$team->region}",
                     'icon' => 'team'
                 ];
@@ -91,13 +108,19 @@ class MentionController extends Controller
                     $subtitle .= " • {$player->team_name}";
                 }
 
+                // Process player avatar URL
+                $avatarUrl = null;
+                if ($player->avatar) {
+                    $avatarUrl = asset('storage/' . ltrim($player->avatar, '/'));
+                }
+
                 $results[] = [
                     'id' => $player->id,
                     'type' => 'player',
                     'name' => $player->username,
                     'display_name' => $player->real_name ?: $player->username,
                     'mention_text' => "@player:{$player->username}",
-                    'avatar' => $player->avatar,
+                    'avatar' => $avatarUrl,
                     'subtitle' => $subtitle,
                     'icon' => 'player'
                 ];
@@ -125,7 +148,7 @@ class MentionController extends Controller
         ]);
     }
 
-    public function getPopularMentions(Request $request)
+    public function popular(Request $request)
     {
         $limit = min($request->get('limit', 10), 20);
         
@@ -162,13 +185,24 @@ class MentionController extends Controller
                 ->get();
             
             foreach ($users as $user) {
+                // Process avatar URL
+                $avatarUrl = null;
+                if ($user->avatar) {
+                    // Handle hero images differently - they're in public/images/heroes/
+                    if (strpos($user->avatar, '/images/heroes/') !== false) {
+                        $avatarUrl = asset(ltrim($user->avatar, '/'));
+                    } else {
+                        $avatarUrl = asset('storage/' . ltrim($user->avatar, '/'));
+                    }
+                }
+
                 $results[] = [
                     'id' => $user->id,
                     'type' => 'user',
                     'name' => $user->name,
                     'display_name' => $user->name,
                     'mention_text' => "@{$user->name}",
-                    'avatar' => $user->avatar,
+                    'avatar' => $avatarUrl,
                     'subtitle' => 'User',
                     'icon' => 'user'
                 ];
@@ -181,13 +215,19 @@ class MentionController extends Controller
                 ->get();
             
             foreach ($teams as $team) {
+                // Process team logo URL
+                $logoUrl = null;
+                if ($team->logo) {
+                    $logoUrl = asset('storage/' . ltrim($team->logo, '/'));
+                }
+
                 $results[] = [
                     'id' => $team->id,
                     'type' => 'team',
                     'name' => $team->short_name,
                     'display_name' => $team->name,
                     'mention_text' => "@team:{$team->short_name}",
-                    'avatar' => $team->logo,
+                    'avatar' => $logoUrl,
                     'subtitle' => "Team • {$team->region}",
                     'icon' => 'team'
                 ];
@@ -212,13 +252,24 @@ class MentionController extends Controller
                 
                 if (!$user) return null;
                 
+                // Process avatar URL
+                $avatarUrl = null;
+                if ($user->avatar) {
+                    // Handle hero images differently - they're in public/images/heroes/
+                    if (strpos($user->avatar, '/images/heroes/') !== false) {
+                        $avatarUrl = asset(ltrim($user->avatar, '/'));
+                    } else {
+                        $avatarUrl = asset('storage/' . ltrim($user->avatar, '/'));
+                    }
+                }
+                
                 return [
                     'id' => $user->id,
                     'type' => 'user',
                     'name' => $user->name,
                     'display_name' => $user->name,
                     'mention_text' => "@{$user->name}",
-                    'avatar' => $user->avatar,
+                    'avatar' => $avatarUrl,
                     'subtitle' => 'User',
                     'icon' => 'user'
                 ];
@@ -231,13 +282,19 @@ class MentionController extends Controller
                 
                 if (!$team) return null;
                 
+                // Process team logo URL
+                $logoUrl = null;
+                if ($team->logo) {
+                    $logoUrl = asset('storage/' . ltrim($team->logo, '/'));
+                }
+                
                 return [
                     'id' => $team->id,
                     'type' => 'team',
                     'name' => $team->short_name,
                     'display_name' => $team->name,
                     'mention_text' => "@team:{$team->short_name}",
-                    'avatar' => $team->logo,
+                    'avatar' => $logoUrl,
                     'subtitle' => "Team • {$team->region}",
                     'icon' => 'team'
                 ];
@@ -259,13 +316,19 @@ class MentionController extends Controller
                     $subtitle .= " • {$player->team_name}";
                 }
                 
+                // Process player avatar URL
+                $avatarUrl = null;
+                if ($player->avatar) {
+                    $avatarUrl = asset('storage/' . ltrim($player->avatar, '/'));
+                }
+                
                 return [
                     'id' => $player->id,
                     'type' => 'player',
                     'name' => $player->username,
                     'display_name' => $player->real_name ?: $player->username,
                     'mention_text' => "@player:{$player->username}",
-                    'avatar' => $player->avatar,
+                    'avatar' => $avatarUrl,
                     'subtitle' => $subtitle,
                     'icon' => 'player'
                 ];

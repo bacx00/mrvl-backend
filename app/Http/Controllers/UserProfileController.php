@@ -21,13 +21,24 @@ class UserProfileController extends Controller
     {
         try {
             $user = Auth::user();
+            
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User not authenticated'
+                ], 401);
+            }
+            
+            // Ensure user has at least the 'user' role if no roles assigned
+            $this->ensureUserHasBasicRole($user);
+            
             $user->load('teamFlair');
             
             // Fix avatar if it's using old PNG path
             $this->fixUserAvatar($user);
             
             // Get user statistics
-            $stats = $this->getUserStats($user->id);
+            $stats = $this->getUserStatsData($user->id);
             
             // Get recent activity
             $recentActivity = $this->getRecentActivity($user->id, 5);
@@ -348,17 +359,71 @@ class UserProfileController extends Controller
     }
 
     /**
+     * Get user stats (public endpoint)
+     */
+    public function getUserStats(Request $request)
+    {
+        try {
+            $user = Auth::user();
+            
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User not authenticated'
+                ], 401);
+            }
+
+            // Ensure user has proper role assigned
+            $this->ensureUserHasBasicRole($user);
+
+            $stats = $this->getUserStatsData($user->id);
+            
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'stats' => $stats,
+                    'user' => [
+                        'id' => $user->id,
+                        'name' => $user->name,
+                        'roles' => $user->getRoleNames(),
+                        'is_admin' => $user->hasRole('admin'),
+                        'is_moderator' => $user->hasRole('moderator')
+                    ]
+                ]
+            ]);
+        } catch (Exception $e) {
+            Log::error('Error fetching user stats: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch user stats'
+            ], 500);
+        }
+    }
+
+    /**
      * Get user activity
      */
     public function getUserActivity(Request $request)
     {
         try {
-            $userId = Auth::id();
+            $user = Auth::user();
+            
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User not authenticated'
+                ], 401);
+            }
+
+            // Ensure user has proper role assigned
+            $this->ensureUserHasBasicRole($user);
+            
+            $userId = $user->id;
             $limit = $request->get('limit', 50);
             $offset = $request->get('offset', 0);
             
             $activities = $this->getDetailedUserActivity($userId, $limit, $offset);
-            $stats = $this->getUserStats($userId);
+            $stats = $this->getUserStatsData($userId);
             
             return response()->json([
                 'success' => true,
@@ -711,18 +776,97 @@ class UserProfileController extends Controller
     /**
      * Helper: Get user stats
      */
-    private function getUserStats($userId)
+    private function getUserStatsData($userId)
     {
+        // Get user for created_at date
+        $user = User::find($userId);
+        
+        // Calculate days active - more user-friendly format
+        $daysActive = 0;
+        $daysActiveFormatted = '0 days';
+        if ($user && $user->created_at) {
+            $daysActive = (int) $user->created_at->diffInDays(now());
+            // At least 1 day if account was created today
+            $daysActive = max(1, $daysActive);
+            
+            // Format days active for display
+            if ($daysActive === 1) {
+                $daysActiveFormatted = '1 day';
+            } elseif ($daysActive < 30) {
+                $daysActiveFormatted = $daysActive . ' days';
+            } elseif ($daysActive < 365) {
+                $months = floor($daysActive / 30);
+                $daysActiveFormatted = $months . ' month' . ($months > 1 ? 's' : '');
+            } else {
+                $years = floor($daysActive / 365);
+                $daysActiveFormatted = $years . ' year' . ($years > 1 ? 's' : '');
+            }
+        }
+        
+        // Get individual counts
+        $newsComments = DB::table('news_comments')->where('user_id', $userId)->count();
+        $matchComments = DB::table('match_comments')->where('user_id', $userId)->count();
+        $forumThreads = DB::table('forum_threads')->where('user_id', $userId)->count();
+        $forumPosts = DB::table('forum_posts')->where('user_id', $userId)->count();
+        
+        // Count mentions of this user
+        $username = $user ? $user->name : '';
+        $mentionsCount = 0;
+        
+        if ($username) {
+            try {
+                // Count mentions in forum posts
+                $mentionsCount += DB::table('forum_posts')
+                    ->where('content', 'LIKE', '%@' . $username . '%')
+                    ->where('user_id', '!=', $userId) // Don't count self-mentions
+                    ->count();
+                
+                // Count mentions in forum threads
+                $mentionsCount += DB::table('forum_threads')
+                    ->where(function($query) use ($username) {
+                        $query->where('content', 'LIKE', '%@' . $username . '%')
+                              ->orWhere('title', 'LIKE', '%@' . $username . '%');
+                    })
+                    ->where('user_id', '!=', $userId)
+                    ->count();
+                
+                // Count mentions in news comments
+                $mentionsCount += DB::table('news_comments')
+                    ->where('content', 'LIKE', '%@' . $username . '%')
+                    ->where('user_id', '!=', $userId)
+                    ->count();
+                
+                // Count mentions in match comments
+                $mentionsCount += DB::table('match_comments')
+                    ->where('content', 'LIKE', '%@' . $username . '%')
+                    ->where('user_id', '!=', $userId)
+                    ->count();
+            } catch (\Exception $e) {
+                // Some tables might not exist
+                $mentionsCount = 0;
+            }
+        }
+        
         $stats = [
+            // For frontend compatibility - these are the fields it expects
+            'total_comments' => $newsComments + $matchComments,
+            'total_forum_threads' => $forumThreads,
+            'total_forum_posts' => $forumPosts,
+            'days_active' => $daysActive,
+            'days_active_formatted' => $daysActiveFormatted,
+            'total_votes' => 0, // Will calculate below
+            'total_mentions' => $mentionsCount,
+            
+            // Detailed breakdown
             'comments' => [
-                'news' => DB::table('news_comments')->where('user_id', $userId)->count(),
-                'matches' => DB::table('match_comments')->where('user_id', $userId)->count(),
-                'total' => 0
+                'news' => $newsComments,
+                'matches' => $matchComments,
+                'total' => $newsComments + $matchComments
             ],
             'forum' => [
-                'threads' => DB::table('forum_threads')->where('user_id', $userId)->count(),
-                'posts' => DB::table('forum_posts')->where('user_id', $userId)->count(),
-                'total' => 0
+                'threads' => $forumThreads,
+                'posts' => $forumPosts,
+                'total' => $forumThreads + $forumPosts
             ],
             'votes' => [
                 'upvotes_given' => 0,
@@ -731,54 +875,60 @@ class UserProfileController extends Controller
                 'downvotes_received' => 0
             ],
             'account' => [
-                'days_active' => 0,
-                'last_seen' => null
+                'days_active' => $daysActive,
+                'days_active_formatted' => $daysActiveFormatted,
+                'last_seen' => $user ? $user->last_login : null,
+                'created_at' => $user ? $user->created_at : null
+            ],
+            'mentions' => [
+                'total' => $mentionsCount,
+                'username' => $username
             ]
         ];
         
-        // Calculate totals
-        $stats['comments']['total'] = $stats['comments']['news'] + $stats['comments']['matches'];
-        $stats['forum']['total'] = $stats['forum']['threads'] + $stats['forum']['posts'];
-        
         // Get vote counts
-        $stats['votes']['upvotes_given'] = DB::table('forum_post_votes')
-            ->where('user_id', $userId)
-            ->where('vote_type', 'upvote')
-            ->count();
+        try {
+            $stats['votes']['upvotes_given'] = DB::table('forum_post_votes')
+                ->where('user_id', $userId)
+                ->where('vote_type', 'upvote')
+                ->count();
+                
+            $stats['votes']['downvotes_given'] = DB::table('forum_post_votes')
+                ->where('user_id', $userId)
+                ->where('vote_type', 'downvote')
+                ->count();
+                
+            // Get received votes
+            $userThreadIds = DB::table('forum_threads')->where('user_id', $userId)->pluck('id');
+            $userPostIds = DB::table('forum_posts')->where('user_id', $userId)->pluck('id');
             
-        $stats['votes']['downvotes_given'] = DB::table('forum_post_votes')
-            ->where('user_id', $userId)
-            ->where('vote_type', 'downvote')
-            ->count();
-            
-        // Get received votes
-        $userThreadIds = DB::table('forum_threads')->where('user_id', $userId)->pluck('id');
-        $userPostIds = DB::table('forum_posts')->where('user_id', $userId)->pluck('id');
-        
-        $stats['votes']['upvotes_received'] = DB::table('forum_thread_votes')
-            ->whereIn('thread_id', $userThreadIds)
-            ->where('vote_type', 'upvote')
-            ->count() + 
-            DB::table('forum_post_votes')
-            ->whereIn('post_id', $userPostIds)
-            ->where('vote_type', 'upvote')
-            ->count();
-            
-        $stats['votes']['downvotes_received'] = DB::table('forum_thread_votes')
-            ->whereIn('thread_id', $userThreadIds)
-            ->where('vote_type', 'downvote')
-            ->count() + 
-            DB::table('forum_post_votes')
-            ->whereIn('post_id', $userPostIds)
-            ->where('vote_type', 'downvote')
-            ->count();
-        
-        // Get account stats
-        $user = User::find($userId);
-        if ($user) {
-            $stats['account']['days_active'] = $user->created_at->diffInDays(now());
-            $stats['account']['last_seen'] = $user->last_login;
+            $stats['votes']['upvotes_received'] = DB::table('forum_thread_votes')
+                ->whereIn('thread_id', $userThreadIds)
+                ->where('vote_type', 'upvote')
+                ->count() + 
+                DB::table('forum_post_votes')
+                ->whereIn('post_id', $userPostIds)
+                ->where('vote_type', 'upvote')
+                ->count();
+                
+            $stats['votes']['downvotes_received'] = DB::table('forum_thread_votes')
+                ->whereIn('thread_id', $userThreadIds)
+                ->where('vote_type', 'downvote')
+                ->count() + 
+                DB::table('forum_post_votes')
+                ->whereIn('post_id', $userPostIds)
+                ->where('vote_type', 'downvote')
+                ->count();
+        } catch (\Exception $e) {
+            // Voting tables might not exist
+            $stats['votes']['upvotes_given'] = 0;
+            $stats['votes']['downvotes_given'] = 0;
+            $stats['votes']['upvotes_received'] = 0;
+            $stats['votes']['downvotes_received'] = 0;
         }
+        
+        // Calculate total votes for frontend
+        $stats['total_votes'] = $stats['votes']['upvotes_given'] + $stats['votes']['downvotes_given'];
         
         return $stats;
     }
@@ -1031,6 +1181,23 @@ class UserProfileController extends Controller
         }
         
         return $backgrounds[abs($hash) % count($backgrounds)];
+    }
+
+    /**
+     * Helper: Ensure user has at least basic role assigned
+     */
+    private function ensureUserHasBasicRole($user)
+    {
+        try {
+            // Check if user has any roles
+            if (!$user->hasAnyRole(['admin', 'moderator', 'user'])) {
+                Log::info("User {$user->id} has no roles assigned, assigning 'user' role");
+                $user->assignRole('user');
+                $user->refresh();
+            }
+        } catch (Exception $e) {
+            Log::warning("Failed to ensure user has basic role: " . $e->getMessage());
+        }
     }
 
     /**

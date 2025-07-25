@@ -65,7 +65,7 @@ class Event extends Model
     public function teams(): BelongsToMany
     {
         return $this->belongsToMany(Team::class, 'event_teams')
-                    ->withPivot(['seed', 'status', 'registered_at', 'registration_data'])
+                    ->withPivot(['seed', 'status', 'registered_at', 'placement', 'prize_money', 'points'])
                     ->withTimestamps();
     }
 
@@ -277,5 +277,16 @@ class Event extends Model
         'ongoing' => 'Ongoing',
         'completed' => 'Completed',
         'cancelled' => 'Cancelled'
+    ];
+
+    public const REGIONS = [
+        'NA' => 'North America',
+        'EU' => 'Europe',
+        'APAC' => 'Asia-Pacific',
+        'CN' => 'China',
+        'SA' => 'South America',
+        'MENA' => 'Middle East & North Africa',
+        'OCE' => 'Oceania',
+        'INTL' => 'International'
     ];
 }

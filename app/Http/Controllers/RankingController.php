@@ -606,4 +606,80 @@ class RankingController extends Controller
             'success' => true
         ]);
     }
+    
+    public function getTeamRankings(Request $request)
+    {
+        try {
+            $query = DB::table('teams as t')
+                ->select([
+                    't.id', 't.name', 't.short_name', 't.logo', 't.region', 
+                    't.rating', 't.founded', 't.country'
+                ])
+                ->where('t.status', 'active')
+                ->orderBy('t.rating', 'desc');
+
+            if ($request->region && $request->region !== 'all') {
+                $query->where('t.region', $request->region);
+            }
+
+            $teams = $query->paginate(20);
+
+            return response()->json([
+                'success' => true,
+                'data' => $teams->items(),
+                'meta' => [
+                    'current_page' => $teams->currentPage(),
+                    'last_page' => $teams->lastPage(),
+                    'per_page' => $teams->perPage(),
+                    'total' => $teams->total()
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch team rankings'
+            ], 500);
+        }
+    }
+    
+    public function getPlayerRankings(Request $request)
+    {
+        try {
+            $query = DB::table('players as p')
+                ->leftJoin('teams as t', 'p.team_id', '=', 't.id')
+                ->select([
+                    'p.id', 'p.username', 'p.real_name', 'p.avatar', 'p.role', 
+                    'p.main_hero', 'p.rating', 'p.peak_rating', 'p.country', 'p.region',
+                    't.name as team_name', 't.short_name as team_short', 't.logo as team_logo'
+                ])
+                ->where('p.status', 'active')
+                ->orderBy('p.rating', 'desc');
+
+            if ($request->region && $request->region !== 'all') {
+                $query->where('p.region', $request->region);
+            }
+
+            if ($request->role && $request->role !== 'all') {
+                $query->where('p.role', $request->role);
+            }
+
+            $players = $query->paginate(20);
+
+            return response()->json([
+                'success' => true,
+                'data' => $players->items(),
+                'meta' => [
+                    'current_page' => $players->currentPage(),
+                    'last_page' => $players->lastPage(),
+                    'per_page' => $players->perPage(),
+                    'total' => $players->total()
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch player rankings'
+            ], 500);
+        }
+    }
 }

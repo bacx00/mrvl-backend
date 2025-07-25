@@ -25,7 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions) {
         $exceptions->render(function (\Illuminate\Auth\AuthenticationException $e, $request) {
-            if ($request->expectsJson()) {
+            if ($request->expectsJson() || $request->is('api/*')) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Unauthenticated. Please provide a valid authentication token.',
@@ -35,7 +35,7 @@ return Application::configure(basePath: dirname(__DIR__))
         });
         
         $exceptions->render(function (\Throwable $e, $request) {
-            if ($request->expectsJson()) {
+            if ($request->expectsJson() || $request->is('api/*')) {
                 // Log the actual error
                 \Log::error('API Error: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
                 
