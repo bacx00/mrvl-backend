@@ -1,0 +1,140 @@
+{
+    "summary": {
+        "total_tests": 17,
+        "passed": 1,
+        "failed": 16,
+        "success_rate": 5.87999999999999989341858963598497211933135986328125
+    },
+    "failed_tests": [
+        "Single Elimination 8 teams bracket generation",
+        "Single Elimination 16 teams bracket generation",
+        "Single Elimination 32 teams bracket generation",
+        "Single Elimination 7 teams bracket generation",
+        "Single Elimination 15 teams bracket generation",
+        "Single Elimination 6 teams bracket generation",
+        "Double Elimination 8 teams bracket generation",
+        "Double Elimination 16 teams bracket generation",
+        "Double Elimination 6 teams bracket generation",
+        "Swiss System 16 teams bracket generation",
+        "Swiss System 12 teams bracket generation",
+        "Swiss System 8 teams bracket generation",
+        "Round Robin 6 teams bracket generation",
+        "Round Robin 8 teams bracket generation",
+        "Round Robin 4 teams bracket generation",
+        "Marvel Rivals China Tournament Replication"
+    ],
+    "detailed_results": [
+        {
+            "test": "Single Elimination 8 teams bracket generation",
+            "status": "FAIL",
+            "error": "Unauthenticated. Please provide a valid authentication token.",
+            "timestamp": "2025-08-05T17:19:29.331952Z"
+        },
+        {
+            "test": "Single Elimination 16 teams bracket generation",
+            "status": "FAIL",
+            "error": "Unauthenticated. Please provide a valid authentication token.",
+            "timestamp": "2025-08-05T17:19:30.021175Z"
+        },
+        {
+            "test": "Single Elimination 32 teams bracket generation",
+            "status": "FAIL",
+            "error": "Unauthenticated. Please provide a valid authentication token.",
+            "timestamp": "2025-08-05T17:19:31.777200Z"
+        },
+        {
+            "test": "Single Elimination 7 teams bracket generation",
+            "status": "FAIL",
+            "error": "Unauthenticated. Please provide a valid authentication token.",
+            "timestamp": "2025-08-05T17:19:32.867694Z"
+        },
+        {
+            "test": "Single Elimination 15 teams bracket generation",
+            "status": "FAIL",
+            "error": "Unauthenticated. Please provide a valid authentication token.",
+            "timestamp": "2025-08-05T17:19:33.388096Z"
+        },
+        {
+            "test": "Single Elimination 6 teams bracket generation",
+            "status": "FAIL",
+            "error": "Unauthenticated. Please provide a valid authentication token.",
+            "timestamp": "2025-08-05T17:19:33.851402Z"
+        },
+        {
+            "test": "Double Elimination 8 teams bracket generation",
+            "status": "FAIL",
+            "error": "Unauthenticated. Please provide a valid authentication token.",
+            "timestamp": "2025-08-05T17:19:34.142724Z"
+        },
+        {
+            "test": "Double Elimination 16 teams bracket generation",
+            "status": "FAIL",
+            "error": "Unauthenticated. Please provide a valid authentication token.",
+            "timestamp": "2025-08-05T17:19:34.713963Z"
+        },
+        {
+            "test": "Double Elimination 6 teams bracket generation",
+            "status": "FAIL",
+            "error": "Unauthenticated. Please provide a valid authentication token.",
+            "timestamp": "2025-08-05T17:19:35.119662Z"
+        },
+        {
+            "test": "Swiss System 16 teams bracket generation",
+            "status": "FAIL",
+            "error": "Unauthenticated. Please provide a valid authentication token.",
+            "timestamp": "2025-08-05T17:19:35.797353Z"
+        },
+        {
+            "test": "Swiss System 12 teams bracket generation",
+            "status": "FAIL",
+            "error": "Unauthenticated. Please provide a valid authentication token.",
+            "timestamp": "2025-08-05T17:19:36.629950Z"
+        },
+        {
+            "test": "Swiss System 8 teams bracket generation",
+            "status": "FAIL",
+            "error": "Unauthenticated. Please provide a valid authentication token.",
+            "timestamp": "2025-08-05T17:19:36.983285Z"
+        },
+        {
+            "test": "Round Robin 6 teams bracket generation",
+            "status": "FAIL",
+            "error": "Unauthenticated. Please provide a valid authentication token.",
+            "timestamp": "2025-08-05T17:19:37.218407Z"
+        },
+        {
+            "test": "Round Robin 8 teams bracket generation",
+            "status": "FAIL",
+            "error": "Unauthenticated. Please provide a valid authentication token.",
+            "timestamp": "2025-08-05T17:19:37.558083Z"
+        },
+        {
+            "test": "Round Robin 4 teams bracket generation",
+            "status": "FAIL",
+            "error": "Unauthenticated. Please provide a valid authentication token.",
+            "timestamp": "2025-08-05T17:19:37.906113Z"
+        },
+        {
+            "test": "GSL Format",
+            "status": "PASS",
+            "data": {
+                "message": "Format not implemented, which is acceptable"
+            },
+            "timestamp": "2025-08-05T17:19:38.018032Z"
+        },
+        {
+            "test": "Marvel Rivals China Tournament Replication",
+            "status": "FAIL",
+            "error": {
+                "group_a_valid": false,
+                "group_b_valid": false,
+                "playoffs_valid": false,
+                "total_teams": 12,
+                "group_stage_matches": 30,
+                "playoff_matches": 15
+            },
+            "timestamp": "2025-08-05T17:19:38.691302Z"
+        }
+    ],
+    "generated_at": "2025-08-05T17:19:39.048025Z"
+}

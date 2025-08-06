@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Clear Service Worker</title>
+</head>
+<body>
+    <h1>Clear Service Worker & Cache</h1>
+    <button onclick="clearEverything()">Clear Everything and Reload</button>
+    <div id="status"></div>
+    
+    <script>
+        async function clearEverything() {
+            const status = document.getElementById('status');
+            try {
+                // Unregister all service workers
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                for(let registration of registrations) {
+                    await registration.unregister();
+                }
+                
+                // Clear all caches
+                const cacheNames = await caches.keys();
+                await Promise.all(cacheNames.map(name => caches.delete(name)));
+                
+                // Clear localStorage and sessionStorage
+                localStorage.clear();
+                sessionStorage.clear();
+                
+                status.innerHTML = '<p style="color: green">✅ Everything cleared! Reloading...</p>';
+                
+                // Reload after 1 second
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 1000);
+                
+            } catch(e) {
+                status.innerHTML = '<p style="color: red">❌ Error: ' + e.message + '</p>';
+            }
+        }
+        
+        // Auto-run on page load
+        window.onload = clearEverything;
+    </script>
+</body>
+</html>

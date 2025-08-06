@@ -464,87 +464,7 @@ class MatchController extends Controller
         }
     }
 
-    public function pauseMatch(Request $request, $matchId)
-    {
-        $this->authorize('moderate-matches');
-        
-        try {
-            $match = DB::table('matches')->where('id', $matchId)->first();
-            if (!$match || $match->status !== 'live') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Match must be live to pause'
-                ], 400);
-            }
-
-            // Update match status and save current state
-            $liveData = json_decode($match->live_data, true) ?? [];
-            $liveData['paused_at'] = now();
-            $liveData['timer_paused'] = true;
-            $liveData['timer_status'] = 'paused';
-
-            DB::table('matches')->where('id', $matchId)->update([
-                'status' => 'paused',
-                'live_data' => json_encode($liveData),
-                'updated_at' => now()
-            ]);
-
-            // Broadcast pause event
-            event(new \App\Events\MatchPaused($matchId));
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Match paused successfully'
-            ]);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error pausing match: ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-    public function resumeMatch(Request $request, $matchId)
-    {
-        $this->authorize('moderate-matches');
-        
-        try {
-            $match = DB::table('matches')->where('id', $matchId)->first();
-            if (!$match || $match->status !== 'paused') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Match must be paused to resume'
-                ], 400);
-            }
-
-            // Update match status and restore timer
-            $liveData = json_decode($match->live_data, true) ?? [];
-            $liveData['resumed_at'] = now();
-            $liveData['timer_paused'] = false;
-            $liveData['timer_status'] = 'running';
-
-            DB::table('matches')->where('id', $matchId)->update([
-                'status' => 'live',
-                'live_data' => json_encode($liveData),
-                'updated_at' => now()
-            ]);
-
-            // Broadcast resume event
-            event(new \App\Events\MatchResumed($matchId));
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Match resumed successfully'
-            ]);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error resuming match: ' . $e->getMessage()
-            ], 500);
-        }
-    }
+    // Pause functionality removed - matches can only be live, upcoming, or completed
 
     public function restartMatch(Request $request, $matchId)
     {
@@ -1002,6 +922,146 @@ class MatchController extends Controller
         try {
             $action = $request->input('action', 'update_all');
             
+            if ($action === 'update_scores' || $action === 'update_all') {
+                // Handle score updates with immediate response
+                $data = [
+                    'team1_score' => $request->input('team1_score') ?? $request->input('team_scores.team1'),
+                    'team2_score' => $request->input('team2_score') ?? $request->input('team_scores.team2'),
+                    'current_map' => $request->input('current_map'),
+                    'status' => $request->input('status', 'live'),
+                    'match_timer' => $request->input('timer') ?? $request->input('match_timer', '00:00'),
+                    'updated_at' => now()
+                ];
+
+                // Update live data with current scores for immediate sync
+                $liveData = [
+                    'timer' => $data['match_timer'],
+                    'current_map_score' => [
+                        'team1' => $data['team1_score'],
+                        'team2' => $data['team2_score']
+                    ],
+                    'current_map_index' => $request->input('current_map_index', 0),
+                    'last_update' => now(),
+                    'action' => $action
+                ];
+                $data['live_data'] = json_encode($liveData);
+
+                DB::table('matches')->where('id', $matchId)->update($data);
+
+                // Broadcast update
+                $this->broadcastLiveUpdate($matchId, $data);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Match scores updated successfully',
+                    'data' => $data,
+                    'live_data' => $liveData
+                ]);
+            }
+
+            if ($action === 'update_composition' || $action === 'update_all') {
+                // Handle player composition and stats updates
+                $playerStats = $request->input('player_stats', []);
+                $mapNumber = $request->input('map_number', 1);
+
+                // Get current maps data
+                $match = DB::table('matches')->where('id', $matchId)->first();
+                $mapsData = $match->maps_data ? json_decode($match->maps_data, true) : [];
+
+                // Ensure maps data structure exists
+                if (empty($mapsData)) {
+                    $mapsData = [
+                        [
+                            'map_number' => 1,
+                            'map_name' => 'Tokyo 2099: Shibuya Sky',
+                            'mode' => 'Domination',
+                            'team1_score' => 0,
+                            'team2_score' => 0,
+                            'team1_composition' => [],
+                            'team2_composition' => []
+                        ]
+                    ];
+                }
+
+                // Update player stats in maps data
+                if (!empty($playerStats)) {
+                    $mapIndex = $mapNumber - 1;
+                    if (isset($mapsData[$mapIndex])) {
+                        foreach ($playerStats as $player) {
+                            $playerData = [
+                                'player_id' => $player['player_id'],
+                                'hero' => $player['hero'] ?? 'Captain America',
+                                'eliminations' => $player['eliminations'] ?? 0,
+                                'deaths' => $player['deaths'] ?? 0,
+                                'assists' => $player['assists'] ?? 0,
+                                'damage' => $player['damage'] ?? 0,
+                                'healing' => $player['healing'] ?? 0,
+                                'blocked' => $player['blocked'] ?? 0
+                            ];
+
+                            // Determine team based on player or use team field
+                            $team = isset($player['team']) ? $player['team'] : 'team1';
+                            $compositionKey = $team === 'team1' ? 'team1_composition' : 'team2_composition';
+
+                            if (!isset($mapsData[$mapIndex][$compositionKey])) {
+                                $mapsData[$mapIndex][$compositionKey] = [];
+                            }
+
+                            // Find and update existing player or add new
+                            $playerFound = false;
+                            foreach ($mapsData[$mapIndex][$compositionKey] as &$existingPlayer) {
+                                if ($existingPlayer['player_id'] === $player['player_id']) {
+                                    $existingPlayer = array_merge($existingPlayer, $playerData);
+                                    $playerFound = true;
+                                    break;
+                                }
+                            }
+
+                            if (!$playerFound) {
+                                $mapsData[$mapIndex][$compositionKey][] = $playerData;
+                            }
+                        }
+                    }
+                }
+
+                // Update maps data in database
+                DB::table('matches')->where('id', $matchId)->update([
+                    'maps_data' => json_encode($mapsData),
+                    'updated_at' => now()
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Player composition updated successfully',
+                    'maps_data' => $mapsData
+                ]);
+            }
+
+            if ($action === 'update_timer') {
+                // Handle timer updates
+                $timer = $request->input('timer', '00:00');
+                $currentMapIndex = $request->input('current_map_index', 0);
+
+                $liveData = [
+                    'timer' => $timer,
+                    'current_map_index' => $currentMapIndex,
+                    'timer_updated' => now(),
+                    'action' => 'timer_update'
+                ];
+
+                DB::table('matches')->where('id', $matchId)->update([
+                    'live_data' => json_encode($liveData),
+                    'updated_at' => now()
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Timer updated successfully',
+                    'timer' => $timer
+                ]);
+            }
+
+            // Legacy support for update_all
             if ($action === 'update_all') {
                 // Update all match data including player stats
                 $data = [
@@ -1082,6 +1142,192 @@ class MatchController extends Controller
                 'message' => 'Error updating match: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    // Live Scoreboard endpoint for frontend live scoring synchronization
+    public function liveScoreboard($matchId)
+    {
+        try {
+            $match = DB::table('matches as m')
+                ->leftJoin('teams as t1', 'm.team1_id', '=', 't1.id')
+                ->leftJoin('teams as t2', 'm.team2_id', '=', 't2.id')
+                ->leftJoin('events as e', 'm.event_id', '=', 'e.id')
+                ->where('m.id', $matchId)
+                ->select(
+                    'm.*',
+                    't1.name as team1_name', 't1.short_name as team1_short', 't1.logo as team1_logo', 
+                    't1.region as team1_region', 't1.rating as team1_rating', 't1.flag as team1_flag',
+                    't2.name as team2_name', 't2.short_name as team2_short', 't2.logo as team2_logo',
+                    't2.region as team2_region', 't2.rating as team2_rating', 't2.flag as team2_flag',
+                    'e.name as event_name', 'e.type as event_type', 'e.logo as event_logo'
+                )
+                ->first();
+
+            if (!$match) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Match not found'
+                ], 404);
+            }
+
+            // Get team players with complete data
+            $team1Players = $this->getTeamPlayersForLiveScoring($match->team1_id);
+            $team2Players = $this->getTeamPlayersForLiveScoring($match->team2_id);
+
+            // Parse live data
+            $liveData = $match->live_data ? json_decode($match->live_data, true) : [];
+            $mapsData = $match->maps_data ? json_decode($match->maps_data, true) : [];
+
+            // Prepare response data optimized for live scoring
+            $responseData = [
+                'match' => [
+                    'id' => $match->id,
+                    'team1_id' => $match->team1_id,
+                    'team2_id' => $match->team2_id,
+                    'team1_score' => $match->team1_score ?? 0,
+                    'team2_score' => $match->team2_score ?? 0,
+                    'status' => $match->status,
+                    'format' => $match->format,
+                    'current_map' => $match->current_map ?? 'Tokyo 2099: Shibuya Sky',
+                    'current_mode' => $liveData['current_mode'] ?? 'Domination',
+                    'game_mode' => $liveData['game_mode'] ?? 'Domination',
+                    'match_timer' => $liveData['timer'] ?? '00:00',
+                    'timer' => $liveData['timer'] ?? '00:00',
+                    'current_map_index' => ($liveData['current_map_index'] ?? 1) - 1,
+                    'current_map_number' => $liveData['current_map_index'] ?? 1,
+                    'maps_data' => json_encode($mapsData),
+                    'viewers' => $match->viewers ?? 0,
+                    'last_updated' => $match->updated_at
+                ],
+                'teams' => [
+                    'team1' => [
+                        'id' => $match->team1_id,
+                        'name' => $match->team1_name ?? 'Team 1',
+                        'short_name' => $match->team1_short,
+                        'logo' => $match->team1_logo,
+                        'region' => $match->team1_region,
+                        'flag' => $match->team1_flag,
+                        'players' => $team1Players
+                    ],
+                    'team2' => [
+                        'id' => $match->team2_id,
+                        'name' => $match->team2_name ?? 'Team 2',
+                        'short_name' => $match->team2_short,
+                        'logo' => $match->team2_logo,
+                        'region' => $match->team2_region,
+                        'flag' => $match->team2_flag,
+                        'players' => $team2Players
+                    ]
+                ],
+                'live_data' => $liveData,
+                'event' => [
+                    'name' => $match->event_name,
+                    'type' => $match->event_type,
+                    'logo' => $match->event_logo
+                ]
+            ];
+
+            return response()->json([
+                'success' => true,
+                'data' => $responseData,
+                'message' => 'Live scoreboard data retrieved successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error retrieving live scoreboard: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // Helper method to get country flag URL
+    private function getCountryFlag($countryCode)
+    {
+        if (!$countryCode) return null;
+        
+        $code = strtolower($countryCode);
+        
+        // Map common country codes to flag image URLs
+        $flagMap = [
+            'us' => 'https://flagcdn.com/16x12/us.png',
+            'ca' => 'https://flagcdn.com/16x12/ca.png',
+            'gb' => 'https://flagcdn.com/16x12/gb.png',
+            'uk' => 'https://flagcdn.com/16x12/gb.png',
+            'de' => 'https://flagcdn.com/16x12/de.png',
+            'fr' => 'https://flagcdn.com/16x12/fr.png',
+            'kr' => 'https://flagcdn.com/16x12/kr.png',
+            'jp' => 'https://flagcdn.com/16x12/jp.png',
+            'cn' => 'https://flagcdn.com/16x12/cn.png',
+            'br' => 'https://flagcdn.com/16x12/br.png',
+            'au' => 'https://flagcdn.com/16x12/au.png',
+            'se' => 'https://flagcdn.com/16x12/se.png',
+            'no' => 'https://flagcdn.com/16x12/no.png',
+            'dk' => 'https://flagcdn.com/16x12/dk.png',
+            'fi' => 'https://flagcdn.com/16x12/fi.png',
+            'nl' => 'https://flagcdn.com/16x12/nl.png',
+            'es' => 'https://flagcdn.com/16x12/es.png',
+            'it' => 'https://flagcdn.com/16x12/it.png',
+            'ru' => 'https://flagcdn.com/16x12/ru.png',
+            'pl' => 'https://flagcdn.com/16x12/pl.png',
+            'mx' => 'https://flagcdn.com/16x12/mx.png',
+            'ar' => 'https://flagcdn.com/16x12/ar.png',
+        ];
+
+        return $flagMap[$code] ?? "https://flagcdn.com/16x12/{$code}.png";
+    }
+
+    // Helper method to get team players optimized for live scoring
+    private function getTeamPlayersForLiveScoring($teamId)
+    {
+        if (!$teamId) return [];
+
+        return DB::table('players')
+            ->where('team_id', $teamId)
+            ->where('status', 'active')
+            ->select(
+                'id',
+                'player_id',
+                'username',
+                'real_name',
+                'role',
+                'avatar',
+                'country',
+                'nationality',
+                'main_hero',
+                'age'
+            )
+            ->limit(6)
+            ->get()
+            ->map(function($player) {
+                return [
+                    'id' => $player->id,
+                    'player_id' => $player->player_id ?? $player->id,
+                    'name' => $player->username,
+                    'player_name' => $player->username,
+                    'username' => $player->username,
+                    'real_name' => $player->real_name,
+                    'hero' => $player->main_hero ?? 'Captain America',
+                    'main_hero' => $player->main_hero,
+                    'current_hero' => $player->main_hero,
+                    'role' => $player->role ?? 'Vanguard',
+                    'country' => $player->country ?? 'US',
+                    'nationality' => $player->nationality ?? $player->country ?? 'US',
+                    'flag' => $this->getCountryFlag($player->country ?? 'US'),
+                    'avatar' => $player->avatar,
+                    'age' => $player->age,
+                    // Initialize stats for live scoring
+                    'eliminations' => 0,
+                    'deaths' => 0,
+                    'assists' => 0,
+                    'damage' => 0,
+                    'healing' => 0,
+                    'damage_blocked' => 0,
+                    'ultimate_usage' => 0,
+                    'objective_time' => 0
+                ];
+            })
+            ->toArray();
     }
 
     // Broadcast live update to frontend via Pusher/WebSocket
@@ -2349,262 +2595,6 @@ class MatchController extends Controller
         return $playerStats;
     }
 
-    private function getCountryFlag($countryCode)
-    {
-        // Map full country names to country codes
-        $countryNameToCode = [
-            'United States' => 'US',
-            'USA' => 'US',
-            'Canada' => 'CA',
-            'United Kingdom' => 'GB',
-            'UK' => 'GB',
-            'France' => 'FR',
-            'Germany' => 'DE',
-            'Spain' => 'ES',
-            'Italy' => 'IT',
-            'Japan' => 'JP',
-            'South Korea' => 'KR',
-            'Korea' => 'KR',
-            'China' => 'CN',
-            'Brazil' => 'BR',
-            'Mexico' => 'MX',
-            'Australia' => 'AU',
-            'New Zealand' => 'NZ',
-            'Sweden' => 'SE',
-            'Norway' => 'NO',
-            'Denmark' => 'DK',
-            'Finland' => 'FI',
-            'Netherlands' => 'NL',
-            'Belgium' => 'BE',
-            'Poland' => 'PL',
-            'Russia' => 'RU',
-            'Ukraine' => 'UA',
-            'India' => 'IN',
-            'Argentina' => 'AR',
-            'Chile' => 'CL',
-            'Colombia' => 'CO',
-            'Peru' => 'PE',
-            'Venezuela' => 'VE',
-            'South Africa' => 'ZA',
-            'Egypt' => 'EG',
-            'Saudi Arabia' => 'SA',
-            'UAE' => 'AE',
-            'Israel' => 'IL',
-            'Turkey' => 'TR',
-            'Greece' => 'GR',
-            'Portugal' => 'PT',
-            'Ireland' => 'IE',
-            'Austria' => 'AT',
-            'Switzerland' => 'CH',
-            'Czech Republic' => 'CZ',
-            'Hungary' => 'HU',
-            'Romania' => 'RO',
-            'Bulgaria' => 'BG',
-            'Croatia' => 'HR',
-            'Serbia' => 'RS',
-        ];
-
-        // Convert full country name to code if necessary
-        if (strlen($countryCode) > 2) {
-            $countryCode = $countryNameToCode[$countryCode] ?? $countryCode;
-        }
-
-        // Map country codes to flag URLs or emoji
-        $flags = [
-            'US' => '🇺🇸',
-            'CA' => '🇨🇦',
-            'GB' => '🇬🇧',
-            'UK' => '🇬🇧',
-            'FR' => '🇫🇷',
-            'DE' => '🇩🇪',
-            'ES' => '🇪🇸',
-            'IT' => '🇮🇹',
-            'JP' => '🇯🇵',
-            'KR' => '🇰🇷',
-            'CN' => '🇨🇳',
-            'BR' => '🇧🇷',
-            'MX' => '🇲🇽',
-            'AU' => '🇦🇺',
-            'NZ' => '🇳🇿',
-            'SE' => '🇸🇪',
-            'NO' => '🇳🇴',
-            'DK' => '🇩🇰',
-            'FI' => '🇫🇮',
-            'NL' => '🇳🇱',
-            'BE' => '🇧🇪',
-            'PL' => '🇵🇱',
-            'RU' => '🇷🇺',
-            'UA' => '🇺🇦',
-            'IN' => '🇮🇳',
-            'AR' => '🇦🇷',
-            'CL' => '🇨🇱',
-            'CO' => '🇨🇴',
-            'PE' => '🇵🇪',
-            'VE' => '🇻🇪',
-            'ZA' => '🇿🇦',
-            'EG' => '🇪🇬',
-            'SA' => '🇸🇦',
-            'AE' => '🇦🇪',
-            'IL' => '🇮🇱',
-            'TR' => '🇹🇷',
-            'GR' => '🇬🇷',
-            'PT' => '🇵🇹',
-            'IE' => '🇮🇪',
-            'AT' => '🇦🇹',
-            'CH' => '🇨🇭',
-            'CZ' => '🇨🇿',
-            'HU' => '🇭🇺',
-            'RO' => '🇷🇴',
-            'BG' => '🇧🇬',
-            'HR' => '🇭🇷',
-            'RS' => '🇷🇸',
-            'SK' => '🇸🇰',
-            'SI' => '🇸🇮',
-            'LT' => '🇱🇹',
-            'LV' => '🇱🇻',
-            'EE' => '🇪🇪',
-            'IS' => '🇮🇸',
-            'MT' => '🇲🇹',
-            'CY' => '🇨🇾',
-            'LU' => '🇱🇺',
-            'SG' => '🇸🇬',
-            'MY' => '🇲🇾',
-            'TH' => '🇹🇭',
-            'ID' => '🇮🇩',
-            'PH' => '🇵🇭',
-            'VN' => '🇻🇳',
-            'HK' => '🇭🇰',
-            'TW' => '🇹🇼',
-            'NP' => '🇳🇵',
-            'PK' => '🇵🇰',
-            'BD' => '🇧🇩',
-            'LK' => '🇱🇰',
-            'MM' => '🇲🇲',
-            'KH' => '🇰🇭',
-            'LA' => '🇱🇦',
-            'MN' => '🇲🇳',
-            'KZ' => '🇰🇿',
-            'UZ' => '🇺🇿',
-            'TM' => '🇹🇲',
-            'KG' => '🇰🇬',
-            'TJ' => '🇹🇯',
-            'AF' => '🇦🇫',
-            'IQ' => '🇮🇶',
-            'IR' => '🇮🇷',
-            'SY' => '🇸🇾',
-            'LB' => '🇱🇧',
-            'JO' => '🇯🇴',
-            'PS' => '🇵🇸',
-            'YE' => '🇾🇪',
-            'OM' => '🇴🇲',
-            'KW' => '🇰🇼',
-            'QA' => '🇶🇦',
-            'BH' => '🇧🇭',
-            'MA' => '🇲🇦',
-            'DZ' => '🇩🇿',
-            'TN' => '🇹🇳',
-            'LY' => '🇱🇾',
-            'SD' => '🇸🇩',
-            'ET' => '🇪🇹',
-            'KE' => '🇰🇪',
-            'UG' => '🇺🇬',
-            'TZ' => '🇹🇿',
-            'RW' => '🇷🇼',
-            'BI' => '🇧🇮',
-            'MW' => '🇲🇼',
-            'MZ' => '🇲🇿',
-            'ZM' => '🇿🇲',
-            'ZW' => '🇿🇼',
-            'BW' => '🇧🇼',
-            'NA' => '🇳🇦',
-            'AO' => '🇦🇴',
-            'CD' => '🇨🇩',
-            'CG' => '🇨🇬',
-            'CM' => '🇨🇲',
-            'GA' => '🇬🇦',
-            'GQ' => '🇬🇶',
-            'CF' => '🇨🇫',
-            'TD' => '🇹🇩',
-            'NG' => '🇳🇬',
-            'GH' => '🇬🇭',
-            'CI' => '🇨🇮',
-            'BF' => '🇧🇫',
-            'ML' => '🇲🇱',
-            'NE' => '🇳🇪',
-            'SN' => '🇸🇳',
-            'GM' => '🇬🇲',
-            'GW' => '🇬🇼',
-            'GN' => '🇬🇳',
-            'SL' => '🇸🇱',
-            'LR' => '🇱🇷',
-            'TG' => '🇹🇬',
-            'BJ' => '🇧🇯',
-            'MR' => '🇲🇷',
-            'CV' => '🇨🇻',
-            'SO' => '🇸🇴',
-            'DJ' => '🇩🇯',
-            'ER' => '🇪🇷',
-            'SS' => '🇸🇸',
-            'SZ' => '🇸🇿',
-            'LS' => '🇱🇸',
-            'MG' => '🇲🇬',
-            'KM' => '🇰🇲',
-            'MU' => '🇲🇺',
-            'SC' => '🇸🇨',
-            'RE' => '🇷🇪',
-            'YT' => '🇾🇹',
-            'MV' => '🇲🇻',
-            'BT' => '🇧🇹',
-            'TL' => '🇹🇱',
-            'BN' => '🇧🇳',
-            'PG' => '🇵🇬',
-            'SB' => '🇸🇧',
-            'VU' => '🇻🇺',
-            'FJ' => '🇫🇯',
-            'NC' => '🇳🇨',
-            'PF' => '🇵🇫',
-            'GU' => '🇬🇺',
-            'WS' => '🇼🇸',
-            'KI' => '🇰🇮',
-            'TO' => '🇹🇴',
-            'TV' => '🇹🇻',
-            'NR' => '🇳🇷',
-            'PW' => '🇵🇼',
-            'MH' => '🇲🇭',
-            'FM' => '🇫🇲',
-            'JM' => '🇯🇲',
-            'CU' => '🇨🇺',
-            'HT' => '🇭🇹',
-            'DO' => '🇩🇴',
-            'PR' => '🇵🇷',
-            'TT' => '🇹🇹',
-            'BB' => '🇧🇧',
-            'AG' => '🇦🇬',
-            'DM' => '🇩🇲',
-            'GD' => '🇬🇩',
-            'KN' => '🇰🇳',
-            'LC' => '🇱🇨',
-            'VC' => '🇻🇨',
-            'BS' => '🇧🇸',
-            'BZ' => '🇧🇿',
-            'GT' => '🇬🇹',
-            'SV' => '🇸🇻',
-            'HN' => '🇭🇳',
-            'NI' => '🇳🇮',
-            'CR' => '🇨🇷',
-            'PA' => '🇵🇦',
-            'EC' => '🇪🇨',
-            'BO' => '🇧🇴',
-            'PY' => '🇵🇾',
-            'UY' => '🇺🇾',
-            'GY' => '🇬🇾',
-            'SR' => '🇸🇷',
-            'GF' => '🇬🇫',
-            'FK' => '🇫🇰'
-        ];
-        
-        return $flags[strtoupper($countryCode)] ?? '🏳️';
-    }
 
 
     // Live match update methods
@@ -3541,6 +3531,97 @@ class MatchController extends Controller
         }
         
         return '00:00';
+    }
+
+    /**
+     * Server-sent events endpoint for real-time match updates
+     */
+    public function liveStream(Request $request, $id)
+    {
+        try {
+            // Set headers for Server-Sent Events
+            $headers = [
+                'Cache-Control' => 'no-cache',
+                'Content-Type' => 'text/event-stream',
+                'Connection' => 'keep-alive',
+                'Access-Control-Allow-Origin' => '*',
+                'Access-Control-Allow-Headers' => 'Cache-Control'
+            ];
+
+            $response = response()->stream(function() use ($id) {
+                // Send initial connection event
+                echo "event: connected\n";
+                echo "data: " . json_encode(['message' => 'Connected to match ' . $id, 'timestamp' => now()->toISOString()]) . "\n\n";
+                if (ob_get_level()) ob_flush();
+                flush();
+
+                // Keep the connection alive and send periodic updates
+                $lastUpdate = 0;
+                $maxDuration = 300; // 5 minutes max connection time
+                $startTime = time();
+
+                while (connection_aborted() == 0 && (time() - $startTime) < $maxDuration) {
+                    try {
+                        // Get current match data
+                        $match = DB::table('matches')->where('id', $id)->first();
+                        
+                        if ($match && $match->status === 'live') {
+                            $currentUpdate = strtotime($match->updated_at);
+                            
+                            // Send update if match data has changed
+                            if ($currentUpdate > $lastUpdate) {
+                                // Get detailed match data
+                                $fullMatch = $this->show(new Request(), $id);
+                                $matchData = $fullMatch->getData();
+                                
+                                // Send score update
+                                echo "event: score-update\n";
+                                echo "data: " . json_encode([
+                                    'team1_score' => $match->team1_score,
+                                    'team2_score' => $match->team2_score,
+                                    'status' => $match->status,
+                                    'timestamp' => now()->toISOString()
+                                ]) . "\n\n";
+                                
+                                // Send status update if needed
+                                echo "event: status-update\n";
+                                echo "data: " . json_encode([
+                                    'status' => $match->status,
+                                    'timestamp' => now()->toISOString()
+                                ]) . "\n\n";
+                                
+                                $lastUpdate = $currentUpdate;
+                                if (ob_get_level()) ob_flush();
+                                flush();
+                            }
+                        }
+                    } catch (\Exception $e) {
+                        // Log error but continue connection
+                        \Log::error('SSE Error: ' . $e->getMessage());
+                    }
+                    
+                    // Sleep for 1 second before next check
+                    sleep(1);
+                }
+                
+                // Send close event
+                echo "event: close\n";
+                echo "data: " . json_encode(['message' => 'Connection closed', 'timestamp' => now()->toISOString()]) . "\n\n";
+                if (ob_get_level()) ob_flush();
+                flush();
+                
+            }, 200, $headers);
+
+            return $response;
+            
+        } catch (\Exception $e) {
+            \Log::error('Live stream error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to establish live stream',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
 }

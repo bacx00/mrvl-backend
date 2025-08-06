@@ -1,4 +1,3 @@
-// app/Http/Controllers/AdminMatchController.php
 <?php
 
 namespace App\Http\Controllers;

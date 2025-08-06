@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Unregister Service Worker</title>
+</head>
+<body>
+    <h1>Service Worker Management</h1>
+    <button onclick="unregisterSW()">Unregister All Service Workers</button>
+    <button onclick="clearCaches()">Clear All Caches</button>
+    <button onclick="registerNewSW()">Register New Service Worker</button>
+    <div id="status"></div>
+    
+    <script>
+        const status = document.getElementById('status');
+        
+        async function unregisterSW() {
+            try {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                for(let registration of registrations) {
+                    await registration.unregister();
+                }
+                status.innerHTML = '<p style="color: green">✅ All service workers unregistered!</p>';
+            } catch(e) {
+                status.innerHTML = '<p style="color: red">❌ Error: ' + e.message + '</p>';
+            }
+        }
+        
+        async function clearCaches() {
+            try {
+                const cacheNames = await caches.keys();
+                await Promise.all(cacheNames.map(name => caches.delete(name)));
+                status.innerHTML = '<p style="color: green">✅ All caches cleared!</p>';
+            } catch(e) {
+                status.innerHTML = '<p style="color: red">❌ Error: ' + e.message + '</p>';
+            }
+        }
+        
+        async function registerNewSW() {
+            try {
+                await navigator.serviceWorker.register('/service-worker.js');
+                status.innerHTML = '<p style="color: green">✅ New service worker registered!</p>';
+            } catch(e) {
+                status.innerHTML = '<p style="color: red">❌ Error: ' + e.message + '</p>';
+            }
+        }
+    </script>
+</body>
+</html>

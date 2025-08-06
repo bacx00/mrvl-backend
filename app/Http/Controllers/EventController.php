@@ -83,7 +83,6 @@ class EventController extends Controller
                     'slug' => $event->slug,
                     'description' => $event->description,
                     'logo' => $event->logo,
-                    'banner' => $event->banner,
                     'organizer' => $organizer,
                     'details' => [
                         'type' => $event->type,
@@ -182,7 +181,6 @@ class EventController extends Controller
                 'slug' => $event->slug,
                 'description' => $event->description,
                 'logo' => $event->logo,
-                'banner' => $event->banner,
                 'organizer' => $this->getUserWithFlairs($event->organizer_id),
                 'details' => [
                     'type' => $event->type,
@@ -242,7 +240,22 @@ class EventController extends Controller
 
     public function store(Request $request)
     {
-        $this->authorize('manage-events');
+        // Check if user is authenticated and has admin role
+        $user = auth('api')->user();
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Authentication required. Please provide a valid Bearer token.'
+            ], 401);
+        }
+        
+        // Check if user has admin role
+        if (!$user->hasRole(['admin', 'super_admin']) && !$user->hasPermissionTo('manage-events')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You do not have permission to create events. Admin role required.'
+            ], 403);
+        }
         
         $request->validate([
             'name' => 'required|string|max:255',
@@ -261,7 +274,6 @@ class EventController extends Controller
             'currency' => 'nullable|string|max:3',
             'prize_distribution' => 'nullable|array',
             'logo' => 'nullable|string',
-            'banner' => 'nullable|string',
             'rules' => 'nullable|string',
             'registration_requirements' => 'nullable|array',
             'streams' => 'nullable|array',
@@ -300,7 +312,6 @@ class EventController extends Controller
                 'currency' => $request->currency ?? 'USD',
                 'prize_distribution' => $request->prize_distribution,
                 'logo' => $request->logo,
-                'banner' => $request->banner,
                 'rules' => $request->rules,
                 'registration_requirements' => $request->registration_requirements,
                 'streams' => $request->streams,
@@ -575,11 +586,6 @@ class EventController extends Controller
             if ($event->logo) {
                 $logoPath = str_replace(url('storage/'), '', $event->logo);
                 Storage::disk('public')->delete($logoPath);
-            }
-            
-            if ($event->banner) {
-                $bannerPath = str_replace(url('storage/'), '', $event->banner);
-                Storage::disk('public')->delete($bannerPath);
             }
 
             $event->delete();
@@ -1164,7 +1170,6 @@ class EventController extends Controller
                     'currency' => $event->currency,
                     'prize_distribution' => $event->prize_distribution ? json_decode($event->prize_distribution, true) : null,
                     'logo' => $event->logo,
-                    'banner' => $event->banner,
                     'rules' => $event->rules,
                     'registration_requirements' => $event->registration_requirements ? json_decode($event->registration_requirements, true) : null,
                     'streams' => $event->streams ? json_decode($event->streams, true) : null,
@@ -1188,7 +1193,22 @@ class EventController extends Controller
 
     public function update(Request $request, $eventId)
     {
-        $this->authorize('manage-events');
+        // Check if user is authenticated and has admin role
+        $user = auth('api')->user();
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Authentication required. Please provide a valid Bearer token.'
+            ], 401);
+        }
+        
+        // Check if user has admin role
+        if (!$user->hasRole(['admin', 'super_admin']) && !$user->hasPermissionTo('manage-events')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You do not have permission to update events. Admin role required.'
+            ], 403);
+        }
         
         $request->validate([
             'name' => 'sometimes|string|max:255',
@@ -1206,7 +1226,6 @@ class EventController extends Controller
             'currency' => 'nullable|string|max:3',
             'prize_distribution' => 'nullable|array',
             'logo' => 'nullable|url',
-            'banner' => 'nullable|url',
             'rules' => 'nullable|string',
             'registration_requirements' => 'nullable|array',
             'streams' => 'nullable|array',
@@ -1224,7 +1243,7 @@ class EventController extends Controller
             $fields = [
                 'name', 'description', 'type', 'format', 'region', 'game_mode',
                 'start_date', 'end_date', 'registration_start', 'registration_end',
-                'max_teams', 'prize_pool', 'currency', 'logo', 'banner', 'rules',
+                'max_teams', 'prize_pool', 'currency', 'logo', 'rules',
                 'timezone', 'status', 'featured', 'public'
             ];
             

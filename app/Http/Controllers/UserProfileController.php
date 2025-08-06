@@ -20,7 +20,14 @@ class UserProfileController extends Controller
     public function show()
     {
         try {
-            $user = Auth::user();
+            $user = auth('api')->user();
+            
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Authentication required. Please provide a valid Bearer token.'
+                ], 401);
+            }
             $user->load('teamFlair');
             
             // Fix avatar if it's using old PNG path
@@ -71,8 +78,17 @@ class UserProfileController extends Controller
     public function updateProfile(Request $request)
     {
         try {
+            $user = auth('api')->user();
+            
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Authentication required. Please provide a valid Bearer token.'
+                ], 401);
+            }
+            
             $request->validate([
-                'name' => 'sometimes|string|max:255|unique:users,name,' . Auth::id(),
+                'name' => 'sometimes|string|max:255|unique:users,name,' . $user->id,
                 'avatar' => 'nullable|string|max:500',
                 'hero_flair' => 'nullable|string|exists:marvel_rivals_heroes,name',
                 'team_flair_id' => 'nullable|exists:teams,id',
@@ -81,7 +97,6 @@ class UserProfileController extends Controller
                 'use_hero_as_avatar' => 'boolean'
             ]);
 
-            $user = Auth::user();
             $updateData = [];
 
             // Handle name update
@@ -149,39 +164,48 @@ class UserProfileController extends Controller
     public function updateFlairs(Request $request)
     {
         try {
+            $user = auth('api')->user();
+            
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Authentication required. Please provide a valid Bearer token.'
+                ], 401);
+            }
+            
             $request->validate([
-                'hero_flair' => 'nullable|string|exists:marvel_rivals_heroes,name',
-                'team_flair_id' => 'nullable|exists:teams,id',
+                'hero_flair' => 'nullable|string',
+                'team_flair_id' => 'nullable|integer',
                 'show_hero_flair' => 'boolean',
                 'show_team_flair' => 'boolean'
             ]);
-
-            $user = Auth::user();
-            $user->update($request->only([
-                'hero_flair', 
-                'team_flair_id', 
-                'show_hero_flair', 
-                'show_team_flair'
-            ]));
-
-            $user->refresh()->load('teamFlair');
+            
+            // Use the model method for proper validation and tracking
+            $updatedUser = $user->updateFlairs(
+                $request->hero_flair,
+                $request->team_flair_id,
+                $request->boolean('show_hero_flair'),
+                $request->boolean('show_team_flair')
+            );
 
             return response()->json([
                 'success' => true,
                 'message' => 'Flairs updated successfully',
                 'data' => [
-                    'hero_flair' => $user->hero_flair,
-                    'team_flair' => $user->teamFlair,
-                    'show_hero_flair' => $user->show_hero_flair,
-                    'show_team_flair' => $user->show_team_flair,
-                    'display_flairs' => $this->getDisplayFlairs($user)
+                    'hero_flair' => $updatedUser->hero_flair,
+                    'team_flair' => $updatedUser->teamFlair,
+                    'team_flair_id' => $updatedUser->team_flair_id,
+                    'show_hero_flair' => (bool)$updatedUser->show_hero_flair,
+                    'show_team_flair' => (bool)$updatedUser->show_team_flair,
+                    'display_flairs' => $this->getDisplayFlairs($updatedUser),
+                    'hero_flair_image' => $updatedUser->hero_flair_image
                 ]
             ]);
         } catch (Exception $e) {
             Log::error('Error updating flairs: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to update flairs'
+                'message' => 'Failed to update flairs: ' . $e->getMessage()
             ], 500);
         }
     }
@@ -721,18 +745,32 @@ class UserProfileController extends Controller
             ],
             'forum' => [
                 'threads' => DB::table('forum_threads')->where('user_id', $userId)->count(),
-                'posts' => DB::table('forum_posts')->where('user_id', $userId)->count(),
+                'posts' => DB::table('posts')->where('user_id', $userId)->count(),
                 'total' => 0
             ],
             'votes' => [
                 'upvotes_given' => 0,
                 'downvotes_given' => 0,
                 'upvotes_received' => 0,
-                'downvotes_received' => 0
+                'downvotes_received' => 0,
+                'reputation_score' => 0
+            ],
+            'mentions' => [
+                'given' => 0,
+                'received' => 0,
+                'player_mentions' => 0,
+                'team_mentions' => 0,
+                'user_mentions' => 0
+            ],
+            'activity' => [
+                'total_actions' => 0,
+                'last_activity' => null,
+                'activity_score' => 0
             ],
             'account' => [
                 'days_active' => 0,
-                'last_seen' => null
+                'last_seen' => null,
+                'join_date' => null
             ]
         ];
         
@@ -740,44 +778,87 @@ class UserProfileController extends Controller
         $stats['comments']['total'] = $stats['comments']['news'] + $stats['comments']['matches'];
         $stats['forum']['total'] = $stats['forum']['threads'] + $stats['forum']['posts'];
         
-        // Get vote counts
-        $stats['votes']['upvotes_given'] = DB::table('forum_post_votes')
+        // Get unified vote counts from votes table
+        $votesGiven = DB::table('votes')
             ->where('user_id', $userId)
-            ->where('vote_type', 'upvote')
-            ->count();
+            ->selectRaw('vote_type, COUNT(*) as count')
+            ->groupBy('vote_type')
+            ->get()
+            ->keyBy('vote_type');
             
-        $stats['votes']['downvotes_given'] = DB::table('forum_post_votes')
-            ->where('user_id', $userId)
-            ->where('vote_type', 'downvote')
-            ->count();
-            
-        // Get received votes
-        $userThreadIds = DB::table('forum_threads')->where('user_id', $userId)->pluck('id');
-        $userPostIds = DB::table('forum_posts')->where('user_id', $userId)->pluck('id');
+        $stats['votes']['upvotes_given'] = $votesGiven->get('upvote')->count ?? 0;
+        $stats['votes']['downvotes_given'] = $votesGiven->get('downvote')->count ?? 0;
         
-        $stats['votes']['upvotes_received'] = DB::table('forum_thread_votes')
-            ->whereIn('thread_id', $userThreadIds)
-            ->where('vote_type', 'upvote')
-            ->count() + 
-            DB::table('forum_post_votes')
-            ->whereIn('post_id', $userPostIds)
-            ->where('vote_type', 'upvote')
+        // Get received votes on user's content
+        $userContent = [
+            'forum_threads' => DB::table('forum_threads')->where('user_id', $userId)->pluck('id'),
+            'forum_posts' => DB::table('posts')->where('user_id', $userId)->pluck('id'),
+            'news_comments' => DB::table('news_comments')->where('user_id', $userId)->pluck('id'),
+        ];
+
+        $votesReceived = ['upvote' => 0, 'downvote' => 0];
+        foreach ($userContent as $type => $ids) {
+            if ($ids->isNotEmpty()) {
+                $typeVotes = DB::table('votes')
+                    ->where('votable_type', $type)
+                    ->whereIn('votable_id', $ids)
+                    ->selectRaw('vote_type, COUNT(*) as count')
+                    ->groupBy('vote_type')
+                    ->get();
+                
+                foreach ($typeVotes as $vote) {
+                    $votesReceived[$vote->vote_type] += $vote->count;
+                }
+            }
+        }
+        
+        $stats['votes']['upvotes_received'] = $votesReceived['upvote'];
+        $stats['votes']['downvotes_received'] = $votesReceived['downvote'];
+        $stats['votes']['reputation_score'] = $votesReceived['upvote'] - $votesReceived['downvote'];
+        
+        // Get mention stats
+        $stats['mentions']['given'] = DB::table('mentions')->where('mentioned_by', $userId)->count();
+        $stats['mentions']['received'] = DB::table('mentions')
+            ->where('mentioned_type', 'user')
+            ->where('mentioned_id', $userId)
             ->count();
+        
+        $mentionsByType = DB::table('mentions')
+            ->where('mentioned_by', $userId)
+            ->selectRaw('mentioned_type, COUNT(*) as count')
+            ->groupBy('mentioned_type')
+            ->get()
+            ->keyBy('mentioned_type');
             
-        $stats['votes']['downvotes_received'] = DB::table('forum_thread_votes')
-            ->whereIn('thread_id', $userThreadIds)
-            ->where('vote_type', 'downvote')
-            ->count() + 
-            DB::table('forum_post_votes')
-            ->whereIn('post_id', $userPostIds)
-            ->where('vote_type', 'downvote')
-            ->count();
+        $stats['mentions']['player_mentions'] = $mentionsByType->get('player')->count ?? 0;
+        $stats['mentions']['team_mentions'] = $mentionsByType->get('team')->count ?? 0;
+        $stats['mentions']['user_mentions'] = $mentionsByType->get('user')->count ?? 0;
+        
+        // Get activity stats
+        $stats['activity']['total_actions'] = DB::table('user_activities')->where('user_id', $userId)->count();
+        $stats['activity']['last_activity'] = DB::table('user_activities')
+            ->where('user_id', $userId)
+            ->orderBy('created_at', 'desc')
+            ->value('created_at');
+        
+        // Calculate activity score based on various factors
+        $activityScore = 
+            ($stats['forum']['posts'] * 2) + 
+            ($stats['forum']['threads'] * 5) + 
+            ($stats['comments']['total'] * 1) + 
+            ($stats['votes']['upvotes_given'] * 1) + 
+            ($stats['votes']['upvotes_received'] * 3) + 
+            ($stats['mentions']['given'] * 1) + 
+            ($stats['mentions']['received'] * 2);
+        
+        $stats['activity']['activity_score'] = $activityScore;
         
         // Get account stats
         $user = User::find($userId);
         if ($user) {
             $stats['account']['days_active'] = $user->created_at->diffInDays(now());
             $stats['account']['last_seen'] = $user->last_login;
+            $stats['account']['join_date'] = $user->created_at;
         }
         
         return $stats;
@@ -788,6 +869,26 @@ class UserProfileController extends Controller
      */
     private function getDetailedUserActivity($userId, $limit = 50, $offset = 0)
     {
+        // First check if we have user activities table data
+        $userActivities = DB::table('user_activities')
+            ->where('user_id', $userId)
+            ->orderBy('created_at', 'desc')
+            ->limit($limit)
+            ->offset($offset)
+            ->get();
+        
+        if ($userActivities->isNotEmpty()) {
+            // Use tracked activities if available
+            return $userActivities->map(function($activity) {
+                $activity->time_ago = $this->getTimeAgo($activity->created_at);
+                $activity->content_preview = strlen($activity->content) > 100 
+                    ? substr($activity->content, 0, 100) . '...' 
+                    : $activity->content;
+                return $activity;
+            });
+        }
+        
+        // Fallback to aggregating from various sources
         $activities = [];
         
         // News comments
@@ -801,7 +902,9 @@ class UserProfileController extends Controller
                 'nc.created_at',
                 'n.title as item_title',
                 DB::raw("'news_comment' as type"),
-                DB::raw("'Commented on news' as action")
+                DB::raw("'news_comment' as resource_type"),
+                DB::raw("'Commented on news' as action"),
+                DB::raw("JSON_OBJECT('news_title', n.title, 'news_slug', n.slug) as metadata")
             ]);
             
         // Match comments
@@ -817,25 +920,31 @@ class UserProfileController extends Controller
                 'mc.created_at',
                 DB::raw("CONCAT(COALESCE(t1.name, 'Team 1'), ' vs ', COALESCE(t2.name, 'Team 2')) as item_title"),
                 DB::raw("'match_comment' as type"),
-                DB::raw("'Commented on match' as action")
+                DB::raw("'match_comment' as resource_type"),
+                DB::raw("'Commented on match' as action"),
+                DB::raw("JSON_OBJECT('team1', t1.name, 'team2', t2.name) as metadata")
             ]);
             
         // Forum threads
-        $forumThreads = DB::table('forum_threads')
-            ->where('user_id', $userId)
+        $forumThreads = DB::table('forum_threads as ft')
+            ->leftJoin('forum_categories as fc', 'ft.category_id', '=', 'fc.id')
+            ->where('ft.user_id', $userId)
             ->select([
-                'id',
-                'id as item_id',
-                'title as content',
-                'created_at',
-                'title as item_title',
+                'ft.id',
+                'ft.id as item_id',
+                'ft.title as content',
+                'ft.created_at',
+                'ft.title as item_title',
                 DB::raw("'forum_thread' as type"),
-                DB::raw("'Created thread' as action")
+                DB::raw("'forum_thread' as resource_type"),
+                DB::raw("'Created thread' as action"),
+                DB::raw("JSON_OBJECT('category', fc.name, 'views', ft.views) as metadata")
             ]);
             
         // Forum posts
-        $forumPosts = DB::table('forum_posts as fp')
+        $forumPosts = DB::table('posts as fp')
             ->join('forum_threads as ft', 'fp.thread_id', '=', 'ft.id')
+            ->leftJoin('forum_categories as fc', 'ft.category_id', '=', 'fc.id')
             ->where('fp.user_id', $userId)
             ->select([
                 'fp.id',
@@ -844,14 +953,72 @@ class UserProfileController extends Controller
                 'fp.created_at',
                 'ft.title as item_title',
                 DB::raw("'forum_post' as type"),
-                DB::raw("'Posted in thread' as action")
+                DB::raw("'forum_post' as resource_type"),
+                DB::raw("'Posted in thread' as action"),
+                DB::raw("JSON_OBJECT('thread_title', ft.title, 'category', fc.name) as metadata")
             ]);
             
-        // Combine and sort
+        // Votes given
+        $votesGiven = DB::table('votes as v')
+            ->leftJoin('news as n', function($join) {
+                $join->on('v.votable_id', '=', 'n.id')
+                     ->where('v.votable_type', '=', 'news');
+            })
+            ->leftJoin('forum_threads as ft', function($join) {
+                $join->on('v.votable_id', '=', 'ft.id')
+                     ->where('v.votable_type', '=', 'forum_thread');
+            })
+            ->leftJoin('posts as p', function($join) {
+                $join->on('v.votable_id', '=', 'p.id')
+                     ->where('v.votable_type', '=', 'forum_post');
+            })
+            ->where('v.user_id', $userId)
+            ->select([
+                'v.id',
+                'v.votable_id as item_id',
+                DB::raw("CONCAT(UPPER(v.vote_type), ' on ', v.votable_type) as content"),
+                'v.created_at',
+                DB::raw("COALESCE(n.title, ft.title, 'Forum Post') as item_title"),
+                DB::raw("'vote' as type"),
+                'v.votable_type as resource_type',
+                DB::raw("CONCAT(UPPER(LEFT(v.vote_type, 1)), SUBSTRING(v.vote_type, 2), 'd content') as action"),
+                DB::raw("JSON_OBJECT('vote_type', v.vote_type, 'votable_type', v.votable_type) as metadata")
+            ]);
+            
+        // Mentions given
+        $mentionsGiven = DB::table('mentions as m')
+            ->leftJoin('users as u', function($join) {
+                $join->on('m.mentioned_id', '=', 'u.id')
+                     ->where('m.mentioned_type', '=', 'user');
+            })
+            ->leftJoin('players as pl', function($join) {
+                $join->on('m.mentioned_id', '=', 'pl.id')
+                     ->where('m.mentioned_type', '=', 'player');
+            })
+            ->leftJoin('teams as t', function($join) {
+                $join->on('m.mentioned_id', '=', 't.id')
+                     ->where('m.mentioned_type', '=', 'team');
+            })
+            ->where('m.mentioned_by', $userId)
+            ->select([
+                'm.id',
+                'm.mentioned_id as item_id',
+                DB::raw("CONCAT('Mentioned ', m.mentioned_type, ' ', m.mention_text) as content"),
+                'm.created_at',
+                DB::raw("COALESCE(u.name, pl.username, t.name, 'Unknown') as item_title"),
+                DB::raw("'mention' as type"),
+                'm.mentioned_type as resource_type',
+                DB::raw("CONCAT('Mentioned ', m.mentioned_type) as action"),
+                DB::raw("JSON_OBJECT('mention_text', m.mention_text, 'mentioned_type', m.mentioned_type, 'context', m.context) as metadata")
+            ]);
+            
+        // Combine and sort all activities
         $activities = $newsComments
             ->union($matchComments)
             ->union($forumThreads)
             ->union($forumPosts)
+            ->union($votesGiven)
+            ->union($mentionsGiven)
             ->orderBy('created_at', 'desc')
             ->limit($limit)
             ->offset($offset)
@@ -862,6 +1029,12 @@ class UserProfileController extends Controller
             $activity->content_preview = strlen($activity->content) > 100 
                 ? substr($activity->content, 0, 100) . '...' 
                 : $activity->content;
+            
+            // Parse metadata if it's a JSON string
+            if (is_string($activity->metadata ?? null)) {
+                $activity->metadata = json_decode($activity->metadata, true);
+            }
+            
             return $activity;
         });
     }

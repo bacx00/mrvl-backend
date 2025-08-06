@@ -7,74 +7,139 @@ use App\Models\ForumVote;
 use App\Models\User;
 use App\Models\Team;
 use App\Models\Player;
+use App\Services\ForumCacheService;
+use App\Services\ForumRealTimeService;
+use App\Services\ForumSearchService;
+use App\Services\ForumModerationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 
 class ForumController extends Controller
 {
+    private $cacheService;
+    private $realTimeService;
+    private $searchService;
+    private $moderationService;
+
+    public function __construct(
+        ForumCacheService $cacheService,
+        ForumRealTimeService $realTimeService,
+        ForumSearchService $searchService,
+        ForumModerationService $moderationService
+    ) {
+        $this->cacheService = $cacheService;
+        $this->realTimeService = $realTimeService;
+        $this->searchService = $searchService;
+        $this->moderationService = $moderationService;
+    }
+
     public function index(Request $request)
     {
         try {
+            $category = $request->get('category', 'all');
+            $sortBy = $request->get('sort', 'latest');
+            $page = $request->get('page', 1);
+
+            // Check cache first
+            $cached = $this->cacheService->getCachedThreads($category, $sortBy, $page);
+            if ($cached) {
+                return response()->json($cached);
+            }
+
+            // If search is provided, use search service
+            if ($request->search) {
+                $searchResults = $this->searchService->search($request->search, [
+                    'category' => $category !== 'all' ? $category : null
+                ], $page);
+                
+                return response()->json([
+                    'data' => $searchResults['threads'],
+                    'pagination' => [
+                        'current_page' => $page,
+                        'per_page' => 20,
+                        'total' => count($searchResults['threads'])
+                    ],
+                    'success' => true
+                ]);
+            }
+
+            // Use optimized query with proper indexing
             $query = DB::table('forum_threads as ft')
                 ->leftJoin('users as u', 'ft.user_id', '=', 'u.id')
+                ->leftJoin('forum_categories as fc', 'ft.category_id', '=', 'fc.id')
                 ->select([
-                    'ft.*',
-                    'u.name as author_name',
-                    'u.avatar as author_avatar',
-                    'ft.category as category_name'
-                ]);
+                    'ft.id', 'ft.title', 'ft.content', 'ft.user_id', 'ft.category',
+                    'ft.replies_count', 'ft.views', 'ft.score', 'ft.upvotes', 'ft.downvotes',
+                    'ft.pinned', 'ft.locked', 'ft.created_at', 'ft.last_reply_at',
+                    'u.name as author_name', 'u.avatar as author_avatar', 
+                    'u.hero_flair', 'u.team_flair_id',
+                    'fc.name as category_name', 'fc.color as category_color'
+                ])
+                ->where('ft.status', 'active'); // Only active threads
 
-            // Filter by category
-            if ($request->category && $request->category !== 'all') {
-                $query->where('ft.category', $request->category);
+            // Filter by category with index optimization
+            if ($category && $category !== 'all') {
+                $query->where('ft.category', $category);
             }
 
-            // Search functionality
-            if ($request->search) {
-                $query->where(function($q) use ($request) {
-                    $q->where('ft.title', 'LIKE', "%{$request->search}%")
-                      ->orWhere('ft.content', 'LIKE', "%{$request->search}%");
-                });
-            }
-
-            // Sort options
-            $sortBy = $request->get('sort', 'latest');
+            // Optimized sort options with proper indexing
             switch ($sortBy) {
                 case 'popular':
-                    $query->orderBy('ft.score', 'desc');
+                    $query->orderBy('ft.pinned', 'desc')
+                          ->orderBy('ft.score', 'desc')
+                          ->orderBy('ft.created_at', 'desc');
                     break;
                 case 'hot':
-                    $query->orderBy('ft.replies_count', 'desc');
+                    $query->orderBy('ft.pinned', 'desc')
+                          ->orderByRaw('(ft.replies_count * 0.6 + ft.views * 0.001 + ft.score * 0.4) DESC')
+                          ->orderBy('ft.last_reply_at', 'desc');
                     break;
                 case 'oldest':
-                    $query->orderBy('ft.created_at', 'asc');
+                    $query->orderBy('ft.pinned', 'desc')
+                          ->orderBy('ft.created_at', 'asc');
                     break;
                 default: // latest
                     $query->orderBy('ft.pinned', 'desc')
                           ->orderBy('ft.last_reply_at', 'desc');
             }
 
-            $threads = $query->paginate(20);
+            // Use cursor pagination for better performance on large datasets
+            $perPage = min($request->get('per_page', 20), 50); // Limit max per page
+            $threads = $query->paginate($perPage);
 
-            // Add additional data for each thread with proper flairs
-            $threadsData = collect($threads->items())->map(function($thread) {
-                $author = $this->getUserWithFlairs($thread->user_id);
+            // Optimize data transformation - avoid N+1 queries
+            $userIds = collect($threads->items())->pluck('user_id')->unique();
+            $teamFlairs = $this->getTeamFlairsForUsers($userIds);
+
+            $threadsData = collect($threads->items())->map(function($thread) use ($teamFlairs) {
+                $teamFlair = $teamFlairs[$thread->team_flair_id] ?? null;
+                
                 return [
                     'id' => $thread->id,
                     'title' => $thread->title,
                     'content' => $thread->content,
-                    'author' => $author,
+                    'author' => [
+                        'id' => $thread->user_id,
+                        'name' => $thread->author_name,
+                        'username' => $thread->author_name,
+                        'avatar' => $thread->author_avatar,
+                        'hero_flair' => $thread->hero_flair,
+                        'show_hero_flair' => true,
+                        'team_flair' => $teamFlair,
+                        'show_team_flair' => (bool)$teamFlair,
+                        'roles' => []
+                    ],
                     'category' => [
-                        'name' => $thread->category_name,
-                        'color' => '#6b7280'
+                        'name' => $thread->category_name ?? $thread->category,
+                        'color' => $thread->category_color ?? '#6b7280'
                     ],
                     'stats' => [
-                        'views' => $thread->views ?? 0,
-                        'replies' => $thread->replies_count ?? 0,
-                        'score' => $thread->score ?? 0,
-                        'upvotes' => $thread->upvotes ?? 0,
-                        'downvotes' => $thread->downvotes ?? 0
+                        'views' => (int)$thread->views,
+                        'replies' => (int)$thread->replies_count,
+                        'score' => (int)$thread->score,
+                        'upvotes' => (int)$thread->upvotes,
+                        'downvotes' => (int)$thread->downvotes
                     ],
                     'meta' => [
                         'pinned' => (bool)$thread->pinned,
@@ -86,7 +151,7 @@ class ForumController extends Controller
                 ];
             });
 
-            return response()->json([
+            $result = [
                 'data' => $threadsData,
                 'pagination' => [
                     'current_page' => $threads->currentPage(),
@@ -95,7 +160,12 @@ class ForumController extends Controller
                     'total' => $threads->total()
                 ],
                 'success' => true
-            ]);
+            ];
+
+            // Cache the result
+            $this->cacheService->cacheThreads($category, $sortBy, $page, $result);
+
+            return response()->json($result);
 
         } catch (\Exception $e) {
             return response()->json([
@@ -284,18 +354,18 @@ class ForumController extends Controller
                 'user_id' => Auth::id(),
                 'content' => $request->content,
                 'parent_id' => $request->parent_id,
+                'status' => 'active',
                 'created_at' => now(),
                 'updated_at' => now()
             ]);
 
-            // Update thread reply count and last reply time
+            // Update thread reply count and last reply time in one query
             DB::table('forum_threads')
                 ->where('id', $threadId)
-                ->increment('replies_count');
-            
-            DB::table('forum_threads')
-                ->where('id', $threadId)
-                ->update(['last_reply_at' => now()]);
+                ->update([
+                    'replies_count' => DB::raw('replies_count + 1'),
+                    'last_reply_at' => now()
+                ]);
 
             // Process mentions
             $this->processMentions($request->content, $threadId, $postId);
@@ -325,71 +395,87 @@ class ForumController extends Controller
         }
         
         $request->validate([
-            'vote_type' => 'required|in:upvote,downvote',
-            'post_id' => 'nullable|exists:forum_posts,id'
+            'vote_type' => 'required|in:upvote,downvote'
         ]);
 
         try {
             $userId = Auth::id();
             $voteType = $request->vote_type;
-            $postId = $request->post_id;
 
-            // Check for existing vote
-            $existingVoteQuery = DB::table('forum_votes')
-                ->where('thread_id', $threadId)
-                ->where('user_id', $userId);
-            
-            if ($postId) {
-                $existingVoteQuery->where('post_id', $postId);
-            } else {
-                $existingVoteQuery->whereNull('post_id');
+            // Check if thread exists
+            $thread = DB::table('forum_threads')->where('id', $threadId)->first();
+            if (!$thread) {
+                return response()->json(['success' => false, 'message' => 'Thread not found'], 404);
             }
-            
-            $existingVote = $existingVoteQuery->first();
 
-            if ($existingVote) {
-                if ($existingVote->vote_type === $voteType) {
-                    // Remove vote if same type
-                    DB::table('forum_votes')->where('id', $existingVote->id)->delete();
-                    $this->updateVoteCounts($threadId, $postId);
-                    
-                    return response()->json([
-                        'success' => true,
-                        'message' => 'Vote removed',
-                        'action' => 'removed'
-                    ]);
+            // Use DB transaction for thread voting
+            return DB::transaction(function() use ($threadId, $userId, $voteType) {
+                // Check for existing thread vote (where post_id is NULL)
+                $existingVote = DB::table('forum_votes')
+                    ->where('thread_id', $threadId)
+                    ->where('user_id', $userId)
+                    ->whereNull('post_id')
+                    ->lockForUpdate()
+                    ->first();
+
+                if ($existingVote) {
+                    if ($existingVote->vote_type === $voteType) {
+                        // Remove vote if same type
+                        DB::table('forum_votes')->where('id', $existingVote->id)->delete();
+                        $this->updateVoteCounts($threadId);
+                        
+                        return response()->json([
+                            'success' => true,
+                            'message' => 'Vote removed',
+                            'action' => 'removed'
+                        ]);
+                    } else {
+                        // Update vote if different type
+                        DB::table('forum_votes')
+                            ->where('id', $existingVote->id)
+                            ->update(['vote_type' => $voteType, 'updated_at' => now()]);
+                        
+                        $this->updateVoteCounts($threadId);
+                        
+                        return response()->json([
+                            'success' => true,
+                            'message' => 'Vote updated',
+                            'action' => 'updated'
+                        ]);
+                    }
                 } else {
-                    // Update vote if different type
-                    DB::table('forum_votes')
-                        ->where('id', $existingVote->id)
-                        ->update(['vote_type' => $voteType, 'updated_at' => now()]);
+                    // Create new thread vote
+                    try {
+                        $voteKey = "thread_{$threadId}_{$userId}";
+                        DB::table('forum_votes')->insert([
+                            'thread_id' => $threadId,
+                            'user_id' => $userId,
+                            'vote_type' => $voteType,
+                            'post_id' => null, // Explicitly set to null for thread votes
+                            'vote_key' => $voteKey,
+                            'created_at' => now(),
+                            'updated_at' => now()
+                        ]);
+                        
+                        $this->updateVoteCounts($threadId);
+                        
+                        return response()->json([
+                            'success' => true,
+                            'message' => 'Vote recorded',
+                            'action' => 'voted'
+                        ]);
+                        
+                    } catch (\Exception $e) {
+                        if (str_contains($e->getMessage(), 'Duplicate entry')) {
+                            return response()->json([
+                                'success' => false,
+                                'message' => 'You have already voted on this thread'
+                            ], 409);
+                        }
+                        throw $e;
+                    }
                 }
-            } else {
-                // Create new vote
-                $voteData = [
-                    'thread_id' => $threadId,
-                    'user_id' => $userId,
-                    'vote_type' => $voteType,
-                    'created_at' => now(),
-                    'updated_at' => now()
-                ];
-                
-                // Only add post_id if it's not null
-                if ($postId !== null) {
-                    $voteData['post_id'] = $postId;
-                }
-                
-                DB::table('forum_votes')->insert($voteData);
-            }
-
-            // Update vote counts
-            $this->updateVoteCounts($threadId, $postId);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Vote recorded',
-                'action' => 'voted'
-            ]);
+            });
 
         } catch (\Exception $e) {
             return response()->json([
@@ -423,49 +509,73 @@ class ForumController extends Controller
                 return response()->json(['success' => false, 'message' => 'Post not found'], 404);
             }
 
-            // Check for existing vote (by thread and user due to unique constraint)
-            $existingVote = DB::table('forum_votes')
-                ->where('thread_id', $post->thread_id)
-                ->where('user_id', $userId)
-                ->first();
+            // Use DB transaction for post voting
+            return DB::transaction(function() use ($postId, $post, $userId, $voteType) {
+                // Check for existing post vote (where post_id matches)
+                $existingVote = DB::table('forum_votes')
+                    ->where('post_id', $postId)
+                    ->where('user_id', $userId)
+                    ->lockForUpdate()
+                    ->first();
 
-            if ($existingVote) {
-                if ($existingVote->vote_type === $voteType) {
-                    // Remove vote if same type
-                    DB::table('forum_votes')->where('id', $existingVote->id)->delete();
-                    $this->updateVoteCounts($post->thread_id, $postId);
-                    
-                    return response()->json([
-                        'success' => true,
-                        'message' => 'Vote removed',
-                        'action' => 'removed'
-                    ]);
+                if ($existingVote) {
+                    if ($existingVote->vote_type === $voteType) {
+                        // Remove vote if same type
+                        DB::table('forum_votes')->where('id', $existingVote->id)->delete();
+                        $this->updateVoteCounts($post->thread_id, $postId);
+                        
+                        return response()->json([
+                            'success' => true,
+                            'message' => 'Vote removed',
+                            'action' => 'removed'
+                        ]);
+                    } else {
+                        // Update vote if different type
+                        DB::table('forum_votes')
+                            ->where('id', $existingVote->id)
+                            ->update(['vote_type' => $voteType, 'updated_at' => now()]);
+                        
+                        $this->updateVoteCounts($post->thread_id, $postId);
+                        
+                        return response()->json([
+                            'success' => true,
+                            'message' => 'Vote updated',
+                            'action' => 'updated'
+                        ]);
+                    }
                 } else {
-                    // Update vote if different type
-                    DB::table('forum_votes')
-                        ->where('id', $existingVote->id)
-                        ->update(['vote_type' => $voteType, 'updated_at' => now()]);
+                    // Create new post vote
+                    try {
+                        $voteKey = "post_{$postId}_{$userId}";
+                        DB::table('forum_votes')->insert([
+                            'thread_id' => $post->thread_id,
+                            'post_id' => $postId,
+                            'user_id' => $userId,
+                            'vote_type' => $voteType,
+                            'vote_key' => $voteKey,
+                            'created_at' => now(),
+                            'updated_at' => now()
+                        ]);
+                        
+                        $this->updateVoteCounts($post->thread_id, $postId);
+                        
+                        return response()->json([
+                            'success' => true,
+                            'message' => 'Vote recorded',
+                            'action' => 'voted'
+                        ]);
+                        
+                    } catch (\Exception $e) {
+                        if (str_contains($e->getMessage(), 'Duplicate entry')) {
+                            return response()->json([
+                                'success' => false,
+                                'message' => 'You have already voted on this post'
+                            ], 409);
+                        }
+                        throw $e;
+                    }
                 }
-            } else {
-                // Create new vote
-                DB::table('forum_votes')->insert([
-                    'thread_id' => $post->thread_id,
-                    'post_id' => $postId,
-                    'user_id' => $userId,
-                    'vote_type' => $voteType,
-                    'created_at' => now(),
-                    'updated_at' => now()
-                ]);
-            }
-
-            // Update vote counts
-            $this->updateVoteCounts($post->thread_id, $postId);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Vote recorded',
-                'action' => 'voted'
-            ]);
+            });
 
         } catch (\Exception $e) {
             return response()->json([
@@ -627,10 +737,24 @@ class ForumController extends Controller
             // Actually delete the post record
             DB::table('forum_posts')->where('id', $postId)->delete();
 
-            // Update thread reply count
+            // Update thread reply count and potentially last reply time
+            $remainingPosts = DB::table('forum_posts')
+                ->where('thread_id', $post->thread_id)
+                ->orderBy('created_at', 'desc')
+                ->first();
+            
+            $updateData = [
+                'replies_count' => DB::raw('GREATEST(replies_count - 1, 0)')
+            ];
+            
+            // Update last_reply_at if there are remaining posts
+            if ($remainingPosts) {
+                $updateData['last_reply_at'] = $remainingPosts->created_at;
+            }
+            
             DB::table('forum_threads')
                 ->where('id', $post->thread_id)
-                ->decrement('replies_count');
+                ->update($updateData);
 
             return response()->json([
                 'success' => true,
@@ -900,8 +1024,127 @@ class ForumController extends Controller
             DB::table('forum_threads')->where('id', $threadId)->update([
                 'upvotes' => $upvotes,
                 'downvotes' => $downvotes,
-                'score' => $upvotes - $downvotes
+                'score' => $upvotes - $downvotes,
+                'updated_at' => now()
             ]);
+        }
+    }
+
+    private function updateThreadRepliesCount($threadId)
+    {
+        try {
+            // Count all active posts in the thread
+            $repliesCount = DB::table('forum_posts')
+                ->where('thread_id', $threadId)
+                ->where('status', 'active')
+                ->count();
+
+            // Get the most recent post's created date for last_reply_at
+            $lastReplyAt = DB::table('forum_posts')
+                ->where('thread_id', $threadId)
+                ->where('status', 'active')
+                ->orderBy('created_at', 'desc')
+                ->value('created_at');
+
+            // Update thread
+            DB::table('forum_threads')->where('id', $threadId)->update([
+                'replies_count' => $repliesCount,
+                'last_reply_at' => $lastReplyAt ?: now(),
+                'updated_at' => now()
+            ]);
+
+            return $repliesCount;
+        } catch (\Exception $e) {
+            Log::warning('Failed to update thread replies count', [
+                'thread_id' => $threadId,
+                'error' => $e->getMessage()
+            ]);
+            return 0;
+        }
+    }
+
+    private function processMentions($content, $threadId, $postId = null)
+    {
+        try {
+            // Extract mentions from content
+            $mentions = [];
+            
+            // Find user mentions (@username)
+            preg_match_all('/@([a-zA-Z0-9_]+)/', $content, $userMatches);
+            foreach ($userMatches[1] as $username) {
+                $user = DB::table('users')->where('name', $username)->first();
+                if ($user) {
+                    $mentions[] = [
+                        'mentionable_type' => $postId ? 'forum_post' : 'forum_thread',
+                        'mentionable_id' => $postId ?: $threadId,
+                        'mentioned_type' => 'user',
+                        'mentioned_id' => $user->id,
+                        'user_id' => Auth::id(),
+                        'is_read' => false,
+                        'mentioned_at' => now(),
+                        'created_at' => now(),
+                        'updated_at' => now()
+                    ];
+                }
+            }
+
+            // Find team mentions (@team:shortname)
+            preg_match_all('/@team:([a-zA-Z0-9_]+)/', $content, $teamMatches);
+            foreach ($teamMatches[1] as $teamShort) {
+                $team = DB::table('teams')
+                    ->where('short_name', $teamShort)
+                    ->orWhere('name', $teamShort)
+                    ->first();
+                if ($team) {
+                    $mentions[] = [
+                        'mentionable_type' => $postId ? 'forum_post' : 'forum_thread',
+                        'mentionable_id' => $postId ?: $threadId,
+                        'mentioned_type' => 'team',
+                        'mentioned_id' => $team->id,
+                        'user_id' => Auth::id(),
+                        'is_read' => false,
+                        'mentioned_at' => now(),
+                        'created_at' => now(),
+                        'updated_at' => now()
+                    ];
+                }
+            }
+
+            // Find player mentions (@player:username)
+            preg_match_all('/@player:([a-zA-Z0-9_]+)/', $content, $playerMatches);
+            foreach ($playerMatches[1] as $playerName) {
+                $player = DB::table('players')
+                    ->where('username', $playerName)
+                    ->orWhere('real_name', $playerName)
+                    ->first();
+                if ($player) {
+                    $mentions[] = [
+                        'mentionable_type' => $postId ? 'forum_post' : 'forum_thread',
+                        'mentionable_id' => $postId ?: $threadId,
+                        'mentioned_type' => 'player',
+                        'mentioned_id' => $player->id,
+                        'user_id' => Auth::id(),
+                        'is_read' => false,
+                        'mentioned_at' => now(),
+                        'created_at' => now(),
+                        'updated_at' => now()
+                    ];
+                }
+            }
+
+            // Insert mentions if any found
+            if (!empty($mentions)) {
+                DB::table('mentions')->insert($mentions);
+            }
+
+            return count($mentions);
+        } catch (\Exception $e) {
+            Log::warning('Failed to process mentions', [
+                'thread_id' => $threadId,
+                'post_id' => $postId,
+                'error' => $e->getMessage()
+            ]);
+            return 0;
         }
     }
 
@@ -957,29 +1200,6 @@ class ForumController extends Controller
         return $mentions;
     }
 
-    private function processMentions($content, $threadId, $postId = null)
-    {
-        $mentions = $this->extractMentions($content);
-        
-        foreach ($mentions as $mention) {
-            // Store mention in database for notifications
-            try {
-                DB::table('mentions')->insert([
-                    'mentionable_type' => $postId ? 'forum_post' : 'forum_thread',
-                    'mentionable_id' => $postId ?: $threadId,
-                    'mentioned_type' => $mention['type'],
-                    'mentioned_id' => $mention['id'],
-                    'user_id' => Auth::id(),
-                    'mentioned_at' => now(),
-                    'created_at' => now(),
-                    'updated_at' => now()
-                ]);
-            } catch (\Exception $e) {
-                // Log error but don't fail the request
-                \Log::error('Failed to save mention: ' . $e->getMessage());
-            }
-        }
-    }
 
     public function getCategories()
     {
@@ -1354,6 +1574,36 @@ class ForumController extends Controller
             'show_team_flair' => (bool)$user->show_team_flair,
             'roles' => $roles
         ];
+    }
+
+    // Optimized helper method to get team flairs for multiple users at once
+    private function getTeamFlairsForUsers($userIds)
+    {
+        if (empty($userIds) || $userIds->isEmpty()) {
+            return [];
+        }
+
+        return DB::table('teams as t')
+            ->join('users as u', 't.id', '=', 'u.team_flair_id')
+            ->whereIn('u.id', $userIds->toArray())
+            ->select([
+                'u.team_flair_id',
+                't.id',
+                't.name',
+                't.short_name',
+                't.logo'
+            ])
+            ->get()
+            ->keyBy('team_flair_id')
+            ->map(function($team) {
+                return [
+                    'id' => $team->id,
+                    'name' => $team->name,
+                    'short_name' => $team->short_name,
+                    'logo' => $team->logo
+                ];
+            })
+            ->toArray();
     }
 
     // Moderator Methods

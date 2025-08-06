@@ -11,6 +11,30 @@ class ImageUploadController extends Controller
 {
     private $allowedTypes = ['jpeg', 'jpg', 'png', 'webp'];
     private $maxFileSize = 5120; // 5MB in KB
+    
+    /**
+     * Check if user is authenticated and authorized for image uploads
+     */
+    private function checkAuthAndPermissions($requiredPermission = 'manage-events')
+    {
+        $user = auth('api')->user();
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Authentication required. Please provide a valid Bearer token.'
+            ], 401);
+        }
+        
+        // Check if user has required permission or admin role
+        if (!$user->hasRole(['admin', 'super_admin']) && !$user->hasPermissionTo($requiredPermission)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You do not have permission to upload images. Admin role required.'
+            ], 403);
+        }
+        
+        return null; // No error, user is authorized
+    }
 
     // Team Logo Upload
     public function uploadTeamLogo(Request $request, $teamId)
@@ -548,6 +572,23 @@ class ImageUploadController extends Controller
 
     public function uploadEventLogo(Request $request, $eventId)
     {
+        // Check authentication
+        $user = auth('api')->user();
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Authentication required. Please provide a valid Bearer token.'
+            ], 401);
+        }
+        
+        // Check if user has admin role
+        if (!$user->hasRole(['admin', 'super_admin']) && !$user->hasPermissionTo('manage-events')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You do not have permission to upload event images. Admin role required.'
+            ], 403);
+        }
+        
         $event = \App\Models\Event::findOrFail($eventId);
         
         $request->validate([
@@ -557,24 +598,49 @@ class ImageUploadController extends Controller
         try {
             // Delete old logo if exists
             if ($event->logo) {
-                Storage::disk('public')->delete($event->logo);
+                $logoPath = str_replace(url('storage/'), '', $event->logo);
+                Storage::disk('public')->delete($logoPath);
             }
 
             $file = $request->file('logo');
-            $path = $this->processAndStoreImage($file, 'events/logos', [
-                'width' => 200,
-                'height' => 200,
-                'maintain_ratio' => true
-            ]);
-
-            $event->update(['logo' => $path]);
+            
+            // Simple file storage without complex processing
+            $extension = $file->getClientOriginalExtension();
+            $filename = 'event_' . $eventId . '_' . time() . '_' . Str::random(10) . '.' . $extension;
+            $directory = 'events/logos';
+            
+            // Ensure directory exists
+            $fullDirectory = storage_path('app/public/' . $directory);
+            if (!is_dir($fullDirectory)) {
+                mkdir($fullDirectory, 0775, true);
+            }
+            
+            $finalPath = $directory . '/' . $filename;
+            $destinationPath = storage_path('app/public/' . $finalPath);
+            
+            // Move uploaded file
+            if (!move_uploaded_file($file->path(), $destinationPath)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to move uploaded file'
+                ], 500);
+            }
+            
+            // Set proper permissions
+            chmod($destinationPath, 0644);
+            
+            // Generate full URL for the logo
+            $logoUrl = url('storage/' . $finalPath);
+            
+            // Update event with logo URL
+            $event->update(['logo' => $logoUrl]);
 
             return response()->json([
                 'success' => true,
                 'message' => 'Event logo uploaded successfully',
                 'data' => [
-                    'logo' => $path,
-                    'logo_url' => Storage::disk('public')->url($path)
+                    'logo' => $finalPath,
+                    'logo_url' => $logoUrl
                 ]
             ]);
 

@@ -366,50 +366,92 @@ class NewsController extends Controller
             $voteType = $request->vote_type;
             $commentId = $request->comment_id;
 
-            // Check for existing vote
+            // Verify news exists
+            $newsExists = DB::table('news')->where('id', $newsId)->exists();
+            if (!$newsExists) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'News article not found'
+                ], 404);
+            }
+
+            // Check for existing vote with proper unique constraint handling
             $existingVote = DB::table('news_votes')
                 ->where('news_id', $newsId)
                 ->where('user_id', $userId)
-                ->where('comment_id', $commentId)
+                ->where(function($query) use ($commentId) {
+                    if ($commentId) {
+                        $query->where('comment_id', $commentId);
+                    } else {
+                        $query->whereNull('comment_id');
+                    }
+                })
                 ->first();
 
-            if ($existingVote) {
-                if ($existingVote->vote_type === $voteType) {
-                    // Remove vote if same type
-                    DB::table('news_votes')->where('id', $existingVote->id)->delete();
+            DB::beginTransaction();
+
+            try {
+                if ($existingVote) {
+                    if ($existingVote->vote_type === $voteType) {
+                        // Remove vote if same type (toggle off)
+                        DB::table('news_votes')->where('id', $existingVote->id)->delete();
+                        $this->updateNewsVoteCounts($newsId, $commentId);
+                        
+                        DB::commit();
+                        return response()->json([
+                            'success' => true,
+                            'message' => 'Vote removed',
+                            'action' => 'removed',
+                            'vote_type' => null
+                        ]);
+                    } else {
+                        // Update vote if different type (switch vote)
+                        DB::table('news_votes')
+                            ->where('id', $existingVote->id)
+                            ->update([
+                                'vote_type' => $voteType, 
+                                'updated_at' => now()
+                            ]);
+                        
+                        $this->updateNewsVoteCounts($newsId, $commentId);
+                        
+                        DB::commit();
+                        return response()->json([
+                            'success' => true,
+                            'message' => 'Vote updated',
+                            'action' => 'updated',
+                            'vote_type' => $voteType
+                        ]);
+                    }
+                } else {
+                    // Create new vote using INSERT IGNORE for race condition safety
+                    $inserted = DB::table('news_votes')->insert([
+                        'news_id' => $newsId,
+                        'comment_id' => $commentId,
+                        'user_id' => $userId,
+                        'vote_type' => $voteType,
+                        'created_at' => now(),
+                        'updated_at' => now()
+                    ]);
+
+                    if (!$inserted) {
+                        throw new \Exception('Failed to insert vote - possible race condition');
+                    }
+
                     $this->updateNewsVoteCounts($newsId, $commentId);
                     
+                    DB::commit();
                     return response()->json([
                         'success' => true,
-                        'message' => 'Vote removed',
-                        'action' => 'removed'
+                        'message' => 'Vote recorded',
+                        'action' => 'created',
+                        'vote_type' => $voteType
                     ]);
-                } else {
-                    // Update vote if different type
-                    DB::table('news_votes')
-                        ->where('id', $existingVote->id)
-                        ->update(['vote_type' => $voteType, 'updated_at' => now()]);
                 }
-            } else {
-                // Create new vote
-                DB::table('news_votes')->insert([
-                    'news_id' => $newsId,
-                    'comment_id' => $commentId,
-                    'user_id' => $userId,
-                    'vote_type' => $voteType,
-                    'created_at' => now(),
-                    'updated_at' => now()
-                ]);
+            } catch (\Exception $innerException) {
+                DB::rollback();
+                throw $innerException;
             }
-
-            // Update vote counts
-            $this->updateNewsVoteCounts($newsId, $commentId);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Vote recorded',
-                'action' => 'voted'
-            ]);
 
         } catch (\Exception $e) {
             return response()->json([
@@ -540,61 +582,92 @@ class NewsController extends Controller
         ]);
 
         try {
-            // Check if comment exists
-            $comment = DB::table('news_comments')->where('id', $commentId)->first();
+            // Check if comment exists and is active
+            $comment = DB::table('news_comments')
+                ->where('id', $commentId)
+                ->where('status', 'active')
+                ->first();
+                
             if (!$comment) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Comment not found'
+                    'message' => 'Comment not found or deleted'
                 ], 404);
             }
 
             $userId = Auth::id();
             $voteType = $request->vote_type;
 
-            // Check for existing vote
+            // Check for existing vote with proper constraint handling
             $existingVote = DB::table('news_votes')
                 ->where('comment_id', $commentId)
                 ->where('user_id', $userId)
                 ->first();
 
-            if ($existingVote) {
-                if ($existingVote->vote_type === $voteType) {
-                    // Remove vote if same type
-                    DB::table('news_votes')->where('id', $existingVote->id)->delete();
+            DB::beginTransaction();
+
+            try {
+                if ($existingVote) {
+                    if ($existingVote->vote_type === $voteType) {
+                        // Remove vote if same type (toggle off)
+                        DB::table('news_votes')->where('id', $existingVote->id)->delete();
+                        $this->updateNewsVoteCounts($comment->news_id, $commentId);
+                        
+                        DB::commit();
+                        return response()->json([
+                            'success' => true,
+                            'message' => 'Vote removed',
+                            'action' => 'removed',
+                            'vote_type' => null
+                        ]);
+                    } else {
+                        // Update vote if different type (switch vote)
+                        DB::table('news_votes')
+                            ->where('id', $existingVote->id)
+                            ->update([
+                                'vote_type' => $voteType, 
+                                'updated_at' => now()
+                            ]);
+                        
+                        $this->updateNewsVoteCounts($comment->news_id, $commentId);
+                        
+                        DB::commit();
+                        return response()->json([
+                            'success' => true,
+                            'message' => 'Vote updated',
+                            'action' => 'updated',
+                            'vote_type' => $voteType
+                        ]);
+                    }
+                } else {
+                    // Create new vote
+                    $inserted = DB::table('news_votes')->insert([
+                        'news_id' => $comment->news_id,
+                        'comment_id' => $commentId,
+                        'user_id' => $userId,
+                        'vote_type' => $voteType,
+                        'created_at' => now(),
+                        'updated_at' => now()
+                    ]);
+
+                    if (!$inserted) {
+                        throw new \Exception('Failed to insert vote - possible race condition');
+                    }
+
                     $this->updateNewsVoteCounts($comment->news_id, $commentId);
                     
+                    DB::commit();
                     return response()->json([
                         'success' => true,
-                        'message' => 'Vote removed',
-                        'action' => 'removed'
+                        'message' => 'Vote recorded',
+                        'action' => 'created',
+                        'vote_type' => $voteType
                     ]);
-                } else {
-                    // Update vote if different type
-                    DB::table('news_votes')
-                        ->where('id', $existingVote->id)
-                        ->update(['vote_type' => $voteType, 'updated_at' => now()]);
                 }
-            } else {
-                // Create new vote
-                DB::table('news_votes')->insert([
-                    'news_id' => $comment->news_id,
-                    'comment_id' => $commentId,
-                    'user_id' => $userId,
-                    'vote_type' => $voteType,
-                    'created_at' => now(),
-                    'updated_at' => now()
-                ]);
+            } catch (\Exception $innerException) {
+                DB::rollback();
+                throw $innerException;
             }
-
-            // Update vote counts
-            $this->updateNewsVoteCounts($comment->news_id, $commentId);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Vote recorded',
-                'action' => 'voted'
-            ]);
 
         } catch (\Exception $e) {
             return response()->json([
@@ -809,25 +882,63 @@ class NewsController extends Controller
     {
         $videos = [];
         
-        // Extract YouTube URLs
-        preg_match_all('/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/', $content, $youtubeMatches);
+        // Extract YouTube URLs (various formats)
+        preg_match_all('/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|v\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})(?:\S+)?/', $content, $youtubeMatches);
         foreach ($youtubeMatches[1] as $videoId) {
             $videos[] = [
                 'platform' => 'youtube',
                 'video_id' => $videoId,
-                'embed_url' => "https://www.youtube.com/embed/{$videoId}",
-                'thumbnail' => "https://img.youtube.com/vi/{$videoId}/maxresdefault.jpg"
+                'embed_url' => "https://www.youtube.com/embed/{$videoId}?rel=0&modestbranding=1&controls=1&showinfo=0&fs=1",
+                'thumbnail' => "https://img.youtube.com/vi/{$videoId}/maxresdefault.jpg",
+                'title' => null // Will be populated later if needed
             ];
         }
 
-        // Extract Twitch URLs
-        preg_match_all('/(?:https?:\/\/)?(?:www\.)?twitch\.tv\/videos\/([0-9]+)/', $content, $twitchMatches);
-        foreach ($twitchMatches[1] as $videoId) {
+        // Extract Twitch clip URLs
+        preg_match_all('/(?:https?:\/\/)?(?:www\.)?(?:clips\.twitch\.tv\/|twitch\.tv\/\w+\/clip\/)([a-zA-Z0-9_-]+)/', $content, $twitchClipMatches);
+        foreach ($twitchClipMatches[1] as $clipId) {
             $videos[] = [
-                'platform' => 'twitch',
+                'platform' => 'twitch-clip',
+                'video_id' => $clipId,
+                'embed_url' => "https://clips.twitch.tv/embed?clip={$clipId}&parent=" . request()->getHost(),
+                'thumbnail' => null,
+                'title' => null
+            ];
+        }
+
+        // Extract Twitch video URLs
+        preg_match_all('/(?:https?:\/\/)?(?:www\.)?twitch\.tv\/videos\/([0-9]+)/', $content, $twitchVideoMatches);
+        foreach ($twitchVideoMatches[1] as $videoId) {
+            $videos[] = [
+                'platform' => 'twitch-video',
                 'video_id' => $videoId,
-                'embed_url' => "https://player.twitch.tv/?video={$videoId}&parent=yourdomain.com",
-                'thumbnail' => null
+                'embed_url' => "https://player.twitch.tv/?video={$videoId}&parent=" . request()->getHost(),
+                'thumbnail' => null,
+                'title' => null
+            ];
+        }
+
+        // Extract Twitter/X URLs
+        preg_match_all('/(?:https?:\/\/)?(?:www\.)?(?:twitter\.com|x\.com)\/\w+\/status\/([0-9]+)/', $content, $twitterMatches);
+        foreach ($twitterMatches[1] as $tweetId) {
+            $videos[] = [
+                'platform' => 'twitter',
+                'video_id' => $tweetId,
+                'embed_url' => null, // Twitter uses different embedding
+                'thumbnail' => null,
+                'title' => null
+            ];
+        }
+
+        // Extract generic video URLs (MP4, WebM, etc.)
+        preg_match_all('/(?:https?:\/\/[^\s]+\.(?:mp4|webm|ogg|mov))/', $content, $genericVideoMatches);
+        foreach ($genericVideoMatches[0] as $videoUrl) {
+            $videos[] = [
+                'platform' => 'generic',
+                'video_id' => null,
+                'embed_url' => $videoUrl,
+                'thumbnail' => null,
+                'title' => basename(parse_url($videoUrl, PHP_URL_PATH))
             ];
         }
 
@@ -915,22 +1026,29 @@ class NewsController extends Controller
             ->where('u.id', $userId)
             ->select([
                 'u.id', 'u.name', 'u.avatar', 'u.hero_flair', 'u.show_hero_flair', 'u.show_team_flair',
+                'u.use_hero_as_avatar',
                 't.name as team_name', 't.short_name as team_short', 't.logo as team_logo'
             ])
             ->first();
 
         if (!$user) {
-            return null;
+            return [
+                'id' => null,
+                'name' => 'Unknown User',
+                'avatar' => null,
+                'flairs' => []
+            ];
         }
 
         $flairs = [];
         
         // Add hero flair if enabled
         if ($user->show_hero_flair && $user->hero_flair) {
+            $heroImage = $this->getHeroImagePath($user->hero_flair);
             $flairs['hero'] = [
                 'type' => 'hero',
                 'name' => $user->hero_flair,
-                'image' => "/images/heroes/" . str_replace([' ', '&'], ['-', 'and'], strtolower($user->hero_flair)) . ".png",
+                'image' => $heroImage,
                 'fallback_text' => $user->hero_flair
             ];
         }
@@ -941,17 +1059,51 @@ class NewsController extends Controller
                 'type' => 'team',
                 'name' => $user->team_name,
                 'short_name' => $user->team_short,
-                'image' => $user->team_logo,
+                'image' => $user->team_logo ? asset('storage/' . $user->team_logo) : null,
                 'fallback_text' => $user->team_short
             ];
+        }
+
+        // Determine avatar - use hero image if enabled and available
+        $avatar = $user->avatar;
+        if ($user->use_hero_as_avatar && $user->hero_flair) {
+            $avatar = $this->getHeroImagePath($user->hero_flair);
+        } else if ($user->avatar) {
+            // Ensure avatar URL is properly formatted
+            $avatar = str_starts_with($user->avatar, 'http') 
+                ? $user->avatar 
+                : asset('storage/avatars/' . $user->avatar);
         }
 
         return [
             'id' => $user->id,
             'name' => $user->name,
-            'avatar' => $user->avatar,
-            'flairs' => $flairs
+            'avatar' => $avatar,
+            'flairs' => $flairs,
+            'use_hero_as_avatar' => (bool)$user->use_hero_as_avatar
         ];
+    }
+
+    private function getHeroImagePath($heroName)
+    {
+        // Convert hero name to image path
+        $heroSlug = str_replace([' ', '&', '.', "'"], ['-', 'and', '', ''], strtolower($heroName));
+        $possiblePaths = [
+            "/images/heroes/{$heroSlug}-headbig.webp",
+            "/images/heroes/{$heroSlug}.png",
+            "/images/heroes/{$heroSlug}.webp",
+            "/images/heroes/{$heroSlug}.jpg"
+        ];
+
+        foreach ($possiblePaths as $path) {
+            $fullPath = public_path($path);
+            if (file_exists($fullPath)) {
+                return asset($path);
+            }
+        }
+
+        // Fallback to default hero placeholder
+        return asset('/images/heroes/default-hero.png');
     }
 
 
