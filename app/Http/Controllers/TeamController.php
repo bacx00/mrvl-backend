@@ -3,7 +3,12 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use App\Models\Mention;
+use App\Helpers\ImageHelper;
+use Exception;
+use Illuminate\Validation\ValidationException;
+use Illuminate\Database\QueryException;
 
 class TeamController extends Controller
 {
@@ -39,11 +44,15 @@ class TeamController extends Controller
 
             // Transform to Marvel Rivals esports format
             $formattedTeams = $teams->map(function($team) {
+                $logoInfo = ImageHelper::getTeamLogo($team->logo, $team->name);
+                
                 return [
                     'id' => $team->id,
                     'name' => $team->name,
                     'short_name' => $team->short_name,
-                    'logo' => $team->logo,
+                    'logo' => $logoInfo['url'],
+                    'logo_exists' => $logoInfo['exists'],
+                    'logo_fallback' => $logoInfo['fallback'],
                     'region' => $team->region,
                     'platform' => $team->platform ?? 'PC',
                     'country' => $team->country,
@@ -76,10 +85,28 @@ class TeamController extends Controller
                 'success' => true
             ]);
 
-        } catch (\Exception $e) {
+        } catch (QueryException $e) {
+            Log::error('Database error fetching teams', [
+                'error' => $e->getMessage(),
+                'sql' => $e->getSql(),
+                'bindings' => $e->getBindings(),
+                'request_params' => request()->all()
+            ]);
             return response()->json([
                 'success' => false,
-                'message' => 'Error fetching teams: ' . $e->getMessage()
+                'message' => 'Database connection issue. Please try again later.',
+                'error_code' => 'DATABASE_ERROR'
+            ], 500);
+        } catch (Exception $e) {
+            Log::error('Error fetching teams', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'request_params' => request()->all()
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Unable to load teams. Please try again later.',
+                'error_code' => 'TEAMS_FETCH_ERROR'
             ], 500);
         }
     }
@@ -217,6 +244,9 @@ class TeamController extends Controller
                 'game' => 'Marvel Rivals',
                 'last_active' => $this->getLastActiveDate($recentMatches)
             ];
+
+            // COMPATIBILITY FIX: Ensure both 'players' and 'current_roster' are available for frontend compatibility
+            $formattedTeam['players'] = $currentRoster; // Add players field for frontend compatibility
 
             return response()->json([
                 'data' => $formattedTeam,
@@ -579,10 +609,26 @@ class TeamController extends Controller
                 'success' => true
             ]);
             
-        } catch (\Exception $e) {
+        } catch (QueryException $e) {
+            Log::error('Database error in team operation', [
+                'error' => $e->getMessage(),
+                'method' => debug_backtrace()[1]['function'] ?? 'unknown'
+            ]);
             return response()->json([
                 'success' => false,
-                'message' => 'Error fetching teams: ' . $e->getMessage()
+                'message' => 'Database connection issue. Please try again later.',
+                'error_code' => 'DATABASE_ERROR'
+            ], 500);
+        } catch (Exception $e) {
+            Log::error('Error in team operation', [
+                'error' => $e->getMessage(),
+                'method' => debug_backtrace()[1]['function'] ?? 'unknown',
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Unable to process request. Please try again later.',
+                'error_code' => 'TEAMS_ERROR'
             ], 500);
         }
     }
@@ -666,20 +712,6 @@ class TeamController extends Controller
 
     public function update(Request $request, $teamId)
     {
-        $this->authorize('manage-teams');
-        
-        $request->validate([
-            'name' => 'required|string|max:255|unique:teams,name,' . $teamId,
-            'short_name' => 'required|string|max:10|unique:teams,short_name,' . $teamId,
-            'region' => 'required|string|max:10',
-            'country' => 'nullable|string|max:100',
-            'rating' => 'nullable|integer|min:0|max:5000',
-            'description' => 'nullable|string',
-            'social_links' => 'nullable|array',
-            'logo' => 'nullable|string',
-            'flag' => 'nullable|string'
-        ]);
-        
         try {
             $team = DB::table('teams')->where('id', $teamId)->first();
             
@@ -690,39 +722,423 @@ class TeamController extends Controller
                 ], 404);
             }
             
-            // Update peak rating if new rating is higher
-            $newRating = $request->rating ?? $team->rating;
-            $peakRating = max($newRating, $team->peak ?? 0);
-            
-            DB::table('teams')->where('id', $teamId)->update([
-                'name' => $request->name,
-                'short_name' => $request->short_name,
-                'region' => $request->region,
-                'country' => $request->country,
-                'rating' => $newRating,
-                'peak' => $peakRating,
-                'description' => $request->description,
-                'social_media' => json_encode($request->social_links ?? []),
-                'logo' => $request->logo ?? $team->logo,
-                'flag' => $request->flag ?? $team->flag,
-                'updated_at' => now()
+            $validated = $request->validate([
+                'name' => 'sometimes|string|max:255|unique:teams,name,' . $teamId,
+                'short_name' => 'sometimes|string|max:20|unique:teams,short_name,' . $teamId,
+                'region' => 'sometimes|string|max:20',
+                'country' => 'nullable|string|max:100',
+                'country_code' => 'nullable|string|max:5',
+                'rating' => 'nullable|numeric|min:0|max:5000',
+                'elo_rating' => 'nullable|numeric|min:0|max:5000',
+                'peak_rating' => 'nullable|numeric|min:0|max:5000',
+                'peak_elo' => 'nullable|numeric|min:0|max:5000',
+                'earnings' => 'nullable|numeric|min:0',
+                'earnings_decimal' => 'nullable|numeric|min:0',
+                'earnings_amount' => 'nullable|numeric|min:0',
+                'earnings_currency' => 'nullable|string|max:10',
+                'description' => 'nullable|string',
+                'social_links' => 'nullable|array',
+                'social_media' => 'nullable|array',
+                'twitter' => 'nullable|string',
+                'twitter_url' => 'nullable|string|url',
+                'instagram' => 'nullable|string',
+                'instagram_url' => 'nullable|string|url',
+                'youtube' => 'nullable|string',
+                'youtube_url' => 'nullable|string|url',
+                'twitch' => 'nullable|string',
+                'twitch_url' => 'nullable|string|url',
+                'tiktok' => 'nullable|string',
+                'discord' => 'nullable|string',
+                'discord_url' => 'nullable|string',
+                'facebook' => 'nullable|string|url',
+                'website' => 'nullable|string|url',
+                'website_url' => 'nullable|string|url',
+                'liquipedia_url' => 'nullable|string|url',
+                'vlr_url' => 'nullable|string|url',
+                'logo' => 'nullable|string|url',
+                'flag' => 'nullable|string|url',
+                'country_flag' => 'nullable|string|url',
+                'coach' => 'nullable|string|max:255',
+                'coach_picture' => 'nullable|string|url',
+                'captain' => 'nullable|string|max:255',
+                'manager' => 'nullable|string|max:255',
+                'owner' => 'nullable|string|max:255',
+                'founded' => 'nullable|string',
+                'founded_date' => 'nullable|date',
+                'status' => 'sometimes|in:active,inactive,disbanded,suspended',
+                'achievements' => 'nullable|array'
             ]);
             
-            // Update team ranks after rating change
-            $this->updateAllTeamRanks();
+            // Handle social media fields - merge individual fields into social_media JSON
+            // Support all 6 major platforms: Twitter, Instagram, YouTube, Twitch, Discord, TikTok
+            $socialFields = [
+                'twitter', 'twitter_url', 'instagram', 'instagram_url', 
+                'youtube', 'youtube_url', 'twitch', 'twitch_url',
+                'tiktok', 'discord', 'discord_url', 'facebook',
+                'website', 'website_url', 'liquipedia_url', 'vlr_url'
+            ];
+            $currentSocialMedia = $team->social_media ? json_decode($team->social_media, true) : [];
             
-            $updatedTeam = DB::table('teams')->where('id', $teamId)->first();
+            foreach ($socialFields as $field) {
+                if (isset($validated[$field])) {
+                    if (!empty($validated[$field])) {
+                        // Store both in social_media JSON and individual columns
+                        $currentSocialMedia[$field] = $validated[$field];
+                        // Keep individual column for direct database access
+                        if (in_array($field, ['twitter', 'instagram', 'youtube', 'twitch', 'tiktok', 'discord', 'website'])) {
+                            // Don't remove from validated - allow updating individual columns
+                        } else {
+                            unset($validated[$field]); // Remove URL variants to avoid column conflicts
+                        }
+                    } else {
+                        // Remove empty values
+                        unset($currentSocialMedia[$field]);
+                        if (in_array($field, ['twitter', 'instagram', 'youtube', 'twitch', 'tiktok', 'discord', 'website'])) {
+                            $validated[$field] = null; // Set individual column to null
+                        } else {
+                            unset($validated[$field]);
+                        }
+                    }
+                }
+            }
+            
+            // Handle social_links array if provided
+            if (isset($validated['social_links'])) {
+                foreach ($validated['social_links'] as $platform => $url) {
+                    if (!empty($url)) {
+                        $currentSocialMedia[$platform] = $url;
+                    }
+                }
+                unset($validated['social_links']);
+            }
+            
+            // Handle direct social_media array update
+            if (isset($validated['social_media']) && is_array($validated['social_media'])) {
+                $currentSocialMedia = array_merge($currentSocialMedia, $validated['social_media']);
+            }
+            
+            $validated['social_media'] = json_encode($currentSocialMedia);
+            
+            // Process other array fields to JSON
+            $arrayFields = ['achievements'];
+            foreach ($arrayFields as $field) {
+                if (isset($validated[$field]) && is_array($validated[$field])) {
+                    $validated[$field] = json_encode($validated[$field]);
+                }
+            }
+            
+            // Update peak ratings if new ratings are higher
+            if (isset($validated['rating']) && $validated['rating'] > ($team->peak ?? 0)) {
+                $validated['peak'] = $validated['rating'];
+            }
+            if (isset($validated['elo_rating']) && $validated['elo_rating'] > ($team->peak_elo ?? 0)) {
+                $validated['peak_elo'] = $validated['elo_rating'];
+            }
+            
+            // Set updated timestamp
+            $validated['updated_at'] = now();
+            
+            // Update the team
+            DB::table('teams')->where('id', $teamId)->update($validated);
+            
+            // Update team ranks after rating change if rating was updated
+            if (isset($validated['rating']) || isset($validated['elo_rating'])) {
+                $this->updateAllTeamRanks();
+            }
+            
+            // Return updated team data using the admin method
+            $updatedTeam = $this->getTeamAdmin($teamId);
             
             return response()->json([
-                'data' => $updatedTeam,
+                'data' => $updatedTeam->original['data'],
                 'success' => true,
                 'message' => 'Team updated successfully'
             ]);
             
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
         } catch (\Exception $e) {
+            \Log::error('TeamController@update error: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
             return response()->json([
                 'success' => false,
                 'message' => 'Error updating team: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Add a player to the team
+     */
+    public function addPlayer(Request $request, $teamId)
+    {
+        try {
+            $team = DB::table('teams')->where('id', $teamId)->first();
+            if (!$team) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Team not found'
+                ], 404);
+            }
+
+            // Check current roster size (Marvel Rivals teams typically have 6 players)
+            $currentRosterSize = DB::table('players')->where('team_id', $teamId)->where('status', 'active')->count();
+            if ($currentRosterSize >= 6) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Team roster is full (maximum 6 players)'
+                ], 400);
+            }
+
+            $validated = $request->validate([
+                'player_id' => 'required|exists:players,id',
+                'role' => 'required|in:Vanguard,Duelist,Strategist',
+                'jersey_number' => 'nullable|integer|min:1|max:99'
+            ]);
+
+            $player = DB::table('players')->where('id', $validated['player_id'])->first();
+            if (!$player) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Player not found'
+                ], 404);
+            }
+
+            if ($player->team_id && $player->team_id != $teamId) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Player is already on another team'
+                ], 400);
+            }
+
+            // Add player to team
+            DB::table('players')->where('id', $validated['player_id'])->update([
+                'team_id' => $teamId,
+                'role' => $validated['role'],
+                'jersey_number' => $validated['jersey_number'] ?? null,
+                'status' => 'active',
+                'updated_at' => now()
+            ]);
+
+            // Update team player count
+            $newPlayerCount = DB::table('players')->where('team_id', $teamId)->where('status', 'active')->count();
+            DB::table('teams')->where('id', $teamId)->update([
+                'player_count' => $newPlayerCount,
+                'updated_at' => now()
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Player added to team successfully',
+                'data' => [
+                    'player_id' => $validated['player_id'],
+                    'team_id' => $teamId,
+                    'role' => $validated['role'],
+                    'roster_size' => $newPlayerCount
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error adding player to team: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Remove a player from the team
+     */
+    public function removePlayer(Request $request, $teamId, $playerId)
+    {
+        try {
+            $team = DB::table('teams')->where('id', $teamId)->first();
+            if (!$team) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Team not found'
+                ], 404);
+            }
+
+            $player = DB::table('players')->where('id', $playerId)->where('team_id', $teamId)->first();
+            if (!$player) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Player not found on this team'
+                ], 404);
+            }
+
+            // Remove player from team
+            DB::table('players')->where('id', $playerId)->update([
+                'team_id' => null,
+                'role' => null,
+                'jersey_number' => null,
+                'status' => 'active', // Still active, just not on a team
+                'updated_at' => now()
+            ]);
+
+            // Update team player count
+            $newPlayerCount = DB::table('players')->where('team_id', $teamId)->where('status', 'active')->count();
+            DB::table('teams')->where('id', $teamId)->update([
+                'player_count' => $newPlayerCount,
+                'updated_at' => now()
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Player removed from team successfully',
+                'data' => [
+                    'player_id' => $playerId,
+                    'team_id' => $teamId,
+                    'roster_size' => $newPlayerCount
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error removing player from team: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Update a player's role on the team
+     */
+    public function updatePlayerRole(Request $request, $teamId, $playerId)
+    {
+        try {
+            $team = DB::table('teams')->where('id', $teamId)->first();
+            if (!$team) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Team not found'
+                ], 404);
+            }
+
+            $player = DB::table('players')->where('id', $playerId)->where('team_id', $teamId)->first();
+            if (!$player) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Player not found on this team'
+                ], 404);
+            }
+
+            $validated = $request->validate([
+                'role' => 'required|in:Vanguard,Duelist,Strategist',
+                'jersey_number' => 'nullable|integer|min:1|max:99'
+            ]);
+
+            // Update player role
+            DB::table('players')->where('id', $playerId)->update([
+                'role' => $validated['role'],
+                'jersey_number' => $validated['jersey_number'] ?? $player->jersey_number,
+                'updated_at' => now()
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Player role updated successfully',
+                'data' => [
+                    'player_id' => $playerId,
+                    'team_id' => $teamId,
+                    'role' => $validated['role'],
+                    'jersey_number' => $validated['jersey_number'] ?? $player->jersey_number
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating player role: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Transfer a player to another team
+     */
+    public function transferPlayer(Request $request, $teamId)
+    {
+        try {
+            $team = DB::table('teams')->where('id', $teamId)->first();
+            if (!$team) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Team not found'
+                ], 404);
+            }
+
+            $validated = $request->validate([
+                'player_id' => 'required|exists:players,id',
+                'to_team_id' => 'required|exists:teams,id'
+            ]);
+
+            $player = DB::table('players')->where('id', $validated['player_id'])->where('team_id', $teamId)->first();
+            if (!$player) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Player not found on this team'
+                ], 404);
+            }
+
+            $toTeam = DB::table('teams')->where('id', $validated['to_team_id'])->first();
+            if (!$toTeam) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Destination team not found'
+                ], 404);
+            }
+
+            // Check if destination team has space
+            $destinationRosterSize = DB::table('players')->where('team_id', $validated['to_team_id'])->where('status', 'active')->count();
+            if ($destinationRosterSize >= 6) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Destination team roster is full (maximum 6 players)'
+                ], 400);
+            }
+
+            // Transfer player
+            DB::table('players')->where('id', $validated['player_id'])->update([
+                'team_id' => $validated['to_team_id'],
+                'updated_at' => now()
+            ]);
+
+            // Update both teams' player counts
+            $oldTeamPlayerCount = DB::table('players')->where('team_id', $teamId)->where('status', 'active')->count();
+            $newTeamPlayerCount = DB::table('players')->where('team_id', $validated['to_team_id'])->where('status', 'active')->count();
+
+            DB::table('teams')->where('id', $teamId)->update([
+                'player_count' => $oldTeamPlayerCount,
+                'updated_at' => now()
+            ]);
+
+            DB::table('teams')->where('id', $validated['to_team_id'])->update([
+                'player_count' => $newTeamPlayerCount,
+                'updated_at' => now()
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Player transferred successfully',
+                'data' => [
+                    'player_id' => $validated['player_id'],
+                    'from_team_id' => $teamId,
+                    'to_team_id' => $validated['to_team_id'],
+                    'old_roster_size' => $oldTeamPlayerCount,
+                    'new_roster_size' => $newTeamPlayerCount
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error transferring player: ' . $e->getMessage()
             ], 500);
         }
     }
@@ -795,10 +1211,9 @@ class TeamController extends Controller
         }
     }
 
-    public function getMentions($teamId)
+    public function getMentions($teamId, Request $request = null)
     {
         try {
-            // Get team info
             $team = DB::table('teams')->where('id', $teamId)->first();
             if (!$team) {
                 return response()->json([
@@ -807,117 +1222,139 @@ class TeamController extends Controller
                 ], 404);
             }
 
-            $teamName = $team->name;
+            $query = DB::table('mentions as m')
+                ->leftJoin('users as u', 'm.mentioned_by', '=', 'u.id')
+                ->where('m.mentioned_type', 'team')
+                ->where('m.mentioned_id', $teamId)
+                ->where('m.is_active', true)
+                ->select([
+                    'm.id',
+                    'm.mention_text',
+                    'm.context',
+                    'm.mentioned_at',
+                    'm.mentionable_type',
+                    'm.mentionable_id',
+                    'm.metadata',
+                    'u.id as mentioned_by_id',
+                    'u.name as mentioned_by_name',
+                    'u.avatar as mentioned_by_avatar',
+                    'u.hero_flair as mentioned_by_hero_flair',
+                    'u.team_flair_id as mentioned_by_team_flair'
+                ])
+                ->orderBy('m.mentioned_at', 'desc');
+
+            // Filter by content type if specified
+            if ($request && $request->content_type) {
+                $query->where('m.mentionable_type', $request->content_type);
+            }
+
+            // Pagination
+            $perPage = $request ? min($request->get('per_page', 20), 50) : 20;
+            $page = $request ? $request->get('page', 1) : 1;
+            $offset = ($page - 1) * $perPage;
             
-            // Search for mentions across different content types
-            $mentions = collect();
+            $total = $query->count();
+            $mentions = $query->offset($offset)->limit($perPage)->get();
 
-            // Forum post mentions
-            $forumMentions = DB::table('forum_posts as fp')
-                ->leftJoin('forum_threads as ft', 'fp.thread_id', '=', 'ft.id')
-                ->leftJoin('users as u', 'fp.user_id', '=', 'u.id')
-                ->where('fp.content', 'LIKE', "%{$teamName}%")
-                ->select([
-                    'fp.id', 'fp.content', 'fp.created_at',
-                    'u.id as user_id', 'u.name as user_name', 'u.avatar as user_avatar',
-                    'u.hero_flair', 'u.team_flair_id',
-                    'ft.title as context_title',
-                    DB::raw("'forum_post' as context_type")
-                ])
-                ->orderBy('fp.created_at', 'desc')
-                ->limit(20)
-                ->get();
-
-            // Forum thread mentions  
-            $threadMentions = DB::table('forum_threads as ft')
-                ->leftJoin('users as u', 'ft.user_id', '=', 'u.id')
-                ->where(function($query) use ($teamName) {
-                    $query->where('ft.title', 'LIKE', "%{$teamName}%")
-                          ->orWhere('ft.content', 'LIKE', "%{$teamName}%");
-                })
-                ->select([
-                    'ft.id', 'ft.content', 'ft.created_at',
-                    'u.id as user_id', 'u.name as user_name', 'u.avatar as user_avatar',
-                    'u.hero_flair', 'u.team_flair_id',
-                    'ft.title as context_title',
-                    DB::raw("'forum_thread' as context_type")
-                ])
-                ->orderBy('ft.created_at', 'desc')
-                ->limit(20)
-                ->get();
-
-            // News comment mentions
-            $newsCommentMentions = DB::table('news_comments as nc')
-                ->leftJoin('news as n', 'nc.news_id', '=', 'n.id')
-                ->leftJoin('users as u', 'nc.user_id', '=', 'u.id')
-                ->where('nc.content', 'LIKE', "%{$teamName}%")
-                ->select([
-                    'nc.id', 'nc.content', 'nc.created_at',
-                    'u.id as user_id', 'u.name as user_name', 'u.avatar as user_avatar',
-                    'u.hero_flair', 'u.team_flair_id',
-                    'n.title as context_title',
-                    DB::raw("'news_comment' as context_type")
-                ])
-                ->orderBy('nc.created_at', 'desc')
-                ->limit(20)
-                ->get();
-
-            // Match comment mentions
-            $matchCommentMentions = DB::table('match_comments as mc')
-                ->leftJoin('matches as m', 'mc.match_id', '=', 'm.id')
-                ->leftJoin('users as u', 'mc.user_id', '=', 'u.id')
-                ->leftJoin('teams as t1', 'm.team1_id', '=', 't1.id')
-                ->leftJoin('teams as t2', 'm.team2_id', '=', 't2.id')
-                ->where('mc.content', 'LIKE', "%{$teamName}%")
-                ->select([
-                    'mc.id', 'mc.content', 'mc.created_at',
-                    'u.id as user_id', 'u.name as user_name', 'u.avatar as user_avatar',
-                    'u.hero_flair', 'u.team_flair_id',
-                    DB::raw("t1.name || ' vs ' || t2.name as context_title"),
-                    DB::raw("'match_comment' as context_type")
-                ])
-                ->orderBy('mc.created_at', 'desc')
-                ->limit(20)
-                ->get();
-
-            // Combine all mentions
-            $allMentions = $mentions
-                ->concat($forumMentions)
-                ->concat($threadMentions)
-                ->concat($newsCommentMentions)
-                ->concat($matchCommentMentions)
-                ->sortByDesc('created_at')
-                ->take(50);
-
-            // Format mentions with user data
-            $formattedMentions = $allMentions->map(function($mention) {
-                return [
+            // Format mentions with content context
+            $formattedMentions = $mentions->map(function($mention) {
+                $mentionData = [
                     'id' => $mention->id,
-                    'content' => $mention->content,
-                    'context_type' => $mention->context_type,
-                    'context_title' => $mention->context_title,
-                    'created_at' => $mention->created_at,
-                    'mentioned_by' => [
-                        'id' => $mention->user_id,
-                        'name' => $mention->user_name,
-                        'avatar' => $mention->user_avatar,
-                        'hero_flair' => $mention->hero_flair,
-                        'team_flair_id' => $mention->team_flair_id
-                    ]
+                    'mention_text' => $mention->mention_text,
+                    'context' => $mention->context,
+                    'mentioned_at' => $mention->mentioned_at,
+                    'mentioned_by' => $mention->mentioned_by_id ? [
+                        'id' => $mention->mentioned_by_id,
+                        'name' => $mention->mentioned_by_name,
+                        'avatar' => $mention->mentioned_by_avatar,
+                        'hero_flair' => $mention->mentioned_by_hero_flair,
+                        'team_flair_id' => $mention->mentioned_by_team_flair
+                    ] : null,
+                    'content' => $this->getContentContextForMention($mention),
+                    'metadata' => $mention->metadata ? json_decode($mention->metadata, true) : null
                 ];
+
+                return $mentionData;
             });
 
             return response()->json([
-                'data' => $formattedMentions->values(),
-                'success' => true,
-                'total_mentions' => $formattedMentions->count()
+                'data' => $formattedMentions,
+                'pagination' => [
+                    'current_page' => (int) $page,
+                    'last_page' => (int) ceil($total / $perPage),
+                    'per_page' => (int) $perPage,
+                    'total' => $total
+                ],
+                'success' => true
             ]);
 
         } catch (\Exception $e) {
+            \Log::error('TeamController@getMentions error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Error fetching mentions: ' . $e->getMessage()
             ], 500);
+        }
+    }
+
+    private function getContentContextForMention($mention)
+    {
+        switch ($mention->mentionable_type) {
+            case 'news':
+                $news = DB::table('news')->where('id', $mention->mentionable_id)->first();
+                return $news ? [
+                    'type' => 'news',
+                    'title' => $news->title,
+                    'url' => "/news/{$news->slug}"
+                ] : null;
+            
+            case 'news_comment':
+                $comment = DB::table('news_comments')->where('id', $mention->mentionable_id)->first();
+                if ($comment) {
+                    $news = DB::table('news')->where('id', $comment->news_id)->first();
+                    return $news ? [
+                        'type' => 'news_comment',
+                        'title' => "Comment on: {$news->title}",
+                        'url' => "/news/{$news->slug}#comment-{$comment->id}"
+                    ] : null;
+                }
+                return null;
+            
+            case 'match':
+                $match = DB::table('matches')->where('id', $mention->mentionable_id)->first();
+                if ($match) {
+                    $team1 = DB::table('teams')->where('id', $match->team1_id)->first();
+                    $team2 = DB::table('teams')->where('id', $match->team2_id)->first();
+                    return [
+                        'type' => 'match',
+                        'title' => ($team1 ? $team1->name : 'TBD') . ' vs ' . ($team2 ? $team2->name : 'TBD'),
+                        'url' => "/matches/{$match->id}"
+                    ];
+                }
+                return null;
+            
+            case 'forum_thread':
+                $thread = DB::table('forum_threads')->where('id', $mention->mentionable_id)->first();
+                return $thread ? [
+                    'type' => 'forum_thread',
+                    'title' => $thread->title,
+                    'url' => "/forums/threads/{$thread->id}"
+                ] : null;
+            
+            case 'forum_post':
+                $post = DB::table('forum_posts')->where('id', $mention->mentionable_id)->first();
+                if ($post) {
+                    $thread = DB::table('forum_threads')->where('id', $post->thread_id)->first();
+                    return $thread ? [
+                        'type' => 'forum_post',
+                        'title' => "Reply in: {$thread->title}",
+                        'url' => "/forums/threads/{$thread->id}#post-{$post->id}"
+                    ] : null;
+                }
+                return null;
+            
+            default:
+                return null;
         }
     }
 
@@ -2012,5 +2449,88 @@ class TeamController extends Controller
         ];
         
         return $flags[$country] ?? '🌍';
+    }
+
+    /**
+     * Test team logos with fallback support
+     */
+    public function testTeamLogos()
+    {
+        try {
+            $teams = DB::table('teams')
+                ->select(['id', 'name', 'logo'])
+                ->limit(20)
+                ->get();
+
+            $logoTests = $teams->map(function($team) {
+                $logoInfo = ImageHelper::getTeamLogo($team->logo, $team->name);
+                
+                return [
+                    'id' => $team->id,
+                    'name' => $team->name,
+                    'logo_path' => $team->logo,
+                    'resolved_url' => $logoInfo['url'],
+                    'exists' => $logoInfo['exists'],
+                    'fallback' => $logoInfo['fallback'],
+                    'status' => $logoInfo['exists'] ? 'Found' : 'Missing - Will show fallback'
+                ];
+            });
+
+            return response()->json([
+                'data' => $logoTests,
+                'total' => $logoTests->count(),
+                'success' => true,
+                'note' => 'This endpoint tests team logo resolution with fallback support'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error testing team logos: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get all team logos with status
+     */
+    public function getAllTeamLogos()
+    {
+        try {
+            $teams = DB::table('teams')
+                ->select(['id', 'name', 'short_name', 'logo'])
+                ->get();
+
+            $teamLogos = $teams->map(function($team) {
+                $logoInfo = ImageHelper::getTeamLogo($team->logo, $team->name);
+                
+                return [
+                    'id' => $team->id,
+                    'name' => $team->name,
+                    'short_name' => $team->short_name,
+                    'logo_url' => $logoInfo['url'],
+                    'logo_exists' => $logoInfo['exists'],
+                    'fallback_text' => $logoInfo['fallback']['text'],
+                    'fallback_color' => $logoInfo['fallback']['color'],
+                    'original_path' => $team->logo
+                ];
+            });
+
+            $missingLogos = $teamLogos->where('logo_exists', false);
+
+            return response()->json([
+                'data' => $teamLogos,
+                'total' => $teamLogos->count(),
+                'missing_count' => $missingLogos->count(),
+                'missing_teams' => $missingLogos->pluck('name'),
+                'success' => true
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching team logos: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

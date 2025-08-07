@@ -11,6 +11,7 @@ use App\Http\Controllers\{
     SearchController,
     ForumController,
     AdminStatsController,
+    AnalyticsController,
     AdminUserController,
     AdminMatchController,
     NewsController,
@@ -25,7 +26,8 @@ use App\Http\Controllers\{
     BulkOperationController,
     MentionController,
     TestDataController,
-    VoteController
+    VoteController,
+    ImageTestController
 };
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -96,15 +98,31 @@ Route::prefix('public')->group(function () {
     Route::get('/forums/threads', [ForumController::class, 'index']);
     Route::get('/forums/threads/{id}', [ForumController::class, 'show']);
     Route::get('/forums/threads/{id}/posts', [ForumController::class, 'getPosts']);
-    Route::get('/forums/search', [SearchController::class, 'searchForums']);
+    Route::get('/forums/search', [SearchController::class, 'search']);
     Route::get('/forums/search/suggestions', [SearchController::class, 'searchSuggestions']);
     Route::get('/forums/trending', [ForumController::class, 'getTrendingThreads']);
     Route::get('/forums/hot', [ForumController::class, 'getHotThreads']);
+    Route::get('/forums/overview', [ForumController::class, 'getForumOverview']);
+    
+    // Forum thread existence check (for 404 prevention)
+    Route::get('/forums/threads/{id}/exists', [ForumController::class, 'checkThreadExists']);
     
     // News (Read Only)
     Route::get('/news', [NewsController::class, 'index']);
-    Route::get('/news/{id}', [NewsController::class, 'show']);
     Route::get('/news/categories', [NewsController::class, 'getCategories']);
+    Route::get('/news/{id}', [NewsController::class, 'show']);
+    
+    // News View Tracking (no auth required for view tracking)
+    Route::post('/news/{id}/view', [NewsController::class, 'trackView']);
+    
+    // News Comments and Voting (require authentication)
+    Route::middleware('auth:api')->group(function () {
+        Route::post('/news/{newsId}/comments', [NewsController::class, 'comment']);
+        Route::post('/news/{newsId}/vote', [NewsController::class, 'vote']);
+        Route::put('/news/comments/{commentId}', [NewsController::class, 'updateComment']);
+        Route::delete('/news/comments/{commentId}', [NewsController::class, 'destroyComment']);
+        Route::post('/news/comments/{commentId}/vote', [NewsController::class, 'voteComment']);
+    });
     
     // Rankings
     Route::get('/rankings', [RankingController::class, 'index']);
@@ -137,8 +155,24 @@ Route::prefix('public')->group(function () {
     Route::get('/events/{eventId}/comprehensive-bracket', [ComprehensiveBracketController::class, 'show']);
     Route::get('/events/{eventId}/bracket-analysis', [ComprehensiveBracketController::class, 'getBracketAnalysis']);
     
+    // Comprehensive Bracket System - Public Access
+    Route::get('/tournaments/{tournamentId}/bracket', [ComprehensiveBracketController::class, 'getBracket']);
+    Route::get('/events/{eventId}/bracket-comprehensive', [ComprehensiveBracketController::class, 'getBracket']);
+    Route::get('/tournaments/{tournamentId}/bracket-visualization', [ComprehensiveBracketController::class, 'getBracketVisualization']);
+    Route::get('/events/{eventId}/bracket-visualization', [ComprehensiveBracketController::class, 'getBracketVisualization']);
+    Route::get('/tournaments/{tournamentId}/standings', [ComprehensiveBracketController::class, 'getStandings']);
+    Route::get('/events/{eventId}/standings', [ComprehensiveBracketController::class, 'getStandings']);
+    Route::get('/tournaments/{tournamentId}/swiss-standings', [ComprehensiveBracketController::class, 'getSwissStandings']);
+    Route::get('/events/{eventId}/swiss-standings', [ComprehensiveBracketController::class, 'getSwissStandings']);
+    Route::get('/live-matches', [ComprehensiveBracketController::class, 'getLiveMatches']);
+    
     // Search
     Route::get('/search', [SearchController::class, 'search']);
+    
+    // Search for mentions (public access for autocomplete)
+    Route::get('/search/users', [SearchController::class, 'searchUsersForMentions']);
+    Route::get('/search/teams', [SearchController::class, 'searchTeamsForMentions']);
+    Route::get('/search/players', [SearchController::class, 'searchPlayersForMentions']);
     
     // Mentions autocomplete (public access for better UX)
     Route::get('/mentions/search', [MentionController::class, 'searchMentions']);
@@ -147,6 +181,9 @@ Route::prefix('public')->group(function () {
     // Public user profiles
     Route::get('/users/{userId}/profile', [UserProfileController::class, 'getUserWithAvatarAndFlairs']);
 });
+
+// News view tracking (legacy compatibility)
+Route::post('/news/{news}/view', [NewsController::class, 'trackView']);
 
 // Legacy public routes (for compatibility)
 Route::get('/teams', [TeamController::class, 'index']);
@@ -158,6 +195,8 @@ Route::get('/teams/{team}/matches/upcoming', [TeamController::class, 'getUpcomin
 Route::get('/teams/{team}/matches/live', [TeamController::class, 'getLiveMatches']);
 Route::get('/teams/{team}/matches/recent', [TeamController::class, 'getRecentResults']);
 Route::get('/teams/{team}/matches/stats', [TeamController::class, 'getMatchStats']);
+Route::get('/teams/logos/test', [TeamController::class, 'testTeamLogos']);
+Route::get('/teams/logos/all', [TeamController::class, 'getAllTeamLogos']);
 Route::get('/players', [PlayerController::class, 'index']);
 Route::get('/players/{player}', [PlayerController::class, 'show']);
 Route::get('/players/{player}/mentions', [PlayerController::class, 'getMentions']);
@@ -177,15 +216,46 @@ Route::get('/matches/{match}/comments', [MatchController::class, 'getComments'])
 Route::get('/matches/{match}/timeline', [MatchController::class, 'getMatchTimeline']);
 Route::get('/matches/head-to-head/{team1Id}/{team2Id}', [MatchController::class, 'getHeadToHead']);
 Route::get('/news', [NewsController::class, 'index']);
+Route::get('/news/categories', [NewsController::class, 'getCategories']);
 Route::get('/news/{news}', [NewsController::class, 'show']);
 Route::get('/news/{newsId}/comments', [NewsController::class, 'getCommentsWithNesting']);
-Route::get('/news/categories', [NewsController::class, 'getCategories']);
+
+// Missing direct news comment routes for frontend compatibility
+Route::middleware('auth:api')->group(function () {
+    Route::post('/news/{newsId}/comments', [NewsController::class, 'comment']);
+    Route::put('/news/comments/{commentId}', [NewsController::class, 'updateComment']);
+    Route::delete('/news/comments/{commentId}', [NewsController::class, 'destroyComment']);
+    Route::post('/news/comments/{commentId}/vote', [NewsController::class, 'voteComment']);
+    Route::post('/news/{newsId}/vote', [NewsController::class, 'vote']);
+});
+
+// Heroes routes (for frontend compatibility with direct /api/heroes path)
+Route::get('/heroes', [HeroController::class, 'index']);
+Route::get('/heroes/roles', [HeroController::class, 'getRoles']);
+Route::get('/heroes/season-2', [HeroController::class, 'getSeasonTwoHeroes']);
+Route::get('/heroes/images', [HeroController::class, 'getHeroImages']);
+Route::get('/heroes/images/all', [HeroController::class, 'getAllHeroImages']);
+Route::get('/heroes/images/{slug}', [HeroController::class, 'getHeroImageBySlug']);
+Route::get('/heroes/{slug}', [HeroController::class, 'show']);
 
 // Forum routes (for frontend compatibility)
 Route::get('/forums/categories', [ForumController::class, 'getCategories']);
 Route::get('/forums/threads', [ForumController::class, 'index']);
 Route::get('/forums/threads/{id}', [ForumController::class, 'show']);
 Route::get('/forums/threads/{id}/posts', [ForumController::class, 'getPosts']);
+Route::get('/forums/overview', [ForumController::class, 'getForumOverview']);
+
+// Mention routes (for frontend compatibility - matches expected API calls)
+Route::get('/mentions/search', [MentionController::class, 'searchMentions']);
+Route::get('/mentions/popular', [MentionController::class, 'getPopularMentions']);
+
+// Search for mentions (legacy route compatibility - moved to public section above)
+
+// FIXED: Add voting compatibility routes that frontend expects
+Route::middleware('auth:api')->group(function () {
+    Route::post('/forums/threads/{threadId}/vote', [ForumController::class, 'voteThread']);
+    Route::post('/forums/posts/{postId}/vote', [ForumController::class, 'votePost']);
+});
 
 // ===================================
 // USER ROUTES (🟢 User Role + Authentication)
@@ -216,6 +286,12 @@ Route::middleware(['auth:api', 'role:user|moderator|admin'])->prefix('user')->gr
         Route::get('/', [VoteController::class, 'getVotes']);
         Route::get('/user', [VoteController::class, 'getUserVotes']);
         Route::get('/stats', [VoteController::class, 'getVoteStats']);
+        
+        // Specific voting routes for easier frontend integration
+        Route::post('/news/{newsId}', [VoteController::class, 'voteNews']);
+        Route::post('/news/{newsId}/comments/{commentId}', [VoteController::class, 'voteNewsComment']);
+        Route::post('/forums/threads/{threadId}', [VoteController::class, 'voteThread']);
+        Route::post('/forums/posts/{postId}', [VoteController::class, 'votePost']);
     });
     
     // Forum CRUD Operations
@@ -277,6 +353,9 @@ Route::middleware(['auth:api', 'role:user|moderator|admin'])->prefix('user')->gr
         Route::put('/mark-all-read', [AuthController::class, 'markAllNotificationsRead']);
         Route::delete('/{notificationId}', [AuthController::class, 'deleteNotification']);
     });
+    
+    // Forum Engagement Stats
+    Route::get('/forums/engagement-stats/{userId?}', [ForumController::class, 'getUserEngagementStats']);
 });
 
 // ===================================
@@ -451,6 +530,13 @@ Route::middleware(['auth:api', 'role:admin'])->prefix('admin')->group(function (
         Route::put('/{eventId}/comprehensive-bracket/matches/{matchId}', [ComprehensiveBracketController::class, 'updateMatch']);
         Route::post('/{eventId}/swiss/next-round', [ComprehensiveBracketController::class, 'generateNextSwissRound']);
         
+        // Advanced Bracket Management - New System
+        Route::post('/{eventId}/bracket/generate', [ComprehensiveBracketController::class, 'generateBracket']);
+        Route::put('/bracket/matches/{matchId}', [ComprehensiveBracketController::class, 'updateMatch']);
+        Route::put('/bracket/matches/{matchId}/games/{gameNumber}', [ComprehensiveBracketController::class, 'updateGame']);
+        Route::post('/bracket/matches/{matchId}/reset-bracket', [ComprehensiveBracketController::class, 'resetBracket']);
+        Route::post('/{eventId}/swiss/generate-round', [ComprehensiveBracketController::class, 'generateSwissRound']);
+        
         // Event Images
         Route::post('/{eventId}/logo', [ImageUploadController::class, 'uploadEventLogo']);
         Route::post('/{eventId}/banner', [ImageUploadController::class, 'uploadEventBanner']);
@@ -476,8 +562,20 @@ Route::middleware(['auth:api', 'role:admin'])->prefix('admin')->group(function (
         Route::post('/{matchId}/live-scoring', [AdminMatchController::class, 'updateLiveScoring']);
         Route::post('/{matchId}/control', [AdminMatchController::class, 'controlMatch']);
         
-        // Hero Selection Updates
-        Route::post('/{matchId}/hero-update', [MatchController::class, 'updateHeroSelection']);
+        // Real-Time Live Scoring API Endpoints
+        Route::post('/{matchId}/live-update', [MatchController::class, 'liveUpdate']);
+        Route::post('/{matchId}/player-stats', [MatchController::class, 'playerStatsUpdate']);
+        Route::post('/{matchId}/hero-update', [MatchController::class, 'heroUpdate']);
+        Route::post('/{matchId}/map-result', [MatchController::class, 'mapResult']);
+
+        // Simple Real-Time Scoring Synchronization (API calls only)
+        Route::post('/{matchId}/update-score', [MatchController::class, 'updateScore']);
+        Route::post('/{matchId}/update-player-stats', [MatchController::class, 'updatePlayerStatsSimple']);
+        Route::post('/{matchId}/update-heroes', [MatchController::class, 'updateHeroes']);
+        Route::get('/{matchId}/live-data', [MatchController::class, 'getLiveData']);
+        
+        // Legacy Hero Selection Updates (for compatibility)
+        Route::post('/{matchId}/hero-update-legacy', [MatchController::class, 'updateHeroSelection']);
         
         // Enhanced Live Scoring Routes
         Route::post('/{matchId}/maps/{mapNumber}/start', [MatchController::class, 'startMap']);
@@ -524,6 +622,8 @@ Route::middleware(['auth:api', 'role:admin'])->prefix('admin')->group(function (
         Route::get('/threads', [ForumController::class, 'getAllThreadsForModeration']);
         Route::put('/threads/{threadId}', [ForumController::class, 'updateThreadAdmin']);
         Route::post('/threads/{threadId}/delete', [ForumController::class, 'deleteThread']);
+        // FIXED: Add direct DELETE route for admin thread deletion compatibility
+        Route::delete('/threads/{threadId}', [ForumController::class, 'deleteThread']);
         Route::delete('/threads/{threadId}/force', [ForumController::class, 'forceDeleteThread']);
         Route::post('/threads/{threadId}/pin', [ForumController::class, 'pinThread']);
         Route::post('/threads/{threadId}/unpin', [ForumController::class, 'unpinThread']);
@@ -569,6 +669,7 @@ Route::middleware(['auth:api', 'role:admin'])->prefix('admin')->group(function (
     
     // Analytics
     Route::prefix('analytics')->group(function () {
+        Route::get('/', [AnalyticsController::class, 'index']); // New comprehensive analytics endpoint
         Route::get('/overview', [AdminStatsController::class, 'getAnalyticsOverview']);
         Route::get('/users', [AdminStatsController::class, 'getUserAnalytics']);
         Route::get('/content', [AdminStatsController::class, 'getContentAnalytics']);
@@ -718,6 +819,7 @@ Route::middleware('auth:api')->get('/test-auth', function () {
     ]);
 });
 
+
 // ===================================
 // MATCH INGESTION SERVICE
 // ===================================
@@ -730,4 +832,27 @@ Route::prefix('ingestion')->group(function () {
         Route::post('/matches', [App\Http\Controllers\MatchIngestionController::class, 'ingestMatchReport']);
         Route::get('/status/{requestId}', [App\Http\Controllers\MatchIngestionController::class, 'getIngestionStatus']);
     });
+});
+
+// ===================================
+// OPTIMIZED MATCH SCORING API V2
+// ===================================
+Route::prefix('v2/matches')->group(function () {
+    // Public endpoints
+    Route::get('/{matchId}', [\App\Http\Controllers\OptimizedMatchController::class, 'show']);
+    Route::get('/{matchId}/live', [\App\Http\Controllers\OptimizedMatchController::class, 'getLiveData']);
+    
+    // Admin/authenticated endpoints for score updates
+    Route::middleware('auth:api')->group(function () {
+        Route::post('/{matchId}/scores', [\App\Http\Controllers\OptimizedMatchController::class, 'updateMatchScore']);
+        Route::post('/{matchId}/maps/{mapNumber}/scores', [\App\Http\Controllers\OptimizedMatchController::class, 'updateMapScore']);
+    });
+});
+
+// ===================================
+// IMAGE TESTING ROUTES
+// ===================================
+Route::prefix('images')->group(function () {
+    Route::get('/test-all', [ImageTestController::class, 'testAllImages']);
+    Route::get('/test-url', [ImageTestController::class, 'testImageUrl']);
 });

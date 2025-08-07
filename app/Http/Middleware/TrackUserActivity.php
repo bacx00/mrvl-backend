@@ -82,9 +82,30 @@ class TrackUserActivity
             }
         }
 
-        // Skip GET requests for most read operations
-        if ($method === 'GET' && !str_contains($uri, '/activity')) {
-            return true;
+        // Track important GET requests (page views)
+        if ($method === 'GET') {
+            // Track page views for important content
+            $trackViewsFor = [
+                '/api/news/',
+                '/api/matches/',
+                '/api/events/',
+                '/api/teams/',
+                '/api/players/',
+                '/api/forum/threads/',
+                '/api/rankings'
+            ];
+            
+            $shouldTrackView = false;
+            foreach ($trackViewsFor as $pattern) {
+                if (str_contains($uri, $pattern)) {
+                    $shouldTrackView = true;
+                    break;
+                }
+            }
+            
+            if (!$shouldTrackView) {
+                return true;
+            }
         }
 
         return false;
@@ -95,8 +116,13 @@ class TrackUserActivity
      */
     private function determineActivityData(Request $request, $response, $uri, $method)
     {
+        // Page view tracking for GET requests
+        if ($method === 'GET') {
+            return $this->handlePageViewActivity($request, $uri);
+        }
+
         // Forum activities
-        if (str_contains($uri, '/api/user/forums')) {
+        if (str_contains($uri, '/api/user/forums') || str_contains($uri, '/api/forum')) {
             return $this->handleForumActivity($request, $uri, $method);
         }
 
@@ -106,8 +132,18 @@ class TrackUserActivity
         }
 
         // Match activities
-        if (str_contains($uri, '/api/matches') && str_contains($uri, '/comments')) {
+        if (str_contains($uri, '/api/matches')) {
             return $this->handleMatchActivity($request, $uri, $method);
+        }
+
+        // Event activities
+        if (str_contains($uri, '/api/events')) {
+            return $this->handleEventActivity($request, $uri, $method);
+        }
+
+        // Team activities
+        if (str_contains($uri, '/api/teams')) {
+            return $this->handleTeamActivity($request, $uri, $method);
         }
 
         // Voting activities
@@ -118,6 +154,11 @@ class TrackUserActivity
         // Profile updates
         if (str_contains($uri, '/api/user/profile') && $method !== 'GET') {
             return $this->handleProfileActivity($request, $uri, $method);
+        }
+
+        // Search activities
+        if (str_contains($uri, '/api/search')) {
+            return $this->handleSearchActivity($request, $uri, $method);
         }
 
         return null;
@@ -262,6 +303,152 @@ class TrackUserActivity
                 'metadata' => array_intersect_key($request->all(), array_flip([
                     'name', 'hero_flair', 'team_flair_id'
                 ]))
+            ];
+        }
+
+        return null;
+    }
+
+    /**
+     * Handle page view activities
+     */
+    private function handlePageViewActivity(Request $request, $uri)
+    {
+        // Extract resource type and ID from URI
+        $resourceType = null;
+        $resourceId = null;
+        $action = 'page_viewed';
+        $content = 'Viewed page';
+
+        if (preg_match('/\/api\/news\/(\d+)/', $uri, $matches)) {
+            $resourceType = 'news';
+            $resourceId = $matches[1];
+            $action = 'news_viewed';
+            $content = 'Viewed news article';
+        } elseif (preg_match('/\/api\/matches\/(\d+)/', $uri, $matches)) {
+            $resourceType = 'match';
+            $resourceId = $matches[1];
+            $action = 'match_viewed';
+            $content = 'Viewed match details';
+        } elseif (preg_match('/\/api\/events\/(\d+)/', $uri, $matches)) {
+            $resourceType = 'event';
+            $resourceId = $matches[1];
+            $action = 'event_viewed';
+            $content = 'Viewed event details';
+        } elseif (preg_match('/\/api\/teams\/(\d+)/', $uri, $matches)) {
+            $resourceType = 'team';
+            $resourceId = $matches[1];
+            $action = 'team_viewed';
+            $content = 'Viewed team profile';
+        } elseif (preg_match('/\/api\/players\/(\d+)/', $uri, $matches)) {
+            $resourceType = 'player';
+            $resourceId = $matches[1];
+            $action = 'player_viewed';
+            $content = 'Viewed player profile';
+        } elseif (preg_match('/\/api\/forum\/threads\/(\d+)/', $uri, $matches)) {
+            $resourceType = 'forum_thread';
+            $resourceId = $matches[1];
+            $action = 'thread_viewed';
+            $content = 'Viewed forum thread';
+        } elseif (str_contains($uri, '/api/rankings')) {
+            $action = 'rankings_viewed';
+            $content = 'Viewed rankings page';
+        }
+
+        return [
+            'action' => $action,
+            'content' => $content,
+            'resource_type' => $resourceType,
+            'resource_id' => $resourceId,
+            'metadata' => [
+                'uri' => $uri,
+                'user_agent' => $request->header('User-Agent'),
+                'referer' => $request->header('Referer')
+            ]
+        ];
+    }
+
+    /**
+     * Handle event-related activities
+     */
+    private function handleEventActivity(Request $request, $uri, $method)
+    {
+        if ($method === 'POST' && str_contains($uri, '/register')) {
+            preg_match('/events\/(\d+)\/register/', $uri, $matches);
+            $eventId = $matches[1] ?? null;
+            
+            return [
+                'action' => 'event_registered',
+                'content' => 'Registered for event',
+                'resource_type' => 'event',
+                'resource_id' => $eventId,
+                'metadata' => [
+                    'event_id' => $eventId,
+                    'team_id' => $request->input('team_id')
+                ]
+            ];
+        }
+
+        return null;
+    }
+
+    /**
+     * Handle team-related activities
+     */
+    private function handleTeamActivity(Request $request, $uri, $method)
+    {
+        if ($method === 'POST' && str_contains($uri, '/follow')) {
+            preg_match('/teams\/(\d+)\/follow/', $uri, $matches);
+            $teamId = $matches[1] ?? null;
+            
+            return [
+                'action' => 'team_followed',
+                'content' => 'Followed team',
+                'resource_type' => 'team',
+                'resource_id' => $teamId,
+                'metadata' => [
+                    'team_id' => $teamId
+                ]
+            ];
+        }
+
+        if ($method === 'DELETE' && str_contains($uri, '/follow')) {
+            preg_match('/teams\/(\d+)\/follow/', $uri, $matches);
+            $teamId = $matches[1] ?? null;
+            
+            return [
+                'action' => 'team_unfollowed',
+                'content' => 'Unfollowed team',
+                'resource_type' => 'team',
+                'resource_id' => $teamId,
+                'metadata' => [
+                    'team_id' => $teamId
+                ]
+            ];
+        }
+
+        return null;
+    }
+
+    /**
+     * Handle search activities
+     */
+    private function handleSearchActivity(Request $request, $uri, $method)
+    {
+        if ($method === 'GET') {
+            $query = $request->input('q', '');
+            $type = $request->input('type', 'all');
+            
+            return [
+                'action' => 'search_performed',
+                'content' => "Searched for: {$query}",
+                'resource_type' => 'search',
+                'resource_id' => null,
+                'metadata' => [
+                    'query' => $query,
+                    'search_type' => $type,
+                    'filters' => $request->except(['q', 'type'])
+                ]
             ];
         }
 

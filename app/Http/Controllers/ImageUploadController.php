@@ -243,8 +243,11 @@ class ImageUploadController extends Controller
     // News Featured Image Upload
     public function uploadNewsFeaturedImage(Request $request, News $news)
     {
+        // Support both 'featured_image' and 'image' field names for backward compatibility
+        $fieldName = $request->hasFile('featured_image') ? 'featured_image' : 'image';
+        
         $request->validate([
-            'featured_image' => 'required|image|mimes:jpeg,jpg,png,webp|max:' . $this->maxFileSize,
+            $fieldName => 'required|image|mimes:jpeg,jpg,png,webp|max:' . $this->maxFileSize,
         ]);
 
         try {
@@ -261,7 +264,7 @@ class ImageUploadController extends Controller
                 Storage::disk('public')->delete($news->featured_image);
             }
 
-            $file = $request->file('featured_image');
+            $file = $request->file($fieldName);
             $path = $this->processAndStoreImage($file, 'news/featured', [
                 'width' => 800,
                 'height' => 450,
@@ -285,6 +288,18 @@ class ImageUploadController extends Controller
                 'message' => 'Failed to upload featured image: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    // News General Images Upload (for backward compatibility)
+    public function uploadNewsImages(Request $request, News $news)
+    {
+        // Check if this is a featured image request
+        if ($request->hasFile('featured_image') || $request->hasFile('image')) {
+            return $this->uploadNewsFeaturedImage($request, $news);
+        }
+        
+        // Otherwise, handle as gallery images
+        return $this->uploadNewsGalleryImages($request, $news);
     }
 
     // News Gallery Images Upload

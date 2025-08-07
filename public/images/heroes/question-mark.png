@@ -1,0 +1,10 @@
+<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <style>
+      .bg { fill: #374151; }
+      .text { fill: #ffffff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif; font-size: 48px; font-weight: bold; }
+    </style>
+  </defs>
+  <rect class="bg" width="100" height="100" rx="8"/>
+  <text class="text" x="50" y="65" text-anchor="middle">?</text>
+</svg>

@@ -567,9 +567,9 @@ class LiveUpdateController extends Controller
             'data' => $data
         ]);
         
-        // Also trigger a Redis pub/sub event if available
-        if (config('broadcasting.default') === 'redis') {
-            \Illuminate\Support\Facades\Redis::publish("match.{$matchId}.updates", json_encode($update));
-        }
+        // Store broadcast event in cache instead of Redis pub/sub
+        // This allows SSE clients to pick up the update
+        $broadcastKey = "match.{$matchId}.broadcast." . time() . '.' . uniqid();
+        cache()->put($broadcastKey, $update, 5); // Keep for 5 minutes
     }
 }

@@ -1,0 +1,29 @@
+{
+    "timestamp": "2025-08-07 08:52:31",
+    "test_match_id": 6,
+    "total_tests": 8,
+    "passed_tests": 5,
+    "success_rate": "62.5%",
+    "test_results": {
+        "get_match": "FAIL - Exception",
+        "score_updates": "FAIL - Exception",
+        "hero_updates": "PASS",
+        "player_stats_updates": "PASS",
+        "timer_updates": "PASS",
+        "status_transitions": "PASS",
+        "completed_match_updates": "FAIL - Exception",
+        "error_handling": "PASS"
+    },
+    "endpoints_tested": [
+        "POST \/api\/admin\/matches\/{id}\/live-scoring",
+        "GET \/api\/matches\/{id}"
+    ],
+    "features_tested": [
+        "Score updates (team1_score, team2_score)",
+        "Hero composition changes",
+        "Player stats (kills, deaths, damage, healing, blocked)",
+        "Timer updates",
+        "Status transitions (live, paused, completed)",
+        "Error handling"
+    ]
+}

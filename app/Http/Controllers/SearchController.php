@@ -15,11 +15,24 @@ class SearchController extends Controller
         $limit = $request->get('limit', 10);
         $page = $request->get('page', 1);
         
-        if (strlen($query) < 2) {
+        // Allow single character searches with limited results
+        if (strlen($query) < 1) {
             return response()->json([
                 'success' => false,
-                'message' => 'Search query must be at least 2 characters long'
+                'message' => 'Search query cannot be empty'
             ], 400);
+        }
+        
+        // For single character searches, limit to exact matches and user searches
+        if (strlen($query) === 1) {
+            $results = $this->searchSingleCharacter($query, $limit);
+            return response()->json([
+                'data' => $results,
+                'query' => $query,
+                'type' => $type,
+                'success' => true,
+                'message' => 'Limited results for single character search'
+            ]);
         }
 
         $results = [];
@@ -65,6 +78,65 @@ class SearchController extends Controller
             'type' => $type,
             'success' => true
         ]);
+    }
+
+    /**
+     * Handle single character searches with limited scope
+     */
+    private function searchSingleCharacter($query, $limit)
+    {
+        $results = [
+            'users' => [],
+            'teams' => [],
+            'total_results' => 0
+        ];
+        
+        // Search users whose names start with the character
+        $users = DB::table('users')
+            ->select(['id', 'name', 'avatar', 'hero_flair'])
+            ->where('name', 'LIKE', $query . '%')
+            ->where('status', 'active')
+            ->orderBy('name')
+            ->limit(5)
+            ->get();
+            
+        foreach ($users as $user) {
+            $results['users'][] = [
+                'id' => $user->id,
+                'name' => $user->name,
+                'avatar' => $user->avatar,
+                'hero_flair' => $user->hero_flair,
+                'type' => 'user',
+                'url' => "/users/{$user->id}"
+            ];
+        }
+        
+        // Search team short names that start with the character
+        $teams = DB::table('teams')
+            ->select(['id', 'name', 'short_name', 'logo', 'region'])
+            ->where(function($q) use ($query) {
+                $q->where('short_name', 'LIKE', $query . '%')
+                  ->orWhere('name', 'LIKE', $query . '%');
+            })
+            ->orderBy('name')
+            ->limit(5)
+            ->get();
+            
+        foreach ($teams as $team) {
+            $results['teams'][] = [
+                'id' => $team->id,
+                'name' => $team->name,
+                'short_name' => $team->short_name,
+                'logo' => $team->logo,
+                'region' => $team->region,
+                'type' => 'team',
+                'url' => "/teams/{$team->id}"
+            ];
+        }
+        
+        $results['total_results'] = count($results['users']) + count($results['teams']);
+        
+        return $results;
     }
 
     public function advancedSearch(Request $request)
@@ -1074,5 +1146,338 @@ class SearchController extends Controller
         ];
         
         return $colors[$heroName] ?? '#6b7280';
+    }
+
+    /**
+     * Search users for mention purposes (public access)
+     * This endpoint is specifically for autocomplete in mention systems
+     */
+    public function searchUsersForMentions(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'q' => 'nullable|string|max:100',
+                'limit' => 'nullable|integer|min:1|max:20'
+            ]);
+
+            $query = $validated['q'] ?? '';
+            $limit = min($validated['limit'] ?? 10, 20);
+
+            if (strlen($query) < 1) {
+                return response()->json([
+                    'success' => true,
+                    'data' => [],
+                    'query' => $query,
+                    'message' => 'Query too short for user search'
+                ]);
+            }
+
+            // Search active users only
+            $users = DB::table('users')
+                ->where('name', 'LIKE', "%{$query}%")
+                ->where('status', 'active')
+                ->select(['id', 'name', 'avatar', 'hero_flair'])
+                ->orderByRaw("
+                    CASE 
+                        WHEN name LIKE ? THEN 1
+                        ELSE 2
+                    END
+                ", ["{$query}%"])
+                ->orderBy('name')
+                ->limit($limit)
+                ->get();
+
+            $results = $users->map(function($user) {
+                return [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'avatar' => $user->avatar,
+                    'hero_flair' => $user->hero_flair,
+                    'type' => 'user',
+                    'mention_text' => "@{$user->name}",
+                    'display_name' => $user->name,
+                    'subtitle' => 'User',
+                    'url' => "/users/{$user->id}"
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'data' => $results,
+                'query' => $query,
+                'total_results' => count($results)
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            \Log::error('SearchController@searchUsersForMentions error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error searching users for mentions',
+                'data' => []
+            ], 500);
+        }
+    }
+
+    /**
+     * Search teams for mention purposes (public access)
+     * This endpoint is specifically for autocomplete in mention systems
+     */
+    public function searchTeamsForMentions(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'q' => 'nullable|string|max:100',
+                'limit' => 'nullable|integer|min:1|max:20'
+            ]);
+
+            $query = $validated['q'] ?? '';
+            $limit = min($validated['limit'] ?? 10, 20);
+
+            if (strlen($query) < 1) {
+                return response()->json([
+                    'success' => true,
+                    'data' => [],
+                    'query' => $query,
+                    'message' => 'Query too short for team search'
+                ]);
+            }
+
+            // Search teams
+            $teams = DB::table('teams')
+                ->where(function($q) use ($query) {
+                    $q->where('name', 'LIKE', "%{$query}%")
+                      ->orWhere('short_name', 'LIKE', "%{$query}%");
+                })
+                ->select(['id', 'name', 'short_name', 'logo', 'region', 'country'])
+                ->orderByRaw("
+                    CASE 
+                        WHEN name LIKE ? THEN 1
+                        WHEN short_name LIKE ? THEN 2
+                        ELSE 3
+                    END
+                ", ["{$query}%", "{$query}%"])
+                ->orderBy('name')
+                ->limit($limit)
+                ->get();
+
+            $results = $teams->map(function($team) {
+                return [
+                    'id' => $team->id,
+                    'name' => $team->name,
+                    'short_name' => $team->short_name,
+                    'logo' => $team->logo,
+                    'region' => $team->region,
+                    'country' => $team->country,
+                    'type' => 'team',
+                    'mention_text' => "@team:{$team->short_name}",
+                    'display_name' => $team->name,
+                    'subtitle' => "Team • {$team->region}",
+                    'url' => "/teams/{$team->id}"
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'data' => $results,
+                'query' => $query,
+                'total_results' => count($results)
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            \Log::error('SearchController@searchTeamsForMentions error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error searching teams for mentions',
+                'data' => []
+            ], 500);
+        }
+    }
+
+    /**
+     * Search players for mention purposes (public access)
+     * This endpoint is specifically for autocomplete in mention systems
+     */
+    public function searchPlayersForMentions(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'q' => 'nullable|string|max:100',
+                'limit' => 'nullable|integer|min:1|max:20'
+            ]);
+
+            $query = $validated['q'] ?? '';
+            $limit = min($validated['limit'] ?? 10, 20);
+
+            if (strlen($query) < 1) {
+                return response()->json([
+                    'success' => true,
+                    'data' => [],
+                    'query' => $query,
+                    'message' => 'Query too short for player search'
+                ]);
+            }
+
+            // Search players
+            $players = DB::table('players as p')
+                ->leftJoin('teams as t', 'p.team_id', '=', 't.id')
+                ->where(function($q) use ($query) {
+                    $q->where('p.username', 'LIKE', "%{$query}%")
+                      ->orWhere('p.real_name', 'LIKE', "%{$query}%");
+                })
+                ->select([
+                    'p.id', 'p.username', 'p.real_name', 'p.avatar', 'p.role',
+                    't.name as team_name', 't.short_name as team_short'
+                ])
+                ->orderByRaw("
+                    CASE 
+                        WHEN p.username LIKE ? THEN 1
+                        WHEN p.real_name LIKE ? THEN 2
+                        ELSE 3
+                    END
+                ", ["{$query}%", "{$query}%"])
+                ->orderBy('p.username')
+                ->limit($limit)
+                ->get();
+
+            $results = $players->map(function($player) {
+                $subtitle = $player->role;
+                if ($player->team_name) {
+                    $subtitle .= " • {$player->team_name}";
+                }
+
+                return [
+                    'id' => $player->id,
+                    'username' => $player->username,
+                    'real_name' => $player->real_name,
+                    'avatar' => $player->avatar,
+                    'role' => $player->role,
+                    'team_name' => $player->team_name,
+                    'team_short' => $player->team_short,
+                    'type' => 'player',
+                    'mention_text' => "@player:{$player->username}",
+                    'display_name' => $player->real_name ?: $player->username,
+                    'subtitle' => $subtitle,
+                    'url' => "/players/{$player->id}"
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'data' => $results,
+                'query' => $query,
+                'total_results' => count($results)
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            \Log::error('SearchController@searchPlayersForMentions error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error searching players for mentions',
+                'data' => []
+            ], 500);
+        }
+    }
+    
+    /**
+     * Get search suggestions for forum search
+     */
+    public function searchSuggestions(Request $request)
+    {
+        $query = $request->get('q', '');
+        $limit = min($request->get('limit', 10), 20);
+        
+        if (strlen($query) < 1) {
+            // Return popular search terms when no query
+            $popular = ['tips', 'strategy', 'guide', 'meta', 'tournament', 'patch', 'heroes', 'teams'];
+            return response()->json([
+                'data' => array_map(function($term) {
+                    return [
+                        'text' => $term,
+                        'type' => 'popular_term'
+                    ];
+                }, $popular),
+                'success' => true
+            ]);
+        }
+        
+        $suggestions = [];
+        
+        // Get matching thread titles
+        $threadTitles = DB::table('forum_threads')
+            ->select('title')
+            ->where('title', 'LIKE', "%{$query}%")
+            ->where('status', 'active')
+            ->orderBy('score', 'desc')
+            ->limit($limit / 2)
+            ->pluck('title');
+            
+        foreach ($threadTitles as $title) {
+            $suggestions[] = [
+                'text' => $title,
+                'type' => 'thread_title',
+                'category' => 'forums'
+            ];
+        }
+        
+        // Get matching usernames
+        $usernames = DB::table('users')
+            ->select('name')
+            ->where('name', 'LIKE', "%{$query}%")
+            ->where('status', 'active')
+            ->orderBy('name')
+            ->limit($limit / 2)
+            ->pluck('name');
+            
+        foreach ($usernames as $username) {
+            $suggestions[] = [
+                'text' => $username,
+                'type' => 'username',
+                'category' => 'users'
+            ];
+        }
+        
+        // Get matching team names
+        if (strlen($query) > 1) {
+            $teams = DB::table('teams')
+                ->select(['name', 'short_name'])
+                ->where(function($q) use ($query) {
+                    $q->where('name', 'LIKE', "%{$query}%")
+                      ->orWhere('short_name', 'LIKE', "%{$query}%");
+                })
+                ->limit(3)
+                ->get();
+                
+            foreach ($teams as $team) {
+                $suggestions[] = [
+                    'text' => $team->name,
+                    'type' => 'team_name',
+                    'category' => 'teams'
+                ];
+            }
+        }
+        
+        return response()->json([
+            'data' => $suggestions,
+            'query' => $query,
+            'success' => true
+        ]);
     }
 }

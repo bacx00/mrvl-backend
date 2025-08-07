@@ -94,7 +94,8 @@ class ForumSearchService
         } else {
             $threadsQuery->where(function($q) use ($query) {
                 $q->where('ft.title', 'LIKE', "%{$query}%")
-                  ->orWhere('ft.content', 'LIKE', "%{$query}%");
+                  ->orWhere('ft.content', 'LIKE', "%{$query}%")
+                  ->orWhere('u.name', 'LIKE', "%{$query}%"); // Also search by author name
             });
         }
 

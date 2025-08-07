@@ -25,87 +25,87 @@
         {
             "test": "Single Elimination Direct 8 teams",
             "status": "FAIL",
-            "error": "SQLSTATE[23000]: Integrity constraint violation: 1452 Cannot add or update a child row: a foreign key constraint fails (`mrvl_production`.`events`, CONSTRAINT `events_organizer_id_foreign` FOREIGN KEY (`organizer_id`) REFERENCES `users` (`id`) ON DELETE CASCADE) (Connection: mysql, SQL: insert into `events` (`name`, `slug`, `description`, `format`, `status`, `start_date`, `end_date`, `region`, `game_mode`, `organizer_id`, `created_at`, `updated_at`) values (SE Direct Test - 8 Teams, se-direct-test---8-teams-1754426106, Direct test event for single_elimination, single_elimination, upcoming, 2025-08-06 20:35:06, 2025-08-12 20:35:06, test, Convoy, 1, 2025-08-05 20:35:06, 2025-08-05 20:35:06))",
-            "timestamp": "2025-08-05T20:35:06.633706Z"
+            "error": "SQLSTATE[23000]: Integrity constraint violation: 1452 Cannot add or update a child row: a foreign key constraint fails (`mrvl_production`.`events`, CONSTRAINT `events_organizer_id_foreign` FOREIGN KEY (`organizer_id`) REFERENCES `users` (`id`) ON DELETE CASCADE) (Connection: mysql, SQL: insert into `events` (`name`, `slug`, `description`, `format`, `status`, `start_date`, `end_date`, `region`, `game_mode`, `organizer_id`, `created_at`, `updated_at`) values (SE Direct Test - 8 Teams, se-direct-test---8-teams-1754555809, Direct test event for single_elimination, single_elimination, upcoming, 2025-08-08 08:36:49, 2025-08-14 08:36:49, test, Convoy, 1, 2025-08-07 08:36:49, 2025-08-07 08:36:49))",
+            "timestamp": "2025-08-07T08:36:49.356168Z"
         },
         {
             "test": "Single Elimination Direct 16 teams",
             "status": "FAIL",
-            "error": "SQLSTATE[23000]: Integrity constraint violation: 1452 Cannot add or update a child row: a foreign key constraint fails (`mrvl_production`.`events`, CONSTRAINT `events_organizer_id_foreign` FOREIGN KEY (`organizer_id`) REFERENCES `users` (`id`) ON DELETE CASCADE) (Connection: mysql, SQL: insert into `events` (`name`, `slug`, `description`, `format`, `status`, `start_date`, `end_date`, `region`, `game_mode`, `organizer_id`, `created_at`, `updated_at`) values (SE Direct Test - 16 Teams, se-direct-test---16-teams-1754426106, Direct test event for single_elimination, single_elimination, upcoming, 2025-08-06 20:35:06, 2025-08-12 20:35:06, test, Convoy, 1, 2025-08-05 20:35:06, 2025-08-05 20:35:06))",
-            "timestamp": "2025-08-05T20:35:06.639472Z"
+            "error": "SQLSTATE[23000]: Integrity constraint violation: 1452 Cannot add or update a child row: a foreign key constraint fails (`mrvl_production`.`events`, CONSTRAINT `events_organizer_id_foreign` FOREIGN KEY (`organizer_id`) REFERENCES `users` (`id`) ON DELETE CASCADE) (Connection: mysql, SQL: insert into `events` (`name`, `slug`, `description`, `format`, `status`, `start_date`, `end_date`, `region`, `game_mode`, `organizer_id`, `created_at`, `updated_at`) values (SE Direct Test - 16 Teams, se-direct-test---16-teams-1754555809, Direct test event for single_elimination, single_elimination, upcoming, 2025-08-08 08:36:49, 2025-08-14 08:36:49, test, Convoy, 1, 2025-08-07 08:36:49, 2025-08-07 08:36:49))",
+            "timestamp": "2025-08-07T08:36:49.374148Z"
         },
         {
             "test": "Single Elimination Direct 7 teams",
             "status": "FAIL",
-            "error": "SQLSTATE[23000]: Integrity constraint violation: 1452 Cannot add or update a child row: a foreign key constraint fails (`mrvl_production`.`events`, CONSTRAINT `events_organizer_id_foreign` FOREIGN KEY (`organizer_id`) REFERENCES `users` (`id`) ON DELETE CASCADE) (Connection: mysql, SQL: insert into `events` (`name`, `slug`, `description`, `format`, `status`, `start_date`, `end_date`, `region`, `game_mode`, `organizer_id`, `created_at`, `updated_at`) values (SE Direct Test - 7 Teams, se-direct-test---7-teams-1754426106, Direct test event for single_elimination, single_elimination, upcoming, 2025-08-06 20:35:06, 2025-08-12 20:35:06, test, Convoy, 1, 2025-08-05 20:35:06, 2025-08-05 20:35:06))",
-            "timestamp": "2025-08-05T20:35:06.647117Z"
+            "error": "SQLSTATE[23000]: Integrity constraint violation: 1452 Cannot add or update a child row: a foreign key constraint fails (`mrvl_production`.`events`, CONSTRAINT `events_organizer_id_foreign` FOREIGN KEY (`organizer_id`) REFERENCES `users` (`id`) ON DELETE CASCADE) (Connection: mysql, SQL: insert into `events` (`name`, `slug`, `description`, `format`, `status`, `start_date`, `end_date`, `region`, `game_mode`, `organizer_id`, `created_at`, `updated_at`) values (SE Direct Test - 7 Teams, se-direct-test---7-teams-1754555809, Direct test event for single_elimination, single_elimination, upcoming, 2025-08-08 08:36:49, 2025-08-14 08:36:49, test, Convoy, 1, 2025-08-07 08:36:49, 2025-08-07 08:36:49))",
+            "timestamp": "2025-08-07T08:36:49.385301Z"
         },
         {
             "test": "Single Elimination Direct 6 teams",
             "status": "FAIL",
-            "error": "SQLSTATE[23000]: Integrity constraint violation: 1452 Cannot add or update a child row: a foreign key constraint fails (`mrvl_production`.`events`, CONSTRAINT `events_organizer_id_foreign` FOREIGN KEY (`organizer_id`) REFERENCES `users` (`id`) ON DELETE CASCADE) (Connection: mysql, SQL: insert into `events` (`name`, `slug`, `description`, `format`, `status`, `start_date`, `end_date`, `region`, `game_mode`, `organizer_id`, `created_at`, `updated_at`) values (SE Direct Test - 6 Teams, se-direct-test---6-teams-1754426106, Direct test event for single_elimination, single_elimination, upcoming, 2025-08-06 20:35:06, 2025-08-12 20:35:06, test, Convoy, 1, 2025-08-05 20:35:06, 2025-08-05 20:35:06))",
-            "timestamp": "2025-08-05T20:35:06.658176Z"
+            "error": "SQLSTATE[23000]: Integrity constraint violation: 1452 Cannot add or update a child row: a foreign key constraint fails (`mrvl_production`.`events`, CONSTRAINT `events_organizer_id_foreign` FOREIGN KEY (`organizer_id`) REFERENCES `users` (`id`) ON DELETE CASCADE) (Connection: mysql, SQL: insert into `events` (`name`, `slug`, `description`, `format`, `status`, `start_date`, `end_date`, `region`, `game_mode`, `organizer_id`, `created_at`, `updated_at`) values (SE Direct Test - 6 Teams, se-direct-test---6-teams-1754555809, Direct test event for single_elimination, single_elimination, upcoming, 2025-08-08 08:36:49, 2025-08-14 08:36:49, test, Convoy, 1, 2025-08-07 08:36:49, 2025-08-07 08:36:49))",
+            "timestamp": "2025-08-07T08:36:49.400863Z"
         },
         {
             "test": "Double Elimination Direct 8 teams",
             "status": "FAIL",
-            "error": "SQLSTATE[23000]: Integrity constraint violation: 1452 Cannot add or update a child row: a foreign key constraint fails (`mrvl_production`.`events`, CONSTRAINT `events_organizer_id_foreign` FOREIGN KEY (`organizer_id`) REFERENCES `users` (`id`) ON DELETE CASCADE) (Connection: mysql, SQL: insert into `events` (`name`, `slug`, `description`, `format`, `status`, `start_date`, `end_date`, `region`, `game_mode`, `organizer_id`, `created_at`, `updated_at`) values (DE Direct Test - 8 Teams, de-direct-test---8-teams-1754426106, Direct test event for double_elimination, double_elimination, upcoming, 2025-08-06 20:35:06, 2025-08-12 20:35:06, test, Convoy, 1, 2025-08-05 20:35:06, 2025-08-05 20:35:06))",
-            "timestamp": "2025-08-05T20:35:06.674036Z"
+            "error": "SQLSTATE[23000]: Integrity constraint violation: 1452 Cannot add or update a child row: a foreign key constraint fails (`mrvl_production`.`events`, CONSTRAINT `events_organizer_id_foreign` FOREIGN KEY (`organizer_id`) REFERENCES `users` (`id`) ON DELETE CASCADE) (Connection: mysql, SQL: insert into `events` (`name`, `slug`, `description`, `format`, `status`, `start_date`, `end_date`, `region`, `game_mode`, `organizer_id`, `created_at`, `updated_at`) values (DE Direct Test - 8 Teams, de-direct-test---8-teams-1754555809, Direct test event for double_elimination, double_elimination, upcoming, 2025-08-08 08:36:49, 2025-08-14 08:36:49, test, Convoy, 1, 2025-08-07 08:36:49, 2025-08-07 08:36:49))",
+            "timestamp": "2025-08-07T08:36:49.416732Z"
         },
         {
             "test": "Double Elimination Direct 6 teams",
             "status": "FAIL",
-            "error": "SQLSTATE[23000]: Integrity constraint violation: 1452 Cannot add or update a child row: a foreign key constraint fails (`mrvl_production`.`events`, CONSTRAINT `events_organizer_id_foreign` FOREIGN KEY (`organizer_id`) REFERENCES `users` (`id`) ON DELETE CASCADE) (Connection: mysql, SQL: insert into `events` (`name`, `slug`, `description`, `format`, `status`, `start_date`, `end_date`, `region`, `game_mode`, `organizer_id`, `created_at`, `updated_at`) values (DE Direct Test - 6 Teams, de-direct-test---6-teams-1754426106, Direct test event for double_elimination, double_elimination, upcoming, 2025-08-06 20:35:06, 2025-08-12 20:35:06, test, Convoy, 1, 2025-08-05 20:35:06, 2025-08-05 20:35:06))",
-            "timestamp": "2025-08-05T20:35:06.793707Z"
+            "error": "SQLSTATE[23000]: Integrity constraint violation: 1452 Cannot add or update a child row: a foreign key constraint fails (`mrvl_production`.`events`, CONSTRAINT `events_organizer_id_foreign` FOREIGN KEY (`organizer_id`) REFERENCES `users` (`id`) ON DELETE CASCADE) (Connection: mysql, SQL: insert into `events` (`name`, `slug`, `description`, `format`, `status`, `start_date`, `end_date`, `region`, `game_mode`, `organizer_id`, `created_at`, `updated_at`) values (DE Direct Test - 6 Teams, de-direct-test---6-teams-1754555809, Direct test event for double_elimination, double_elimination, upcoming, 2025-08-08 08:36:49, 2025-08-14 08:36:49, test, Convoy, 1, 2025-08-07 08:36:49, 2025-08-07 08:36:49))",
+            "timestamp": "2025-08-07T08:36:49.444525Z"
         },
         {
             "test": "Round Robin Direct 6 teams",
             "status": "FAIL",
-            "error": "SQLSTATE[23000]: Integrity constraint violation: 1452 Cannot add or update a child row: a foreign key constraint fails (`mrvl_production`.`events`, CONSTRAINT `events_organizer_id_foreign` FOREIGN KEY (`organizer_id`) REFERENCES `users` (`id`) ON DELETE CASCADE) (Connection: mysql, SQL: insert into `events` (`name`, `slug`, `description`, `format`, `status`, `start_date`, `end_date`, `region`, `game_mode`, `organizer_id`, `created_at`, `updated_at`) values (RR Direct Test - 6 Teams, rr-direct-test---6-teams-1754426106, Direct test event for round_robin, round_robin, upcoming, 2025-08-06 20:35:06, 2025-08-12 20:35:06, test, Convoy, 1, 2025-08-05 20:35:06, 2025-08-05 20:35:06))",
-            "timestamp": "2025-08-05T20:35:07.528639Z"
+            "error": "SQLSTATE[23000]: Integrity constraint violation: 1452 Cannot add or update a child row: a foreign key constraint fails (`mrvl_production`.`events`, CONSTRAINT `events_organizer_id_foreign` FOREIGN KEY (`organizer_id`) REFERENCES `users` (`id`) ON DELETE CASCADE) (Connection: mysql, SQL: insert into `events` (`name`, `slug`, `description`, `format`, `status`, `start_date`, `end_date`, `region`, `game_mode`, `organizer_id`, `created_at`, `updated_at`) values (RR Direct Test - 6 Teams, rr-direct-test---6-teams-1754555809, Direct test event for round_robin, round_robin, upcoming, 2025-08-08 08:36:49, 2025-08-14 08:36:49, test, Convoy, 1, 2025-08-07 08:36:49, 2025-08-07 08:36:49))",
+            "timestamp": "2025-08-07T08:36:49.454839Z"
         },
         {
             "test": "Round Robin Direct 4 teams",
             "status": "FAIL",
-            "error": "SQLSTATE[23000]: Integrity constraint violation: 1452 Cannot add or update a child row: a foreign key constraint fails (`mrvl_production`.`events`, CONSTRAINT `events_organizer_id_foreign` FOREIGN KEY (`organizer_id`) REFERENCES `users` (`id`) ON DELETE CASCADE) (Connection: mysql, SQL: insert into `events` (`name`, `slug`, `description`, `format`, `status`, `start_date`, `end_date`, `region`, `game_mode`, `organizer_id`, `created_at`, `updated_at`) values (RR Direct Test - 4 Teams, rr-direct-test---4-teams-1754426107, Direct test event for round_robin, round_robin, upcoming, 2025-08-06 20:35:07, 2025-08-12 20:35:07, test, Convoy, 1, 2025-08-05 20:35:07, 2025-08-05 20:35:07))",
-            "timestamp": "2025-08-05T20:35:07.702472Z"
+            "error": "SQLSTATE[23000]: Integrity constraint violation: 1452 Cannot add or update a child row: a foreign key constraint fails (`mrvl_production`.`events`, CONSTRAINT `events_organizer_id_foreign` FOREIGN KEY (`organizer_id`) REFERENCES `users` (`id`) ON DELETE CASCADE) (Connection: mysql, SQL: insert into `events` (`name`, `slug`, `description`, `format`, `status`, `start_date`, `end_date`, `region`, `game_mode`, `organizer_id`, `created_at`, `updated_at`) values (RR Direct Test - 4 Teams, rr-direct-test---4-teams-1754555809, Direct test event for round_robin, round_robin, upcoming, 2025-08-08 08:36:49, 2025-08-14 08:36:49, test, Convoy, 1, 2025-08-07 08:36:49, 2025-08-07 08:36:49))",
+            "timestamp": "2025-08-07T08:36:49.463788Z"
         },
         {
             "test": "Swiss Direct 8 teams",
             "status": "FAIL",
-            "error": "SQLSTATE[23000]: Integrity constraint violation: 1452 Cannot add or update a child row: a foreign key constraint fails (`mrvl_production`.`events`, CONSTRAINT `events_organizer_id_foreign` FOREIGN KEY (`organizer_id`) REFERENCES `users` (`id`) ON DELETE CASCADE) (Connection: mysql, SQL: insert into `events` (`name`, `slug`, `description`, `format`, `status`, `start_date`, `end_date`, `region`, `game_mode`, `organizer_id`, `created_at`, `updated_at`) values (Swiss Direct Test - 8 Teams, swiss-direct-test---8-teams-1754426107, Direct test event for swiss, swiss, upcoming, 2025-08-06 20:35:07, 2025-08-12 20:35:07, test, Convoy, 1, 2025-08-05 20:35:07, 2025-08-05 20:35:07))",
-            "timestamp": "2025-08-05T20:35:08.297369Z"
+            "error": "SQLSTATE[23000]: Integrity constraint violation: 1452 Cannot add or update a child row: a foreign key constraint fails (`mrvl_production`.`events`, CONSTRAINT `events_organizer_id_foreign` FOREIGN KEY (`organizer_id`) REFERENCES `users` (`id`) ON DELETE CASCADE) (Connection: mysql, SQL: insert into `events` (`name`, `slug`, `description`, `format`, `status`, `start_date`, `end_date`, `region`, `game_mode`, `organizer_id`, `created_at`, `updated_at`) values (Swiss Direct Test - 8 Teams, swiss-direct-test---8-teams-1754555809, Direct test event for swiss, swiss, upcoming, 2025-08-08 08:36:49, 2025-08-14 08:36:49, test, Convoy, 1, 2025-08-07 08:36:49, 2025-08-07 08:36:49))",
+            "timestamp": "2025-08-07T08:36:49.470835Z"
         },
         {
             "test": "Swiss Direct 16 teams",
             "status": "FAIL",
-            "error": "SQLSTATE[23000]: Integrity constraint violation: 1452 Cannot add or update a child row: a foreign key constraint fails (`mrvl_production`.`events`, CONSTRAINT `events_organizer_id_foreign` FOREIGN KEY (`organizer_id`) REFERENCES `users` (`id`) ON DELETE CASCADE) (Connection: mysql, SQL: insert into `events` (`name`, `slug`, `description`, `format`, `status`, `start_date`, `end_date`, `region`, `game_mode`, `organizer_id`, `created_at`, `updated_at`) values (Swiss Direct Test - 16 Teams, swiss-direct-test---16-teams-1754426108, Direct test event for swiss, swiss, upcoming, 2025-08-06 20:35:08, 2025-08-12 20:35:08, test, Convoy, 1, 2025-08-05 20:35:08, 2025-08-05 20:35:08))",
-            "timestamp": "2025-08-05T20:35:08.403434Z"
+            "error": "SQLSTATE[23000]: Integrity constraint violation: 1452 Cannot add or update a child row: a foreign key constraint fails (`mrvl_production`.`events`, CONSTRAINT `events_organizer_id_foreign` FOREIGN KEY (`organizer_id`) REFERENCES `users` (`id`) ON DELETE CASCADE) (Connection: mysql, SQL: insert into `events` (`name`, `slug`, `description`, `format`, `status`, `start_date`, `end_date`, `region`, `game_mode`, `organizer_id`, `created_at`, `updated_at`) values (Swiss Direct Test - 16 Teams, swiss-direct-test---16-teams-1754555809, Direct test event for swiss, swiss, upcoming, 2025-08-08 08:36:49, 2025-08-14 08:36:49, test, Convoy, 1, 2025-08-07 08:36:49, 2025-08-07 08:36:49))",
+            "timestamp": "2025-08-07T08:36:49.476921Z"
         },
         {
             "test": "Minimum Team Count Test",
             "status": "FAIL",
-            "error": "SQLSTATE[23000]: Integrity constraint violation: 1452 Cannot add or update a child row: a foreign key constraint fails (`mrvl_production`.`events`, CONSTRAINT `events_organizer_id_foreign` FOREIGN KEY (`organizer_id`) REFERENCES `users` (`id`) ON DELETE CASCADE) (Connection: mysql, SQL: insert into `events` (`name`, `slug`, `description`, `format`, `status`, `start_date`, `end_date`, `region`, `game_mode`, `organizer_id`, `created_at`, `updated_at`) values (Min Teams Test, min-teams-test-1754426108, Direct test event for single_elimination, single_elimination, upcoming, 2025-08-06 20:35:08, 2025-08-12 20:35:08, test, Convoy, 1, 2025-08-05 20:35:08, 2025-08-05 20:35:08))",
-            "timestamp": "2025-08-05T20:35:08.455366Z"
+            "error": "SQLSTATE[23000]: Integrity constraint violation: 1452 Cannot add or update a child row: a foreign key constraint fails (`mrvl_production`.`events`, CONSTRAINT `events_organizer_id_foreign` FOREIGN KEY (`organizer_id`) REFERENCES `users` (`id`) ON DELETE CASCADE) (Connection: mysql, SQL: insert into `events` (`name`, `slug`, `description`, `format`, `status`, `start_date`, `end_date`, `region`, `game_mode`, `organizer_id`, `created_at`, `updated_at`) values (Min Teams Test, min-teams-test-1754555809, Direct test event for single_elimination, single_elimination, upcoming, 2025-08-08 08:36:49, 2025-08-14 08:36:49, test, Convoy, 1, 2025-08-07 08:36:49, 2025-08-07 08:36:49))",
+            "timestamp": "2025-08-07T08:36:49.483930Z"
         },
         {
             "test": "BYE Handling Test",
             "status": "FAIL",
-            "error": "SQLSTATE[23000]: Integrity constraint violation: 1452 Cannot add or update a child row: a foreign key constraint fails (`mrvl_production`.`events`, CONSTRAINT `events_organizer_id_foreign` FOREIGN KEY (`organizer_id`) REFERENCES `users` (`id`) ON DELETE CASCADE) (Connection: mysql, SQL: insert into `events` (`name`, `slug`, `description`, `format`, `status`, `start_date`, `end_date`, `region`, `game_mode`, `organizer_id`, `created_at`, `updated_at`) values (BYE Test, bye-test-1754426108, Direct test event for single_elimination, single_elimination, upcoming, 2025-08-06 20:35:08, 2025-08-12 20:35:08, test, Convoy, 1, 2025-08-05 20:35:08, 2025-08-05 20:35:08))",
-            "timestamp": "2025-08-05T20:35:08.517199Z"
+            "error": "SQLSTATE[23000]: Integrity constraint violation: 1452 Cannot add or update a child row: a foreign key constraint fails (`mrvl_production`.`events`, CONSTRAINT `events_organizer_id_foreign` FOREIGN KEY (`organizer_id`) REFERENCES `users` (`id`) ON DELETE CASCADE) (Connection: mysql, SQL: insert into `events` (`name`, `slug`, `description`, `format`, `status`, `start_date`, `end_date`, `region`, `game_mode`, `organizer_id`, `created_at`, `updated_at`) values (BYE Test, bye-test-1754555809, Direct test event for single_elimination, single_elimination, upcoming, 2025-08-08 08:36:49, 2025-08-14 08:36:49, test, Convoy, 1, 2025-08-07 08:36:49, 2025-08-07 08:36:49))",
+            "timestamp": "2025-08-07T08:36:49.495239Z"
         },
         {
             "test": "Large Tournament Test",
             "status": "FAIL",
-            "error": "SQLSTATE[23000]: Integrity constraint violation: 1452 Cannot add or update a child row: a foreign key constraint fails (`mrvl_production`.`events`, CONSTRAINT `events_organizer_id_foreign` FOREIGN KEY (`organizer_id`) REFERENCES `users` (`id`) ON DELETE CASCADE) (Connection: mysql, SQL: insert into `events` (`name`, `slug`, `description`, `format`, `status`, `start_date`, `end_date`, `region`, `game_mode`, `organizer_id`, `created_at`, `updated_at`) values (Large Tournament Test, large-tournament-test-1754426108, Direct test event for single_elimination, single_elimination, upcoming, 2025-08-06 20:35:08, 2025-08-12 20:35:08, test, Convoy, 1, 2025-08-05 20:35:08, 2025-08-05 20:35:08))",
-            "timestamp": "2025-08-05T20:35:08.785321Z"
+            "error": "SQLSTATE[23000]: Integrity constraint violation: 1452 Cannot add or update a child row: a foreign key constraint fails (`mrvl_production`.`events`, CONSTRAINT `events_organizer_id_foreign` FOREIGN KEY (`organizer_id`) REFERENCES `users` (`id`) ON DELETE CASCADE) (Connection: mysql, SQL: insert into `events` (`name`, `slug`, `description`, `format`, `status`, `start_date`, `end_date`, `region`, `game_mode`, `organizer_id`, `created_at`, `updated_at`) values (Large Tournament Test, large-tournament-test-1754555809, Direct test event for single_elimination, single_elimination, upcoming, 2025-08-08 08:36:49, 2025-08-14 08:36:49, test, Convoy, 1, 2025-08-07 08:36:49, 2025-08-07 08:36:49))",
+            "timestamp": "2025-08-07T08:36:49.514110Z"
         },
         {
             "test": "China Tournament Direct Replication",
             "status": "FAIL",
-            "error": "SQLSTATE[42S02]: Base table or view not found: 1146 Table 'mrvl_production.teams' doesn't exist (Connection: mysql, SQL: insert into `teams` (`name`, `short_name`, `region`, `rating`, `country`, `created_at`, `updated_at`) values (Nova Esports Test, NOVA_T, CN, 1727, CN, 2025-08-05 20:35:08, 2025-08-05 20:35:08))",
-            "timestamp": "2025-08-05T20:35:10.779428Z"
+            "error": "SQLSTATE[23000]: Integrity constraint violation: 1452 Cannot add or update a child row: a foreign key constraint fails (`mrvl_production`.`events`, CONSTRAINT `events_organizer_id_foreign` FOREIGN KEY (`organizer_id`) REFERENCES `users` (`id`) ON DELETE CASCADE) (Connection: mysql, SQL: insert into `events` (`name`, `slug`, `description`, `format`, `status`, `start_date`, `end_date`, `region`, `game_mode`, `organizer_id`, `created_at`, `updated_at`) values (China Group A Test, china-group-a-test-1754555809, Direct test event for round_robin, round_robin, upcoming, 2025-08-08 08:36:49, 2025-08-14 08:36:49, test, Convoy, 1, 2025-08-07 08:36:49, 2025-08-07 08:36:49))",
+            "timestamp": "2025-08-07T08:36:49.690529Z"
         }
     ],
-    "generated_at": "2025-08-05T20:35:10.779869Z"
+    "generated_at": "2025-08-07T08:36:49.692555Z"
 }

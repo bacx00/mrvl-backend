@@ -25,7 +25,11 @@ class MatchModel extends Model
         'ended_at',
         'team1_score',
         'team2_score',
+        'maps_won_team1',
+        'maps_won_team2',
         'winner_id',
+        'current_map_number',
+        'current_map_status',
         'round',
         'bracket_position',
         'match_number',
@@ -85,17 +89,17 @@ class MatchModel extends Model
 
     public function maps(): HasMany
     {
-        return $this->hasMany(MatchMap::class);
+        return $this->hasMany(MatchMap::class, 'match_id');
     }
 
     public function playerStats(): HasMany
     {
-        return $this->hasMany(MatchPlayerStat::class);
+        return $this->hasMany(MatchPlayerStat::class, 'match_id');
     }
 
     public function events(): HasMany
     {
-        return $this->hasMany(MatchEvent::class);
+        return $this->hasMany(MatchEvent::class, 'match_id');
     }
 
     public function remakeOriginal(): BelongsTo
@@ -105,7 +109,7 @@ class MatchModel extends Model
 
     public function remakes(): HasMany
     {
-        return $this->hasMany(MatchModel::class, 'remake_of');
+        return $this->hasMany(MatchModel::class, 'remake_of', 'id');
     }
 
     /**
@@ -202,6 +206,51 @@ class MatchModel extends Model
             'team1_score' => $team1Score,
             'team2_score' => $team2Score
         ]);
+    }
+
+    /**
+     * Update series scores based on map wins
+     */
+    public function updateSeriesScore(): void
+    {
+        $team1MapWins = $this->maps()->where('winner_id', $this->team1_id)->count();
+        $team2MapWins = $this->maps()->where('winner_id', $this->team2_id)->count();
+        
+        $this->update([
+            'maps_won_team1' => $team1MapWins,
+            'maps_won_team2' => $team2MapWins,
+            'team1_score' => $team1MapWins,
+            'team2_score' => $team2MapWins
+        ]);
+        
+        // Check if match should be completed
+        $formatDetails = $this->getFormatDetailsAttribute();
+        $winCondition = $formatDetails['win_condition'];
+        
+        if ($team1MapWins >= $winCondition || $team2MapWins >= $winCondition) {
+            $this->endMatch();
+        }
+    }
+
+    /**
+     * Get the current live map
+     */
+    public function getCurrentLiveMap()
+    {
+        return $this->maps()
+            ->where('status', 'live')
+            ->first();
+    }
+
+    /**
+     * Get the next upcoming map
+     */
+    public function getNextUpcomingMap()
+    {
+        return $this->maps()
+            ->where('status', 'upcoming')
+            ->orderBy('map_number')
+            ->first();
     }
 
     public function getPlayerStatsForMap($mapId)

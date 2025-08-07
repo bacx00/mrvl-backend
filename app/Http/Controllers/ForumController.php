@@ -7,31 +7,21 @@ use App\Models\ForumVote;
 use App\Models\User;
 use App\Models\Team;
 use App\Models\Player;
-use App\Services\ForumCacheService;
-use App\Services\ForumRealTimeService;
 use App\Services\ForumSearchService;
-use App\Services\ForumModerationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 class ForumController extends Controller
 {
-    private $cacheService;
-    private $realTimeService;
     private $searchService;
-    private $moderationService;
 
     public function __construct(
-        ForumCacheService $cacheService,
-        ForumRealTimeService $realTimeService,
-        ForumSearchService $searchService,
-        ForumModerationService $moderationService
+        ForumSearchService $searchService
     ) {
-        $this->cacheService = $cacheService;
-        $this->realTimeService = $realTimeService;
         $this->searchService = $searchService;
-        $this->moderationService = $moderationService;
     }
 
     public function index(Request $request)
@@ -41,8 +31,9 @@ class ForumController extends Controller
             $sortBy = $request->get('sort', 'latest');
             $page = $request->get('page', 1);
 
-            // Check cache first
-            $cached = $this->cacheService->getCachedThreads($category, $sortBy, $page);
+            // Use Laravel's built-in cache instead of Redis-based cache service
+            $cacheKey = "forum:threads:{$category}:{$sortBy}:page:{$page}";
+            $cached = Cache::get($cacheKey);
             if ($cached) {
                 return response()->json($cached);
             }
@@ -64,13 +55,18 @@ class ForumController extends Controller
                 ]);
             }
 
-            // Use optimized query with proper indexing
+            // Use optimized query with proper indexing and accurate reply counts
             $query = DB::table('forum_threads as ft')
                 ->leftJoin('users as u', 'ft.user_id', '=', 'u.id')
                 ->leftJoin('forum_categories as fc', 'ft.category_id', '=', 'fc.id')
+                ->leftJoin(
+                    DB::raw('(SELECT thread_id, COUNT(*) as actual_replies_count FROM forum_posts WHERE status = "active" GROUP BY thread_id) as reply_counts'),
+                    'ft.id', '=', 'reply_counts.thread_id'
+                )
                 ->select([
                     'ft.id', 'ft.title', 'ft.content', 'ft.user_id', 'ft.category',
-                    'ft.replies_count', 'ft.views', 'ft.score', 'ft.upvotes', 'ft.downvotes',
+                    DB::raw('COALESCE(reply_counts.actual_replies_count, 0) as replies_count'),
+                    'ft.views', 'ft.score', 'ft.upvotes', 'ft.downvotes',
                     'ft.pinned', 'ft.locked', 'ft.created_at', 'ft.last_reply_at',
                     'u.name as author_name', 'u.avatar as author_avatar', 
                     'u.hero_flair', 'u.team_flair_id',
@@ -145,7 +141,11 @@ class ForumController extends Controller
                         'pinned' => (bool)$thread->pinned,
                         'locked' => (bool)$thread->locked,
                         'created_at' => $thread->created_at,
-                        'last_reply_at' => $thread->last_reply_at
+                        'created_at_formatted' => \Carbon\Carbon::parse($thread->created_at)->format('M j, Y g:i A'),
+                        'created_at_relative' => \Carbon\Carbon::parse($thread->created_at)->diffForHumans(),
+                        'last_reply_at' => $thread->last_reply_at,
+                        'last_reply_at_formatted' => $thread->last_reply_at ? \Carbon\Carbon::parse($thread->last_reply_at)->format('M j, Y g:i A') : null,
+                        'last_reply_at_relative' => $thread->last_reply_at ? \Carbon\Carbon::parse($thread->last_reply_at)->diffForHumans() : null
                     ],
                     'mentions' => $this->extractMentions($thread->content)
                 ];
@@ -162,8 +162,9 @@ class ForumController extends Controller
                 'success' => true
             ];
 
-            // Cache the result
-            $this->cacheService->cacheThreads($category, $sortBy, $page, $result);
+            // Cache the result using Laravel's cache
+            $ttl = ($sortBy === 'hot' || $sortBy === 'latest') ? 60 : 300; // 1 min for hot/latest, 5 min for others
+            Cache::put($cacheKey, $result, $ttl);
 
             return response()->json($result);
 
@@ -297,23 +298,41 @@ class ForumController extends Controller
         ]);
 
         try {
+            $validated = $request->validate([
+                'title' => 'required|string|max:255',
+                'content' => 'required|string|min:10',
+                'category' => 'nullable|string|exists:forum_categories,slug'
+            ]);
+
             $thread = DB::table('forum_threads')->insertGetId([
-                'title' => $request->title,
-                'content' => $request->content,
-                'category' => 'general', // Default category since we're not using category selection
+                'title' => $validated['title'],
+                'content' => $validated['content'],
+                'category' => $validated['category'] ?? 'general',
                 'user_id' => Auth::id(),
                 'last_reply_at' => now(),
+                'status' => 'active',
                 'created_at' => now(),
                 'updated_at' => now()
             ]);
 
-            // Process mentions
-            $this->processMentions($request->content, $thread);
+            // Process mentions with better error handling
+            $mentionCount = $this->processMentions($validated['content'], $thread);
+            
+            // Clear relevant caches
+            Cache::forget("forum:threads:all:latest:page:1");
+            Cache::forget("forum:threads:general:latest:page:1");
 
             return response()->json([
-                'data' => ['id' => $thread],
+                'data' => [
+                    'id' => $thread,
+                    'title' => $validated['title'],
+                    'content' => $validated['content'],
+                    'category' => $validated['category'] ?? 'general',
+                    'mentions_processed' => $mentionCount
+                ],
                 'success' => true,
-                'message' => 'Thread created successfully'
+                'message' => 'Thread created successfully',
+                'instant_update' => true
             ], 201);
 
         } catch (\Exception $e) {
@@ -330,13 +349,18 @@ class ForumController extends Controller
         if (!Auth::check()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Unauthorized'
+                'message' => 'Unauthorized. Please log in to reply to threads.'
             ], 401);
         }
         
-        $request->validate([
-            'content' => 'required|string|min:1',
+        $validated = $request->validate([
+            'content' => 'required|string|min:1|max:10000',
             'parent_id' => 'nullable|exists:forum_posts,id'
+        ], [
+            'content.required' => 'Reply content is required.',
+            'content.min' => 'Reply must contain at least 1 character.',
+            'content.max' => 'Reply cannot exceed 10,000 characters.',
+            'parent_id.exists' => 'Invalid parent post specified.'
         ]);
 
         try {
@@ -352,8 +376,8 @@ class ForumController extends Controller
             $postId = DB::table('forum_posts')->insertGetId([
                 'thread_id' => $threadId,
                 'user_id' => Auth::id(),
-                'content' => $request->content,
-                'parent_id' => $request->parent_id,
+                'content' => $validated['content'],
+                'parent_id' => $validated['parent_id'] ?? null,
                 'status' => 'active',
                 'created_at' => now(),
                 'updated_at' => now()
@@ -367,13 +391,66 @@ class ForumController extends Controller
                     'last_reply_at' => now()
                 ]);
 
-            // Process mentions
-            $this->processMentions($request->content, $threadId, $postId);
+            // Process mentions and get mention count
+            $mentionCount = $this->processMentions($validated['content'], $threadId, $postId);
+            
+            // Get the created post with user details
+            $createdPost = DB::table('forum_posts as fp')
+                ->leftJoin('users as u', 'fp.user_id', '=', 'u.id')
+                ->where('fp.id', $postId)
+                ->select([
+                    'fp.*',
+                    'u.name as author_name',
+                    'u.avatar as author_avatar'
+                ])
+                ->first();
+                
+            $userWithFlairs = $this->getUserWithFlairs($createdPost->user_id);
+            $mentions = $this->extractMentions($createdPost->content);
+            
+            $responseData = [
+                'id' => (int)$postId,
+                'content' => (string)$createdPost->content,
+                'author' => $userWithFlairs ?: [
+                    'id' => (int)$createdPost->user_id,
+                    'name' => (string)$createdPost->author_name,
+                    'username' => (string)$createdPost->author_name,
+                    'avatar' => $createdPost->author_avatar,
+                    'hero_flair' => null,
+                    'show_hero_flair' => false,
+                    'team_flair' => null,
+                    'show_team_flair' => false,
+                    'roles' => []
+                ],
+                'stats' => [
+                    'score' => 0,
+                    'upvotes' => 0,
+                    'downvotes' => 0
+                ],
+                'meta' => [
+                    'created_at' => (string)$createdPost->created_at,
+                    'created_at_formatted' => \Carbon\Carbon::parse($createdPost->created_at)->format('M j, Y g:i A'),
+                    'created_at_relative' => \Carbon\Carbon::parse($createdPost->created_at)->diffForHumans(),
+                    'updated_at' => (string)$createdPost->updated_at,
+                    'edited' => false
+                ],
+                'mentions' => is_array($mentions) ? $mentions : [],
+                'user_vote' => null,
+                'replies' => [],
+                'parent_id' => $createdPost->parent_id ? (int)$createdPost->parent_id : null
+            ];
 
+            // Clear relevant caches
+            Cache::forget("forum:threads:all:latest:page:1");
+            Cache::forget("forum:threads:general:latest:page:1");
+            Cache::forget("forum:thread:{$threadId}");
+            
             return response()->json([
-                'data' => ['id' => $postId],
+                'data' => $responseData,
                 'success' => true,
-                'message' => 'Reply posted successfully'
+                'message' => 'Reply posted successfully',
+                'mentions_processed' => $mentionCount,
+                'instant_update' => true // Signal for frontend immediate update
             ], 201);
 
         } catch (\Exception $e) {
@@ -424,10 +501,23 @@ class ForumController extends Controller
                         DB::table('forum_votes')->where('id', $existingVote->id)->delete();
                         $this->updateVoteCounts($threadId);
                         
+                        // Get updated vote counts for immediate response
+                        $updatedThread = DB::table('forum_threads')
+                            ->where('id', $threadId)
+                            ->select(['upvotes', 'downvotes', 'score'])
+                            ->first();
+                            
                         return response()->json([
                             'success' => true,
                             'message' => 'Vote removed',
-                            'action' => 'removed'
+                            'action' => 'removed',
+                            'updated_stats' => [
+                                'upvotes' => $updatedThread->upvotes ?? 0,
+                                'downvotes' => $updatedThread->downvotes ?? 0,
+                                'score' => $updatedThread->score ?? 0
+                            ],
+                            'user_vote' => null,
+                            'instant_update' => true
                         ]);
                     } else {
                         // Update vote if different type
@@ -437,10 +527,23 @@ class ForumController extends Controller
                         
                         $this->updateVoteCounts($threadId);
                         
+                        // Get updated vote counts for immediate response
+                        $updatedThread = DB::table('forum_threads')
+                            ->where('id', $threadId)
+                            ->select(['upvotes', 'downvotes', 'score'])
+                            ->first();
+                            
                         return response()->json([
                             'success' => true,
                             'message' => 'Vote updated',
-                            'action' => 'updated'
+                            'action' => 'updated',
+                            'updated_stats' => [
+                                'upvotes' => $updatedThread->upvotes ?? 0,
+                                'downvotes' => $updatedThread->downvotes ?? 0,
+                                'score' => $updatedThread->score ?? 0
+                            ],
+                            'user_vote' => $voteType,
+                            'instant_update' => true
                         ]);
                     }
                 } else {
@@ -459,10 +562,23 @@ class ForumController extends Controller
                         
                         $this->updateVoteCounts($threadId);
                         
+                        // Get updated vote counts for immediate response
+                        $updatedThread = DB::table('forum_threads')
+                            ->where('id', $threadId)
+                            ->select(['upvotes', 'downvotes', 'score'])
+                            ->first();
+                            
                         return response()->json([
                             'success' => true,
                             'message' => 'Vote recorded',
-                            'action' => 'voted'
+                            'action' => 'voted',
+                            'updated_stats' => [
+                                'upvotes' => $updatedThread->upvotes ?? 0,
+                                'downvotes' => $updatedThread->downvotes ?? 0,
+                                'score' => $updatedThread->score ?? 0
+                            ],
+                            'user_vote' => $voteType,
+                            'instant_update' => true
                         ]);
                         
                     } catch (\Exception $e) {
@@ -524,10 +640,23 @@ class ForumController extends Controller
                         DB::table('forum_votes')->where('id', $existingVote->id)->delete();
                         $this->updateVoteCounts($post->thread_id, $postId);
                         
+                        // Get updated vote counts for immediate response
+                        $updatedPost = DB::table('forum_posts')
+                            ->where('id', $postId)
+                            ->select(['upvotes', 'downvotes', 'score'])
+                            ->first();
+                            
                         return response()->json([
                             'success' => true,
                             'message' => 'Vote removed',
-                            'action' => 'removed'
+                            'action' => 'removed',
+                            'updated_stats' => [
+                                'upvotes' => $updatedPost->upvotes ?? 0,
+                                'downvotes' => $updatedPost->downvotes ?? 0,
+                                'score' => $updatedPost->score ?? 0
+                            ],
+                            'user_vote' => null,
+                            'instant_update' => true
                         ]);
                     } else {
                         // Update vote if different type
@@ -537,10 +666,23 @@ class ForumController extends Controller
                         
                         $this->updateVoteCounts($post->thread_id, $postId);
                         
+                        // Get updated vote counts for immediate response
+                        $updatedPost = DB::table('forum_posts')
+                            ->where('id', $postId)
+                            ->select(['upvotes', 'downvotes', 'score'])
+                            ->first();
+                            
                         return response()->json([
                             'success' => true,
                             'message' => 'Vote updated',
-                            'action' => 'updated'
+                            'action' => 'updated',
+                            'updated_stats' => [
+                                'upvotes' => $updatedPost->upvotes ?? 0,
+                                'downvotes' => $updatedPost->downvotes ?? 0,
+                                'score' => $updatedPost->score ?? 0
+                            ],
+                            'user_vote' => $voteType,
+                            'instant_update' => true
                         ]);
                     }
                 } else {
@@ -559,10 +701,23 @@ class ForumController extends Controller
                         
                         $this->updateVoteCounts($post->thread_id, $postId);
                         
+                        // Get updated vote counts for immediate response
+                        $updatedPost = DB::table('forum_posts')
+                            ->where('id', $postId)
+                            ->select(['upvotes', 'downvotes', 'score'])
+                            ->first();
+                            
                         return response()->json([
                             'success' => true,
                             'message' => 'Vote recorded',
-                            'action' => 'voted'
+                            'action' => 'voted',
+                            'updated_stats' => [
+                                'upvotes' => $updatedPost->upvotes ?? 0,
+                                'downvotes' => $updatedPost->downvotes ?? 0,
+                                'score' => $updatedPost->score ?? 0
+                            ],
+                            'user_vote' => $voteType,
+                            'instant_update' => true
                         ]);
                         
                     } catch (\Exception $e) {
@@ -648,16 +803,23 @@ class ForumController extends Controller
             }
 
             // Check if user owns the thread or is admin/moderator
-            if ($thread->user_id !== Auth::id() && !in_array(Auth::user()->role, ['admin', 'moderator'])) {
+            if ($thread->user_id !== Auth::id() && !Auth::user()->hasAnyRole(['admin', 'moderator'])) {
                 return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
             }
 
             // Actually delete the thread record
             DB::table('forum_threads')->where('id', $threadId)->delete();
+            
+            // Clear relevant caches for instant UI update
+            Cache::forget("forum:threads:all:latest:page:1");
+            Cache::forget("forum:threads:general:latest:page:1");
+            Cache::tags(['forum'])->flush();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Thread deleted successfully'
+                'message' => 'Thread deleted successfully',
+                'deleted_thread_id' => $threadId,
+                'instant_update' => true
             ]);
 
         } catch (\Exception $e) {
@@ -689,7 +851,7 @@ class ForumController extends Controller
             }
 
             // Check if user owns the post
-            if ($post->user_id !== Auth::id() && !in_array(Auth::user()->role, ['admin', 'moderator'])) {
+            if ($post->user_id !== Auth::id() && !Auth::user()->hasAnyRole(['admin', 'moderator'])) {
                 return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
             }
 
@@ -730,7 +892,7 @@ class ForumController extends Controller
             }
 
             // Check if user owns the post or is admin/moderator
-            if ($post->user_id !== Auth::id() && !in_array(Auth::user()->role, ['admin', 'moderator'])) {
+            if ($post->user_id !== Auth::id() && !Auth::user()->hasAnyRole(['admin', 'moderator'])) {
                 return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
             }
 
@@ -855,7 +1017,7 @@ class ForumController extends Controller
     public function featureThread($threadId)
     {
         // Check if user is authenticated and has admin role
-        if (!Auth::check() || Auth::user()->role !== 'admin') {
+        if (!Auth::check() || !Auth::user()->hasRole('admin')) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized - Admin access required'
@@ -890,7 +1052,7 @@ class ForumController extends Controller
     public function unfeatureThread($threadId)
     {
         // Check if user is authenticated and has admin role
-        if (!Auth::check() || Auth::user()->role !== 'admin') {
+        if (!Auth::check() || !Auth::user()->hasRole('admin')) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized - Admin access required'
@@ -1162,7 +1324,10 @@ class ForumController extends Controller
                     'id' => $user->id,
                     'name' => $user->name,
                     'display_name' => $user->name,
-                    'mention_text' => '@' . $username
+                    'mention_text' => '@' . $username,
+                    'url' => '/users/' . $user->id,
+                    'clickable' => true,
+                    'avatar' => $user->avatar
                 ];
             }
         }
@@ -1177,7 +1342,10 @@ class ForumController extends Controller
                     'id' => $team->id,
                     'name' => $team->short_name,
                     'display_name' => $team->name,
-                    'mention_text' => '@team:' . $teamName
+                    'mention_text' => '@team:' . $teamName,
+                    'url' => '/teams/' . $team->id,
+                    'clickable' => true,
+                    'logo' => $team->logo
                 ];
             }
         }
@@ -1192,7 +1360,10 @@ class ForumController extends Controller
                     'id' => $player->id,
                     'name' => $player->username,
                     'display_name' => $player->real_name ?? $player->username,
-                    'mention_text' => '@player:' . $playerName
+                    'mention_text' => '@player:' . $playerName,
+                    'url' => '/players/' . $player->id,
+                    'clickable' => true,
+                    'avatar' => $player->avatar
                 ];
             }
         }
@@ -1200,6 +1371,27 @@ class ForumController extends Controller
         return $mentions;
     }
 
+    public function checkThreadExists($threadId)
+    {
+        try {
+            $exists = DB::table('forum_threads')
+                ->where('id', $threadId)
+                ->where('status', 'active')
+                ->exists();
+
+            return response()->json([
+                'exists' => $exists,
+                'success' => true
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error checking thread existence: ' . $e->getMessage(),
+                'exists' => false
+            ], 500);
+        }
+    }
 
     public function getCategories()
     {
@@ -1208,7 +1400,23 @@ class ForumController extends Controller
                 ->select(['id', 'name', 'slug', 'description', 'color', 'icon'])
                 ->where('is_active', true)
                 ->orderBy('sort_order')
-                ->get();
+                ->get()
+                ->unique('slug') // Remove duplicates by slug
+                ->map(function($category) {
+                    // Clean up category names - remove emojis and normalize
+                    $cleanName = preg_replace('/[\x{1F600}-\x{1F64F}]|[\x{1F300}-\x{1F5FF}]|[\x{1F680}-\x{1F6FF}]|[\x{1F1E0}-\x{1F1FF}]|[\x{2600}-\x{26FF}]|[\x{2700}-\x{27BF}]/u', '', $category->name);
+                    $cleanName = trim($cleanName);
+                    
+                    return [
+                        'id' => $category->id,
+                        'name' => $cleanName ?: $category->name, // Fallback to original if completely empty
+                        'slug' => $category->slug,
+                        'description' => $category->description,
+                        'color' => $category->color ?? '#6b7280',
+                        'icon' => null // Remove emoji icons, use null for frontend to handle
+                    ];
+                })
+                ->values(); // Re-index array
 
             return response()->json([
                 'data' => $categories,
@@ -1227,7 +1435,7 @@ class ForumController extends Controller
     public function getAllCategories()
     {
         // Check if user is authenticated and has admin/moderator role
-        if (!Auth::check() || !in_array(Auth::user()->role, ['admin', 'moderator'])) {
+        if (!Auth::check() || !Auth::user()->hasAnyRole(['admin', 'moderator'])) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized - Admin or Moderator access required'
@@ -1260,7 +1468,7 @@ class ForumController extends Controller
     public function storeCategory(Request $request)
     {
         // Check if user is authenticated and has admin role
-        if (!Auth::check() || Auth::user()->role !== 'admin') {
+        if (!Auth::check() || !Auth::user()->hasRole('admin')) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized - Admin access required'
@@ -1307,7 +1515,7 @@ class ForumController extends Controller
     public function updateCategory(Request $request, $categoryId)
     {
         // Check if user is authenticated and has admin role
-        if (!Auth::check() || Auth::user()->role !== 'admin') {
+        if (!Auth::check() || !Auth::user()->hasRole('admin')) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized - Admin access required'
@@ -1355,7 +1563,7 @@ class ForumController extends Controller
     public function destroyCategory($categoryId)
     {
         // Check if user is authenticated and has admin role
-        if (!Auth::check() || Auth::user()->role !== 'admin') {
+        if (!Auth::check() || !Auth::user()->hasRole('admin')) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized - Admin access required'
@@ -1394,7 +1602,7 @@ class ForumController extends Controller
     public function getAllThreads()
     {
         // Check if user is authenticated and has admin/moderator role
-        if (!Auth::check() || !in_array(Auth::user()->role, ['admin', 'moderator'])) {
+        if (!Auth::check() || !Auth::user()->hasAnyRole(['admin', 'moderator'])) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized - Admin or Moderator access required'
@@ -1450,7 +1658,7 @@ class ForumController extends Controller
     public function updateThreadAdmin(Request $request, $threadId)
     {
         // Check if user is authenticated and has admin/moderator role
-        if (!Auth::check() || !in_array(Auth::user()->role, ['admin', 'moderator'])) {
+        if (!Auth::check() || !Auth::user()->hasAnyRole(['admin', 'moderator'])) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized - Admin or Moderator access required'
@@ -1499,7 +1707,7 @@ class ForumController extends Controller
     public function forceDeleteThread($threadId)
     {
         // Check if user is authenticated and has admin role
-        if (!Auth::check() || Auth::user()->role !== 'admin') {
+        if (!Auth::check() || !Auth::user()->hasRole('admin')) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized - Admin access required'
@@ -1564,15 +1772,15 @@ class ForumController extends Controller
         }
 
         return [
-            'id' => $user->id,
-            'name' => $user->name,
-            'username' => $user->name, // Add username field for compatibility
+            'id' => (int)$user->id,
+            'name' => (string)$user->name,
+            'username' => (string)$user->name, // Add username field for compatibility
             'avatar' => $user->avatar,
             'hero_flair' => $user->hero_flair,
             'show_hero_flair' => (bool)$user->show_hero_flair,
             'team_flair' => $teamFlair,
-            'show_team_flair' => (bool)$user->show_team_flair,
-            'roles' => $roles
+            'show_team_flair' => (bool)$user->show_team_flair && $teamFlair !== null,
+            'roles' => is_array($roles) ? $roles : []
         ];
     }
 
@@ -1783,7 +1991,7 @@ class ForumController extends Controller
     public function getAllThreadsForModeration(Request $request)
     {
         // Check if user is authenticated and has admin/moderator role
-        if (!Auth::check() || !in_array(Auth::user()->role, ['admin', 'moderator'])) {
+        if (!Auth::check() || !Auth::user()->hasAnyRole(['admin', 'moderator'])) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized - Admin or Moderator access required'
@@ -1856,7 +2064,7 @@ class ForumController extends Controller
     public function getAllPostsForModeration(Request $request)
     {
         // Check if user is authenticated and has admin/moderator role
-        if (!Auth::check() || !in_array(Auth::user()->role, ['admin', 'moderator'])) {
+        if (!Auth::check() || !Auth::user()->hasAnyRole(['admin', 'moderator'])) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized - Admin or Moderator access required'
@@ -1927,7 +2135,7 @@ class ForumController extends Controller
     public function getAllForumReports(Request $request)
     {
         // Check if user is authenticated and has admin/moderator role
-        if (!Auth::check() || !in_array(Auth::user()->role, ['admin', 'moderator'])) {
+        if (!Auth::check() || !Auth::user()->hasAnyRole(['admin', 'moderator'])) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized - Admin or Moderator access required'
@@ -1958,7 +2166,7 @@ class ForumController extends Controller
     public function deleteThread($threadId)
     {
         // Check if user is authenticated and has admin/moderator role
-        if (!Auth::check() || !in_array(Auth::user()->role, ['admin', 'moderator'])) {
+        if (!Auth::check() || !Auth::user()->hasAnyRole(['admin', 'moderator'])) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized - Admin or Moderator access required'
@@ -1987,7 +2195,7 @@ class ForumController extends Controller
     public function deletePost($postId)
     {
         // Check if user is authenticated and has admin/moderator role
-        if (!Auth::check() || !in_array(Auth::user()->role, ['admin', 'moderator'])) {
+        if (!Auth::check() || !Auth::user()->hasAnyRole(['admin', 'moderator'])) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized - Admin or Moderator access required'
@@ -2016,7 +2224,7 @@ class ForumController extends Controller
     public function resolveReport($reportId)
     {
         // Check if user is authenticated and has admin/moderator role
-        if (!Auth::check() || !in_array(Auth::user()->role, ['admin', 'moderator'])) {
+        if (!Auth::check() || !Auth::user()->hasAnyRole(['admin', 'moderator'])) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized - Admin or Moderator access required'
@@ -2041,7 +2249,7 @@ class ForumController extends Controller
     public function dismissReport($reportId)
     {
         // Check if user is authenticated and has admin/moderator role
-        if (!Auth::check() || !in_array(Auth::user()->role, ['admin', 'moderator'])) {
+        if (!Auth::check() || !Auth::user()->hasAnyRole(['admin', 'moderator'])) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized - Admin or Moderator access required'
@@ -2064,6 +2272,172 @@ class ForumController extends Controller
     }
     
     /**
+     * Get trending threads based on engagement
+     */
+    public function getTrendingThreads(Request $request)
+    {
+        $limit = min($request->get('limit', 10), 20);
+        $timeFrame = $request->get('timeframe', '24h'); // 24h, 7d, 30d
+        
+        $hoursBack = match($timeFrame) {
+            '7d' => 168,
+            '30d' => 720,
+            default => 24
+        };
+        
+        $threads = DB::table('forum_threads as ft')
+            ->leftJoin('users as u', 'ft.user_id', '=', 'u.id')
+            ->leftJoin('forum_categories as fc', 'ft.category_id', '=', 'fc.id')
+            ->select([
+                'ft.id', 'ft.title', 'ft.content', 'ft.replies_count', 'ft.views', 
+                'ft.score', 'ft.upvotes', 'ft.downvotes', 'ft.created_at', 'ft.last_reply_at',
+                'u.name as author_name', 'u.avatar as author_avatar',
+                'fc.name as category_name', 'fc.color as category_color'
+            ])
+            ->where('ft.status', 'active')
+            ->where('ft.created_at', '>=', now()->subHours($hoursBack))
+            ->orderByRaw('(ft.replies_count * 2 + ft.views * 0.1 + ft.score * 3) DESC')
+            ->orderBy('ft.created_at', 'desc')
+            ->limit($limit)
+            ->get();
+            
+        $threadsData = $threads->map(function($thread) {
+            return [
+                'id' => $thread->id,
+                'title' => $thread->title,
+                'content' => substr($thread->content, 0, 200) . (strlen($thread->content) > 200 ? '...' : ''),
+                'author' => [
+                    'name' => $thread->author_name,
+                    'avatar' => $thread->author_avatar
+                ],
+                'category' => [
+                    'name' => $thread->category_name ?? 'General',
+                    'color' => $thread->category_color ?? '#6b7280'
+                ],
+                'stats' => [
+                    'views' => $thread->views ?? 0,
+                    'replies' => $thread->replies_count ?? 0,
+                    'score' => $thread->score ?? 0,
+                    'upvotes' => $thread->upvotes ?? 0,
+                    'downvotes' => $thread->downvotes ?? 0
+                ],
+                'meta' => [
+                    'created_at' => $thread->created_at,
+                    'last_reply_at' => $thread->last_reply_at
+                ]
+            ];
+        });
+        
+        return response()->json([
+            'data' => $threadsData,
+            'timeframe' => $timeFrame,
+            'success' => true
+        ]);
+    }
+    
+    /**
+     * Get hot threads based on recent activity
+     */
+    public function getHotThreads(Request $request)
+    {
+        $limit = min($request->get('limit', 10), 20);
+        
+        $threads = DB::table('forum_threads as ft')
+            ->leftJoin('users as u', 'ft.user_id', '=', 'u.id')
+            ->leftJoin('forum_categories as fc', 'ft.category_id', '=', 'fc.id')
+            ->select([
+                'ft.id', 'ft.title', 'ft.content', 'ft.replies_count', 'ft.views', 
+                'ft.score', 'ft.upvotes', 'ft.downvotes', 'ft.created_at', 'ft.last_reply_at',
+                'u.name as author_name', 'u.avatar as author_avatar',
+                'fc.name as category_name', 'fc.color as category_color'
+            ])
+            ->where('ft.status', 'active')
+            ->where('ft.last_reply_at', '>=', now()->subHours(6)) // Recent activity in last 6 hours
+            ->orderByRaw('(ft.replies_count * 1.5 + ft.score * 2 + TIMESTAMPDIFF(MINUTE, ft.last_reply_at, NOW()) * -0.1) DESC')
+            ->limit($limit)
+            ->get();
+            
+        $threadsData = $threads->map(function($thread) {
+            return [
+                'id' => $thread->id,
+                'title' => $thread->title,
+                'content' => substr($thread->content, 0, 200) . (strlen($thread->content) > 200 ? '...' : ''),
+                'author' => [
+                    'name' => $thread->author_name,
+                    'avatar' => $thread->author_avatar
+                ],
+                'category' => [
+                    'name' => $thread->category_name ?? 'General',
+                    'color' => $thread->category_color ?? '#6b7280'
+                ],
+                'stats' => [
+                    'views' => $thread->views ?? 0,
+                    'replies' => $thread->replies_count ?? 0,
+                    'score' => $thread->score ?? 0,
+                    'upvotes' => $thread->upvotes ?? 0,
+                    'downvotes' => $thread->downvotes ?? 0
+                ],
+                'meta' => [
+                    'created_at' => $thread->created_at,
+                    'last_reply_at' => $thread->last_reply_at,
+                    'is_hot' => true
+                ]
+            ];
+        });
+        
+        return response()->json([
+            'data' => $threadsData,
+            'success' => true
+        ]);
+    }
+    
+    /**
+     * Get user's thread participation stats
+     */
+    public function getUserEngagementStats($userId = null)
+    {
+        $userId = $userId ?? Auth::id();
+        
+        if (!$userId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User not authenticated'
+            ], 401);
+        }
+        
+        $stats = [
+            'threads_created' => DB::table('forum_threads')->where('user_id', $userId)->count(),
+            'posts_made' => DB::table('forum_posts')->where('user_id', $userId)->count(),
+            'upvotes_received' => DB::table('forum_votes')
+                ->join('forum_threads', 'forum_votes.thread_id', '=', 'forum_threads.id')
+                ->where('forum_threads.user_id', $userId)
+                ->where('forum_votes.vote_type', 'upvote')
+                ->count(),
+            'total_thread_views' => DB::table('forum_threads')->where('user_id', $userId)->sum('views') ?? 0,
+            'total_thread_score' => DB::table('forum_threads')->where('user_id', $userId)->sum('score') ?? 0,
+            'mentions_count' => DB::table('mentions')
+                ->where('mentioned_type', 'user')
+                ->where('mentioned_id', $userId)
+                ->count(),
+            'most_popular_thread' => DB::table('forum_threads')
+                ->where('user_id', $userId)
+                ->select(['id', 'title', 'views', 'score'])
+                ->orderBy('score', 'desc')
+                ->first(),
+            'recent_activity' => DB::table('forum_posts')
+                ->where('user_id', $userId)
+                ->orderBy('created_at', 'desc')
+                ->limit(5)
+                ->get(['id', 'thread_id', 'created_at'])
+        ];
+        
+        return response()->json([
+            'data' => $stats,
+            'success' => true
+        ]);
+    }
+    
+    /**
      * Helper method to safely check if user has a specific role
      */
     private function userHasRole($roles)
@@ -2082,5 +2456,82 @@ class ForumController extends Controller
         }
         
         return false;
+    }
+    
+    /**
+     * Get forum overview data for homepage cards
+     */
+    public function getForumOverview()
+    {
+        try {
+            // Get latest threads with accurate data
+            $latestThreads = DB::table('forum_threads as ft')
+                ->leftJoin('users as u', 'ft.user_id', '=', 'u.id')
+                ->leftJoin(
+                    DB::raw('(SELECT thread_id, COUNT(*) as actual_replies_count FROM forum_posts WHERE status = "active" GROUP BY thread_id) as reply_counts'),
+                    'ft.id', '=', 'reply_counts.thread_id'
+                )
+                ->select([
+                    'ft.id', 'ft.title', 'ft.created_at', 'ft.last_reply_at',
+                    DB::raw('COALESCE(reply_counts.actual_replies_count, 0) as replies_count'),
+                    'ft.views', 'ft.score', 'ft.category',
+                    'u.name as author_name', 'u.avatar as author_avatar'
+                ])
+                ->where('ft.status', 'active')
+                ->orderBy('ft.last_reply_at', 'desc')
+                ->limit(5)
+                ->get()
+                ->map(function($thread) {
+                    return [
+                        'id' => $thread->id,
+                        'title' => $thread->title,
+                        'author' => [
+                            'name' => $thread->author_name,
+                            'avatar' => $thread->author_avatar
+                        ],
+                        'stats' => [
+                            'replies' => (int)$thread->replies_count,
+                            'views' => (int)$thread->views,
+                            'score' => (int)$thread->score
+                        ],
+                        'meta' => [
+                            'category' => $thread->category,
+                            'created_at' => $thread->created_at,
+                            'created_at_relative' => \Carbon\Carbon::parse($thread->created_at)->diffForHumans(),
+                            'last_reply_at' => $thread->last_reply_at,
+                            'last_reply_at_relative' => $thread->last_reply_at ? \Carbon\Carbon::parse($thread->last_reply_at)->diffForHumans() : null
+                        ]
+                    ];
+                });
+            
+            // Get forum statistics
+            $stats = [
+                'total_threads' => DB::table('forum_threads')->where('status', 'active')->count(),
+                'total_posts' => DB::table('forum_posts')->where('status', 'active')->count(),
+                'total_users' => DB::table('users')->where('status', 'active')->count(),
+                'active_today' => DB::table('forum_threads')
+                    ->where('status', 'active')
+                    ->whereDate('created_at', today())
+                    ->count() + DB::table('forum_posts')
+                    ->where('status', 'active')
+                    ->whereDate('created_at', today())
+                    ->count()
+            ];
+            
+            return response()->json([
+                'data' => [
+                    'latest_threads' => $latestThreads,
+                    'stats' => $stats
+                ],
+                'success' => true,
+                'last_updated' => now()->toISOString()
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching forum overview: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

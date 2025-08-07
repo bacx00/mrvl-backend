@@ -9,7 +9,9 @@ class Post extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['thread_id', 'user_id', 'content'];
+    protected $table = 'forum_posts';
+    
+    protected $fillable = ['thread_id', 'user_id', 'content', 'parent_id'];
 
     public function thread()
     {
@@ -19,5 +21,15 @@ class Post extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function parent()
+    {
+        return $this->belongsTo(Post::class, 'parent_id');
+    }
+
+    public function replies()
+    {
+        return $this->hasMany(Post::class, 'parent_id');
     }
 }

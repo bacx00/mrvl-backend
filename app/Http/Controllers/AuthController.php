@@ -50,7 +50,9 @@ class AuthController extends Controller
                     'id' => $user->id,
                     'name' => $user->name,
                     'email' => $user->email,
-                    'roles' => method_exists($user, 'getRoleNames') ? $user->getRoleNames() : [],
+                    'role' => $user->role ?? 'user',
+                    'roles' => [$user->role ?? 'user'], // For frontend compatibility
+                    'role_display_name' => $user->getRoleDisplayName(),
                     'avatar' => $user->avatar,
                     'hero_flair' => $user->hero_flair,
                     'team_flair' => $user->teamFlair,
@@ -106,7 +108,9 @@ class AuthController extends Controller
                     'id' => $user->id,
                     'name' => $user->name,
                     'email' => $user->email,
-                    'roles' => method_exists($user, 'getRoleNames') ? $user->getRoleNames() : ['user'],
+                    'role' => $user->role ?? 'user',
+                    'roles' => [$user->role ?? 'user'], // For frontend compatibility
+                    'role_display_name' => $user->getRoleDisplayName(),
                     'avatar' => $user->avatar,
                     'hero_flair' => $user->hero_flair,
                     'team_flair' => $user->teamFlair,
@@ -149,7 +153,9 @@ class AuthController extends Controller
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
-                'roles' => method_exists($user, 'getRoleNames') ? $user->getRoleNames() : [],
+                'role' => $user->role ?? 'user',
+                'roles' => [$user->role ?? 'user'], // For frontend compatibility
+                'role_display_name' => $user->getRoleDisplayName(),
                 'avatar' => $user->avatar,
                 'hero_flair' => $user->hero_flair,
                 'team_flair' => $user->teamFlair,
@@ -192,7 +198,9 @@ class AuthController extends Controller
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
-                'roles' => method_exists($user, 'getRoleNames') ? $user->getRoleNames() : [],
+                'role' => $user->role ?? 'user',
+                'roles' => [$user->role ?? 'user'], // For frontend compatibility
+                'role_display_name' => $user->getRoleDisplayName(),
                 'avatar' => $user->avatar,
                 'created_at' => $user->created_at->toISOString()
             ],

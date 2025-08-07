@@ -44,10 +44,13 @@ return [
             ],
         ],
 
+        /*
+        // Redis broadcasting disabled - using 'log' or 'null' instead
         'redis' => [
             'driver'     => 'redis',
             'connection' => env('BROADCAST_REDIS_CONNECTION', 'default'),
         ],
+        */
 
         'log' => [
             'driver' => 'log',

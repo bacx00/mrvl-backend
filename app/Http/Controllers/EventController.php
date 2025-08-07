@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use App\Helpers\ImageHelper;
 
 class EventController extends Controller
 {
@@ -82,7 +83,7 @@ class EventController extends Controller
                     'name' => $event->name,
                     'slug' => $event->slug,
                     'description' => $event->description,
-                    'logo' => $event->logo,
+                    'logo' => ImageHelper::getEventImage($event->logo, $event->name, 'logo'),
                     'organizer' => $organizer,
                     'details' => [
                         'type' => $event->type,
@@ -430,7 +431,7 @@ class EventController extends Controller
                     'id' => $team->id,
                     'name' => $team->name,
                     'short_name' => $team->short_name,
-                    'logo' => $team->logo,
+                    'logo' => ImageHelper::getTeamLogo($team->logo, $team->name),
                     'region' => $team->region,
                     'rating' => $team->rating,
                     'seed' => $team->seed,

@@ -10,17 +10,20 @@ class News extends Model
     use HasFactory;
 
     protected $fillable = [
-        'title', 'slug', 'excerpt', 'content', 'featured_image', 'gallery',
-        'category', 'tags', 'author_id', 'status', 'published_at', 
-        'featured', 'sort_order', 'meta_data'
+        'title', 'slug', 'excerpt', 'content', 'featured_image', 'gallery', 'videos',
+        'category', 'category_id', 'tags', 'author_id', 'status', 'published_at', 
+        'featured', 'featured_at', 'breaking', 'sort_order', 'meta_data', 'score',
+        'upvotes', 'downvotes', 'comments_count', 'views', 'region'
     ];
 
     protected $casts = [
         'gallery' => 'array',
         'tags' => 'array',
         'meta_data' => 'array',
+        'videos' => 'array',
         'published_at' => 'datetime',
-        'featured' => 'boolean'
+        'featured' => 'boolean',
+        'breaking' => 'boolean'
     ];
 
     protected $appends = ['featured_image_url', 'gallery_urls', 'read_time'];

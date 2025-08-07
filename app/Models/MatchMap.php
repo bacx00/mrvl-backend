@@ -11,7 +11,7 @@ class MatchMap extends Model
 {
     use HasFactory;
 
-    protected $table = 'match_rounds';
+    protected $table = 'match_maps';
 
     protected $fillable = [
         'match_id',
@@ -57,7 +57,7 @@ class MatchMap extends Model
      */
     public function match(): BelongsTo
     {
-        return $this->belongsTo(Match::class, 'match_id');
+        return $this->belongsTo(MatchModel::class, 'match_id');
     }
 
     public function winner(): BelongsTo
@@ -179,12 +179,8 @@ class MatchMap extends Model
             'duration_seconds' => $duration
         ]);
 
-        // Update match scores
-        if ($winnerId === $this->match->team1_id) {
-            $this->match->increment('team1_score');
-        } elseif ($winnerId === $this->match->team2_id) {
-            $this->match->increment('team2_score');
-        }
+        // Update match series scores
+        $this->match->updateSeriesScore();
     }
 
     /**

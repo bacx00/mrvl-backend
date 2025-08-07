@@ -1,0 +1,78 @@
+{
+  "timestamp": "2025-08-07T08:33:37.915Z",
+  "summary": {
+    "total_tests": 17,
+    "passed_tests": 13,
+    "success_rate": 76.47058823529412,
+    "errors": 0,
+    "warnings": 1
+  },
+  "results": {
+    "authentication": {
+      "login": false
+    },
+    "public_endpoints": {
+      "events_list": {
+        "success": true,
+        "status_code": 200,
+        "response_time": 136,
+        "has_data": false
+      },
+      "teams_list": {
+        "success": true,
+        "status_code": 200,
+        "response_time": 151,
+        "has_data": false
+      },
+      "event_bracket": {
+        "success": true,
+        "status_code": 200,
+        "response_time": 179,
+        "has_data": false
+      },
+      "comprehensive_bracket": {
+        "success": true,
+        "status_code": 200,
+        "response_time": 147,
+        "has_data": false
+      },
+      "bracket_analysis": {
+        "success": true,
+        "status_code": 200,
+        "response_time": 120,
+        "has_data": false
+      },
+      "bracket_visualization": {
+        "success": true,
+        "status_code": 200,
+        "response_time": 112,
+        "has_data": false
+      },
+      "tournament_bracket": {
+        "success": true,
+        "status_code": 200,
+        "response_time": 149,
+        "has_data": false
+      }
+    },
+    "crud_operations": {
+      "read_event_bracket": true,
+      "read_comprehensive_bracket": true,
+      "read_bracket_visualization": true,
+      "delete_operations_skipped": true
+    },
+    "edge_cases": {
+      "invalid_event_id": false,
+      "invalid_tournament_id": false,
+      "malformed_bracket_request": false
+    },
+    "error_handling": {
+      "malformed_json": true,
+      "missing_auth": true
+    }
+  },
+  "errors": [],
+  "warnings": [
+    "Could not authenticate as admin - limited testing"
+  ]
+}

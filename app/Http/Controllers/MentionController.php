@@ -9,15 +9,26 @@ class MentionController extends Controller
 {
     public function searchMentions(Request $request)
     {
-        $query = $request->get('q', '');
-        $type = $request->get('type', 'all'); // 'all', 'user', 'team', 'player'
-        $limit = min($request->get('limit', 10), 20); // Max 20 results
-
-        if (strlen($query) < 1) {
-            return response()->json([
-                'data' => [],
-                'success' => true
+        try {
+            // Validate request parameters
+            $validated = $request->validate([
+                'q' => 'nullable|string|max:100',
+                'type' => 'nullable|in:all,user,team,player',
+                'limit' => 'nullable|integer|min:1|max:50'
             ]);
+
+            $query = $validated['q'] ?? '';
+            $type = $validated['type'] ?? 'all';
+            $limit = min($validated['limit'] ?? 10, 20); // Max 20 results
+
+            if (strlen($query) < 1) {
+                // Return popular suggestions when no query provided
+                return $this->getPopularMentions($request);
+            }
+        
+        // For very short queries, be more restrictive
+        if (strlen($query) === 1 && $type === 'all') {
+            $limit = min($limit, 5); // Limit single character searches
         }
 
         $results = [];
@@ -121,13 +132,35 @@ class MentionController extends Controller
 
         return response()->json([
             'data' => $results,
-            'success' => true
+            'success' => true,
+            'query' => $query,
+            'type' => $type,
+            'total_results' => count($results)
         ]);
+        
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            \Log::error('MentionController@searchMentions error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error searching mentions: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function getPopularMentions(Request $request)
     {
-        $limit = min($request->get('limit', 10), 20);
+        try {
+            $validated = $request->validate([
+                'limit' => 'nullable|integer|min:1|max:50'
+            ]);
+            
+            $limit = min($validated['limit'] ?? 10, 20);
         
         // Get most mentioned entities from the last 30 days
         $popularMentions = DB::table('mentions as m')
@@ -196,8 +229,23 @@ class MentionController extends Controller
 
         return response()->json([
             'data' => $results,
-            'success' => true
+            'success' => true,
+            'total_results' => count($results)
         ]);
+        
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            \Log::error('MentionController@getPopularMentions error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching popular mentions: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     private function getEntityData($type, $id)

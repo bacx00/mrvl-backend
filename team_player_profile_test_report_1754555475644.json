@@ -1,0 +1,74 @@
+{
+  "startTime": "2025-08-07T08:31:15.557Z",
+  "tests": [
+    {
+      "name": "Teams List Endpoint",
+      "status": "failed",
+      "timestamp": "2025-08-07T08:31:15.608Z",
+      "details": null,
+      "error": "Status: 0"
+    },
+    {
+      "name": "Players List Endpoint",
+      "status": "failed",
+      "timestamp": "2025-08-07T08:31:15.614Z",
+      "details": null,
+      "error": "Status: 0"
+    },
+    {
+      "name": "Matches List Endpoint",
+      "status": "failed",
+      "timestamp": "2025-08-07T08:31:15.617Z",
+      "details": null,
+      "error": "Status: 0"
+    },
+    {
+      "name": "Create Test Team",
+      "status": "failed",
+      "timestamp": "2025-08-07T08:31:15.620Z",
+      "details": null,
+      "error": "Failed to create test team"
+    },
+    {
+      "name": "Create Test Player",
+      "status": "failed",
+      "timestamp": "2025-08-07T08:31:15.627Z",
+      "details": null,
+      "error": "Failed to create test player"
+    },
+    {
+      "name": "Data Validation Constraints",
+      "status": "passed",
+      "timestamp": "2025-08-07T08:31:15.636Z",
+      "details": {
+        "rejectedInvalidData": true
+      },
+      "error": null
+    },
+    {
+      "name": "Handle Non-existent Team Update",
+      "status": "failed",
+      "timestamp": "2025-08-07T08:31:15.639Z",
+      "details": null,
+      "error": "Should return 404"
+    },
+    {
+      "name": "Handle Invalid Data Types",
+      "status": "passed",
+      "timestamp": "2025-08-07T08:31:15.641Z",
+      "details": {
+        "rejectedInvalidTypes": true
+      },
+      "error": null
+    }
+  ],
+  "summary": {
+    "total": 8,
+    "passed": 2,
+    "failed": 6,
+    "skipped": 0
+  },
+  "endTime": "2025-08-07T08:31:15.644Z",
+  "duration": "87ms",
+  "successRate": "25.00%"
+}

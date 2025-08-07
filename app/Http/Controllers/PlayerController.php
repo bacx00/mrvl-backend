@@ -122,7 +122,7 @@ class PlayerController extends Controller
             $ratingHistory = $this->generatePlayerRatingHistory($playerData->rating ?? 1000);
 
             // Social media and streaming
-            $socialMedia = $playerData->social_media ? json_decode($playerData->social_media, true) : [];
+            $socialMedia = $this->decodeJsonField($playerData->social_media);
 
             $comprehensiveProfile = [
                 // Basic player info
@@ -224,31 +224,174 @@ class PlayerController extends Controller
 
     public function update(Request $request, $playerId)
     {
-        $player = Player::findOrFail($playerId);
-        
-        $validated = $request->validate([
-            'username' => 'sometimes|string|max:255|unique:players,username,' . $player->id,
-            'real_name' => 'nullable|string|max:255',
-            'team_id' => 'nullable|exists:teams,id',
-            'role' => 'sometimes|in:Vanguard,Duelist,Strategist',
-            'main_hero' => 'sometimes|string',
-            'alt_heroes' => 'nullable|array',
-            'region' => 'sometimes|string|max:10',
-            'country' => 'sometimes|string',
-            'rating' => 'nullable|numeric|min:0',
-            'age' => 'nullable|integer|min:13|max:50',
-            'social_media' => 'nullable|array',
-            'biography' => 'nullable|string',
-            'past_teams' => 'nullable|array'
-        ]);
+        try {
+            // Use DB queries instead of Eloquent to avoid model conflicts
+            $player = DB::table('players')->where('id', $playerId)->first();
+            
+            if (!$player) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Player not found'
+                ], 404);
+            }
+            
+            $validated = $request->validate([
+                'username' => 'sometimes|string|max:255|unique:players,username,' . $playerId,
+                'real_name' => 'nullable|string|max:255',
+                'name' => 'nullable|string|max:255', // Handle 'name' field if provided
+                'team_id' => 'nullable|exists:teams,id',
+                'role' => 'sometimes|in:Vanguard,Duelist,Strategist',
+                'main_hero' => 'sometimes|string',
+                'alt_heroes' => 'nullable|array',
+                'hero_preferences' => 'nullable|array',
+                'region' => 'sometimes|string|max:10',
+                'country' => 'sometimes|string|max:100',
+                'country_code' => 'sometimes|string|max:5',
+                'rating' => 'nullable|numeric|min:0|max:5000',
+                'skill_rating' => 'nullable|numeric|min:0|max:5000',
+                'elo_rating' => 'nullable|numeric|min:0|max:5000',
+                'peak_rating' => 'nullable|numeric|min:0|max:5000',
+                'peak_elo' => 'nullable|numeric|min:0|max:5000',
+                'age' => 'nullable|integer|min:13|max:50',
+                'birth_date' => 'nullable|date',
+                'earnings' => 'nullable|numeric|min:0',
+                'total_earnings' => 'nullable|numeric|min:0',
+                'earnings_amount' => 'nullable|numeric|min:0',
+                'earnings_currency' => 'nullable|string|max:10',
+                'social_media' => 'nullable|array',
+                'social_links' => 'nullable|array',
+                'twitter' => 'nullable|string',
+                'twitter_url' => 'nullable|string|url',
+                'instagram' => 'nullable|string',
+                'instagram_url' => 'nullable|string|url',
+                'youtube' => 'nullable|string',
+                'youtube_url' => 'nullable|string|url',
+                'twitch' => 'nullable|string',
+                'twitch_url' => 'nullable|string|url',
+                'tiktok' => 'nullable|string',
+                'discord' => 'nullable|string',
+                'discord_url' => 'nullable|string',
+                'facebook' => 'nullable|string|url',
+                'liquipedia_url' => 'nullable|string|url',
+                'vlr_url' => 'nullable|string|url',
+                'biography' => 'nullable|string',
+                'past_teams' => 'nullable|array',
+                'status' => 'sometimes|in:active,inactive,retired,suspended',
+                'avatar' => 'nullable|string|url'
+            ]);
 
-        $player->update($validated);
+            // Handle team transfer logic
+            if (isset($validated['team_id']) && $validated['team_id'] != $player->team_id) {
+                // Record team change in past_teams if transferring
+                $pastTeams = $player->past_teams ? json_decode($player->past_teams, true) : [];
+                if ($player->team_id) {
+                    $oldTeam = DB::table('teams')->where('id', $player->team_id)->first();
+                    if ($oldTeam) {
+                        $pastTeams[] = [
+                            'team_id' => $player->team_id,
+                            'team_name' => $oldTeam->name,
+                            'left_at' => now()->toDateString()
+                        ];
+                    }
+                }
+                $validated['past_teams'] = json_encode($pastTeams);
+            }
 
-        return response()->json([
-            'data' => $player->fresh()->load('team'),
-            'success' => true,
-            'message' => 'Player updated successfully'
-        ]);
+            // Handle social media fields - merge individual fields into social_media JSON
+            // Support all 6 major platforms: Twitter, Instagram, YouTube, Twitch, Discord, TikTok
+            $socialFields = [
+                'twitter', 'twitter_url', 'instagram', 'instagram_url', 
+                'youtube', 'youtube_url', 'twitch', 'twitch_url',
+                'tiktok', 'discord', 'discord_url', 'facebook',
+                'liquipedia_url', 'vlr_url'
+            ];
+            $currentSocialMedia = $this->decodeJsonField($player->social_media);
+            
+            foreach ($socialFields as $field) {
+                if (isset($validated[$field])) {
+                    if (!empty($validated[$field])) {
+                        // Store both in social_media JSON and individual columns
+                        $currentSocialMedia[$field] = $validated[$field];
+                        // Keep individual column for direct database access
+                        if (in_array($field, ['twitter', 'instagram', 'youtube', 'twitch', 'tiktok', 'discord'])) {
+                            // Don't remove from validated - allow updating individual columns
+                        } else {
+                            unset($validated[$field]); // Remove URL variants to avoid column conflicts
+                        }
+                    } else {
+                        // Remove empty values
+                        unset($currentSocialMedia[$field]);
+                        if (in_array($field, ['twitter', 'instagram', 'youtube', 'twitch', 'tiktok', 'discord'])) {
+                            $validated[$field] = null; // Set individual column to null
+                        } else {
+                            unset($validated[$field]);
+                        }
+                    }
+                }
+            }
+            
+            // Handle social_links array if provided
+            if (isset($validated['social_links'])) {
+                foreach ($validated['social_links'] as $platform => $url) {
+                    if (!empty($url)) {
+                        $currentSocialMedia[$platform] = $url;
+                    }
+                }
+                unset($validated['social_links']);
+            }
+            
+            // Handle direct social_media array update
+            if (isset($validated['social_media']) && is_array($validated['social_media'])) {
+                $currentSocialMedia = array_merge($currentSocialMedia, $validated['social_media']);
+            }
+            
+            $validated['social_media'] = json_encode($currentSocialMedia);
+
+            // Process other array fields to JSON
+            $arrayFields = ['alt_heroes', 'hero_preferences', 'past_teams'];
+            foreach ($arrayFields as $field) {
+                if (isset($validated[$field]) && is_array($validated[$field])) {
+                    $validated[$field] = json_encode($validated[$field]);
+                }
+            }
+
+            // Update peak ratings if new ratings are higher
+            if (isset($validated['rating']) && $validated['rating'] > ($player->peak_rating ?? 0)) {
+                $validated['peak_rating'] = $validated['rating'];
+            }
+            if (isset($validated['elo_rating']) && $validated['elo_rating'] > ($player->peak_elo ?? 0)) {
+                $validated['peak_elo'] = $validated['elo_rating'];
+            }
+
+            // Set updated timestamp
+            $validated['updated_at'] = now();
+
+            // Update the player
+            DB::table('players')->where('id', $playerId)->update($validated);
+
+            // Return updated player data
+            $updatedPlayer = $this->getPlayerAdmin($playerId);
+            
+            return response()->json([
+                'data' => $updatedPlayer->original['data'],
+                'success' => true,
+                'message' => 'Player updated successfully'
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            \Log::error('PlayerController@update error: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating player: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function destroy($playerId)
@@ -298,10 +441,10 @@ class PlayerController extends Controller
                 'age' => $player->age,
                 'status' => $player->status ?? 'active',
                 'biography' => $player->biography,
-                'social_media' => $player->social_media ? json_decode($player->social_media, true) : [],
+                'social_media' => $this->decodeJsonField($player->social_media),
                 'region' => $player->region,
                 'team_id' => $player->team_id,
-                'past_teams' => $player->past_teams ? json_decode($player->past_teams, true) : [],
+                'past_teams' => $this->decodeJsonField($player->past_teams),
                 'current_team' => $player->team_name ? [
                     'id' => $player->team_id,
                     'name' => $player->team_name,
@@ -548,8 +691,8 @@ class PlayerController extends Controller
         // This would typically come from detailed match statistics
         // For now, return basic hero pool information
         $heroPool = [$player->main_hero];
-        if ($player->alt_heroes) {
-            $altHeroes = json_decode($player->alt_heroes, true);
+        $altHeroes = $this->decodeJsonField($player->alt_heroes);
+        if (!empty($altHeroes)) {
             $heroPool = array_merge($heroPool, $altHeroes);
         }
 
@@ -1015,34 +1158,52 @@ class PlayerController extends Controller
                 ], 404);
             }
 
-            $query = Mention::where('mentioned_type', 'player')
-                           ->where('mentioned_id', $playerId)
-                           ->where('is_active', true)
-                           ->with(['mentionedBy'])
-                           ->orderBy('mentioned_at', 'desc');
+            $query = DB::table('mentions as m')
+                ->leftJoin('users as u', 'm.mentioned_by', '=', 'u.id')
+                ->where('m.mentioned_type', 'player')
+                ->where('m.mentioned_id', $playerId)
+                ->where('m.is_active', true)
+                ->select([
+                    'm.id',
+                    'm.mention_text',
+                    'm.context',
+                    'm.mentioned_at',
+                    'm.mentionable_type',
+                    'm.mentionable_id',
+                    'm.metadata',
+                    'u.id as mentioned_by_id',
+                    'u.name as mentioned_by_name',
+                    'u.avatar as mentioned_by_avatar'
+                ])
+                ->orderBy('m.mentioned_at', 'desc');
 
             // Filter by content type if specified
             if ($request->content_type) {
-                $query->where('mentionable_type', $request->content_type);
+                $query->where('m.mentionable_type', $request->content_type);
             }
 
             // Pagination
-            $perPage = $request->get('per_page', 20);
-            $mentions = $query->paginate($perPage);
+            $perPage = min($request->get('per_page', 20), 50);
+            $page = $request->get('page', 1);
+            $offset = ($page - 1) * $perPage;
+            
+            $total = $query->count();
+            $mentions = $query->offset($offset)->limit($perPage)->get();
 
             // Format mentions with content context
-            $formattedMentions = $mentions->getCollection()->map(function($mention) {
+            $formattedMentions = $mentions->map(function($mention) {
                 $mentionData = [
                     'id' => $mention->id,
                     'mention_text' => $mention->mention_text,
                     'context' => $mention->context,
                     'mentioned_at' => $mention->mentioned_at,
-                    'mentioned_by' => $mention->mentionedBy ? [
-                        'id' => $mention->mentionedBy->id,
-                        'name' => $mention->mentionedBy->name,
-                        'avatar' => $mention->mentionedBy->avatar
+                    'mentioned_by' => $mention->mentioned_by_id ? [
+                        'id' => $mention->mentioned_by_id,
+                        'name' => $mention->mentioned_by_name,
+                        'avatar' => $mention->mentioned_by_avatar
                     ] : null,
-                    'content' => $mention->getContentContext()
+                    'content' => $this->getContentContextForMention($mention),
+                    'metadata' => $mention->metadata ? json_decode($mention->metadata, true) : null
                 ];
 
                 return $mentionData;
@@ -1051,10 +1212,10 @@ class PlayerController extends Controller
             return response()->json([
                 'data' => $formattedMentions,
                 'pagination' => [
-                    'current_page' => $mentions->currentPage(),
-                    'last_page' => $mentions->lastPage(),
-                    'per_page' => $mentions->perPage(),
-                    'total' => $mentions->total()
+                    'current_page' => (int) $page,
+                    'last_page' => (int) ceil($total / $perPage),
+                    'per_page' => (int) $perPage,
+                    'total' => $total
                 ],
                 'success' => true
             ]);
@@ -1064,6 +1225,67 @@ class PlayerController extends Controller
                 'success' => false,
                 'message' => 'Error fetching mentions: ' . $e->getMessage()
             ], 500);
+        }
+    }
+
+    private function getContentContextForMention($mention)
+    {
+        switch ($mention->mentionable_type) {
+            case 'news':
+                $news = DB::table('news')->where('id', $mention->mentionable_id)->first();
+                return $news ? [
+                    'type' => 'news',
+                    'title' => $news->title,
+                    'url' => "/news/{$news->slug}"
+                ] : null;
+            
+            case 'news_comment':
+                $comment = DB::table('news_comments')->where('id', $mention->mentionable_id)->first();
+                if ($comment) {
+                    $news = DB::table('news')->where('id', $comment->news_id)->first();
+                    return $news ? [
+                        'type' => 'news_comment',
+                        'title' => "Comment on: {$news->title}",
+                        'url' => "/news/{$news->slug}#comment-{$comment->id}"
+                    ] : null;
+                }
+                return null;
+            
+            case 'match':
+                $match = DB::table('matches')->where('id', $mention->mentionable_id)->first();
+                if ($match) {
+                    $team1 = DB::table('teams')->where('id', $match->team1_id)->first();
+                    $team2 = DB::table('teams')->where('id', $match->team2_id)->first();
+                    return [
+                        'type' => 'match',
+                        'title' => ($team1 ? $team1->name : 'TBD') . ' vs ' . ($team2 ? $team2->name : 'TBD'),
+                        'url' => "/matches/{$match->id}"
+                    ];
+                }
+                return null;
+            
+            case 'forum_thread':
+                $thread = DB::table('forum_threads')->where('id', $mention->mentionable_id)->first();
+                return $thread ? [
+                    'type' => 'forum_thread',
+                    'title' => $thread->title,
+                    'url' => "/forums/threads/{$thread->id}"
+                ] : null;
+            
+            case 'forum_post':
+                $post = DB::table('forum_posts')->where('id', $mention->mentionable_id)->first();
+                if ($post) {
+                    $thread = DB::table('forum_threads')->where('id', $post->thread_id)->first();
+                    return $thread ? [
+                        'type' => 'forum_post',
+                        'title' => "Reply in: {$thread->title}",
+                        'url' => "/forums/threads/{$thread->id}#post-{$post->id}"
+                    ] : null;
+                }
+                return null;
+            
+            default:
+                return null;
         }
     }
 
@@ -1082,7 +1304,7 @@ class PlayerController extends Controller
             }
 
             // Base query to get match player stats
-            $query = DB::table('player_match_stats as mps')
+            $query = DB::table('match_player_stats as mps')
                 ->join('matches as m', 'mps.match_id', '=', 'm.id')
                 ->join('teams as t1', 'm.team1_id', '=', 't1.id')
                 ->join('teams as t2', 'm.team2_id', '=', 't2.id')
@@ -1091,7 +1313,7 @@ class PlayerController extends Controller
                 ->where('m.status', 'completed')
                 ->select([
                     'mps.*',
-                    'mps.hero_played as hero',
+                    'mps.hero as hero',
                     'm.id as match_id',
                     'm.team1_id',
                     'm.team2_id',
@@ -1125,7 +1347,7 @@ class PlayerController extends Controller
             }
 
             if ($request->has('hero')) {
-                $query->where('mps.hero_played', $request->hero);
+                $query->where('mps.hero', $request->hero);
             }
 
             if ($request->has('map')) {
@@ -1241,11 +1463,11 @@ class PlayerController extends Controller
             }
 
             // Base query for hero stats
-            $query = DB::table('player_match_stats as mps')
+            $query = DB::table('match_player_stats as mps')
                 ->join('matches as m', 'mps.match_id', '=', 'm.id')
                 ->where('mps.player_id', $playerId)
                 ->where('m.status', 'completed')
-                ->groupBy('mps.hero_played');
+                ->groupBy('mps.hero');
 
             // Apply date filters
             if ($request->has('date_from')) {
@@ -1262,7 +1484,7 @@ class PlayerController extends Controller
 
             // Aggregate stats per hero
             $heroStats = $query->select([
-                'mps.hero_played as hero',
+                'mps.hero as hero',
                 DB::raw('COUNT(DISTINCT mps.match_id) as matches_played'),
                 DB::raw('SUM(CASE WHEN (mps.team_id = m.team1_id AND m.team1_score > m.team2_score) OR (mps.team_id = m.team2_id AND m.team2_score > m.team1_score) THEN 1 ELSE 0 END) as wins'),
                 DB::raw('AVG(mps.performance_rating) as avg_rating'),
@@ -1369,7 +1591,7 @@ class PlayerController extends Controller
             }
 
             // Base query for performance stats
-            $query = DB::table('player_match_stats as mps')
+            $query = DB::table('match_player_stats as mps')
                 ->join('matches as m', 'mps.match_id', '=', 'm.id')
                 ->where('mps.player_id', $playerId)
                 ->where('m.status', 'completed');
@@ -1388,7 +1610,7 @@ class PlayerController extends Controller
             }
 
             if ($request->has('hero')) {
-                $query->where('mps.hero_played', $request->hero);
+                $query->where('mps.hero', $request->hero);
             }
 
             // Get overall stats
@@ -1433,7 +1655,7 @@ class PlayerController extends Controller
             $playerTeamId = DB::table('players')->where('id', $playerId)->value('team_id');
 
             // Get best and worst performances
-            $bestPerformances = DB::table('player_match_stats as mps')
+            $bestPerformances = DB::table('match_player_stats as mps')
                 ->join('matches as m', 'mps.match_id', '=', 'm.id')
                 ->join('teams as t1', 'm.team1_id', '=', 't1.id')
                 ->join('teams as t2', 'm.team2_id', '=', 't2.id')
@@ -1443,7 +1665,7 @@ class PlayerController extends Controller
                 ->limit(5)
                 ->select([
                     'mps.*',
-                    'mps.hero_played as hero',
+                    'mps.hero as hero',
                     'm.scheduled_at',
                     'm.team1_id',
                     'm.team2_id',
@@ -1454,7 +1676,7 @@ class PlayerController extends Controller
                 ])
                 ->get();
 
-            $worstPerformances = DB::table('player_match_stats as mps')
+            $worstPerformances = DB::table('match_player_stats as mps')
                 ->join('matches as m', 'mps.match_id', '=', 'm.id')
                 ->join('teams as t1', 'm.team1_id', '=', 't1.id')
                 ->join('teams as t2', 'm.team2_id', '=', 't2.id')
@@ -1464,7 +1686,7 @@ class PlayerController extends Controller
                 ->limit(5)
                 ->select([
                     'mps.*',
-                    'mps.hero_played as hero',
+                    'mps.hero as hero',
                     'm.scheduled_at',
                     'm.team1_id',
                     'm.team2_id',
@@ -1582,12 +1804,11 @@ class PlayerController extends Controller
             }
 
             // Query to get map-specific stats
-            $query = DB::table('player_match_stats as mps')
+            // Note: Since match_player_stats doesn't have map_id, we join via match_id
+            // This gives us player stats for matches that included specific maps
+            $query = DB::table('match_player_stats as mps')
                 ->join('matches as m', 'mps.match_id', '=', 'm.id')
-                ->join('match_maps as mm', function($join) {
-                    $join->on('mm.match_id', '=', 'm.id')
-                         ->on('mm.map_number', '=', 'mps.map_number');
-                })
+                ->join('match_maps as mm', 'mm.match_id', '=', 'm.id')
                 ->where('mps.player_id', $playerId)
                 ->where('m.status', 'completed')
                 ->groupBy('mm.map_name');
@@ -1606,7 +1827,7 @@ class PlayerController extends Controller
             }
 
             if ($request->has('hero')) {
-                $query->where('mps.hero_played', $request->hero);
+                $query->where('mps.hero', $request->hero);
             }
 
             // Aggregate stats per map
@@ -1614,17 +1835,15 @@ class PlayerController extends Controller
                 'mm.map_name as map',
                 DB::raw('COUNT(DISTINCT mps.match_id) as matches_played'),
                 DB::raw('SUM(CASE WHEN mm.winner_id = mps.team_id THEN 1 ELSE 0 END) as wins'),
-                DB::raw('AVG(mps.performance_rating) as avg_rating'),
+                DB::raw('AVG(mps.kda_ratio) as avg_rating'),
                 DB::raw('AVG(mps.eliminations) as avg_eliminations'),
                 DB::raw('AVG(mps.deaths) as avg_deaths'),
                 DB::raw('AVG(mps.assists) as avg_assists'),
-                DB::raw('AVG(mps.damage) as avg_damage_dealt'),
+                DB::raw('AVG(mps.damage_dealt) as avg_damage_dealt'),
                 DB::raw('AVG(mps.damage_taken) as avg_damage_taken'),
-                DB::raw('AVG(mps.healing) as avg_healing_done'),
-                DB::raw('AVG(mps.accuracy_percentage) as avg_accuracy'),
-                DB::raw('SUM(mps.final_blows) as total_final_blows'),
-                DB::raw('SUM(mps.solo_kills) as total_solo_kills'),
-                DB::raw('SUM(mps.ultimates_earned) as total_ultimates_earned'),
+                DB::raw('AVG(mps.healing_done) as avg_healing_done'),
+                DB::raw('AVG(mps.mvp_score) as avg_mvp_score'),
+                DB::raw('SUM(mps.eliminations) as total_eliminations'),
                 DB::raw('SUM(mps.ultimates_used) as total_ultimates_used'),
                 DB::raw('AVG(mps.objective_time) as avg_objective_time')
             ])
@@ -1635,7 +1854,6 @@ class PlayerController extends Controller
             $formattedMapStats = $mapStats->map(function($stats) {
                 $winRate = $stats->matches_played > 0 ? round(($stats->wins / $stats->matches_played) * 100, 1) : 0;
                 $kd = $stats->avg_deaths > 0 ? round($stats->avg_eliminations / $stats->avg_deaths, 2) : $stats->avg_eliminations;
-                $ultEfficacy = $stats->total_ultimates_earned > 0 ? round(($stats->total_ultimates_used / $stats->total_ultimates_earned) * 100, 1) : 0;
 
                 return [
                     'map' => $stats->map,
@@ -1646,7 +1864,7 @@ class PlayerController extends Controller
                     'performance' => [
                         'avg_rating' => round($stats->avg_rating, 2),
                         'avg_kd' => $kd,
-                        'avg_accuracy' => round($stats->avg_accuracy, 1),
+                        'avg_mvp_score' => round($stats->avg_mvp_score, 1),
                         'avg_objective_time' => round($stats->avg_objective_time / 60, 1) // Convert to minutes
                     ],
                     'combat' => [
@@ -1658,10 +1876,9 @@ class PlayerController extends Controller
                         'avg_healing_done' => round($stats->avg_healing_done, 0)
                     ],
                     'impact' => [
-                        'total_final_blows' => $stats->total_final_blows,
-                        'total_solo_kills' => $stats->total_solo_kills,
-                        'ultimate_efficacy' => $ultEfficacy,
-                        'total_ultimates_earned' => $stats->total_ultimates_earned
+                        'total_eliminations' => $stats->total_eliminations,
+                        'total_ultimates_used' => $stats->total_ultimates_used,
+                        'avg_mvp_score' => round($stats->avg_mvp_score, 1)
                     ]
                 ];
             });
@@ -1710,7 +1927,7 @@ class PlayerController extends Controller
             }
 
             // Query to get event-specific stats
-            $query = DB::table('player_match_stats as mps')
+            $query = DB::table('match_player_stats as mps')
                 ->join('matches as m', 'mps.match_id', '=', 'm.id')
                 ->join('events as e', 'm.event_id', '=', 'e.id')
                 ->where('mps.player_id', $playerId)
@@ -1731,7 +1948,7 @@ class PlayerController extends Controller
             }
 
             if ($request->has('hero')) {
-                $query->where('mps.hero_played', $request->hero);
+                $query->where('mps.hero', $request->hero);
             }
 
             // Aggregate stats per event
@@ -1889,7 +2106,7 @@ class PlayerController extends Controller
             $weekStart = now()->subWeeks($i)->startOfWeek();
             $weekEnd = now()->subWeeks($i)->endOfWeek();
             
-            $weekStats = DB::table('player_match_stats as mps')
+            $weekStats = DB::table('match_player_stats as mps')
                 ->join('matches as m', 'mps.match_id', '=', 'm.id')
                 ->where('mps.player_id', $playerId)
                 ->where('m.status', 'completed')
@@ -1931,7 +2148,7 @@ class PlayerController extends Controller
         $mapTypeStats = [];
         
         foreach ($mapTypes as $type => $maps) {
-            $stats = DB::table('player_match_stats as mps')
+            $stats = DB::table('match_player_stats as mps')
                 ->join('matches as m', 'mps.match_id', '=', 'm.id')
                 ->join('match_maps as mm', 'mm.match_id', '=', 'm.id')
                 ->where('mps.player_id', $playerId)
@@ -1940,7 +2157,7 @@ class PlayerController extends Controller
                 ->select([
                     DB::raw('COUNT(DISTINCT mps.match_id) as matches_played'),
                     DB::raw('SUM(CASE WHEN mm.winner_id = mps.team_id THEN 1 ELSE 0 END) as wins'),
-                    DB::raw('AVG(mps.performance_rating) as avg_rating'),
+                    DB::raw('AVG(mps.kda_ratio) as avg_rating'),
                     DB::raw('AVG(mps.eliminations) as avg_eliminations')
                 ])
                 ->first();
@@ -1964,7 +2181,7 @@ class PlayerController extends Controller
     private function calculatePlayerEventPlacement($eventId, $playerId)
     {
         // Get the player's team
-        $playerTeam = DB::table('player_match_stats as mps')
+        $playerTeam = DB::table('match_player_stats as mps')
             ->join('matches as m', 'mps.match_id', '=', 'm.id')
             ->where('m.event_id', $eventId)
             ->where('mps.player_id', $playerId)
@@ -2009,35 +2226,30 @@ class PlayerController extends Controller
             }
 
             // Get hero performance from matches
-            $heroStats = DB::table('player_match_stats as pms')
+            $heroStats = DB::table('match_player_stats as pms')
                 ->join('matches as m', 'pms.match_id', '=', 'm.id')
                 ->where('pms.player_id', $playerId)
                 ->where('m.status', 'completed')
-                ->whereNotNull('pms.hero_played')
-                ->groupBy('pms.hero_played')
+                ->whereNotNull('pms.hero')
+                ->groupBy('pms.hero')
                 ->select([
-                    'pms.hero_played as hero_name',
+                    'pms.hero as hero_name',
                     DB::raw('COUNT(DISTINCT pms.match_id) as matches_played'),
-                    DB::raw('SUM(CASE WHEN pms.won = 1 THEN 1 ELSE 0 END) as wins'),
-                    DB::raw('SUM(CASE WHEN pms.won = 0 THEN 1 ELSE 0 END) as losses'),
-                    DB::raw('AVG(pms.performance_rating) as rating'),
-                    DB::raw('AVG(pms.eliminations / NULLIF(pms.rounds_played, 0)) as kpr'),
-                    DB::raw('AVG(pms.deaths / NULLIF(pms.rounds_played, 0)) as dpr'),
-                    DB::raw('AVG(pms.assists / NULLIF(pms.rounds_played, 0)) as apr'),
-                    DB::raw('AVG(pms.damage / NULLIF(pms.rounds_played, 0)) as adr'),
-                    DB::raw('AVG(pms.healing / NULLIF(pms.rounds_played, 0)) as ahr'),
+                    DB::raw('AVG(pms.kda_ratio) as rating'),
+                    DB::raw('AVG(pms.eliminations) as avg_eliminations'),
+                    DB::raw('AVG(pms.deaths) as avg_deaths'),
+                    DB::raw('AVG(pms.assists) as avg_assists'),
+                    DB::raw('AVG(pms.damage_dealt) as avg_damage'),
+                    DB::raw('AVG(pms.healing_done) as avg_healing'),
                     DB::raw('AVG(pms.eliminations / NULLIF(pms.deaths, 0)) as kd_ratio'),
-                    DB::raw('AVG(pms.first_eliminations / NULLIF(pms.rounds_played, 0)) as fkpr'),
-                    DB::raw('AVG(pms.first_deaths / NULLIF(pms.rounds_played, 0)) as fdpr'),
                     DB::raw('SUM(pms.eliminations) as total_kills'),
                     DB::raw('SUM(pms.deaths) as total_deaths'),
                     DB::raw('SUM(pms.assists) as total_assists'),
-                    DB::raw('SUM(pms.damage) as total_damage'),
-                    DB::raw('SUM(pms.healing) as total_healing'),
+                    DB::raw('SUM(pms.damage_dealt) as total_damage'),
+                    DB::raw('SUM(pms.healing_done) as total_healing'),
                     DB::raw('SUM(pms.damage_blocked) as total_damage_blocked'),
-                    DB::raw('SUM(pms.ultimate_usage) as total_ultimate_usage'),
+                    DB::raw('SUM(pms.ultimates_used) as total_ultimate_usage'),
                     DB::raw('SUM(pms.objective_time) as total_objective_time'),
-                    DB::raw('SUM(pms.rounds_played) as total_rounds_played'),
                     DB::raw('MAX(m.scheduled_at) as last_played'),
                     DB::raw('MIN(m.scheduled_at) as first_played')
                 ])
@@ -2154,7 +2366,7 @@ class PlayerController extends Controller
             });
 
             // Get total matches for usage rate calculation
-            $totalMatches = DB::table('player_match_stats')
+            $totalMatches = DB::table('match_player_stats')
                 ->where('player_id', $playerId)
                 ->distinct('match_id')
                 ->count('match_id');
@@ -2200,7 +2412,7 @@ class PlayerController extends Controller
 
     private function calculateUsageRate($heroMatches, $playerId)
     {
-        $totalMatches = DB::table('player_match_stats')
+        $totalMatches = DB::table('match_player_stats')
             ->where('player_id', $playerId)
             ->distinct('match_id')
             ->count('match_id');
@@ -2233,5 +2445,29 @@ class PlayerController extends Controller
         $slug = preg_replace('/[^a-z0-9\-]/', '', $slug);
         $slug = preg_replace('/-+/', '-', $slug);
         return trim($slug, '-');
+    }
+
+    /**
+     * Safely decode JSON fields that may be double-encoded
+     */
+    private function decodeJsonField($jsonField)
+    {
+        if (!$jsonField) {
+            return [];
+        }
+        
+        $decoded = json_decode($jsonField, true);
+        
+        // Handle double-encoded JSON case
+        if (is_string($decoded)) {
+            $decoded = json_decode($decoded, true);
+        }
+        
+        // Ensure we have an array
+        if (!is_array($decoded)) {
+            return [];
+        }
+        
+        return $decoded;
     }
 }

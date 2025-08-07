@@ -4,6 +4,11 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
+use App\Helpers\ImageHelper;
+use Exception;
+use Illuminate\Validation\ValidationException;
+use Illuminate\Database\QueryException;
 
 class HeroController extends Controller
 {
@@ -59,11 +64,11 @@ class HeroController extends Controller
                         'ban_rate' => $hero->ban_rate ?? 0
                     ],
                     'images' => [
-                        'portrait' => $this->getHeroImagePath($hero->name, 'portrait'),
-                        'icon' => $this->getHeroImagePath($hero->name, 'icon'),
-                        'ability_1' => $this->getHeroImagePath($hero->name, 'ability_1'),
-                        'ability_2' => $this->getHeroImagePath($hero->name, 'ability_2'),
-                        'ultimate' => $this->getHeroImagePath($hero->name, 'ultimate')
+                        'portrait' => ImageHelper::getHeroImage($hero->name, 'portrait'),
+                        'icon' => ImageHelper::getHeroImage($hero->name, 'icon'),
+                        'ability_1' => ImageHelper::getHeroImage($hero->name, 'ability_1'),
+                        'ability_2' => ImageHelper::getHeroImage($hero->name, 'ability_2'),
+                        'ultimate' => ImageHelper::getHeroImage($hero->name, 'ultimate')
                     ],
                     'fallback' => [
                         'text' => $hero->name,
@@ -96,10 +101,27 @@ class HeroController extends Controller
                 'success' => true
             ]);
 
-        } catch (\Exception $e) {
+        } catch (QueryException $e) {
+            Log::error('Database error fetching heroes', [
+                'error' => $e->getMessage(),
+                'sql' => $e->getSql(),
+                'bindings' => $e->getBindings()
+            ]);
             return response()->json([
                 'success' => false,
-                'message' => 'Error fetching heroes: ' . $e->getMessage()
+                'message' => 'Database connection issue. Please try again later.',
+                'error_code' => 'DATABASE_ERROR'
+            ], 500);
+        } catch (Exception $e) {
+            Log::error('Error fetching heroes', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'request_params' => request()->all()
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Unable to load heroes. Please try again later.',
+                'error_code' => 'HEROES_FETCH_ERROR'
             ], 500);
         }
     }
@@ -134,11 +156,11 @@ class HeroController extends Controller
                 'abilities' => $hero->abilities ? json_decode($hero->abilities, true) : [],
                 'stats' => $heroStats,
                 'images' => [
-                    'portrait' => $this->getHeroImagePath($hero->name, 'portrait'),
-                    'icon' => $this->getHeroImagePath($hero->name, 'icon'),
-                    'ability_1' => $this->getHeroImagePath($hero->name, 'ability_1'),
-                    'ability_2' => $this->getHeroImagePath($hero->name, 'ability_2'),
-                    'ultimate' => $this->getHeroImagePath($hero->name, 'ultimate'),
+                    'portrait' => ImageHelper::getHeroImage($hero->name, 'portrait'),
+                    'icon' => ImageHelper::getHeroImage($hero->name, 'icon'),
+                    'ability_1' => ImageHelper::getHeroImage($hero->name, 'ability_1'),
+                    'ability_2' => ImageHelper::getHeroImage($hero->name, 'ability_2'),
+                    'ultimate' => ImageHelper::getHeroImage($hero->name, 'ultimate'),
                     'gallery' => $this->getHeroGalleryImages($hero->name)
                 ],
                 'fallback' => [
@@ -168,10 +190,26 @@ class HeroController extends Controller
                 'success' => true
             ]);
 
-        } catch (\Exception $e) {
+        } catch (QueryException $e) {
+            Log::error('Database error fetching hero', [
+                'hero_slug' => $heroSlug,
+                'error' => $e->getMessage()
+            ]);
             return response()->json([
                 'success' => false,
-                'message' => 'Error fetching hero: ' . $e->getMessage()
+                'message' => 'Database connection issue. Please try again later.',
+                'error_code' => 'DATABASE_ERROR'
+            ], 500);
+        } catch (Exception $e) {
+            Log::error('Error fetching hero', [
+                'hero_slug' => $heroSlug,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Unable to load hero details. Please try again later.',
+                'error_code' => 'HERO_FETCH_ERROR'
             ], 500);
         }
     }
@@ -192,61 +230,39 @@ class HeroController extends Controller
             $images = [];
 
             if ($type === 'all' || $type === 'portrait') {
-                $images['portrait'] = $this->getHeroImagePath($heroName, 'portrait');
+                $images['portrait'] = ImageHelper::getHeroImage($heroName, 'portrait');
             }
 
             if ($type === 'all' || $type === 'icon') {
-                $images['icon'] = $this->getHeroImagePath($heroName, 'icon');
+                $images['icon'] = ImageHelper::getHeroImage($heroName, 'icon');
             }
 
             if ($type === 'all' || $type === 'ability') {
                 $images['abilities'] = [
-                    'ability_1' => $this->getHeroImagePath($heroName, 'ability_1'),
-                    'ability_2' => $this->getHeroImagePath($heroName, 'ability_2'),
-                    'ultimate' => $this->getHeroImagePath($heroName, 'ultimate')
+                    'ability_1' => ImageHelper::getHeroImage($heroName, 'ability_1'),
+                    'ability_2' => ImageHelper::getHeroImage($heroName, 'ability_2'),
+                    'ultimate' => ImageHelper::getHeroImage($heroName, 'ultimate')
                 ];
             }
 
-            // Check if images exist and provide fallbacks
-            $imagesWithStatus = [];
-            foreach ($images as $key => $imagePath) {
-                if (is_array($imagePath)) {
-                    $imagesWithStatus[$key] = [];
-                    foreach ($imagePath as $subKey => $subPath) {
-                        $imagesWithStatus[$key][$subKey] = [
-                            'url' => $subPath,
-                            'exists' => $this->imageExists($subPath),
-                            'fallback' => [
-                                'text' => $heroName,
-                                'type' => $subKey,
-                                'color' => $this->getHeroColor($heroName)
-                            ]
-                        ];
-                    }
-                } else {
-                    $imagesWithStatus[$key] = [
-                        'url' => $imagePath,
-                        'exists' => $this->imageExists($imagePath),
-                        'fallback' => [
-                            'text' => $heroName,
-                            'type' => $key,
-                            'color' => $this->getHeroColor($heroName)
-                        ]
-                    ];
-                }
-            }
-
+            // ImageHelper already handles existence and fallbacks
             return response()->json([
-                'data' => $imagesWithStatus,
+                'data' => $images,
                 'hero' => $heroName,
                 'type' => $type,
                 'success' => true
             ]);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
+            Log::error('Error fetching hero images', [
+                'hero_name' => $heroName ?? 'N/A',
+                'type' => $type ?? 'N/A',
+                'error' => $e->getMessage()
+            ]);
             return response()->json([
                 'success' => false,
-                'message' => 'Error fetching hero images: ' . $e->getMessage()
+                'message' => 'Unable to load hero images. Please try again later.',
+                'error_code' => 'HERO_IMAGES_ERROR'
             ], 500);
         }
     }
@@ -278,73 +294,38 @@ class HeroController extends Controller
                 'message' => 'Hero stats updated successfully'
             ]);
 
-        } catch (\Exception $e) {
+        } catch (ValidationException $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error updating hero stats: ' . $e->getMessage()
+                'message' => 'Please check your input values and try again.',
+                'errors' => $e->errors(),
+                'error_code' => 'VALIDATION_ERROR'
+            ], 422);
+        } catch (QueryException $e) {
+            Log::error('Database error updating hero stats', [
+                'hero_id' => $heroId,
+                'error' => $e->getMessage()
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Database connection issue. Please try again later.',
+                'error_code' => 'DATABASE_ERROR'
+            ], 500);
+        } catch (Exception $e) {
+            Log::error('Error updating hero stats', [
+                'hero_id' => $heroId,
+                'error' => $e->getMessage(),
+                'request_data' => request()->all()
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Unable to update hero stats. Please try again later.',
+                'error_code' => 'HERO_UPDATE_ERROR'
             ], 500);
         }
     }
 
-    // Helper methods for Marvel Rivals hero system
-
-    private function getHeroImagePath($heroName, $type)
-    {
-        $slug = $this->createHeroSlug($heroName);
-        
-        switch ($type) {
-            case 'portrait':
-                // Check for webp images first
-                $webpPath = "/images/heroes/{$slug}-headbig.webp";
-                if ($this->imageExists($webpPath)) {
-                    return $webpPath;
-                }
-                return "/images/heroes/portraits/{$slug}.png";
-            case 'icon':
-                // Check for webp icon
-                $webpPath = "/images/heroes/{$slug}-headbig.webp";
-                if ($this->imageExists($webpPath)) {
-                    return $webpPath;
-                }
-                return "/images/heroes/icons/{$slug}.png";
-            case 'ability_1':
-                return "/images/heroes/abilities/{$slug}_ability_1.png";
-            case 'ability_2':
-                return "/images/heroes/abilities/{$slug}_ability_2.png";
-            case 'ultimate':
-                return "/images/heroes/abilities/{$slug}_ultimate.png";
-            default:
-                // Default to webp if available
-                $webpPath = "/images/heroes/{$slug}-headbig.webp";
-                if ($this->imageExists($webpPath)) {
-                    return $webpPath;
-                }
-                return "/images/heroes/{$slug}.png";
-        }
-    }
-
-    private function createHeroSlug($heroName)
-    {
-        // Convert hero names to URL-friendly slugs matching downloaded files
-        $slug = strtolower($heroName);
-        
-        // Special case for Cloak & Dagger
-        if (strpos($slug, 'cloak') !== false && strpos($slug, 'dagger') !== false) {
-            return 'cloak-dagger';
-        }
-        
-        $slug = str_replace([' ', '&', '.', "'", '-'], ['-', '-', '', '', '-'], $slug);
-        $slug = preg_replace('/[^a-z0-9\-]/', '', $slug);
-        $slug = preg_replace('/-+/', '-', $slug);
-        return trim($slug, '-');
-    }
-
-    private function imageExists($imagePath)
-    {
-        // Check if image file exists in public storage
-        $publicPath = public_path($imagePath);
-        return file_exists($publicPath);
-    }
+    // Helper methods for Marvel Rivals hero system - now using centralized ImageHelper
 
     private function getHeroColor($heroName)
     {
@@ -515,8 +496,8 @@ class HeroController extends Controller
                     'release_date' => $hero->release_date,
                     'is_new' => true,
                     'images' => [
-                        'portrait' => $this->getHeroImagePath($hero->name, 'portrait'),
-                        'icon' => $this->getHeroImagePath($hero->name, 'icon')
+                        'portrait' => ImageHelper::getHeroImage($hero->name, 'portrait'),
+                        'icon' => ImageHelper::getHeroImage($hero->name, 'icon')
                     ],
                     'fallback' => [
                         'text' => $hero->name,
@@ -532,10 +513,23 @@ class HeroController extends Controller
                 'success' => true
             ]);
 
-        } catch (\Exception $e) {
+        } catch (QueryException $e) {
+            Log::error('Database error fetching Season 2 heroes', [
+                'error' => $e->getMessage()
+            ]);
             return response()->json([
                 'success' => false,
-                'message' => 'Error fetching Season 2 heroes: ' . $e->getMessage()
+                'message' => 'Database connection issue. Please try again later.',
+                'error_code' => 'DATABASE_ERROR'
+            ], 500);
+        } catch (Exception $e) {
+            Log::error('Error fetching Season 2 heroes', [
+                'error' => $e->getMessage()
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Unable to load Season 2 heroes. Please try again later.',
+                'error_code' => 'SEASON2_HEROES_ERROR'
             ], 500);
         }
     }
@@ -547,18 +541,20 @@ class HeroController extends Controller
             $heroes = DB::table('marvel_rivals_heroes')->get();
             
             $heroImages = $heroes->map(function($hero) {
-                $imagePath = $this->getHeroImagePath($hero->name, 'portrait');
-                $imageExists = $this->imageExists($imagePath);
+                $imageInfo = ImageHelper::getHeroImage($hero->name, 'portrait');
+                $isQuestionMark = ($imageInfo['url'] === "/images/heroes/question-mark.svg");
                 
                 return [
                     'id' => $hero->id,
                     'name' => $hero->name,
                     'slug' => $hero->slug,
-                    'image_url' => $imageExists ? $imagePath : null,
-                    'image_exists' => $imageExists,
+                    'image_url' => $imageInfo['url'],
+                    'image_exists' => $imageInfo['exists'],
+                    'is_fallback' => $isQuestionMark,
                     'fallback_text' => $hero->name,
                     'role' => $hero->role,
-                    'role_color' => $this->getRoleColor($hero->role)
+                    'role_color' => $this->getRoleColor($hero->role),
+                    'fallback' => $imageInfo['fallback']
                 ];
             });
 
@@ -569,10 +565,23 @@ class HeroController extends Controller
                 'success' => true
             ]);
 
-        } catch (\Exception $e) {
+        } catch (QueryException $e) {
+            Log::error('Database error fetching hero images', [
+                'error' => $e->getMessage()
+            ]);
             return response()->json([
                 'success' => false,
-                'message' => 'Error fetching hero images: ' . $e->getMessage()
+                'message' => 'Database connection issue. Please try again later.',
+                'error_code' => 'DATABASE_ERROR'
+            ], 500);
+        } catch (Exception $e) {
+            Log::error('Error fetching all hero images', [
+                'error' => $e->getMessage()
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Unable to load hero images. Please try again later.',
+                'error_code' => 'HERO_IMAGES_ERROR'
             ], 500);
         }
     }
@@ -580,40 +589,102 @@ class HeroController extends Controller
     public function getHeroImageBySlug($slug)
     {
         try {
-            // Get hero from database
+            // Get hero from database - try exact slug first
             $hero = DB::table('marvel_rivals_heroes')
                 ->where('slug', $slug)
                 ->first();
+
+            // If not found by exact slug, try slug variations for better compatibility
+            if (!$hero) {
+                // Try to find hero by name variations that might match the slug
+                $possibleNames = $this->getHeroNameFromSlug($slug);
+                foreach ($possibleNames as $name) {
+                    $hero = DB::table('marvel_rivals_heroes')
+                        ->where('name', 'LIKE', "%{$name}%")
+                        ->first();
+                    if ($hero) {
+                        break;
+                    }
+                }
+            }
 
             if (!$hero) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Hero not found',
-                    'fallback_text' => ucwords(str_replace('-', ' ', $slug))
+                    'fallback_text' => ucwords(str_replace('-', ' ', $slug)),
+                    'tried_slug' => $slug
                 ], 404);
             }
 
-            $imagePath = $this->getHeroImagePath($hero->name, 'portrait');
-            $imageExists = $this->imageExists($imagePath);
+            $imageInfo = ImageHelper::getHeroImage($hero->name, 'portrait');
+            $isQuestionMark = ($imageInfo['url'] === "/images/heroes/question-mark.svg");
 
             return response()->json([
                 'data' => [
                     'hero_name' => $hero->name,
                     'slug' => $hero->slug,
-                    'image_url' => $imageExists ? $imagePath : null,
-                    'image_exists' => $imageExists,
+                    'requested_slug' => $slug,
+                    'image_url' => $imageInfo['url'],
+                    'image_exists' => $imageInfo['exists'],
+                    'is_fallback' => $isQuestionMark,
                     'fallback_text' => $hero->name,
                     'role' => $hero->role,
-                    'role_color' => $this->getRoleColor($hero->role)
+                    'role_color' => $this->getRoleColor($hero->role),
+                    'fallback' => $imageInfo['fallback']
                 ],
                 'success' => true
             ]);
 
-        } catch (\Exception $e) {
+        } catch (QueryException $e) {
+            Log::error('Database error fetching hero image by slug', [
+                'slug' => $slug,
+                'error' => $e->getMessage()
+            ]);
             return response()->json([
                 'success' => false,
-                'message' => 'Error fetching hero image: ' . $e->getMessage()
+                'message' => 'Database connection issue. Please try again later.',
+                'error_code' => 'DATABASE_ERROR',
+                'requested_slug' => $slug
+            ], 500);
+        } catch (Exception $e) {
+            Log::error('Error fetching hero image by slug', [
+                'slug' => $slug,
+                'error' => $e->getMessage()
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Unable to load hero image. Please try again later.',
+                'error_code' => 'HERO_IMAGE_ERROR',
+                'requested_slug' => $slug
             ], 500);
         }
+    }
+
+    private function getHeroNameFromSlug($slug)
+    {
+        $possibleNames = [];
+        
+        // Convert slug back to possible names
+        if ($slug === 'cloak-and-dagger' || $slug === 'cloak-dagger') {
+            $possibleNames[] = 'Cloak & Dagger';
+            $possibleNames[] = 'Cloak and Dagger';
+        }
+        
+        if ($slug === 'mister-fantastic' || $slug === 'mr-fantastic') {
+            $possibleNames[] = 'Mr. Fantastic';
+            $possibleNames[] = 'Mister Fantastic';
+        }
+        
+        if ($slug === 'the-punisher' || $slug === 'punisher') {
+            $possibleNames[] = 'The Punisher';
+            $possibleNames[] = 'Punisher';
+        }
+        
+        // Generic conversion: slug to title case
+        $genericName = ucwords(str_replace('-', ' ', $slug));
+        $possibleNames[] = $genericName;
+        
+        return array_unique($possibleNames);
     }
 }

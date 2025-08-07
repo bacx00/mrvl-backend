@@ -190,8 +190,7 @@ class AdminMatchController extends Controller
 
         $match->save();
 
-        // Broadcast the update event
-        broadcast(new \App\Events\MatchMapUpdated($match));
+        // Note: Broadcasting removed - using simple API polling instead
 
         return response()->json([
             'success' => true,
@@ -224,17 +223,17 @@ class AdminMatchController extends Controller
             case 'start':
                 $match->status = 'live';
                 $match->started_at = now();
-                broadcast(new \App\Events\MatchStarted($match));
+                // Note: Broadcasting removed - using simple API polling
                 break;
             
             case 'pause':
                 $match->status = 'paused';
-                broadcast(new \App\Events\MatchPaused($match));
+                // Note: Broadcasting removed - using simple API polling
                 break;
             
             case 'resume':
                 $match->status = 'live';
-                broadcast(new \App\Events\MatchResumed($match));
+                // Note: Broadcasting removed - using simple API polling
                 break;
             
             case 'complete':
@@ -248,7 +247,7 @@ class AdminMatchController extends Controller
                     $match->winner_id = $match->team2_id;
                 }
                 
-                broadcast(new \App\Events\MatchMapEnded($match));
+                // Note: Broadcasting removed - using simple API polling
                 break;
             
             case 'restart':

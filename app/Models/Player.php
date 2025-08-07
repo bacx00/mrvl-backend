@@ -10,16 +10,19 @@ class Player extends Model
     use HasFactory;
 
     protected $fillable = [
-        'name', 'username', 'real_name', 'avatar', 'team_id', 'role', 'main_hero', 'alt_heroes',
-        'region', 'country', 'rank', 'rating', 'age', 'earnings',
-        'social_media', 'biography', 'past_teams',
-        // Career Stats (VLR.gg style)
-        'total_matches', 'total_wins', 'total_maps_played',
-        'avg_rating', 'avg_combat_score', 'avg_kda',
-        'avg_damage_per_round', 'avg_kast',
-        'avg_kills_per_round', 'avg_assists_per_round',
-        'avg_first_kills_per_round', 'avg_first_deaths_per_round',
-        'hero_pool', 'career_stats', 'achievements'
+        'name', 'username', 'alternate_ids', 'real_name', 'romanized_name', 'avatar', 
+        'team_id', 'past_teams', 'role', 'team_position', 'position_order', 'jersey_number',
+        'hero_preferences', 'skill_rating', 'main_hero', 'alt_heroes', 'region', 'country', 
+        'flag', 'country_flag', 'country_code', 'nationality', 'team_country', 'rank', 
+        'rating', 'elo_rating', 'peak_elo', 'elo_changes', 'last_elo_update', 'peak_rating',
+        'age', 'birth_date', 'earnings', 'earnings_amount', 'earnings_currency', 
+        'total_matches', 'tournaments_played', 'social_media', 'twitter', 'instagram', 
+        'twitch', 'tiktok', 'youtube', 'facebook', 'discord', 'liquipedia_url', 
+        'biography', 'event_placements', 'hero_pool', 'status', 'total_earnings',
+        'total_eliminations', 'total_deaths', 'total_assists', 'overall_kda',
+        'average_damage_per_match', 'average_healing_per_match', 'average_damage_blocked_per_match',
+        'hero_statistics', 'most_played_hero', 'best_winrate_hero', 'longest_win_streak',
+        'current_win_streak', 'achievements'
     ];
 
     protected $casts = [

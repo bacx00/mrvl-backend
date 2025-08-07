@@ -1,0 +1,303 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        // 1. Add missing 'videos' column to news table
+        if (Schema::hasTable('news') && !Schema::hasColumn('news', 'videos')) {
+            Schema::table('news', function (Blueprint $table) {
+                $table->json('videos')->nullable()->after('gallery')
+                    ->comment('JSON array of video embeds with platform, video_id, embed_url, etc.');
+            });
+            echo "Added 'videos' column to news table\n";
+        }
+
+        // 2. Add missing 'breaking' column to news table (referenced in NewsController)
+        if (Schema::hasTable('news') && !Schema::hasColumn('news', 'breaking')) {
+            Schema::table('news', function (Blueprint $table) {
+                $table->boolean('breaking')->default(false)->after('featured')
+                    ->comment('Whether this is breaking news');
+            });
+            echo "Added 'breaking' column to news table\n";
+        }
+
+        // 3. Add missing 'score' column to news table (referenced in NewsController for sorting)
+        if (Schema::hasTable('news') && !Schema::hasColumn('news', 'score')) {
+            Schema::table('news', function (Blueprint $table) {
+                $table->integer('score')->default(0)->after('downvotes')
+                    ->comment('Calculated score (upvotes - downvotes)');
+            });
+            echo "Added 'score' column to news table\n";
+        }
+
+        // 4. Add missing 'category_id' column to news table (for proper foreign key relationship)
+        if (Schema::hasTable('news') && !Schema::hasColumn('news', 'category_id') && Schema::hasTable('news_categories')) {
+            Schema::table('news', function (Blueprint $table) {
+                $table->foreignId('category_id')->nullable()->after('category')
+                    ->constrained('news_categories')->onDelete('set null');
+            });
+            
+            // Update existing records to use category_id instead of category string
+            $this->migrateCategoryStringToId();
+            echo "Added 'category_id' column to news table and migrated data\n";
+        }
+
+        // 5. Create news_video_embeds table if it doesn't exist (referenced in NewsController)
+        if (!Schema::hasTable('news_video_embeds')) {
+            Schema::create('news_video_embeds', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('news_id')->constrained('news')->onDelete('cascade');
+                $table->string('platform')->index(); // youtube, twitch-clip, twitch-video, twitter, vlrgg
+                $table->string('video_id');
+                $table->text('embed_url')->nullable();
+                $table->text('original_url');
+                $table->string('title')->nullable();
+                $table->text('thumbnail')->nullable();
+                $table->integer('duration')->nullable(); // in seconds
+                $table->json('metadata')->nullable(); // additional platform-specific data
+                $table->timestamps();
+
+                // Indexes for performance
+                $table->index(['news_id', 'platform']);
+                $table->unique(['news_id', 'platform', 'video_id'], 'unique_news_video_embed');
+            });
+            echo "Created 'news_video_embeds' table\n";
+        }
+
+        // 6. Add missing 'is_edited' and 'edited_at' columns to news_comments table
+        if (Schema::hasTable('news_comments')) {
+            if (!Schema::hasColumn('news_comments', 'is_edited')) {
+                Schema::table('news_comments', function (Blueprint $table) {
+                    $table->boolean('is_edited')->default(false)->after('status');
+                });
+            }
+            if (!Schema::hasColumn('news_comments', 'edited_at')) {
+                Schema::table('news_comments', function (Blueprint $table) {
+                    $table->timestamp('edited_at')->nullable()->after('is_edited');
+                });
+            }
+            echo "Added editing tracking columns to news_comments table\n";
+        }
+
+        // 7. Add missing 'status' column to news_comments table if it doesn't exist
+        if (Schema::hasTable('news_comments') && !Schema::hasColumn('news_comments', 'status')) {
+            Schema::table('news_comments', function (Blueprint $table) {
+                $table->enum('status', ['active', 'deleted', 'moderated'])->default('active')->after('parent_id');
+            });
+            echo "Added 'status' column to news_comments table\n";
+        }
+
+        // 8. Add missing vote count columns to news_comments table
+        if (Schema::hasTable('news_comments')) {
+            if (!Schema::hasColumn('news_comments', 'upvotes')) {
+                Schema::table('news_comments', function (Blueprint $table) {
+                    $table->integer('upvotes')->default(0)->after('status');
+                });
+            }
+            if (!Schema::hasColumn('news_comments', 'downvotes')) {
+                Schema::table('news_comments', function (Blueprint $table) {
+                    $table->integer('downvotes')->default(0)->after('upvotes');
+                });
+            }
+            if (!Schema::hasColumn('news_comments', 'score')) {
+                Schema::table('news_comments', function (Blueprint $table) {
+                    $table->integer('score')->default(0)->after('downvotes');
+                });
+            }
+            echo "Added vote count columns to news_comments table\n";
+        }
+
+        // 9. Create reports table if it doesn't exist (referenced in NewsController)
+        if (!Schema::hasTable('reports')) {
+            Schema::create('reports', function (Blueprint $table) {
+                $table->id();
+                $table->string('reportable_type'); // news_comment, forum_post, etc.
+                $table->unsignedBigInteger('reportable_id');
+                $table->foreignId('reporter_id')->constrained('users')->onDelete('cascade');
+                $table->text('reason');
+                $table->enum('status', ['pending', 'resolved', 'dismissed'])->default('pending');
+                $table->foreignId('moderator_id')->nullable()->constrained('users')->onDelete('set null');
+                $table->text('moderator_notes')->nullable();
+                $table->timestamps();
+
+                // Indexes
+                $table->index(['reportable_type', 'reportable_id']);
+                $table->index(['status', 'created_at']);
+                $table->index('reporter_id');
+            });
+            echo "Created 'reports' table\n";
+        }
+
+        // 10. Create moderation_logs table if it doesn't exist (referenced in NewsController)
+        if (!Schema::hasTable('moderation_logs')) {
+            Schema::create('moderation_logs', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('moderator_id')->constrained('users')->onDelete('cascade');
+                $table->string('action'); // approve, delete, edit, reject_news, etc.
+                $table->string('target_type'); // news_comment, news, forum_post, etc.
+                $table->unsignedBigInteger('target_id');
+                $table->text('reason')->nullable();
+                $table->json('metadata')->nullable(); // additional action-specific data
+                $table->timestamps();
+
+                // Indexes
+                $table->index(['target_type', 'target_id']);
+                $table->index(['moderator_id', 'created_at']);
+                $table->index(['action', 'created_at']);
+            });
+            echo "Created 'moderation_logs' table\n";
+        }
+
+        // 11. Add missing 'featured_at' column to news table
+        if (Schema::hasTable('news') && !Schema::hasColumn('news', 'featured_at')) {
+            Schema::table('news', function (Blueprint $table) {
+                $table->timestamp('featured_at')->nullable()->after('featured')
+                    ->comment('When the news was featured');
+            });
+            echo "Added 'featured_at' column to news table\n";
+        }
+
+        // 12. Update News model fillable array in database comment for reference
+        if (Schema::hasTable('news')) {
+            DB::statement("ALTER TABLE news COMMENT = 'News articles with video embedding support'");
+        }
+
+        // 13. Create performance indexes for news table
+        $this->createNewsPerformanceIndexes();
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        // Drop in reverse order
+        if (Schema::hasTable('moderation_logs')) {
+            Schema::dropIfExists('moderation_logs');
+        }
+
+        if (Schema::hasTable('reports')) {
+            Schema::dropIfExists('reports');
+        }
+
+        if (Schema::hasTable('news_video_embeds')) {
+            Schema::dropIfExists('news_video_embeds');
+        }
+
+        // Remove columns from news table
+        if (Schema::hasTable('news')) {
+            Schema::table('news', function (Blueprint $table) {
+                if (Schema::hasColumn('news', 'featured_at')) {
+                    $table->dropColumn('featured_at');
+                }
+                if (Schema::hasColumn('news', 'category_id')) {
+                    $table->dropForeign(['category_id']);
+                    $table->dropColumn('category_id');
+                }
+                if (Schema::hasColumn('news', 'score')) {
+                    $table->dropColumn('score');
+                }
+                if (Schema::hasColumn('news', 'breaking')) {
+                    $table->dropColumn('breaking');
+                }
+                if (Schema::hasColumn('news', 'videos')) {
+                    $table->dropColumn('videos');
+                }
+            });
+        }
+
+        // Remove columns from news_comments table
+        if (Schema::hasTable('news_comments')) {
+            Schema::table('news_comments', function (Blueprint $table) {
+                $columns = ['score', 'downvotes', 'upvotes', 'status', 'edited_at', 'is_edited'];
+                foreach ($columns as $column) {
+                    if (Schema::hasColumn('news_comments', $column)) {
+                        $table->dropColumn($column);
+                    }
+                }
+            });
+        }
+    }
+
+    /**
+     * Migrate existing category strings to category_id references
+     */
+    private function migrateCategoryStringToId(): void
+    {
+        if (!Schema::hasTable('news_categories')) {
+            return;
+        }
+
+        // Get all unique category names from news table
+        $categories = DB::table('news')
+            ->whereNotNull('category')
+            ->where('category', '!=', '')
+            ->distinct()
+            ->pluck('category');
+
+        foreach ($categories as $categoryName) {
+            // Find or create news category
+            $category = DB::table('news_categories')
+                ->where('name', $categoryName)
+                ->first();
+
+            if (!$category) {
+                $categoryId = DB::table('news_categories')->insertGetId([
+                    'name' => $categoryName,
+                    'slug' => \Illuminate\Support\Str::slug($categoryName),
+                    'description' => "Auto-generated category for {$categoryName}",
+                    'active' => true,
+                    'sort_order' => 0,
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ]);
+            } else {
+                $categoryId = $category->id;
+            }
+
+            // Update all news articles with this category
+            DB::table('news')
+                ->where('category', $categoryName)
+                ->update(['category_id' => $categoryId]);
+        }
+    }
+
+    /**
+     * Create performance indexes for news table
+     */
+    private function createNewsPerformanceIndexes(): void
+    {
+        if (!Schema::hasTable('news')) {
+            return;
+        }
+
+        try {
+            // Add composite indexes for common queries
+            DB::statement('CREATE INDEX IF NOT EXISTS idx_news_status_published_featured 
+                          ON news (status, published_at DESC, featured DESC)');
+            
+            DB::statement('CREATE INDEX IF NOT EXISTS idx_news_category_status_published 
+                          ON news (category_id, status, published_at DESC)');
+            
+            DB::statement('CREATE INDEX IF NOT EXISTS idx_news_author_status 
+                          ON news (author_id, status, created_at DESC)');
+            
+            DB::statement('CREATE INDEX IF NOT EXISTS idx_news_score_views 
+                          ON news (score DESC, views DESC)');
+            
+            echo "Created performance indexes for news table\n";
+        } catch (\Exception $e) {
+            // Indexes might already exist, continue
+            echo "Note: Some indexes may already exist\n";
+        }
+    }
+};

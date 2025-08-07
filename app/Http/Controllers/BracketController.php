@@ -2,11 +2,20 @@
 namespace App\Http\Controllers;
 
 use App\Models\Event;
-use App\Models\MatchModel;
-use App\Models\EventTeam;
+use App\Models\Tournament;
+use App\Models\Team;
+use App\Models\BracketStage;
+use App\Models\BracketMatch;
+use App\Models\BracketGame;
+use App\Models\BracketSeeding;
+use App\Models\BracketStanding;
+use App\Services\BracketService;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
+use Exception;
 
 class BracketController extends Controller
 {

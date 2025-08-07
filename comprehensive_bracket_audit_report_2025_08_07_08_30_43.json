@@ -1,0 +1,53 @@
+{
+    "timestamp": "2025-08-07 08:30:43",
+    "summary": {
+        "total_tests": 0,
+        "passed_tests": 0,
+        "success_rate": 0,
+        "critical_errors": 7,
+        "high_errors": 0,
+        "medium_errors": 0,
+        "warnings": 0
+    },
+    "detailed_results": {
+        "schema": []
+    },
+    "errors": [
+        {
+            "severity": "CRITICAL",
+            "message": "Error checking table 'bracket_stages': A facade root has not been set.",
+            "timestamp": "2025-08-07 08:30:43"
+        },
+        {
+            "severity": "CRITICAL",
+            "message": "Error checking table 'bracket_matches': A facade root has not been set.",
+            "timestamp": "2025-08-07 08:30:43"
+        },
+        {
+            "severity": "CRITICAL",
+            "message": "Error checking table 'bracket_positions': A facade root has not been set.",
+            "timestamp": "2025-08-07 08:30:43"
+        },
+        {
+            "severity": "CRITICAL",
+            "message": "Error checking table 'bracket_seedings': A facade root has not been set.",
+            "timestamp": "2025-08-07 08:30:43"
+        },
+        {
+            "severity": "CRITICAL",
+            "message": "Error checking table 'bracket_games': A facade root has not been set.",
+            "timestamp": "2025-08-07 08:30:43"
+        },
+        {
+            "severity": "CRITICAL",
+            "message": "Error checking table 'bracket_standings': A facade root has not been set.",
+            "timestamp": "2025-08-07 08:30:43"
+        },
+        {
+            "severity": "CRITICAL",
+            "message": "Audit failed: A facade root has not been set.",
+            "timestamp": "2025-08-07 08:30:43"
+        }
+    ],
+    "warnings": []
+}

@@ -9,11 +9,17 @@ class Team extends Model
     use HasFactory;
 
     protected $fillable = [
-        'name', 'short_name', 'logo', 'region', 'platform', 'game', 'division',
-        'country', 'flag', 'rating', 'rank', 'win_rate', 'points', 'record', 
-        'peak', 'streak', 'last_match', 'founded', 'captain', 'coach', 
-        'website', 'earnings', 'social_media', 'achievements', 'recent_form', 
-        'player_count'
+        'name', 'short_name', 'slug', 'logo', 'region', 'platform', 'game', 'division',
+        'country', 'flag', 'country_code', 'country_flag', 'rating', 'rank', 'win_rate', 
+        'map_win_rate', 'recent_performance', 'longest_win_streak', 'current_streak_count',
+        'current_streak_type', 'points', 'record', 'wins', 'losses', 'matches_played',
+        'maps_won', 'maps_lost', 'tournaments_won', 'peak', 'streak', 'last_match', 
+        'founded', 'founded_date', 'captain', 'coach', 'manager', 'coach_picture', 
+        'coach_image', 'description', 'website', 'liquipedia_url', 'twitter', 'instagram',
+        'youtube', 'twitch', 'tiktok', 'discord', 'facebook', 'social_media', 
+        'social_links', 'achievements', 'recent_form', 'player_count', 'status',
+        'earnings', 'owner', 'elo_rating', 'peak_elo', 'elo_changes', 'last_elo_update',
+        'ranking'
     ];
 
     protected $casts = [

@@ -2,28 +2,23 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
-use App\Events\ForumThreadCreated;
-use App\Events\ForumPostCreated;
-use App\Events\ForumThreadUpdated;
-use App\Events\ForumVoteUpdated;
 
 class ForumRealTimeService
 {
-    private $redis;
     private $cacheService;
 
     public function __construct(ForumCacheService $cacheService)
     {
-        $this->redis = Redis::connection();
         $this->cacheService = $cacheService;
     }
 
     /**
-     * Broadcast thread creation to subscribers
+     * Broadcast thread creation to subscribers (cache-based approach)
      */
     public function broadcastThreadCreated($threadId, $threadData)
     {
@@ -34,15 +29,13 @@ class ForumRealTimeService
             'timestamp' => Carbon::now()->toISOString()
         ];
 
-        // Broadcast to all forum subscribers
-        $this->broadcast('forum.threads', $event);
+        // Store in activity feed (cache-based)
+        $this->addToActivityFeed($event);
         
-        // Broadcast to category subscribers
-        if (isset($threadData['category'])) {
-            $this->broadcast("forum.category.{$threadData['category']}", $event);
-        }
+        // Store thread-specific update
+        $this->storeThreadUpdate($threadId, $event);
 
-        // Update real-time metrics
+        // Update forum metrics
         $this->updateForumMetrics('new_thread');
         
         // Cache invalidation
@@ -62,16 +55,16 @@ class ForumRealTimeService
             'timestamp' => Carbon::now()->toISOString()
         ];
 
-        // Broadcast to thread subscribers
-        $this->broadcast("forum.thread.{$threadId}", $event);
+        // Store in activity feed
+        $this->addToActivityFeed($event);
         
-        // Broadcast to general forum
-        $this->broadcast('forum.activity', $event);
+        // Store thread-specific update
+        $this->storeThreadUpdate($threadId, $event);
 
         // Update thread activity metrics
         $this->updateThreadMetrics($threadId, 'new_post');
         
-        // Process mentions for real-time notifications
+        // Process mentions for notifications
         $this->processMentionNotifications($postData['content'] ?? '', $threadId, $postId);
     }
 
@@ -89,12 +82,12 @@ class ForumRealTimeService
         ];
 
         if ($type === 'thread') {
-            $this->broadcast("forum.thread.{$targetId}.votes", $event);
+            $this->storeThreadUpdate($targetId, $event);
         } else {
             // For posts, we need to get the thread ID
             $post = DB::table('forum_posts')->where('id', $targetId)->first();
             if ($post) {
-                $this->broadcast("forum.thread.{$post->thread_id}.votes", $event);
+                $this->storeThreadUpdate($post->thread_id, $event);
             }
         }
 
@@ -117,18 +110,18 @@ class ForumRealTimeService
         ];
 
         if ($targetType === 'thread') {
-            $this->broadcast("forum.thread.{$targetId}", $event);
+            $this->storeThreadUpdate($targetId, $event);
         }
         
-        // Broadcast to moderators channel
-        $this->broadcast('forum.moderation', $event);
+        // Store in moderation activity feed
+        $this->addToModerationFeed($event);
 
         // Cache invalidation
         $this->cacheService->invalidateThread($targetId);
     }
 
     /**
-     * Send real-time notifications to users
+     * Send notifications to users (cache-based)
      */
     public function sendUserNotification($userId, $type, $data)
     {
@@ -136,79 +129,98 @@ class ForumRealTimeService
             'type' => $type,
             'data' => $data,
             'timestamp' => Carbon::now()->toISOString(),
-            'read' => false
+            'read' => false,
+            'id' => uniqid('notif_')
         ];
 
-        // Store notification in Redis for persistence
-        $this->redis->lpush("user:{$userId}:notifications", json_encode($notification));
-        $this->redis->ltrim("user:{$userId}:notifications", 0, 99); // Keep last 100
-
-        // Broadcast to user's WebSocket connection
-        $this->broadcast("user.{$userId}.notifications", $notification);
+        // Store notification in cache
+        $notificationsKey = "user:{$userId}:notifications";
+        $notifications = Cache::get($notificationsKey, []);
+        
+        // Add new notification to the beginning
+        array_unshift($notifications, $notification);
+        
+        // Keep only last 100 notifications
+        $notifications = array_slice($notifications, 0, 100);
+        
+        // Store back in cache (keep for 7 days)
+        Cache::put($notificationsKey, $notifications, 60 * 24 * 7);
 
         // Update notification count
-        $this->redis->incr("user:{$userId}:unread_notifications");
-        $this->redis->expire("user:{$userId}:unread_notifications", 86400 * 7); // 7 days
+        $countKey = "user:{$userId}:unread_notifications";
+        $currentCount = Cache::get($countKey, 0);
+        Cache::put($countKey, $currentCount + 1, 60 * 24 * 7);
+
+        // Store live notification update
+        $liveKey = "user:{$userId}:live_notification:" . time();
+        Cache::put($liveKey, $notification, 5); // Keep for 5 minutes
     }
 
     /**
-     * Process mention notifications in real-time
+     * Process mention notifications
      */
     private function processMentionNotifications($content, $threadId, $postId = null)
     {
-        // Extract @username mentions
-        preg_match_all('/@([a-zA-Z0-9_]+)/', $content, $userMatches);
-        foreach ($userMatches[1] as $username) {
-            $user = DB::table('users')->where('name', $username)->first();
-            if ($user && $user->id !== Auth::id()) {
-                $this->sendUserNotification($user->id, 'mention', [
-                    'type' => $postId ? 'post' : 'thread',
-                    'thread_id' => $threadId,
-                    'post_id' => $postId,
-                    'mentioned_by' => [
-                        'id' => Auth::id(),
-                        'name' => Auth::user()->name ?? 'User'
-                    ],
-                    'preview' => substr($content, 0, 100) . '...'
-                ]);
+        try {
+            // Extract @username mentions
+            preg_match_all('/@([a-zA-Z0-9_]+)/', $content, $userMatches);
+            foreach ($userMatches[1] as $username) {
+                $user = DB::table('users')->where('name', $username)->first();
+                if ($user && $user->id !== Auth::id()) {
+                    $this->sendUserNotification($user->id, 'mention', [
+                        'type' => $postId ? 'post' : 'thread',
+                        'thread_id' => $threadId,
+                        'post_id' => $postId,
+                        'mentioned_by' => [
+                            'id' => Auth::id(),
+                            'name' => Auth::user()->name ?? 'User'
+                        ],
+                        'preview' => substr($content, 0, 100) . '...'
+                    ]);
+                }
             }
-        }
 
-        // Extract @team:shortname mentions
-        preg_match_all('/@team:([a-zA-Z0-9_]+)/', $content, $teamMatches);
-        foreach ($teamMatches[1] as $teamShort) {
-            // Notify team members
-            $teamMembers = DB::table('users as u')
-                ->join('teams as t', 'u.team_flair_id', '=', 't.id')
-                ->where('t.short_name', $teamShort)
-                ->where('u.id', '!=', Auth::id())
-                ->pluck('u.id');
+            // Extract @team:shortname mentions
+            preg_match_all('/@team:([a-zA-Z0-9_]+)/', $content, $teamMatches);
+            foreach ($teamMatches[1] as $teamShort) {
+                // Notify team members
+                $teamMembers = DB::table('users as u')
+                    ->join('teams as t', 'u.team_flair_id', '=', 't.id')
+                    ->where('t.short_name', $teamShort)
+                    ->where('u.id', '!=', Auth::id())
+                    ->pluck('u.id');
 
-            foreach ($teamMembers as $memberId) {
-                $this->sendUserNotification($memberId, 'team_mention', [
-                    'type' => $postId ? 'post' : 'thread',
-                    'thread_id' => $threadId,
-                    'post_id' => $postId,
-                    'team_short' => $teamShort,
-                    'mentioned_by' => [
-                        'id' => Auth::id(),
-                        'name' => Auth::user()->name ?? 'User'
-                    ]
-                ]);
+                foreach ($teamMembers as $memberId) {
+                    $this->sendUserNotification($memberId, 'team_mention', [
+                        'type' => $postId ? 'post' : 'thread',
+                        'thread_id' => $threadId,
+                        'post_id' => $postId,
+                        'team_short' => $teamShort,
+                        'mentioned_by' => [
+                            'id' => Auth::id(),
+                            'name' => Auth::user()->name ?? 'User'
+                        ]
+                    ]);
+                }
             }
+        } catch (\Exception $e) {
+            Log::warning('Failed to process mention notifications', [
+                'error' => $e->getMessage(),
+                'thread_id' => $threadId,
+                'post_id' => $postId
+            ]);
         }
     }
 
     /**
-     * Get user's unread notifications
+     * Get user's notifications
      */
     public function getUserNotifications($userId, $limit = 20)
     {
-        $notifications = $this->redis->lrange("user:{$userId}:notifications", 0, $limit - 1);
+        $notificationsKey = "user:{$userId}:notifications";
+        $notifications = Cache::get($notificationsKey, []);
         
-        return array_map(function($notification) {
-            return json_decode($notification, true);
-        }, $notifications);
+        return array_slice($notifications, 0, $limit);
     }
 
     /**
@@ -216,21 +228,24 @@ class ForumRealTimeService
      */
     public function markNotificationsRead($userId, $notificationIds = null)
     {
+        $countKey = "user:{$userId}:unread_notifications";
+        
         if ($notificationIds === null) {
             // Mark all as read
-            $this->redis->del("user:{$userId}:unread_notifications");
+            Cache::forget($countKey);
         } else {
-            // Mark specific notifications as read (simplified implementation)
-            $count = $this->redis->get("user:{$userId}:unread_notifications") ?? 0;
+            // Mark specific notifications as read
+            $count = Cache::get($countKey, 0);
             $newCount = max(0, $count - count($notificationIds));
-            $this->redis->set("user:{$userId}:unread_notifications", $newCount);
+            Cache::put($countKey, $newCount, 60 * 24 * 7);
         }
 
-        // Broadcast update to user
-        $this->broadcast("user.{$userId}.notifications", [
+        // Store update notification
+        $updateKey = "user:{$userId}:notifications_read:" . time();
+        Cache::put($updateKey, [
             'type' => 'notifications_read',
             'timestamp' => Carbon::now()->toISOString()
-        ]);
+        ], 2); // Keep for 2 minutes
     }
 
     /**
@@ -238,26 +253,31 @@ class ForumRealTimeService
      */
     public function getActivityFeed($limit = 50)
     {
-        $events = $this->redis->lrange('forum:activity_feed', 0, $limit - 1);
+        $activityKey = 'forum:activity_feed';
+        $events = Cache::get($activityKey, []);
         
-        return array_map(function($event) {
-            return json_decode($event, true);
-        }, $events);
+        return array_slice($events, 0, $limit);
     }
 
     /**
-     * Get online users count
+     * Get online users count (simplified approach)
      */
     public function getOnlineUsersCount()
     {
-        // Users who have been active in the last 5 minutes
+        // Use cache to track online users
         $onlineKey = 'forum:online_users';
-        $fiveMinutesAgo = Carbon::now()->subMinutes(5)->timestamp;
+        $onlineUsers = Cache::get($onlineKey, []);
         
-        // Clean up old entries
-        $this->redis->zremrangebyscore($onlineKey, 0, $fiveMinutesAgo);
+        // Filter users who have been active in the last 5 minutes
+        $fiveMinutesAgo = time() - 300;
+        $activeUsers = array_filter($onlineUsers, function($timestamp) use ($fiveMinutesAgo) {
+            return $timestamp >= $fiveMinutesAgo;
+        });
         
-        return $this->redis->zcard($onlineKey);
+        // Update the cache with only active users
+        Cache::put($onlineKey, $activeUsers, 60);
+        
+        return count($activeUsers);
     }
 
     /**
@@ -266,21 +286,26 @@ class ForumRealTimeService
     public function markUserOnline($userId)
     {
         $onlineKey = 'forum:online_users';
-        $this->redis->zadd($onlineKey, time(), $userId);
-        $this->redis->expire($onlineKey, 3600); // Expire after 1 hour of inactivity
+        $onlineUsers = Cache::get($onlineKey, []);
+        
+        // Update user's last activity time
+        $onlineUsers[$userId] = time();
+        
+        // Store back in cache
+        Cache::put($onlineKey, $onlineUsers, 60);
     }
 
     /**
-     * Get trending threads in real-time
+     * Get trending threads (database-based calculation)
      */
     public function getTrendingThreads($limit = 10)
     {
         $cacheKey = 'forum:trending_threads';
         
         // Check cache first
-        $cached = $this->redis->get($cacheKey);
+        $cached = Cache::get($cacheKey);
         if ($cached) {
-            return json_decode($cached, true);
+            return $cached;
         }
 
         // Calculate trending threads based on recent activity
@@ -316,9 +341,84 @@ class ForumRealTimeService
         ", [$limit]);
 
         // Cache for 2 minutes
-        $this->redis->setex($cacheKey, 120, json_encode($trending));
+        Cache::put($cacheKey, $trending, 2);
 
         return $trending;
+    }
+
+    /**
+     * Add event to activity feed
+     */
+    private function addToActivityFeed($event)
+    {
+        try {
+            $activityKey = 'forum:activity_feed';
+            $events = Cache::get($activityKey, []);
+            
+            // Add new event to the beginning
+            array_unshift($events, $event);
+            
+            // Keep only last 200 events
+            $events = array_slice($events, 0, 200);
+            
+            // Store back in cache (keep for 1 hour)
+            Cache::put($activityKey, $events, 60);
+        } catch (\Exception $e) {
+            Log::warning('Failed to add to activity feed', [
+                'error' => $e->getMessage(),
+                'event' => $event
+            ]);
+        }
+    }
+
+    /**
+     * Store thread-specific updates
+     */
+    private function storeThreadUpdate($threadId, $event)
+    {
+        try {
+            $threadUpdatesKey = "forum:thread:{$threadId}:updates";
+            $updates = Cache::get($threadUpdatesKey, []);
+            
+            // Add new update
+            array_unshift($updates, $event);
+            
+            // Keep only last 50 updates per thread
+            $updates = array_slice($updates, 0, 50);
+            
+            // Store for 30 minutes
+            Cache::put($threadUpdatesKey, $updates, 30);
+        } catch (\Exception $e) {
+            Log::warning('Failed to store thread update', [
+                'error' => $e->getMessage(),
+                'thread_id' => $threadId
+            ]);
+        }
+    }
+
+    /**
+     * Add event to moderation feed
+     */
+    private function addToModerationFeed($event)
+    {
+        try {
+            $moderationKey = 'forum:moderation_feed';
+            $events = Cache::get($moderationKey, []);
+            
+            // Add new event
+            array_unshift($events, $event);
+            
+            // Keep only last 100 moderation events
+            $events = array_slice($events, 0, 100);
+            
+            // Store for 24 hours
+            Cache::put($moderationKey, $events, 60 * 24);
+        } catch (\Exception $e) {
+            Log::warning('Failed to add to moderation feed', [
+                'error' => $e->getMessage(),
+                'event' => $event
+            ]);
+        }
     }
 
     /**
@@ -326,21 +426,29 @@ class ForumRealTimeService
      */
     private function updateForumMetrics($action)
     {
-        $metricsKey = 'forum:metrics:' . date('Y-m-d-H'); // Hourly metrics
-        
-        $this->redis->hincrby($metricsKey, $action, 1);
-        $this->redis->hincrby($metricsKey, 'total_activity', 1);
-        $this->redis->expire($metricsKey, 86400 * 7); // Keep for 7 days
+        try {
+            $metricsKey = 'forum:metrics:' . date('Y-m-d-H'); // Hourly metrics
+            $metrics = Cache::get($metricsKey, []);
+            
+            // Increment action count
+            $metrics[$action] = ($metrics[$action] ?? 0) + 1;
+            $metrics['total_activity'] = ($metrics['total_activity'] ?? 0) + 1;
+            
+            // Store for 7 days
+            Cache::put($metricsKey, $metrics, 60 * 24 * 7);
 
-        // Update activity feed
-        $activity = [
-            'action' => $action,
-            'timestamp' => Carbon::now()->toISOString(),
-            'user_id' => Auth::id()
-        ];
-        
-        $this->redis->lpush('forum:activity_feed', json_encode($activity));
-        $this->redis->ltrim('forum:activity_feed', 0, 999); // Keep last 1000
+            // Update activity feed
+            $this->addToActivityFeed([
+                'action' => $action,
+                'timestamp' => Carbon::now()->toISOString(),
+                'user_id' => Auth::id()
+            ]);
+        } catch (\Exception $e) {
+            Log::warning('Failed to update forum metrics', [
+                'error' => $e->getMessage(),
+                'action' => $action
+            ]);
+        }
     }
 
     /**
@@ -348,40 +456,20 @@ class ForumRealTimeService
      */
     private function updateThreadMetrics($threadId, $action)
     {
-        $metricsKey = "forum:thread:{$threadId}:metrics";
-        
-        $this->redis->hincrby($metricsKey, $action, 1);
-        $this->redis->hincrby($metricsKey, 'last_activity', time());
-        $this->redis->expire($metricsKey, 86400 * 30); // Keep for 30 days
-    }
-
-    /**
-     * Generic broadcast method
-     */
-    private function broadcast($channel, $data)
-    {
         try {
-            // Use Redis pub/sub for WebSocket broadcasting
-            $this->redis->publish($channel, json_encode($data));
+            $metricsKey = "forum:thread:{$threadId}:metrics";
+            $metrics = Cache::get($metricsKey, []);
+            
+            // Update metrics
+            $metrics[$action] = ($metrics[$action] ?? 0) + 1;
+            $metrics['last_activity'] = time();
+            
+            // Store for 30 days
+            Cache::put($metricsKey, $metrics, 60 * 24 * 30);
         } catch (\Exception $e) {
-            \Log::error('Failed to broadcast forum event', [
-                'channel' => $channel,
-                'error' => $e->getMessage()
-            ]);
-        }
-    }
-
-    /**
-     * Subscribe to forum channels (for WebSocket server)
-     */
-    public function subscribeToChannels($channels, $callback)
-    {
-        try {
-            $this->redis->subscribe($channels, $callback);
-        } catch (\Exception $e) {
-            \Log::error('Failed to subscribe to forum channels', [
-                'channels' => $channels,
-                'error' => $e->getMessage()
+            Log::warning('Failed to update thread metrics', [
+                'error' => $e->getMessage(),
+                'thread_id' => $threadId
             ]);
         }
     }
@@ -397,7 +485,7 @@ class ForumRealTimeService
         for ($i = 0; $i < $hours; $i++) {
             $hour = $now->copy()->subHours($i)->format('Y-m-d-H');
             $key = "forum:metrics:{$hour}";
-            $hourData = $this->redis->hgetall($key);
+            $hourData = Cache::get($key, []);
             
             if (!empty($hourData)) {
                 $metrics[$hour] = $hourData;
@@ -408,21 +496,56 @@ class ForumRealTimeService
     }
 
     /**
-     * Cleanup old real-time data
+     * Cleanup old cached data
      */
     public function cleanup()
     {
-        // Remove old activity feed entries
-        $this->redis->ltrim('forum:activity_feed', 0, 999);
-        
-        // Remove old online users
-        $fiveMinutesAgo = Carbon::now()->subMinutes(5)->timestamp;
-        $this->redis->zremrangebyscore('forum:online_users', 0, $fiveMinutesAgo);
-        
-        // Remove old notification entries (older than 30 days)
-        $patterns = $this->redis->keys('user:*:notifications');
-        foreach ($patterns as $pattern) {
-            $this->redis->ltrim($pattern, 0, 99);
+        try {
+            // Clean up old activity feeds, notifications, etc.
+            // This is a simplified cleanup since we can't pattern match keys easily
+            
+            // Clean up online users (remove inactive ones)
+            $this->getOnlineUsersCount(); // This will clean up inactive users
+            
+            Log::info('Forum real-time service cleanup completed');
+        } catch (\Exception $e) {
+            Log::error('Failed to cleanup forum real-time data', [
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Placeholder methods for WebSocket compatibility (no-op without Redis)
+     */
+    public function subscribeToChannels($channels, $callback)
+    {
+        // Without Redis pub/sub, this becomes a no-op
+        // In a real implementation, you might use Laravel's broadcasting
+        Log::info('WebSocket channel subscription requested but not implemented without Redis', [
+            'channels' => $channels
+        ]);
+    }
+
+    /**
+     * Generic broadcast method (simplified for cache-based approach)
+     */
+    private function broadcast($channel, $data)
+    {
+        try {
+            // Store the broadcast data in cache for potential polling
+            $broadcastKey = "forum:broadcast:" . str_replace('.', '_', $channel) . ':' . time();
+            Cache::put($broadcastKey, $data, 5); // Keep for 5 minutes
+            
+            Log::debug('Broadcast stored in cache', [
+                'channel' => $channel,
+                'key' => $broadcastKey
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to broadcast forum event', [
+                'channel' => $channel,
+                'error' => $e->getMessage()
+            ]);
         }
     }
 }

@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
+use App\Helpers\ImageHelper;
 
 class NewsController extends Controller
 {
@@ -75,7 +76,7 @@ class NewsController extends Controller
                     'title' => $article->title,
                     'slug' => $article->slug,
                     'excerpt' => $article->excerpt,
-                    'featured_image' => $article->featured_image,
+                    'featured_image' => ImageHelper::getNewsImage($article->featured_image, $article->title),
                     'author' => $author,
                     'category' => [
                         'name' => $article->category_name,
@@ -155,8 +156,8 @@ class NewsController extends Controller
             // Get all comments for this article with nested structure (VLR.gg style)
             $comments = $this->getNewsComments($article->id);
 
-            // Increment view count
-            DB::table('news')->where('id', $article->id)->increment('views');
+            // Increment view count (moved to separate trackView method)
+            $this->incrementViewCount($article->id);
 
             // Get user's vote on article (if authenticated)
             $userVote = null;
@@ -201,7 +202,7 @@ class NewsController extends Controller
                 ],
                 'mentions' => $this->extractMentions($article->content),
                 'tags' => $article->tags ? json_decode($article->tags, true) : [],
-                'videos' => $this->extractVideoEmbeds($article->content),
+                'videos' => $this->getArticleVideos($article),
                 'user_vote' => $userVote,
                 'comments' => $comments,
                 'related_articles' => $relatedArticles
@@ -220,10 +221,50 @@ class NewsController extends Controller
         }
     }
 
+    public function trackView(Request $request, $newsId)
+    {
+        try {
+            // Verify news exists
+            $news = DB::table('news')->where('id', $newsId)->where('status', 'published')->first();
+            
+            if (!$news) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Article not found'
+                ], 404);
+            }
+
+            // Increment view count
+            $this->incrementViewCount($newsId);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'View tracked successfully',
+                'views' => $news->views + 1
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error tracking view: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    private function incrementViewCount($newsId)
+    {
+        try {
+            // Simple view increment - can be enhanced with IP tracking, user tracking, etc.
+            DB::table('news')->where('id', $newsId)->increment('views');
+        } catch (\Exception $e) {
+            \Log::error('Error incrementing view count for news ' . $newsId . ': ' . $e->getMessage());
+        }
+    }
+
     public function store(Request $request)
     {
         // Check if user is authenticated and has admin role
-        if (!Auth::check() || !in_array(Auth::user()->role, ['admin', 'moderator'])) {
+        if (!Auth::check() || !Auth::user()->hasAnyRole(['admin', 'moderator'])) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized - Admin or Moderator access required'
@@ -242,6 +283,11 @@ class NewsController extends Controller
             'category_id' => 'required|exists:news_categories,id',
             'featured_image' => 'nullable|url',
             'tags' => 'nullable|array',
+            'videos' => 'nullable|array',
+            'videos.*.platform' => 'required_with:videos|string|in:youtube,twitch-clip,twitch-video,twitter,vlrgg',
+            'videos.*.video_id' => 'required_with:videos|string',
+            'videos.*.embed_url' => 'nullable|string',
+            'videos.*.original_url' => 'required_with:videos|string|url',
             'featured' => 'boolean',
             'breaking' => 'boolean',
             'status' => 'required|in:draft,published,scheduled',
@@ -268,6 +314,7 @@ class NewsController extends Controller
                 'author_id' => Auth::id(),
                 'featured_image' => $request->featured_image,
                 'tags' => $request->tags ? json_encode($request->tags) : null,
+                'videos' => $request->videos ? json_encode($request->videos) : null,
                 'featured' => $request->featured ?? false,
                 'breaking' => $request->breaking ?? false,
                 'status' => $request->status,
@@ -278,6 +325,11 @@ class NewsController extends Controller
 
             // Process mentions in content
             $this->processMentions($request->content, $newsId);
+
+            // Process video embeds if provided
+            if ($request->videos && !empty($request->videos)) {
+                $this->processVideoEmbeds($request->videos, $newsId);
+            }
 
             return response()->json([
                 'data' => ['id' => $newsId, 'slug' => $slug],
@@ -1197,21 +1249,51 @@ class NewsController extends Controller
                 $request->merge(['featured_image' => null]);
             }
             
-            $data = $request->validate([
-                'title' => 'required|string|max:255',
-                'excerpt' => 'required|string|max:500',
-                'content' => 'required|string',
-                'category' => 'required|string',
-                'status' => 'required|string|in:draft,published,archived',
-                'featured_image' => 'nullable|string',
-                'tags' => 'nullable|string',
-                'featured' => 'boolean',
-                'meta_title' => 'nullable|string|max:255',
-                'meta_description' => 'nullable|string|max:255'
-            ]);
+            // Build validation rules based on what fields are present in the request
+            $validationRules = [];
+            
+            if ($request->has('title')) {
+                $validationRules['title'] = 'required|string|max:255';
+            }
+            if ($request->has('excerpt')) {
+                $validationRules['excerpt'] = 'required|string|max:500';
+            }
+            if ($request->has('content')) {
+                $validationRules['content'] = 'required|string';
+            }
+            if ($request->has('category')) {
+                $validationRules['category'] = 'required|string';
+            }
+            if ($request->has('status')) {
+                $validationRules['status'] = 'required|string|in:draft,published,archived';
+            }
+            if ($request->has('featured_image')) {
+                $validationRules['featured_image'] = 'nullable|string';
+            }
+            if ($request->has('tags')) {
+                $validationRules['tags'] = 'nullable|string';
+            }
+            if ($request->has('videos')) {
+                $validationRules['videos'] = 'nullable|array';
+                $validationRules['videos.*.platform'] = 'required_with:videos|string|in:youtube,twitch-clip,twitch-video,twitter,vlrgg';
+                $validationRules['videos.*.video_id'] = 'required_with:videos|string';
+                $validationRules['videos.*.embed_url'] = 'nullable|string';
+                $validationRules['videos.*.original_url'] = 'required_with:videos|string|url';
+            }
+            if ($request->has('featured')) {
+                $validationRules['featured'] = 'boolean';
+            }
+            if ($request->has('meta_title')) {
+                $validationRules['meta_title'] = 'nullable|string|max:255';
+            }
+            if ($request->has('meta_description')) {
+                $validationRules['meta_description'] = 'nullable|string|max:255';
+            }
+            
+            $data = $request->validate($validationRules);
 
-            // Generate slug from title if not provided
-            if (!isset($data['slug']) || empty($data['slug'])) {
+            // Generate slug from title if title is provided and slug is not provided
+            if (isset($data['title']) && (!isset($data['slug']) || empty($data['slug']))) {
                 $data['slug'] = Str::slug($data['title']);
                 
                 // Ensure unique slug
@@ -1221,6 +1303,12 @@ class NewsController extends Controller
                     $data['slug'] = $originalSlug . '-' . $counter;
                     $counter++;
                 }
+            }
+
+            // Handle videos separately
+            $videos = $data['videos'] ?? null;
+            if (isset($data['videos'])) {
+                $data['videos'] = $videos ? json_encode($videos) : null;
             }
 
             $data['updated_at'] = now();
@@ -1234,6 +1322,11 @@ class NewsController extends Controller
                     'success' => false,
                     'message' => 'News not found or no changes made'
                 ], 404);
+            }
+
+            // Process video embeds if provided
+            if ($videos && !empty($videos)) {
+                $this->processVideoEmbeds($videos, $newsId);
             }
 
             return response()->json([
@@ -1416,7 +1509,7 @@ class NewsController extends Controller
     public function featureNews($newsId)
     {
         // Check if user is authenticated and has admin/moderator role
-        if (!Auth::check() || !in_array(Auth::user()->role, ['admin', 'moderator'])) {
+        if (!Auth::check() || !Auth::user()->hasAnyRole(['admin', 'moderator'])) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized - Admin or Moderator access required'
@@ -1454,7 +1547,7 @@ class NewsController extends Controller
     public function unfeatureNews($newsId)
     {
         // Check if user is authenticated and has admin/moderator role
-        if (!Auth::check() || !in_array(Auth::user()->role, ['admin', 'moderator'])) {
+        if (!Auth::check() || !Auth::user()->hasAnyRole(['admin', 'moderator'])) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized - Admin or Moderator access required'
@@ -1541,7 +1634,7 @@ class NewsController extends Controller
     public function getReportedComments(Request $request)
     {
         // Check if user is authenticated and has admin/moderator role
-        if (!Auth::check() || !in_array(Auth::user()->role, ['admin', 'moderator'])) {
+        if (!Auth::check() || !Auth::user()->hasAnyRole(['admin', 'moderator'])) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized - Admin or Moderator access required'
@@ -1586,7 +1679,7 @@ class NewsController extends Controller
     public function moderateComment(Request $request, $commentId)
     {
         // Check if user is authenticated and has admin/moderator role
-        if (!Auth::check() || !in_array(Auth::user()->role, ['admin', 'moderator'])) {
+        if (!Auth::check() || !Auth::user()->hasAnyRole(['admin', 'moderator'])) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized - Admin or Moderator access required'
@@ -1683,7 +1776,7 @@ class NewsController extends Controller
     public function forceDeleteComment($commentId)
     {
         // Check if user is authenticated and has admin role
-        if (!Auth::check() || Auth::user()->role !== 'admin') {
+        if (!Auth::check() || !Auth::user()->hasRole('admin')) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized - Admin access required'
@@ -1724,7 +1817,7 @@ class NewsController extends Controller
     public function getPendingNews(Request $request)
     {
         // Check if user is authenticated and has admin/moderator role
-        if (!Auth::check() || !in_array(Auth::user()->role, ['admin', 'moderator'])) {
+        if (!Auth::check() || !Auth::user()->hasAnyRole(['admin', 'moderator'])) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized - Admin or Moderator access required'
@@ -1758,7 +1851,7 @@ class NewsController extends Controller
     public function approveNews($newsId)
     {
         // Check if user is authenticated and has admin/moderator role
-        if (!Auth::check() || !in_array(Auth::user()->role, ['admin', 'moderator'])) {
+        if (!Auth::check() || !Auth::user()->hasAnyRole(['admin', 'moderator'])) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized - Admin or Moderator access required'
@@ -1796,7 +1889,7 @@ class NewsController extends Controller
     public function rejectNews(Request $request, $newsId)
     {
         // Check if user is authenticated and has admin/moderator role
-        if (!Auth::check() || !in_array(Auth::user()->role, ['admin', 'moderator'])) {
+        if (!Auth::check() || !Auth::user()->hasAnyRole(['admin', 'moderator'])) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized - Admin or Moderator access required'
@@ -1849,7 +1942,7 @@ class NewsController extends Controller
     public function forceDeleteNews($newsId)
     {
         // Check if user is authenticated and has admin role
-        if (!Auth::check() || Auth::user()->role !== 'admin') {
+        if (!Auth::check() || !Auth::user()->hasRole('admin')) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized - Admin access required'
@@ -1886,5 +1979,97 @@ class NewsController extends Controller
     public function getAllNews(Request $request)
     {
         return $this->adminIndex($request);
+    }
+
+    /**
+     * Process video embeds for a news article
+     */
+    private function processVideoEmbeds($videos, $newsId)
+    {
+        if (!$videos || empty($videos)) {
+            return;
+        }
+
+        // Clear existing video embeds for this article
+        DB::table('news_video_embeds')->where('news_id', $newsId)->delete();
+
+        // Insert new video embeds
+        foreach ($videos as $video) {
+            try {
+                DB::table('news_video_embeds')->insert([
+                    'news_id' => $newsId,
+                    'platform' => $video['platform'],
+                    'video_id' => $video['video_id'],
+                    'embed_url' => $video['embed_url'] ?? null,
+                    'original_url' => $video['original_url'],
+                    'title' => $video['title'] ?? null,
+                    'thumbnail' => $video['thumbnail'] ?? null,
+                    'duration' => $video['duration'] ?? null,
+                    'metadata' => isset($video['metadata']) ? json_encode($video['metadata']) : null,
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ]);
+            } catch (\Exception $e) {
+                \Log::error('Error processing video embed: ' . $e->getMessage());
+            }
+        }
+    }
+
+    /**
+     * Get video data for an article (combined from database and content extraction)
+     */
+    private function getArticleVideos($article)
+    {
+        $videos = [];
+
+        // First, try to get videos from the dedicated videos column
+        if (!empty($article->videos)) {
+            try {
+                $storedVideos = json_decode($article->videos, true);
+                if (is_array($storedVideos)) {
+                    $videos = array_merge($videos, $storedVideos);
+                }
+            } catch (\Exception $e) {
+                \Log::error('Error parsing stored videos: ' . $e->getMessage());
+            }
+        }
+
+        // Also check for videos stored in the separate table
+        try {
+            $dbVideos = DB::table('news_video_embeds')
+                ->where('news_id', $article->id)
+                ->get()
+                ->map(function($video) {
+                    return [
+                        'platform' => $video->platform,
+                        'video_id' => $video->video_id,
+                        'embed_url' => $video->embed_url,
+                        'original_url' => $video->original_url,
+                        'title' => $video->title,
+                        'thumbnail' => $video->thumbnail,
+                        'duration' => $video->duration,
+                        'metadata' => $video->metadata ? json_decode($video->metadata, true) : null
+                    ];
+                })
+                ->toArray();
+
+            $videos = array_merge($videos, $dbVideos);
+        } catch (\Exception $e) {
+            \Log::error('Error fetching video embeds from database: ' . $e->getMessage());
+        }
+
+        // Fallback to content extraction if no structured videos found
+        if (empty($videos)) {
+            $videos = $this->extractVideoEmbeds($article->content);
+        }
+
+        // Remove duplicates based on video_id and platform
+        $uniqueVideos = [];
+        foreach ($videos as $video) {
+            $key = ($video['platform'] ?? 'unknown') . '_' . ($video['video_id'] ?? uniqid());
+            $uniqueVideos[$key] = $video;
+        }
+
+        return array_values($uniqueVideos);
     }
 }

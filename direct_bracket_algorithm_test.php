@@ -7,15 +7,6 @@
 
 require_once __DIR__ . '/vendor/autoload.php';
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\DB;
-use App\Http\Controllers\BracketController;
-use App\Http\Controllers\SimpleBracketController;
-
-// Load Laravel app
-$app = require_once __DIR__ . '/bootstrap/app.php';
-$app->make(\Illuminate\Contracts\Console\Kernel::class)->bootstrap();
-
 class DirectBracketTester
 {
     private $testResults = [];
