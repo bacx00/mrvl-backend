@@ -140,19 +140,26 @@ class EventController extends Controller
         }
     }
 
-    public function show($slug)
+    public function show($slugOrId)
     {
         try {
-            // Get event by slug
-            $event = DB::table('events as e')
+            // Get event by slug or ID
+            $query = DB::table('events as e')
                 ->leftJoin('users as u', 'e.organizer_id', '=', 'u.id')
-                ->where('e.slug', $slug)
                 ->select([
                     'e.*',
                     'u.name as organizer_name',
                     'u.avatar as organizer_avatar'
-                ])
-                ->first();
+                ]);
+                
+            // Check if the parameter is numeric (ID) or string (slug)
+            if (is_numeric($slugOrId)) {
+                $query->where('e.id', $slugOrId);
+            } else {
+                $query->where('e.slug', $slugOrId);
+            }
+            
+            $event = $query->first();
 
             if (!$event) {
                 return response()->json([
@@ -251,7 +258,7 @@ class EventController extends Controller
         }
         
         // Check if user has admin role
-        if (!$user->hasRole(['admin', 'super_admin']) && !$user->hasPermissionTo('manage-events')) {
+        if (!($user->hasRole('admin') || $user->hasRole('super_admin')) && !$user->hasPermissionTo('manage-events')) {
             return response()->json([
                 'success' => false,
                 'message' => 'You do not have permission to create events. Admin role required.'
@@ -1090,7 +1097,14 @@ class EventController extends Controller
     // Admin Routes
     public function getAllEvents(Request $request)
     {
-        $this->authorize('manage-events');
+        // Check if user is authenticated and has admin role
+        $user = auth('api')->user();
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Authentication required'
+            ], 401);
+        }
         
         try {
             $query = DB::table('events as e')
@@ -1118,8 +1132,35 @@ class EventController extends Controller
 
             $events = $query->orderBy('e.created_at', 'desc')->paginate(20);
 
+            // Process events data to include proper logo formatting
+            $eventsData = collect($events->items())->map(function($event) {
+                return [
+                    'id' => $event->id,
+                    'name' => $event->name,
+                    'slug' => $event->slug,
+                    'description' => $event->description,
+                    'logo' => $event->logo, // Keep original logo path
+                    'type' => $event->type,
+                    'tier' => $event->tier,
+                    'format' => $event->format,
+                    'region' => $event->region,
+                    'game_mode' => $event->game_mode,
+                    'status' => $event->status,
+                    'start_date' => $event->start_date,
+                    'end_date' => $event->end_date,
+                    'max_teams' => $event->max_teams,
+                    'prize_pool' => $event->prize_pool,
+                    'currency' => $event->currency,
+                    'featured' => (bool)$event->featured,
+                    'public' => (bool)$event->public,
+                    'organizer_name' => $event->organizer_name,
+                    'created_at' => $event->created_at,
+                    'updated_at' => $event->updated_at
+                ];
+            });
+
             return response()->json([
-                'data' => $events->items(),
+                'data' => $eventsData,
                 'pagination' => [
                     'current_page' => $events->currentPage(),
                     'last_page' => $events->lastPage(),
@@ -1139,7 +1180,14 @@ class EventController extends Controller
 
     public function getEventAdmin($eventId)
     {
-        $this->authorize('manage-events');
+        // Check if user is admin or moderator
+        $user = Auth::user();
+        if (!$user || !in_array($user->role, ['admin', 'moderator'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized'
+            ], 401);
+        }
         
         try {
             $event = DB::table('events')->where('id', $eventId)->first();
@@ -1204,7 +1252,7 @@ class EventController extends Controller
         }
         
         // Check if user has admin role
-        if (!$user->hasRole(['admin', 'super_admin']) && !$user->hasPermissionTo('manage-events')) {
+        if (!($user->hasRole('admin') || $user->hasRole('super_admin')) && !$user->hasPermissionTo('manage-events')) {
             return response()->json([
                 'success' => false,
                 'message' => 'You do not have permission to update events. Admin role required.'

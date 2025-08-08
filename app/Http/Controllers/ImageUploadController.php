@@ -26,7 +26,7 @@ class ImageUploadController extends Controller
         }
         
         // Check if user has required permission or admin role
-        if (!$user->hasRole(['admin', 'super_admin']) && !$user->hasPermissionTo($requiredPermission)) {
+        if (!($user->hasRole('admin') || $user->hasRole('super_admin')) && !$user->hasPermissionTo($requiredPermission)) {
             return response()->json([
                 'success' => false,
                 'message' => 'You do not have permission to upload images. Admin role required.'

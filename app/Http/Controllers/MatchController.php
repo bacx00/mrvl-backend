@@ -91,11 +91,11 @@ class MatchController extends Controller
                 ->where('m.id', $matchId)
                 ->select([
                     'm.*',
-                    't1.id as team1_id', 't1.name as team1_name', 't1.short_name as team1_short',
+                    't1.name as team1_name', 't1.short_name as team1_short',
                     't1.logo as team1_logo', 't1.region as team1_region', 't1.rating as team1_rating',
-                    't2.id as team2_id', 't2.name as team2_name', 't2.short_name as team2_short', 
+                    't2.name as team2_name', 't2.short_name as team2_short', 
                     't2.logo as team2_logo', 't2.region as team2_region', 't2.rating as team2_rating',
-                    'e.id as event_id', 'e.name as event_name', 'e.type as event_type',
+                    'e.name as event_name', 'e.type as event_type',
                     'e.logo as event_logo', 'e.format as event_format'
                 ])
                 ->first();
@@ -316,6 +316,148 @@ class MatchController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error updating match: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Complete update method for MatchForm - handles all fields including multiple URLs
+     * PUT /api/admin/matches/{id}/complete-update
+     */
+    public function completeUpdate(Request $request, $matchId)
+    {
+        // Skip authorization for admin routes since they're already protected by admin middleware
+        if (!request()->is('api/admin/*')) {
+            $this->authorize('manage-matches');
+        }
+        
+        $request->validate([
+            'team1_id' => 'required|exists:teams,id',
+            'team2_id' => 'required|exists:teams,id',
+            'event_id' => 'nullable|exists:events,id',
+            'scheduled_at' => 'required|date',
+            'format' => 'required|in:BO1,BO3,BO5,BO7,BO9',
+            'status' => 'sometimes|in:upcoming,live,completed,cancelled,postponed',
+            
+            // Enhanced maps data validation
+            'maps_data' => 'required|array|min:1',
+            'maps_data.*.map_number' => 'required|integer|min:1',
+            'maps_data.*.map_name' => 'required|string',
+            'maps_data.*.mode' => 'required|string',
+            
+            // Multiple URLs support - enhanced validation
+            'stream_urls' => 'nullable|array',
+            'stream_urls.*' => 'url',
+            'betting_urls' => 'nullable|array',
+            'betting_urls.*' => 'url',
+            'vod_urls' => 'nullable|array',
+            'vod_urls.*' => 'url',
+            
+            // Tournament context
+            'round' => 'nullable|string',
+            'bracket_position' => 'nullable|string',
+            'allow_past_date' => 'boolean',
+            
+            // Match scores
+            'team1_score' => 'sometimes|integer|min:0',
+            'team2_score' => 'sometimes|integer|min:0'
+        ]);
+
+        try {
+            $match = DB::table('matches')->where('id', $matchId)->first();
+            if (!$match) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Match not found'
+                ], 404);
+            }
+
+            // Process and validate maps data
+            $processedMapsData = [];
+            foreach ($request->maps_data as $map) {
+                $processedMap = [
+                    'map_number' => $map['map_number'],
+                    'map_name' => $map['map_name'],
+                    'mode' => $map['mode'],
+                    'team1_score' => intval($map['team1_score'] ?? 0),
+                    'team2_score' => intval($map['team2_score'] ?? 0),
+                    'winner_id' => $map['winner_id'] ?? null,
+                    'status' => $map['status'] ?? 'upcoming',
+                    'duration' => $map['duration'] ?? null,
+                    'overtime' => $map['overtime'] ?? false,
+                    
+                    // Enhanced team compositions
+                    'team1_composition' => $map['team1_composition'] ?? [],
+                    'team2_composition' => $map['team2_composition'] ?? []
+                ];
+                
+                $processedMapsData[] = $processedMap;
+            }
+
+            // Update match with all data
+            $updateData = [
+                'team1_id' => intval($request->team1_id),
+                'team2_id' => intval($request->team2_id),
+                'event_id' => $request->event_id ? intval($request->event_id) : null,
+                'scheduled_at' => $request->scheduled_at,
+                'format' => strtolower($request->format),
+                'status' => $request->status ?? 'upcoming',
+                'team1_score' => intval($request->team1_score ?? 0),
+                'team2_score' => intval($request->team2_score ?? 0),
+                
+                // ENHANCED: Multiple URLs support - store as JSON arrays
+                'stream_urls' => json_encode(array_filter($request->stream_urls ?? [])),
+                'betting_urls' => json_encode(array_filter($request->betting_urls ?? [])),
+                'vod_urls' => json_encode(array_filter($request->vod_urls ?? [])),
+                
+                // Tournament context
+                'round' => $request->round ?? null,
+                'bracket_position' => $request->bracket_position ?? null,
+                'allow_past_date' => $request->allow_past_date ?? false,
+                
+                // Enhanced maps data with full compositions
+                'maps_data' => json_encode($processedMapsData),
+                
+                'updated_at' => now()
+            ];
+
+            DB::table('matches')->where('id', $matchId)->update($updateData);
+
+            // CRITICAL FIX: Calculate and update overall match score from maps data
+            $this->updateOverallScore($matchId);
+
+            \Log::info('Match complete update successful', [
+                'match_id' => $matchId,
+                'stream_urls' => count($request->stream_urls ?? []),
+                'betting_urls' => count($request->betting_urls ?? []),
+                'vod_urls' => count($request->vod_urls ?? []),
+                'maps_count' => count($processedMapsData)
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Match updated completely with all URLs and data preserved',
+                'data' => [
+                    'id' => $matchId,
+                    'maps_count' => count($processedMapsData),
+                    'urls_count' => [
+                        'streams' => count(array_filter($request->stream_urls ?? [])),
+                        'betting' => count(array_filter($request->betting_urls ?? [])),
+                        'vods' => count(array_filter($request->vod_urls ?? []))
+                    ]
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Complete match update failed', [
+                'match_id' => $matchId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating match completely: ' . $e->getMessage()
             ], 500);
         }
     }
@@ -983,7 +1125,7 @@ class MatchController extends Controller
                 DB::table('matches')->where('id', $matchId)->update($data);
 
                 // Broadcast update
-                $this->broadcastLiveUpdate($matchId, $data);
+                $this->broadcastLiveUpdate($matchId, 'score-update', $data);
 
                 return response()->json([
                     'success' => true,
@@ -1161,7 +1303,7 @@ class MatchController extends Controller
                 DB::table('matches')->where('id', $matchId)->update($data);
 
                 // Broadcast live update via websocket/pusher
-                $this->broadcastLiveUpdate($matchId, $data);
+                $this->broadcastLiveUpdate($matchId, 'live-update', $data);
 
                 return response()->json([
                     'success' => true,
@@ -1364,25 +1506,6 @@ class MatchController extends Controller
     }
 
     // Broadcast live update to frontend via Pusher/WebSocket
-    private function broadcastLiveUpdate($matchId, $data)
-    {
-        try {
-            // Broadcast to Pusher channel
-            if (config('broadcasting.default') === 'pusher') {
-                broadcast(new \App\Events\MatchUpdated($matchId, $data))->toOthers();
-            }
-            
-            // Log the update for debugging
-            \Log::info('Live match update broadcasted', [
-                'match_id' => $matchId,
-                'team1_score' => $data['team1_score'] ?? null,
-                'team2_score' => $data['team2_score'] ?? null,
-                'current_map' => $data['current_map'] ?? null
-            ]);
-        } catch (\Exception $e) {
-            \Log::error('Failed to broadcast live update: ' . $e->getMessage());
-        }
-    }
 
     // Helper Methods
     private function formatMatchData($match, $isLive = false)
@@ -1869,14 +1992,24 @@ class MatchController extends Controller
         $team2Score = 0;
         
         foreach ($mapsData as $map) {
-            if ($map['status'] === 'completed') {
-                if ($map['team1_score'] > $map['team2_score']) {
+            // FIXED: Count maps that are completed OR have actual scores (not 0-0)
+            $hasScores = ($map['team1_score'] || 0) !== ($map['team2_score'] || 0) && 
+                        (($map['team1_score'] || 0) > 0 || ($map['team2_score'] || 0) > 0);
+            
+            if ($map['status'] === 'completed' || $hasScores) {
+                if (($map['team1_score'] || 0) > ($map['team2_score'] || 0)) {
                     $team1Score++;
-                } elseif ($map['team2_score'] > $map['team1_score']) {
+                } elseif (($map['team2_score'] || 0) > ($map['team1_score'] || 0)) {
                     $team2Score++;
                 }
             }
         }
+        
+        \Log::info("updateOverallScore for match $matchId", [
+            'team1Score' => $team1Score,
+            'team2Score' => $team2Score,
+            'mapsData' => $mapsData
+        ]);
         
         DB::table('matches')->where('id', $matchId)->update([
             'team1_score' => $team1Score,
@@ -4406,6 +4539,221 @@ class MatchController extends Controller
                 'success' => false, 
                 'message' => 'Failed to get live data: ' . $e->getMessage()
             ], 500);
+        }
+    }
+
+    /**
+     * CRITICAL: Update live stats comprehensively from SimplifiedLiveScoring
+     */
+    public function updateLiveStatsComprehensive(Request $request, $matchId)
+    {
+        try {
+            \Log::info('MatchController@updateLiveStatsComprehensive: Updating comprehensive live stats', [
+                'match_id' => $matchId,
+                'request_data' => $request->all()
+            ]);
+
+            $match = DB::table('matches')->where('id', $matchId)->first();
+            if (!$match) {
+                return response()->json(['success' => false, 'message' => 'Match not found'], 404);
+            }
+
+            // Validate request data
+            $validatedData = $request->validate([
+                'team1_players' => 'array',
+                'team2_players' => 'array', 
+                'team1_score' => 'integer|min:0',
+                'team2_score' => 'integer|min:0',
+                'series_score_team1' => 'integer|min:0',
+                'series_score_team2' => 'integer|min:0',
+                'status' => 'string|in:upcoming,live,completed,cancelled'
+            ]);
+
+            DB::transaction(function () use ($matchId, $validatedData, $match) {
+                // Update match scores and status
+                $updateData = [];
+                
+                if (isset($validatedData['series_score_team1'])) {
+                    $updateData['team1_score'] = $validatedData['series_score_team1'];
+                }
+                if (isset($validatedData['series_score_team2'])) {
+                    $updateData['team2_score'] = $validatedData['series_score_team2'];
+                }
+                if (isset($validatedData['status'])) {
+                    $updateData['status'] = $validatedData['status'];
+                }
+                
+                if (!empty($updateData)) {
+                    $updateData['updated_at'] = now();
+                    DB::table('matches')->where('id', $matchId)->update($updateData);
+                }
+
+                // Update or store player stats if provided
+                if (!empty($validatedData['team1_players']) || !empty($validatedData['team2_players'])) {
+                    $this->updatePlayerStatsFromLiveScoring($matchId, $validatedData['team1_players'] ?? [], $validatedData['team2_players'] ?? []);
+                }
+            });
+
+            // Broadcast live update to connected clients
+            $this->broadcastLiveUpdate($matchId, 'stats-update', [
+                'team1_score' => $validatedData['series_score_team1'] ?? $match->team1_score,
+                'team2_score' => $validatedData['series_score_team2'] ?? $match->team2_score,
+                'team1_players' => $validatedData['team1_players'] ?? [],
+                'team2_players' => $validatedData['team2_players'] ?? [],
+                'status' => $validatedData['status'] ?? $match->status,
+                'timestamp' => now()->toIso8601String()
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Live stats updated successfully',
+                'data' => [
+                    'match_id' => $matchId,
+                    'team1_score' => $validatedData['series_score_team1'] ?? $match->team1_score,
+                    'team2_score' => $validatedData['series_score_team2'] ?? $match->team2_score
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('MatchController@updateLiveStatsComprehensive error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating live stats: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Handle team wins map event from SimplifiedLiveScoring
+     */
+    public function teamWinsMap(Request $request, $matchId)
+    {
+        try {
+            \Log::info('MatchController@teamWinsMap: Processing team map win', [
+                'match_id' => $matchId,
+                'request_data' => $request->all()
+            ]);
+
+            $match = DB::table('matches')->where('id', $matchId)->first();
+            if (!$match) {
+                return response()->json(['success' => false, 'message' => 'Match not found'], 404);
+            }
+
+            $validatedData = $request->validate([
+                'winning_team' => 'required|integer|in:1,2',
+                'current_map_score_team1' => 'integer|min:0',
+                'current_map_score_team2' => 'integer|min:0'
+            ]);
+
+            $winningTeam = $validatedData['winning_team'];
+            
+            DB::transaction(function () use ($matchId, $match, $winningTeam, $validatedData) {
+                // Update series score
+                $newTeam1Score = $match->team1_score;
+                $newTeam2Score = $match->team2_score;
+                
+                if ($winningTeam === 1) {
+                    $newTeam1Score++;
+                } else {
+                    $newTeam2Score++;
+                }
+                
+                // Update match
+                DB::table('matches')->where('id', $matchId)->update([
+                    'team1_score' => $newTeam1Score,
+                    'team2_score' => $newTeam2Score,
+                    'updated_at' => now()
+                ]);
+            });
+
+            // Broadcast live update
+            $this->broadcastLiveUpdate($matchId, 'score-update', [
+                'type' => 'map_win',
+                'winning_team' => $winningTeam,
+                'team1_score' => $winningTeam === 1 ? $match->team1_score + 1 : $match->team1_score,
+                'team2_score' => $winningTeam === 2 ? $match->team2_score + 1 : $match->team2_score,
+                'timestamp' => now()->toIso8601String()
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => "Team {$winningTeam} wins the map!",
+                'data' => [
+                    'match_id' => $matchId,
+                    'winning_team' => $winningTeam,
+                    'new_team1_score' => $winningTeam === 1 ? $match->team1_score + 1 : $match->team1_score,
+                    'new_team2_score' => $winningTeam === 2 ? $match->team2_score + 1 : $match->team2_score
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('MatchController@teamWinsMap error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error recording map win: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Helper method to update player stats from live scoring
+     */
+    private function updatePlayerStatsFromLiveScoring($matchId, $team1Players, $team2Players)
+    {
+        $allPlayers = array_merge($team1Players, $team2Players);
+        $statsToUpdate = [];
+        $timestamp = now();
+
+        foreach ($allPlayers as $player) {
+            if (!isset($player['id']) && !isset($player['username'])) {
+                continue; // Skip invalid player data
+            }
+
+            $statsToUpdate[] = [
+                'match_id' => $matchId,
+                'player_id' => $player['id'] ?? null,
+                'player_name' => $player['username'] ?? $player['player_name'] ?? null,
+                'hero_played' => $player['hero'] ?? null,
+                'eliminations' => $player['kills'] ?? 0,
+                'deaths' => $player['deaths'] ?? 0,
+                'assists' => $player['assists'] ?? 0,
+                'created_at' => $timestamp,
+                'updated_at' => $timestamp
+            ];
+        }
+
+        if (!empty($statsToUpdate)) {
+            // Clear existing stats for this match
+            DB::table('player_match_stats')->where('match_id', $matchId)->delete();
+            
+            // Insert new stats
+            DB::table('player_match_stats')->insert($statsToUpdate);
+        }
+    }
+
+    /**
+     * Helper method to broadcast live updates via cache
+     */
+    private function broadcastLiveUpdate($matchId, $updateType, $data)
+    {
+        try {
+            $updateKey = "live_update_match_{$matchId}_{$updateType}";
+            
+            $updatePayload = [
+                'type' => $updateType,
+                'data' => array_merge($data, [
+                    'match_id' => $matchId,
+                    'timestamp' => now()->toIso8601String()
+                ])
+            ];
+            
+            // Store in cache for SSE pickup (expires after 30 seconds)
+            cache()->put($updateKey, $updatePayload, 30);
+            
+            \Log::info("Broadcast live update: {$updateType} for match {$matchId}");
+            
+        } catch (\Exception $e) {
+            \Log::error("Failed to broadcast live update: " . $e->getMessage());
         }
     }
 

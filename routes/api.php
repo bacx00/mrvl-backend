@@ -14,6 +14,7 @@ use App\Http\Controllers\{
     AnalyticsController,
     AdminUserController,
     AdminMatchController,
+    LiveUpdateController,
     NewsController,
     ImageUploadController,
     BracketController,
@@ -61,6 +62,7 @@ Route::prefix('auth')->group(function () {
     Route::post('/reset-password', [AuthController::class, 'resetPassword']);
     Route::middleware('auth:api')->post('/logout', [AuthController::class, 'logout']);
     Route::middleware('auth:api')->get('/me', [AuthController::class, 'me']);
+    Route::middleware('auth:api')->get('/user', [AuthController::class, 'user']);
     Route::middleware('auth:api')->post('/refresh', [AuthController::class, 'refresh']);
 });
 
@@ -71,21 +73,27 @@ Route::prefix('public')->group(function () {
     // Teams
     Route::get('/teams', [TeamController::class, 'index']);
     Route::get('/teams/{id}', [TeamController::class, 'show']);
+    Route::get('/teams/{id}/achievements', [TeamController::class, 'getAchievements']);
     
     // Players
     Route::get('/players', [PlayerController::class, 'index']);
     Route::get('/players/{id}', [PlayerController::class, 'show']);
     
-    // Player Statistics
+    // New Player Profile Endpoints
+    Route::get('/players/{id}/team-history', [PlayerController::class, 'getTeamHistory']);
+    Route::get('/players/{id}/matches', [PlayerController::class, 'getMatches']);
+    Route::get('/players/{id}/stats', [PlayerController::class, 'getStats']);
+    
+    // Player Statistics (Legacy - for backward compatibility)
     Route::get('/players/{player}/match-history', [PlayerController::class, 'getMatchHistory']);
     Route::get('/players/{player}/hero-stats', [PlayerController::class, 'getHeroStats']);
     Route::get('/players/{player}/performance-stats', [PlayerController::class, 'getPerformanceStats']);
     Route::get('/players/{player}/map-stats', [PlayerController::class, 'getMapStats']);
     Route::get('/players/{player}/event-stats', [PlayerController::class, 'getEventStats']);
     
-    // Events - Using temporary controller
-    Route::get('/events', [EventControllerTemp::class, 'index']);
-    Route::get('/events/{id}', [EventControllerTemp::class, 'show']);
+    // Events - Using main event controller
+    Route::get('/events', [EventController::class, 'index']);
+    Route::get('/events/{id}', [EventController::class, 'show']);
     
     // Matches
     Route::get('/matches', [MatchController::class, 'index']);
@@ -178,6 +186,10 @@ Route::prefix('public')->group(function () {
     Route::get('/mentions/search', [MentionController::class, 'searchMentions']);
     Route::get('/mentions/popular', [MentionController::class, 'getPopularMentions']);
     
+    // Public mentions routes for consistent API
+    Route::get('/public/mentions/search', [MentionController::class, 'searchMentions']);
+    Route::get('/public/mentions/popular', [MentionController::class, 'getPopularMentions']);
+    
     // Public user profiles
     Route::get('/users/{userId}/profile', [UserProfileController::class, 'getUserWithAvatarAndFlairs']);
 });
@@ -206,15 +218,20 @@ Route::get('/players/{player}/performance-stats', [PlayerController::class, 'get
 Route::get('/players/{player}/hero-performance', [PlayerController::class, 'getHeroPerformance']);
 Route::get('/players/{player}/map-stats', [PlayerController::class, 'getMapStats']);
 Route::get('/players/{player}/event-stats', [PlayerController::class, 'getEventStats']);
-Route::get('/events', [EventControllerTemp::class, 'index']);
-Route::get('/events/{event}', [EventControllerTemp::class, 'show']);
+Route::get('/events', [EventController::class, 'index']);
+Route::get('/events/{event}', [EventController::class, 'show']);
 Route::get('/matches', [MatchController::class, 'index']);
 Route::get('/matches/live', [MatchController::class, 'live']);
 Route::get('/matches/{match}', [MatchController::class, 'show']);
 Route::get('/matches/{match}/live-scoreboard', [MatchController::class, 'liveScoreboard']);
 Route::get('/matches/{match}/comments', [MatchController::class, 'getComments']);
+Route::middleware('auth:api')->post('/matches/{match}/comments', [MatchController::class, 'storeComment']);
 Route::get('/matches/{match}/timeline', [MatchController::class, 'getMatchTimeline']);
 Route::get('/matches/head-to-head/{team1Id}/{team2Id}', [MatchController::class, 'getHeadToHead']);
+
+// Live Updates SSE Stream (No auth required for public viewing)
+Route::get('/live-updates/{matchId}/stream', [LiveUpdateController::class, 'stream']);
+
 Route::get('/news', [NewsController::class, 'index']);
 Route::get('/news/categories', [NewsController::class, 'getCategories']);
 Route::get('/news/{news}', [NewsController::class, 'show']);
@@ -422,19 +439,38 @@ Route::middleware(['auth:api', 'role:moderator|admin'])->prefix('moderator')->gr
         Route::post('/{eventId}/teams/{teamId}/reject', [EventController::class, 'rejectTeamRegistration']);
     });
     
-    // Moderator Dashboard
+    // Moderator Dashboard & Analytics
     Route::get('/dashboard/stats', [AdminStatsController::class, 'getModeratorStats']);
     Route::get('/dashboard/recent-activity', [AdminStatsController::class, 'getRecentModerationActivity']);
+    
+    // Moderator Analytics - Limited Access
+    Route::prefix('analytics')->group(function () {
+        Route::get('/', [AnalyticsController::class, 'index']); // Role-based analytics (moderator gets limited view)
+        Route::get('/moderation', [AdminStatsController::class, 'analytics']); // Moderation-focused analytics
+    });
 });
 
 // ===================================
 // ADMIN ROUTES (🔴 Admin Role - Full Access)
 // ===================================
-Route::middleware(['auth:api', 'role:admin'])->prefix('admin')->group(function () {
+Route::middleware(['auth:api', 'role:admin,moderator'])->prefix('admin')->group(function () {
     
-    // Admin Statistics
+    // Core Admin Endpoints - Available to both admin and moderator
     Route::get('/stats', [AdminStatsController::class, 'index']);
     Route::get('/analytics', [AdminStatsController::class, 'analytics']);
+    
+    // Resource Management
+    Route::get('/teams', [TeamController::class, 'index']);
+    Route::get('/players', [PlayerController::class, 'index']);
+    Route::get('/matches', [MatchController::class, 'index']);
+    Route::get('/events', [EventController::class, 'index']);
+    Route::get('/news', [NewsController::class, 'index']);
+    
+    // Admin-only routes (checked internally)
+    Route::get('/users', [AdminUserController::class, 'getAllUsers']);
+});
+
+Route::middleware(['auth:api', 'role:admin'])->prefix('admin')->group(function () {
     
     // Bulk Operations
     Route::prefix('bulk')->group(function () {
@@ -549,7 +585,7 @@ Route::middleware(['auth:api', 'role:admin'])->prefix('admin')->group(function (
         Route::post('/', [MatchController::class, 'store']);
         Route::get('/{matchId}', [MatchController::class, 'getMatchAdmin']);
         Route::put('/{matchId}', [MatchController::class, 'update']);
-        Route::put('/{matchId}/complete-update', [MatchController::class, 'update']);
+        Route::put('/{matchId}/complete-update', [MatchController::class, 'completeUpdate']);
         Route::delete('/{matchId}', [MatchController::class, 'destroy']);
         
         // Match Stats Management
@@ -571,6 +607,8 @@ Route::middleware(['auth:api', 'role:admin'])->prefix('admin')->group(function (
         // Simple Real-Time Scoring Synchronization (API calls only)
         Route::post('/{matchId}/update-score', [MatchController::class, 'updateScore']);
         Route::post('/{matchId}/update-player-stats', [MatchController::class, 'updatePlayerStatsSimple']);
+        Route::post('/{matchId}/update-live-stats', [MatchController::class, 'updateLiveStatsComprehensive']);
+        Route::post('/{matchId}/team-wins-map', [MatchController::class, 'teamWinsMap']);
         Route::post('/{matchId}/update-heroes', [MatchController::class, 'updateHeroes']);
         Route::get('/{matchId}/live-data', [MatchController::class, 'getLiveData']);
         
@@ -667,9 +705,9 @@ Route::middleware(['auth:api', 'role:admin'])->prefix('admin')->group(function (
         Route::get('/logs', [AdminStatsController::class, 'getSystemLogs']);
     });
     
-    // Analytics
+    // Analytics - Admin Only (Full System Access)
     Route::prefix('analytics')->group(function () {
-        Route::get('/', [AnalyticsController::class, 'index']); // New comprehensive analytics endpoint
+        Route::get('/', [AnalyticsController::class, 'index']); // Role-based analytics endpoint
         Route::get('/overview', [AdminStatsController::class, 'getAnalyticsOverview']);
         Route::get('/users', [AdminStatsController::class, 'getUserAnalytics']);
         Route::get('/content', [AdminStatsController::class, 'getContentAnalytics']);
@@ -725,15 +763,21 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
             'id' => $user->id,
             'name' => $user->name,
             'email' => $user->email,
+            'role' => $user->role ?? 'user',
+            'roles' => [$user->role ?? 'user'], // For frontend compatibility
+            'role_display_name' => $user->getRoleDisplayName(),
             'avatar' => $user->avatar,
             'hero_flair' => $user->hero_flair,
             'team_flair' => $user->teamFlair,
-            'show_hero_flair' => $user->show_hero_flair,
-            'show_team_flair' => $user->show_team_flair,
+            'team_flair_id' => $user->team_flair_id,
+            'show_hero_flair' => (bool)$user->show_hero_flair,
+            'show_team_flair' => (bool)$user->show_team_flair,
+            'use_hero_as_avatar' => (bool)$user->use_hero_as_avatar,
             'status' => $user->status,
             'last_login' => $user->last_login,
-            'roles' => $user->getRoleNames(),
-            'permissions' => $user->getAllPermissions()->pluck('name')
+            'spatie_roles' => $user->getRoleNames(), // Keep Spatie roles for compatibility
+            'permissions' => $user->getAllPermissions()->pluck('name'),
+            'created_at' => $user->created_at->toISOString()
         ],
         'success' => true
     ]);

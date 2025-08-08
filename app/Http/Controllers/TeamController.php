@@ -2533,4 +2533,210 @@ class TeamController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Get team achievements
+     * GET /api/teams/{id}/achievements
+     */
+    public function getAchievements($id)
+    {
+        try {
+            $team = DB::table('teams')->where('id', $id)->first();
+            
+            if (!$team) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Team not found'
+                ], 404);
+            }
+
+            // Get achievements from team record
+            $achievements = [];
+            if ($team->achievements) {
+                $achievements = json_decode($team->achievements, true) ?: [];
+            }
+
+            // Get tournament placements and wins
+            $tournamentResults = DB::table('matches as m')
+                ->join('events as e', 'm.event_id', '=', 'e.id')
+                ->where(function($query) use ($id) {
+                    $query->where('m.team1_id', $id)
+                          ->orWhere('m.team2_id', $id);
+                })
+                ->where('m.status', 'completed')
+                ->select([
+                    'e.id as event_id',
+                    'e.name as event_name',
+                    'e.tier as event_tier',
+                    'e.start_date',
+                    'e.end_date',
+                    'e.prize_pool',
+                    'e.logo as event_logo',
+                    'm.winner_id',
+                    'm.team1_id',
+                    'm.team2_id',
+                    'm.team1_score',
+                    'm.team2_score'
+                ])
+                ->get();
+
+            // Process tournament results to extract achievements
+            $tournamentAchievements = [];
+            $eventStats = [];
+
+            foreach ($tournamentResults as $result) {
+                $eventId = $result->event_id;
+                
+                if (!isset($eventStats[$eventId])) {
+                    $eventStats[$eventId] = [
+                        'event_id' => $result->event_id,
+                        'event_name' => $result->event_name,
+                        'event_tier' => $result->event_tier,
+                        'event_logo' => $result->event_logo,
+                        'start_date' => $result->start_date,
+                        'end_date' => $result->end_date,
+                        'prize_pool' => $result->prize_pool,
+                        'matches_played' => 0,
+                        'wins' => 0,
+                        'losses' => 0,
+                        'maps_won' => 0,
+                        'maps_lost' => 0
+                    ];
+                }
+
+                $eventStats[$eventId]['matches_played']++;
+                
+                $isTeam1 = $result->team1_id == $id;
+                $teamScore = $isTeam1 ? $result->team1_score : $result->team2_score;
+                $opponentScore = $isTeam1 ? $result->team2_score : $result->team1_score;
+                
+                if ($result->winner_id == $id || ($teamScore > $opponentScore)) {
+                    $eventStats[$eventId]['wins']++;
+                } else {
+                    $eventStats[$eventId]['losses']++;
+                }
+
+                $eventStats[$eventId]['maps_won'] += $teamScore;
+                $eventStats[$eventId]['maps_lost'] += $opponentScore;
+            }
+
+            // Convert event stats to achievements format
+            foreach ($eventStats as $event) {
+                $winRate = $event['matches_played'] > 0 ? round(($event['wins'] / $event['matches_played']) * 100, 1) : 0;
+                
+                // Determine placement based on performance
+                $placement = 'Participated';
+                if ($winRate >= 80) {
+                    $placement = '1st Place';
+                } elseif ($winRate >= 60) {
+                    $placement = '2nd-3rd Place';
+                } elseif ($winRate >= 40) {
+                    $placement = 'Top 8';
+                } elseif ($winRate >= 25) {
+                    $placement = 'Top 16';
+                }
+
+                $tournamentAchievements[] = [
+                    'id' => 'tournament_' . $event['event_id'],
+                    'type' => 'tournament',
+                    'title' => $event['event_name'],
+                    'description' => $placement . ' - ' . $event['wins'] . 'W/' . $event['losses'] . 'L',
+                    'date' => $event['end_date'] ?: $event['start_date'],
+                    'tier' => $event['event_tier'],
+                    'icon' => $event['event_logo'],
+                    'metadata' => [
+                        'event_id' => $event['event_id'],
+                        'matches_played' => $event['matches_played'],
+                        'wins' => $event['wins'],
+                        'losses' => $event['losses'],
+                        'win_rate' => $winRate,
+                        'maps_won' => $event['maps_won'],
+                        'maps_lost' => $event['maps_lost'],
+                        'placement' => $placement,
+                        'prize_pool' => $event['prize_pool']
+                    ]
+                ];
+            }
+
+            // Get milestone achievements based on team stats
+            $milestoneAchievements = [];
+            
+            if ($team->tournaments_won && $team->tournaments_won > 0) {
+                $milestoneAchievements[] = [
+                    'id' => 'tournaments_won',
+                    'type' => 'milestone',
+                    'title' => 'Tournament Champion',
+                    'description' => $team->tournaments_won . ' tournament' . ($team->tournaments_won > 1 ? 's' : '') . ' won',
+                    'date' => null,
+                    'tier' => 'gold',
+                    'icon' => '/images/achievements/champion.png',
+                    'metadata' => [
+                        'count' => $team->tournaments_won
+                    ]
+                ];
+            }
+
+            if ($team->longest_win_streak && $team->longest_win_streak >= 5) {
+                $milestoneAchievements[] = [
+                    'id' => 'win_streak',
+                    'type' => 'milestone',
+                    'title' => 'Win Streak Master',
+                    'description' => $team->longest_win_streak . ' match win streak',
+                    'date' => null,
+                    'tier' => 'silver',
+                    'icon' => '/images/achievements/streak.png',
+                    'metadata' => [
+                        'streak_length' => $team->longest_win_streak
+                    ]
+                ];
+            }
+
+            if ($team->rating && $team->rating >= 1500) {
+                $milestoneAchievements[] = [
+                    'id' => 'high_rating',
+                    'type' => 'milestone',
+                    'title' => 'Elite Team',
+                    'description' => 'Reached ' . $team->rating . ' rating',
+                    'date' => null,
+                    'tier' => 'gold',
+                    'icon' => '/images/achievements/elite.png',
+                    'metadata' => [
+                        'rating' => $team->rating,
+                        'peak_rating' => $team->peak
+                    ]
+                ];
+            }
+
+            // Combine all achievements
+            $allAchievements = array_merge($achievements, $tournamentAchievements, $milestoneAchievements);
+            
+            // Sort by date (most recent first)
+            usort($allAchievements, function($a, $b) {
+                $dateA = $a['date'] ?? '1970-01-01';
+                $dateB = $b['date'] ?? '1970-01-01';
+                return strtotime($dateB) <=> strtotime($dateA);
+            });
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'team_id' => $id,
+                    'team_name' => $team->name,
+                    'total_achievements' => count($allAchievements),
+                    'achievements' => $allAchievements,
+                    'summary' => [
+                        'tournaments' => count($tournamentAchievements),
+                        'milestones' => count($milestoneAchievements),
+                        'custom' => count($achievements)
+                    ]
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching team achievements: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

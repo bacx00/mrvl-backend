@@ -813,7 +813,9 @@ class ForumController extends Controller
             // Clear relevant caches for instant UI update
             Cache::forget("forum:threads:all:latest:page:1");
             Cache::forget("forum:threads:general:latest:page:1");
-            Cache::tags(['forum'])->flush();
+            
+            // Clear forum caches using helper (compatible with all cache drivers)
+            \App\Helpers\CacheHelper::clearForumCaches();
 
             return response()->json([
                 'success' => true,

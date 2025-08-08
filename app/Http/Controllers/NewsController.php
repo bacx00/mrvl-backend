@@ -98,7 +98,11 @@ class NewsController extends Controller
                         'updated_at' => $article->updated_at,
                         'read_time' => $this->calculateReadTime($article->content)
                     ],
-                    'mentions' => $this->extractMentions($article->content),
+                    'mentions' => array_merge(
+                        $this->extractMentions($article->title),
+                        $this->extractMentions($article->excerpt ?: ''),
+                        $this->extractMentions($article->content)
+                    ),
                     'tags' => $article->tags ? json_decode($article->tags, true) : []
                 ];
             });
@@ -178,7 +182,7 @@ class NewsController extends Controller
                 'slug' => $article->slug,
                 'content' => $article->content,
                 'excerpt' => $article->excerpt,
-                'featured_image' => $article->featured_image,
+                'featured_image' => ImageHelper::getNewsImage($article->featured_image, $article->title),
                 'author' => $this->getUserWithFlairs($article->author_id),
                 'category' => [
                     'name' => $article->category_name,
@@ -200,7 +204,11 @@ class NewsController extends Controller
                     'updated_at' => $article->updated_at,
                     'read_time' => $this->calculateReadTime($article->content)
                 ],
-                'mentions' => $this->extractMentions($article->content),
+                'mentions' => array_merge(
+                    $this->extractMentions($article->title),
+                    $this->extractMentions($article->excerpt ?: ''),
+                    $this->extractMentions($article->content)
+                ),
                 'tags' => $article->tags ? json_decode($article->tags, true) : [],
                 'videos' => $this->getArticleVideos($article),
                 'user_vote' => $userVote,
@@ -323,7 +331,11 @@ class NewsController extends Controller
                 'updated_at' => now()
             ]);
 
-            // Process mentions in content
+            // Process mentions in title, excerpt, and content
+            $this->processMentions($request->title, $newsId);
+            if ($request->excerpt) {
+                $this->processMentions($request->excerpt, $newsId);
+            }
             $this->processMentions($request->content, $newsId);
 
             // Process video embeds if provided
@@ -384,11 +396,58 @@ class NewsController extends Controller
             // Process mentions in comment
             $this->processMentions($request->content, $newsId, $commentId);
 
-            return response()->json([
-                'data' => ['id' => $commentId],
-                'success' => true,
-                'message' => 'Comment posted successfully'
-            ], 201);
+            // Get the complete comment data with author info
+            $newComment = DB::table('news_comments as nc')
+                ->leftJoin('users as u', 'nc.user_id', '=', 'u.id')
+                ->leftJoin('teams as t', 'u.team_flair_id', '=', 't.id')
+                ->where('nc.id', $commentId)
+                ->select([
+                    'nc.*',
+                    'u.name as author_name',
+                    'u.avatar as author_avatar',
+                    'u.hero_flair',
+                    'u.show_hero_flair',
+                    'u.show_team_flair',
+                    'u.use_hero_as_avatar',
+                    't.name as team_name',
+                    't.short_name as team_short',
+                    't.logo as team_logo'
+                ])
+                ->first();
+
+            if ($newComment) {
+                $commentData = [
+                    'id' => $newComment->id,
+                    'content' => $newComment->content,
+                    'author' => $this->getUserWithFlairs($newComment->user_id),
+                    'stats' => [
+                        'upvotes' => $newComment->upvotes ?? 0,
+                        'downvotes' => $newComment->downvotes ?? 0,
+                        'score' => $newComment->score ?? 0
+                    ],
+                    'meta' => [
+                        'created_at' => $newComment->created_at,
+                        'updated_at' => $newComment->updated_at,
+                        'edited' => false
+                    ],
+                    'mentions' => $this->extractMentions($newComment->content),
+                    'user_vote' => null,
+                    'replies' => []
+                ];
+
+                return response()->json([
+                    'success' => true,
+                    'comment' => $commentData,
+                    'data' => $commentData,
+                    'message' => 'Comment posted successfully'
+                ], 201);
+            } else {
+                return response()->json([
+                    'success' => true,
+                    'data' => ['id' => $commentId],
+                    'message' => 'Comment posted successfully'
+                ], 201);
+            }
 
         } catch (\Exception $e) {
             return response()->json([

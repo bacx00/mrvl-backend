@@ -8,6 +8,27 @@ class AdminStatsController extends Controller
 {
     public function index()
     {
+        // Ensure user is authenticated and has proper role
+        if (!auth()->check()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Authentication required'
+            ], 401);
+        }
+
+        $user = auth()->user();
+        
+        // Check if user has role attribute directly or through hasRole method
+        $isAdmin = ($user->role === 'admin') || (method_exists($user, 'hasRole') && $user->hasRole('admin'));
+        $isModerator = ($user->role === 'moderator') || (method_exists($user, 'hasRole') && $user->hasRole('moderator'));
+        
+        // Only admin and moderator can access stats, but different levels
+        if (!($isAdmin || $isModerator)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Insufficient permissions to access statistics'
+            ], 403);
+        }
         $stats = [
             'overview' => [
                 'totalTeams' => Team::count(),
@@ -58,6 +79,35 @@ class AdminStatsController extends Controller
     }
 
     public function analytics(Request $request)
+    {
+        // Ensure user is authenticated and has proper role
+        if (!auth()->check()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Authentication required'
+            ], 401);
+        }
+
+        $user = auth()->user();
+        
+        // Check if user has role attribute directly or through hasRole method
+        $isAdmin = ($user->role === 'admin') || (method_exists($user, 'hasRole') && $user->hasRole('admin'));
+        $isModerator = ($user->role === 'moderator') || (method_exists($user, 'hasRole') && $user->hasRole('moderator'));
+        
+        // Only admin can access full analytics, moderator gets limited view
+        if ($isAdmin) {
+            return $this->getFullAnalytics($request);
+        } elseif ($isModerator) {
+            return $this->getModerationAnalytics($request);
+        } else {
+            return response()->json([
+                'success' => false,
+                'message' => 'Insufficient permissions to access analytics'
+            ], 403);
+        }
+    }
+
+    private function getFullAnalytics(Request $request)
     {
         $period = $request->get('period', '30d');
         
@@ -135,6 +185,62 @@ class AdminStatsController extends Controller
         return response()->json([
             'data' => $analytics,
             'success' => true,
+            'user_role' => 'admin',
+            'analytics_level' => 'full',
+            'generated_at' => now()->toISOString()
+        ]);
+    }
+
+    private function getModerationAnalytics(Request $request)
+    {
+        $period = $request->get('period', '30d');
+        
+        // Calculate date range based on period
+        $days = match($period) {
+            '7d' => 7,
+            '30d' => 30,
+            '90d' => 90,
+            '1y' => 365,
+            default => 30
+        };
+        
+        $startDate = now()->subDays($days);
+        
+        // Limited analytics for moderators - only content moderation metrics
+        $moderationAnalytics = [
+            'period' => $period,
+            'date_range' => [
+                'start' => $startDate->toISOString(),
+                'end' => now()->toISOString()
+            ],
+            'moderation_overview' => [
+                'total_forum_threads' => ForumThread::count(),
+                'new_threads_period' => ForumThread::where('created_at', '>=', $startDate)->count(),
+                'total_users' => User::count(),
+                'active_users' => User::where('last_login', '>=', $startDate)->count(),
+                'suspended_users' => User::where('status', 'suspended')->count(),
+                'banned_users' => User::where('status', 'banned')->count()
+            ],
+            'content_activity' => [
+                'new_threads' => ForumThread::where('created_at', '>=', $startDate)->count(),
+                'total_posts' => $this->getTotalPosts($startDate),
+                'total_comments' => $this->getTotalComments($startDate),
+                'content_engagement_rate' => $this->calculateContentEngagementRate($startDate),
+                'top_content_creators' => $this->getTopContentCreators($startDate)
+            ],
+            'forum_moderation' => [
+                'locked_threads' => ForumThread::where('locked', true)->count(),
+                'pinned_threads' => ForumThread::where('pinned', true)->count(),
+                'deleted_threads' => ForumThread::onlyTrashed()->count(),
+                'forum_activity_trend' => $this->getForumActivityTrend($startDate)
+            ]
+        ];
+
+        return response()->json([
+            'data' => $moderationAnalytics,
+            'success' => true,
+            'user_role' => 'moderator',
+            'analytics_level' => 'moderation',
             'generated_at' => now()->toISOString()
         ]);
     }

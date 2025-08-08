@@ -438,7 +438,7 @@ class BracketController extends Controller
     {
         $matches = [];
         $teamCount = count($teams);
-        $rounds = ceil(log($teamCount, 2));
+        $rounds = $this->safeCalculateRounds($teamCount);
         
         // First round matches
         $round = 1;
@@ -648,22 +648,41 @@ class BracketController extends Controller
     {
         $teamCount = $this->getEventTeamCount($eventId);
         
+        // Handle edge cases where there are no teams or only one team
+        if ($teamCount <= 1) {
+            return 0;
+        }
+        
         switch ($format) {
             case 'single_elimination':
-                return ceil(log($teamCount, 2));
+                return $this->safeCalculateRounds($teamCount);
             case 'double_elimination':
-                return ceil(log($teamCount, 2)) * 2;
+                return $this->safeCalculateRounds($teamCount) * 2;
             case 'round_robin':
-                return $teamCount - 1;
+                return max(0, $teamCount - 1);
             case 'swiss':
                 return $this->calculateSwissRounds($teamCount);
             default:
-                return ceil(log($teamCount, 2));
+                return $this->safeCalculateRounds($teamCount);
         }
     }
 
     private function calculateSwissRounds($teamCount)
     {
+        return $this->safeCalculateRounds($teamCount);
+    }
+
+    /**
+     * Safely calculate the number of rounds needed for a tournament
+     * Prevents Inf/NaN issues when team count is 0 or 1
+     */
+    private function safeCalculateRounds($teamCount)
+    {
+        // Handle edge cases where there are no teams or only one team
+        if ($teamCount <= 1) {
+            return 0;
+        }
+        
         return ceil(log($teamCount, 2));
     }
 
@@ -692,7 +711,7 @@ class BracketController extends Controller
 
     private function getRoundName($round, $teamCount)
     {
-        $totalRounds = ceil(log($teamCount, 2));
+        $totalRounds = $this->safeCalculateRounds($teamCount);
         $roundsFromEnd = $totalRounds - $round + 1;
         
         switch ($roundsFromEnd) {
@@ -809,7 +828,7 @@ class BracketController extends Controller
     private function createLowerBracketMatches($eventId, $teamCount)
     {
         $matches = [];
-        $upperRounds = ceil(log($teamCount, 2));
+        $upperRounds = $this->safeCalculateRounds($teamCount);
         
         // Lower bracket has 2 * (upper rounds - 1) rounds
         $lowerRounds = ($upperRounds - 1) * 2;

@@ -237,17 +237,16 @@ class ForumCacheService
     {
         // For file/database cache, we'll use a simple approach to clear search-related cache
         // This is less efficient than Redis pattern matching but works without Redis
-        try {
-            // For now, we'll just clear all caches to ensure search cache is invalidated
-            // In a production environment, you might want to maintain a list of search cache keys
-            Cache::tags(['forum_search'])->flush();
-        } catch (\Exception $e) {
-            // If tags are not supported by the cache driver, fall back to manual clearing
-            // This is a simplified approach for file/database cache
-            \Log::warning('Search cache invalidation failed, falling back to simple cache clear', [
-                'error' => $e->getMessage()
-            ]);
-        }
+        // Use cache helper for safe clearing with tag fallback
+        $searchCacheKeys = [
+            'forum:search:threads',
+            'forum:search:posts', 
+            'forum:search:users',
+            'forum:search:recent',
+            'forum:search:popular'
+        ];
+        
+        \App\Helpers\CacheHelper::clearWithTagFallback(['forum_search'], $searchCacheKeys);
     }
 
     /**
@@ -382,13 +381,8 @@ class ForumCacheService
                 Cache::forget($key);
             }
             
-            // Try to clear tagged caches if supported
-            try {
-                Cache::tags(['forum', 'forum_threads', 'forum_search'])->flush();
-            } catch (\Exception $tagException) {
-                // If tags aren't supported, that's okay - we cleared the main keys above
-                \Log::info('Cache tags not supported, cleared main cache keys instead');
-            }
+            // Use cache helper for comprehensive cache clearing
+            \App\Helpers\CacheHelper::clearForumCaches();
             
             return true;
         } catch (\Exception $e) {

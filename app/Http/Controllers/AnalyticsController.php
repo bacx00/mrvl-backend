@@ -9,9 +9,44 @@ use Illuminate\Support\Facades\DB;
 class AnalyticsController extends Controller
 {
     /**
-     * Get comprehensive analytics data for the advanced analytics dashboard
+     * Get comprehensive analytics data based on user role
+     * Admin: Full system analytics
+     * Moderator: Limited moderation-focused analytics
+     * User: NO ACCESS (should not reach this controller)
      */
     public function index(Request $request)
+    {
+        // Ensure user is authenticated
+        if (!auth()->check()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Authentication required'
+            ], 401);
+        }
+
+        $user = auth()->user();
+        
+        // Check if user has role attribute directly or through hasRole method
+        $isAdmin = ($user->role === 'admin') || (method_exists($user, 'hasRole') && $user->hasRole('admin'));
+        $isModerator = ($user->role === 'moderator') || (method_exists($user, 'hasRole') && $user->hasRole('moderator'));
+        
+        // Check user role and return appropriate analytics
+        if ($isAdmin) {
+            return $this->getAdminAnalytics($request);
+        } elseif ($isModerator) {
+            return $this->getModeratorAnalytics($request);
+        } else {
+            return response()->json([
+                'success' => false,
+                'message' => 'Insufficient permissions to access analytics dashboard'
+            ], 403);
+        }
+    }
+
+    /**
+     * Get full admin analytics - all system metrics
+     */
+    private function getAdminAnalytics(Request $request)
     {
         $period = $request->get('period', '30d');
         
@@ -49,14 +84,81 @@ class AnalyticsController extends Controller
             return response()->json([
                 'data' => $analytics,
                 'success' => true,
+                'user_role' => 'admin',
+                'analytics_level' => 'full',
                 'generated_at' => now()->toISOString()
             ]);
 
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error generating analytics: ' . $e->getMessage(),
+                'message' => 'Error generating admin analytics: ' . $e->getMessage(),
                 'data' => $this->getFallbackAnalytics()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get limited moderator analytics - only moderation-relevant metrics
+     */
+    private function getModeratorAnalytics(Request $request)
+    {
+        $period = $request->get('period', '30d');
+        
+        // Calculate date range based on period
+        $days = match($period) {
+            '7d' => 7,
+            '30d' => 30,
+            '90d' => 90,
+            '1y' => 365,
+            default => 30
+        };
+        
+        $startDate = now()->subDays($days);
+        $endDate = now();
+        
+        try {
+            // Moderator gets limited analytics focused on content moderation
+            $moderatorAnalytics = [
+                'period' => $period,
+                'date_range' => [
+                    'start' => $startDate->toISOString(),
+                    'end' => $endDate->toISOString()
+                ],
+                'content_moderation' => [
+                    'total_forum_threads' => ForumThread::count(),
+                    'new_threads_period' => ForumThread::where('created_at', '>=', $startDate)->count(),
+                    'flagged_content' => $this->getFlaggedContentCount($startDate),
+                    'moderation_actions' => $this->getModerationActionsCount($startDate),
+                    'active_users' => User::where('last_login', '>=', $startDate)->count(),
+                    'total_users' => User::count()
+                ],
+                'forum_engagement' => [
+                    'thread_activity' => $this->getThreadActivity($startDate),
+                    'user_engagement' => $this->getUserEngagementModerator($startDate),
+                    'content_reports' => $this->getContentReports($startDate)
+                ],
+                'moderation_stats' => [
+                    'pending_reports' => $this->getPendingReportsCount(),
+                    'resolved_reports' => $this->getResolvedReportsCount($startDate),
+                    'banned_users' => User::where('status', 'banned')->count(),
+                    'warnings_issued' => $this->getWarningsIssuedCount($startDate)
+                ]
+            ];
+
+            return response()->json([
+                'data' => $moderatorAnalytics,
+                'success' => true,
+                'user_role' => 'moderator',
+                'analytics_level' => 'moderation',
+                'generated_at' => now()->toISOString()
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error generating moderator analytics: ' . $e->getMessage(),
+                'data' => $this->getModeratorFallbackAnalytics()
             ], 500);
         }
     }
@@ -624,6 +726,123 @@ class AnalyticsController extends Controller
                                            })
                                            ->count(),
             'total_matches' => GameMatch::where('created_at', '>=', $startDate)->count()
+        ];
+    }
+
+    // Moderator-specific helper methods
+    private function getFlaggedContentCount($startDate)
+    {
+        try {
+            return DB::table('forum_reports')
+                ->where('created_at', '>=', $startDate)
+                ->where('status', 'pending')
+                ->count();
+        } catch (\Exception $e) {
+            return 0;
+        }
+    }
+
+    private function getModerationActionsCount($startDate)
+    {
+        try {
+            return DB::table('moderation_logs')
+                ->where('created_at', '>=', $startDate)
+                ->count();
+        } catch (\Exception $e) {
+            return 0;
+        }
+    }
+
+    private function getThreadActivity($startDate)
+    {
+        return [
+            'new_threads' => ForumThread::where('created_at', '>=', $startDate)->count(),
+            'active_threads' => ForumThread::where('updated_at', '>=', $startDate)->count(),
+            'locked_threads' => ForumThread::where('locked', true)->count(),
+            'pinned_threads' => ForumThread::where('pinned', true)->count()
+        ];
+    }
+
+    private function getUserEngagementModerator($startDate)
+    {
+        return [
+            'active_users' => User::where('last_login', '>=', $startDate)->count(),
+            'new_users' => User::where('created_at', '>=', $startDate)->count(),
+            'suspended_users' => User::where('status', 'suspended')->count(),
+            'forum_participants' => DB::table('forum_threads')
+                ->where('created_at', '>=', $startDate)
+                ->distinct('user_id')
+                ->count('user_id')
+        ];
+    }
+
+    private function getContentReports($startDate)
+    {
+        try {
+            return [
+                'thread_reports' => DB::table('forum_reports')
+                    ->where('reportable_type', 'thread')
+                    ->where('created_at', '>=', $startDate)
+                    ->count(),
+                'post_reports' => DB::table('forum_reports')
+                    ->where('reportable_type', 'post')
+                    ->where('created_at', '>=', $startDate)
+                    ->count(),
+                'user_reports' => DB::table('user_reports')
+                    ->where('created_at', '>=', $startDate)
+                    ->count()
+            ];
+        } catch (\Exception $e) {
+            return ['thread_reports' => 0, 'post_reports' => 0, 'user_reports' => 0];
+        }
+    }
+
+    private function getPendingReportsCount()
+    {
+        try {
+            return DB::table('forum_reports')
+                ->where('status', 'pending')
+                ->count();
+        } catch (\Exception $e) {
+            return 0;
+        }
+    }
+
+    private function getResolvedReportsCount($startDate)
+    {
+        try {
+            return DB::table('forum_reports')
+                ->where('status', 'resolved')
+                ->where('updated_at', '>=', $startDate)
+                ->count();
+        } catch (\Exception $e) {
+            return 0;
+        }
+    }
+
+    private function getWarningsIssuedCount($startDate)
+    {
+        try {
+            return DB::table('user_warnings')
+                ->where('created_at', '>=', $startDate)
+                ->count();
+        } catch (\Exception $e) {
+            return 0;
+        }
+    }
+
+    private function getModeratorFallbackAnalytics()
+    {
+        return [
+            'content_moderation' => [
+                'total_forum_threads' => 450,
+                'new_threads_period' => 125,
+                'flagged_content' => 12,
+                'moderation_actions' => 28,
+                'active_users' => 875,
+                'total_users' => 1250
+            ],
+            'message' => 'Using fallback moderator analytics due to system limitations'
         ];
     }
 
