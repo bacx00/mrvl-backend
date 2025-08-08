@@ -1391,21 +1391,16 @@ class PlayerController extends Controller
                     ],
                     'hero' => $match->hero,
                     'stats' => [
-                        'rating' => $match->performance_rating ?? 0,
+                        'rating' => $match->mvp_score ?? 0,
                         'eliminations' => $match->eliminations,
                         'deaths' => $match->deaths,
                         'assists' => $match->assists,
                         'kd' => $kd,
-                        'kda' => $match->kda ?? $kda,
-                        'damage_dealt' => $match->damage,
+                        'kda' => $match->kda_ratio ?? $kda,
+                        'damage_dealt' => $match->damage_dealt ?? 0,
                         'damage_taken' => $match->damage_taken,
-                        'healing_done' => $match->healing,
+                        'healing_done' => $match->healing_done ?? 0,
                         'damage_blocked' => $match->damage_blocked ?? 0,
-                        'accuracy_percentage' => $match->accuracy_percentage ?? 0,
-                        'best_killstreak' => $match->best_killstreak ?? 0,
-                        'solo_kills' => $match->solo_kills ?? 0,
-                        'final_blows' => $match->final_blows ?? 0,
-                        'ultimates_earned' => $match->ultimates_earned ?? 0,
                         'ultimates_used' => $match->ultimates_used ?? 0
                     ],
                     'team' => [
@@ -1414,7 +1409,7 @@ class PlayerController extends Controller
                         'short_name' => $isTeam1 ? $match->team1_short : $match->team2_short,
                         'logo' => $isTeam1 ? $match->team1_logo : $match->team2_logo
                     ],
-                    'time_played_seconds' => $match->time_played_seconds ?? 0
+                    'time_played_seconds' => 0
                 ];
             });
 
@@ -1487,21 +1482,17 @@ class PlayerController extends Controller
                 'mps.hero as hero',
                 DB::raw('COUNT(DISTINCT mps.match_id) as matches_played'),
                 DB::raw('SUM(CASE WHEN (mps.team_id = m.team1_id AND m.team1_score > m.team2_score) OR (mps.team_id = m.team2_id AND m.team2_score > m.team1_score) THEN 1 ELSE 0 END) as wins'),
-                DB::raw('AVG(mps.performance_rating) as avg_rating'),
+                DB::raw('AVG(mps.mvp_score) as avg_rating'),
                 DB::raw('AVG(mps.eliminations) as avg_eliminations'),
                 DB::raw('AVG(mps.deaths) as avg_deaths'),
                 DB::raw('AVG(mps.assists) as avg_assists'),
-                DB::raw('AVG(mps.damage) as avg_damage_dealt'),
+                DB::raw('AVG(mps.damage_dealt) as avg_damage_dealt'),
                 DB::raw('AVG(mps.damage_taken) as avg_damage_taken'),
-                DB::raw('AVG(mps.healing) as avg_healing_done'),
+                DB::raw('AVG(mps.healing_done) as avg_healing_done'),
                 DB::raw('AVG(mps.damage_blocked) as avg_damage_blocked'),
-                DB::raw('AVG(mps.accuracy_percentage) as avg_accuracy'),
-                DB::raw('SUM(mps.final_blows) as total_final_blows'),
-                DB::raw('SUM(mps.solo_kills) as total_solo_kills'),
-                DB::raw('AVG(mps.best_killstreak) as avg_best_killstreak'),
-                DB::raw('SUM(mps.ultimates_earned) as total_ultimates_earned'),
+                DB::raw('AVG(mps.kda_ratio) as avg_kda'),
                 DB::raw('SUM(mps.ultimates_used) as total_ultimates_used'),
-                DB::raw('SUM(mps.time_played_seconds) as total_time_played')
+                DB::raw('0 as total_time_played')
             ])
             ->orderBy('matches_played', 'desc')
             ->get();
@@ -1512,7 +1503,6 @@ class PlayerController extends Controller
                 $kd = $stats->avg_deaths > 0 ? round($stats->avg_eliminations / $stats->avg_deaths, 2) : $stats->avg_eliminations;
                 $kda = $stats->avg_deaths > 0 ? round(($stats->avg_eliminations + $stats->avg_assists) / $stats->avg_deaths, 2) : ($stats->avg_eliminations + $stats->avg_assists);
                 $totalTimeHours = round($stats->total_time_played / 3600, 1);
-                $ultEfficacy = $stats->total_ultimates_earned > 0 ? round(($stats->total_ultimates_used / $stats->total_ultimates_earned) * 100, 1) : 0;
 
                 return [
                     'hero' => $stats->hero,
@@ -1522,9 +1512,7 @@ class PlayerController extends Controller
                     'performance' => [
                         'rating' => round($stats->avg_rating, 2),
                         'kd' => $kd,
-                        'kda' => $kda,
-                        'accuracy' => round($stats->avg_accuracy, 1),
-                        'avg_best_killstreak' => round($stats->avg_best_killstreak, 1)
+                        'kda' => round($stats->avg_kda, 2)
                     ],
                     'combat' => [
                         'avg_eliminations' => round($stats->avg_eliminations, 1),
@@ -1536,11 +1524,7 @@ class PlayerController extends Controller
                         'avg_damage_blocked' => round($stats->avg_damage_blocked, 0)
                     ],
                     'impact' => [
-                        'total_final_blows' => $stats->total_final_blows,
-                        'total_solo_kills' => $stats->total_solo_kills,
-                        'ultimates_earned' => $stats->total_ultimates_earned,
-                        'ultimates_used' => $stats->total_ultimates_used,
-                        'ultimate_efficacy' => $ultEfficacy
+                        'ultimates_used' => $stats->total_ultimates_used
                     ]
                 ];
             });
@@ -1617,27 +1601,22 @@ class PlayerController extends Controller
             $overallStats = $query->select([
                 DB::raw('COUNT(DISTINCT mps.match_id) as total_matches'),
                 DB::raw('SUM(CASE WHEN (mps.team_id = m.team1_id AND m.team1_score > m.team2_score) OR (mps.team_id = m.team2_id AND m.team2_score > m.team1_score) THEN 1 ELSE 0 END) as wins'),
-                DB::raw('AVG(mps.performance_rating) as avg_rating'),
-                DB::raw('MAX(mps.performance_rating) as peak_rating'),
-                DB::raw('MIN(mps.performance_rating) as lowest_rating'),
+                DB::raw('AVG(mps.mvp_score) as avg_rating'),
+                DB::raw('MAX(mps.mvp_score) as peak_rating'),
+                DB::raw('MIN(mps.mvp_score) as lowest_rating'),
                 DB::raw('SUM(mps.eliminations) as total_eliminations'),
                 DB::raw('SUM(mps.deaths) as total_deaths'),
                 DB::raw('SUM(mps.assists) as total_assists'),
                 DB::raw('AVG(mps.eliminations) as avg_eliminations'),
                 DB::raw('AVG(mps.deaths) as avg_deaths'),
                 DB::raw('AVG(mps.assists) as avg_assists'),
-                DB::raw('SUM(mps.damage) as total_damage_dealt'),
+                DB::raw('SUM(mps.damage_dealt) as total_damage_dealt'),
                 DB::raw('SUM(mps.damage_taken) as total_damage_taken'),
-                DB::raw('SUM(mps.healing) as total_healing_done'),
+                DB::raw('SUM(mps.healing_done) as total_healing_done'),
                 DB::raw('SUM(mps.damage_blocked) as total_damage_blocked'),
-                DB::raw('AVG(mps.accuracy_percentage) as avg_accuracy'),
-                DB::raw('SUM(mps.final_blows) as total_final_blows'),
-                DB::raw('SUM(mps.solo_kills) as total_solo_kills'),
-                DB::raw('MAX(mps.best_killstreak) as best_killstreak'),
-                DB::raw('SUM(mps.ultimates_earned) as total_ultimates_earned'),
+                DB::raw('AVG(mps.kda_ratio) as avg_kda'),
                 DB::raw('SUM(mps.ultimates_used) as total_ultimates_used'),
-                DB::raw('SUM(mps.ultimate_eliminations) as total_ultimate_eliminations'),
-                DB::raw('SUM(mps.time_played_seconds) as total_time_played')
+                DB::raw('0 as total_time_played')
             ])->first();
 
             // Calculate derived metrics
@@ -1645,7 +1624,6 @@ class PlayerController extends Controller
             $kd = $overallStats->total_deaths > 0 ? round($overallStats->total_eliminations / $overallStats->total_deaths, 2) : $overallStats->total_eliminations;
             $kda = $overallStats->total_deaths > 0 ? round(($overallStats->total_eliminations + $overallStats->total_assists) / $overallStats->total_deaths, 2) : ($overallStats->total_eliminations + $overallStats->total_assists);
             $totalTimeHours = round($overallStats->total_time_played / 3600, 1);
-            $ultEfficacy = $overallStats->total_ultimates_earned > 0 ? round(($overallStats->total_ultimates_used / $overallStats->total_ultimates_earned) * 100, 1) : 0;
             $damagePerSecond = $overallStats->total_time_played > 0 ? round($overallStats->total_damage_dealt / $overallStats->total_time_played, 1) : 0;
 
             // Get performance trends over time
@@ -1661,7 +1639,7 @@ class PlayerController extends Controller
                 ->join('teams as t2', 'm.team2_id', '=', 't2.id')
                 ->where('mps.player_id', $playerId)
                 ->where('m.status', 'completed')
-                ->orderBy('mps.performance_rating', 'desc')
+                ->orderBy('mps.mvp_score', 'desc')
                 ->limit(5)
                 ->select([
                     'mps.*',
@@ -1682,7 +1660,7 @@ class PlayerController extends Controller
                 ->join('teams as t2', 'm.team2_id', '=', 't2.id')
                 ->where('mps.player_id', $playerId)
                 ->where('m.status', 'completed')
-                ->orderBy('mps.performance_rating', 'asc')
+                ->orderBy('mps.mvp_score', 'asc')
                 ->limit(5)
                 ->select([
                     'mps.*',
@@ -1720,13 +1698,10 @@ class PlayerController extends Controller
                         'kda_ratio' => $kda,
                         'avg_eliminations' => round($overallStats->avg_eliminations, 1),
                         'avg_deaths' => round($overallStats->avg_deaths, 1),
-                        'avg_assists' => round($overallStats->avg_assists, 1),
-                        'best_killstreak' => $overallStats->best_killstreak
+                        'avg_assists' => round($overallStats->avg_assists, 1)
                     ],
                     'performance_metrics' => [
-                        'accuracy_percentage' => round($overallStats->avg_accuracy, 1),
-                        'total_final_blows' => $overallStats->total_final_blows,
-                        'total_solo_kills' => $overallStats->total_solo_kills,
+                        'avg_kda_ratio' => round($overallStats->avg_kda, 2),
                         'damage_per_second' => $damagePerSecond
                     ],
                     'damage_stats' => [
@@ -1737,23 +1712,20 @@ class PlayerController extends Controller
                         'damage_differential' => $overallStats->total_damage_dealt - $overallStats->total_damage_taken
                     ],
                     'ultimate_stats' => [
-                        'total_ultimates_earned' => $overallStats->total_ultimates_earned,
-                        'total_ultimates_used' => $overallStats->total_ultimates_used,
-                        'total_ultimate_eliminations' => $overallStats->total_ultimate_eliminations,
-                        'ultimate_efficacy' => $ultEfficacy
+                        'total_ultimates_used' => $overallStats->total_ultimates_used
                     ],
                     'trends' => $performanceTrends,
                     'best_performances' => $bestPerformances->map(function($perf) use ($playerTeamId) {
                         return [
                             'match_id' => $perf->match_id,
                             'date' => $perf->scheduled_at,
-                            'rating' => $perf->performance_rating,
+                            'rating' => $perf->mvp_score ?? 0,
                             'eliminations' => $perf->eliminations,
                             'deaths' => $perf->deaths,
                             'assists' => $perf->assists,
                             'kd' => $perf->deaths > 0 ? round($perf->eliminations / $perf->deaths, 2) : $perf->eliminations,
                             'hero' => $perf->hero,
-                            'damage_dealt' => $perf->damage,
+                            'damage_dealt' => $perf->damage_dealt ?? 0,
                             'opponent' => $perf->team2_name
                         ];
                     }),
@@ -1761,13 +1733,13 @@ class PlayerController extends Controller
                         return [
                             'match_id' => $perf->match_id,
                             'date' => $perf->scheduled_at,
-                            'rating' => $perf->performance_rating,
+                            'rating' => $perf->mvp_score ?? 0,
                             'eliminations' => $perf->eliminations,
                             'deaths' => $perf->deaths,
                             'assists' => $perf->assists,
                             'kd' => $perf->deaths > 0 ? round($perf->eliminations / $perf->deaths, 2) : $perf->eliminations,
                             'hero' => $perf->hero,
-                            'damage_dealt' => $perf->damage,
+                            'damage_dealt' => $perf->damage_dealt ?? 0,
                             'opponent' => $perf->team2_name
                         ];
                     })
@@ -1962,17 +1934,14 @@ class PlayerController extends Controller
                 'e.prize_pool',
                 DB::raw('COUNT(DISTINCT mps.match_id) as matches_played'),
                 DB::raw('SUM(CASE WHEN (mps.team_id = m.team1_id AND m.team1_score > m.team2_score) OR (mps.team_id = m.team2_id AND m.team2_score > m.team1_score) THEN 1 ELSE 0 END) as wins'),
-                DB::raw('AVG(mps.performance_rating) as avg_rating'),
+                DB::raw('AVG(mps.mvp_score) as avg_rating'),
                 DB::raw('AVG(mps.eliminations) as avg_eliminations'),
                 DB::raw('AVG(mps.deaths) as avg_deaths'),
                 DB::raw('AVG(mps.assists) as avg_assists'),
-                DB::raw('AVG(mps.damage) as avg_damage_dealt'),
-                DB::raw('AVG(mps.accuracy_percentage) as avg_accuracy'),
-                DB::raw('SUM(mps.final_blows) as total_final_blows'),
-                DB::raw('SUM(mps.solo_kills) as total_solo_kills'),
-                DB::raw('SUM(mps.ultimates_earned) as total_ultimates_earned'),
+                DB::raw('AVG(mps.damage_dealt) as avg_damage_dealt'),
+                DB::raw('AVG(mps.kda_ratio) as avg_kda'),
                 DB::raw('SUM(mps.ultimates_used) as total_ultimates_used'),
-                DB::raw('SUM(mps.time_played_seconds) as total_time_played')
+                DB::raw('0 as total_time_played')
             ])
             ->orderBy('e.start_date', 'desc')
             ->get();
@@ -1982,7 +1951,6 @@ class PlayerController extends Controller
                 $winRate = $stats->matches_played > 0 ? round(($stats->wins / $stats->matches_played) * 100, 1) : 0;
                 $kd = $stats->avg_deaths > 0 ? round($stats->avg_eliminations / $stats->avg_deaths, 2) : $stats->avg_eliminations;
                 $timePlayedHours = round($stats->total_time_played / 3600, 1);
-                $ultEfficacy = $stats->total_ultimates_earned > 0 ? round(($stats->total_ultimates_used / $stats->total_ultimates_earned) * 100, 1) : 0;
 
                 // Calculate placement for this event
                 $placement = $this->calculatePlayerEventPlacement($stats->event_id, $playerId);
@@ -2009,18 +1977,14 @@ class PlayerController extends Controller
                         'avg_rating' => round($stats->avg_rating, 2),
                         'avg_kd' => $kd,
                         'avg_damage_dealt' => round($stats->avg_damage_dealt, 0),
-                        'avg_accuracy' => round($stats->avg_accuracy, 1)
+                        'avg_kda' => round($stats->avg_kda, 2)
                     ],
                     'combat' => [
                         'avg_eliminations' => round($stats->avg_eliminations, 1),
                         'avg_deaths' => round($stats->avg_deaths, 1),
-                        'avg_assists' => round($stats->avg_assists, 1),
-                        'total_final_blows' => $stats->total_final_blows,
-                        'total_solo_kills' => $stats->total_solo_kills
+                        'avg_assists' => round($stats->avg_assists, 1)
                     ],
                     'impact' => [
-                        'ultimate_efficacy' => $ultEfficacy,
-                        'total_ultimates_earned' => $stats->total_ultimates_earned,
                         'total_ultimates_used' => $stats->total_ultimates_used
                     ]
                 ];
@@ -2112,8 +2076,8 @@ class PlayerController extends Controller
                 ->where('m.status', 'completed')
                 ->whereBetween('m.scheduled_at', [$weekStart, $weekEnd])
                 ->select([
-                    DB::raw('AVG(mps.performance_rating) as avg_rating'),
-                    DB::raw('AVG(mps.damage) as avg_damage'),
+                    DB::raw('AVG(mps.mvp_score) as avg_rating'),
+                    DB::raw('AVG(mps.damage_dealt) as avg_damage'),
                     DB::raw('AVG(mps.eliminations) as avg_eliminations'),
                     DB::raw('COUNT(DISTINCT mps.match_id) as matches')
                 ])
