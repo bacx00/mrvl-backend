@@ -5,10 +5,13 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
+use Carbon\Carbon;
 use App\Models\Mention;
 use App\Models\MatchModel;
 use App\Models\MvrlMatch;
 use App\Events\MatchHeroUpdated;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Validation\ValidationException;
 
 class MatchController extends Controller
 {
@@ -244,7 +247,7 @@ class MatchController extends Controller
                 'overtime' => false,
                 
                 // Administrative
-                'created_by' => Auth::id(),
+                'created_by' => auth('api')->id(),
                 'allow_past_date' => $request->allow_past_date ?? false,
                 'created_at' => now(),
                 'updated_at' => now()
@@ -688,7 +691,7 @@ class MatchController extends Controller
                 'match_id' => $matchId,
                 'action' => 'restart',
                 'reason' => $request->reason,
-                'performed_by' => Auth::id(),
+                'performed_by' => auth('api')->id(),
                 'created_at' => now()
             ]);
 
@@ -2321,7 +2324,7 @@ class MatchController extends Controller
         try {
             $commentId = DB::table('match_comments')->insertGetId([
                 'match_id' => $matchId,
-                'user_id' => Auth::id(),
+                'user_id' => auth('api')->id(),
                 'parent_id' => $request->parent_id,
                 'content' => $request->content,
                 'created_at' => now(),
@@ -2497,7 +2500,7 @@ class MatchController extends Controller
                     'mentioned_id' => $mention['id'],
                     'mention_text' => $mention['mention_text'] ?? "@{$mention['name']}"
                 ], [
-                    'mentioned_by' => Auth::id(),
+                    'mentioned_by' => auth('api')->id(),
                     'mentioned_at' => now(),
                     'is_active' => true,
                     'context' => $this->extractMentionContext($content, $mention['mention_text'] ?? "@{$mention['name']}")
@@ -2607,7 +2610,7 @@ class MatchController extends Controller
         ]);
 
         try {
-            $userId = Auth::id();
+            $userId = auth('api')->id();
             $voteType = $request->vote_type;
 
             // Get the comment to ensure it exists
@@ -3447,6 +3450,17 @@ class MatchController extends Controller
     public function getComments($matchId)
     {
         try {
+            // Validate match exists
+            $match = DB::table('matches')->where('id', $matchId)->first();
+            if (!$match) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Match not found',
+                    'data' => []
+                ], 404);
+            }
+
+            // Get comments with user details
             $comments = DB::table('match_comments')
                 ->join('users', 'match_comments.user_id', '=', 'users.id')
                 ->where('match_comments.match_id', $matchId)
@@ -3476,22 +3490,37 @@ class MatchController extends Controller
                     ->orderBy('match_comments.created_at', 'asc')
                     ->get();
                 
-                // Format timestamps
-                $comment->created_at_formatted = Carbon::parse($comment->created_at)->diffForHumans();
+                // Format timestamps safely
+                if ($comment->created_at) {
+                    $comment->created_at_formatted = \Carbon\Carbon::parse($comment->created_at)->diffForHumans();
+                } else {
+                    $comment->created_at_formatted = 'Unknown time';
+                }
+                
                 foreach ($comment->replies as $reply) {
-                    $reply->created_at_formatted = Carbon::parse($reply->created_at)->diffForHumans();
+                    if ($reply->created_at) {
+                        $reply->created_at_formatted = \Carbon\Carbon::parse($reply->created_at)->diffForHumans();
+                    } else {
+                        $reply->created_at_formatted = 'Unknown time';
+                    }
                 }
             }
 
             return response()->json([
                 'success' => true,
-                'data' => $comments
+                'data' => $comments,
+                'count' => count($comments)
             ]);
         } catch (\Exception $e) {
+            \Log::error("Error in getComments for match {$matchId}: " . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
+            
             return response()->json([
                 'success' => false,
                 'message' => 'Error fetching comments',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+                'data' => []
             ], 500);
         }
     }
@@ -4686,11 +4715,24 @@ class MatchController extends Controller
                 ]
             ]);
 
-        } catch (\Exception $e) {
-            \Log::error('MatchController@teamWinsMap error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
+        } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error recording map win: ' . $e->getMessage()
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            \Log::error('MatchController@teamWinsMap error', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'match_id' => $matchId,
+                'user_id' => auth()->id() ?? 'guest'
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Internal server error. Please try again.'
             ], 500);
         }
     }

@@ -1,0 +1,5715 @@
+COMPLETE MARVEL RIVALS PLAYERS REPORT
+Generated: 2025-08-10 08:50:03
+
+========================================
+PLAYER #1: heat884
+========================================
+ID: 25
+Username: heat884
+Real Name: Kyle Carter
+Alternate IDs: None
+Role: Strategist
+Nationality: American
+Birth Date: 1999-09-22
+Region: NA
+Status: active
+Current Team: TSM (NA)
+Total Earnings: $99,390.00
+ELO Rating: 2247
+
+========================================
+PLAYER #2: Chronicle865
+========================================
+ID: 146
+Username: Chronicle865
+Real Name: Joseph Rivera
+Alternate IDs: None
+Role: Vanguard
+Nationality: German
+Birth Date: 2004-06-02
+Region: EU
+Status: active
+Current Team: FunPlus Phoenix (CN)
+Total Earnings: $99,141.00
+ELO Rating: 1384
+
+========================================
+PLAYER #3: Khalil781
+========================================
+ID: 316
+Username: Khalil781
+Real Name: Donald Wilson
+Alternate IDs: None
+Role: Duelist
+Nationality: Japanese
+Birth Date: 1996-04-12
+Region: JP
+Status: active
+Current Team: REJECT (JP)
+Total Earnings: $99,065.00
+ELO Rating: 2351
+
+========================================
+PLAYER #4: BuZz803
+========================================
+ID: 54
+Username: BuZz803
+Real Name: Steven White
+Alternate IDs: None
+Role: Duelist
+Nationality: Canadian
+Birth Date: 1997-11-25
+Region: NA
+Status: active
+Current Team: Gen.G (KR)
+Total Earnings: $99,032.00
+ELO Rating: 1590
+
+========================================
+PLAYER #5: Alfajer708
+========================================
+ID: 278
+Username: Alfajer708
+Real Name: Mia Anderson
+Alternate IDs: None
+Role: Strategist
+Nationality: South Korean
+Birth Date: 2004-08-02
+Region: KR
+Status: active
+Current Team: Hanwha Life Esports (KR)
+Total Earnings: $98,974.00
+ELO Rating: 1225
+
+========================================
+PLAYER #6: zunba287
+========================================
+ID: 331
+Username: zunba287
+Real Name: Charlotte Nguyen
+Alternate IDs: None
+Role: Strategist
+Nationality: Brazilian
+Birth Date: 1999-11-27
+Region: SA
+Status: active
+Current Team: Keyd Stars (SA)
+Total Earnings: $98,854.00
+ELO Rating: 1741
+
+========================================
+PLAYER #7: d4v41935
+========================================
+ID: 194
+Username: d4v41935
+Real Name: Sebastian Roberts
+Alternate IDs: None
+Role: Duelist
+Nationality: Malaysian
+Birth Date: 1997-05-09
+Region: ASIA
+Status: active
+Current Team: BLEED (ASIA)
+Total Earnings: $98,576.00
+ELO Rating: 2192
+
+========================================
+PLAYER #8: stax134
+========================================
+ID: 177
+Username: stax134
+Real Name: Isabella Wilson
+Alternate IDs: None
+Role: Duelist
+Nationality: Indonesian
+Birth Date: 1998-12-09
+Region: ASIA
+Status: active
+Current Team: BOOM Esports (ASIA)
+Total Earnings: $98,475.00
+ELO Rating: 2017
+
+========================================
+PLAYER #9: nukkye464
+========================================
+ID: 333
+Username: nukkye464
+Real Name: Kenneth Robinson (nukkye464)
+Alternate IDs: None
+Role: Vanguard
+Nationality: Chilean
+Birth Date: 1995-11-15
+Region: SA
+Status: active
+Current Team: Sharks Esports (SA)
+Total Earnings: $98,418.00
+ELO Rating: 2434
+
+========================================
+PLAYER #10: nitr0486
+========================================
+ID: 111
+Username: nitr0486
+Real Name: John Smith
+Alternate IDs: None
+Role: Vanguard
+Nationality: French
+Birth Date: 2005-11-02
+Region: EU
+Status: active
+Current Team: BIG (EU)
+Total Earnings: $98,169.00
+ELO Rating: 1921
+
+========================================
+PLAYER #11: Alfajer842
+========================================
+ID: 10
+Username: Alfajer842
+Real Name: Robert Davis
+Alternate IDs: None
+Role: Strategist
+Nationality: Canadian
+Birth Date: 1999-07-07
+Region: NA
+Status: active
+Current Team: NRG Esports (NA)
+Total Earnings: $97,830.00
+ELO Rating: 2110
+
+========================================
+PLAYER #12: nitr0457
+========================================
+ID: 39
+Username: nitr0457
+Real Name: Matthew Wright
+Alternate IDs: None
+Role: Vanguard
+Nationality: Mexican
+Birth Date: 1997-01-27
+Region: NA
+Status: active
+Current Team: OG (EU)
+Total Earnings: $97,237.00
+ELO Rating: 2464
+
+========================================
+PLAYER #13: mwzera776
+========================================
+ID: 102
+Username: mwzera776
+Real Name: Tyler Rodriguez
+Alternate IDs: None
+Role: Vanguard
+Nationality: Danish
+Birth Date: 2000-09-10
+Region: EU
+Status: active
+Current Team: FNATIC (EU)
+Total Earnings: $97,219.00
+ELO Rating: 1283
+
+========================================
+PLAYER #14: Less371
+========================================
+ID: 228
+Username: Less371
+Real Name: Kenneth Hill (Less371)
+Alternate IDs: None
+Role: Vanguard
+Nationality: Chinese
+Birth Date: 1996-05-30
+Region: CN
+Status: active
+Current Team: FunPlus Phoenix (CN)
+Total Earnings: $96,965.00
+ELO Rating: 2233
+
+========================================
+PLAYER #15: Victor686
+========================================
+ID: 42
+Username: Victor686
+Real Name: Liam Ramirez
+Alternate IDs: None
+Role: Strategist
+Nationality: Canadian
+Birth Date: 2005-12-02
+Region: NA
+Status: active
+Current Team: OG (EU)
+Total Earnings: $95,972.00
+ELO Rating: 2195
+
+========================================
+PLAYER #16: k1Ng158
+========================================
+ID: 304
+Username: k1Ng158
+Real Name: Jackson Harris
+Alternate IDs: None
+Role: Vanguard
+Nationality: Japanese
+Birth Date: 1998-12-06
+Region: JP
+Status: active
+Current Team: FENNEL (JP)
+Total Earnings: $95,950.00
+ELO Rating: 2350
+
+========================================
+PLAYER #17: nukkye847
+========================================
+ID: 160
+Username: nukkye847
+Real Name: Oliver Carter
+Alternate IDs: None
+Role: Duelist
+Nationality: Indian
+Birth Date: 1997-03-26
+Region: ASIA
+Status: active
+Current Team: Paper Rex (ASIA)
+Total Earnings: $95,947.00
+ELO Rating: 1281
+
+========================================
+PLAYER #18: nukkye703
+========================================
+ID: 315
+Username: nukkye703
+Real Name: Liam Martin
+Alternate IDs: None
+Role: Duelist
+Nationality: Japanese
+Birth Date: 2003-06-19
+Region: JP
+Status: active
+Current Team: REJECT (JP)
+Total Earnings: $95,031.00
+ELO Rating: 1576
+
+========================================
+PLAYER #19: soulcas930
+========================================
+ID: 139
+Username: soulcas930
+Real Name: Christian Mitchell
+Alternate IDs: None
+Role: Vanguard
+Nationality: Spanish
+Birth Date: 2003-10-25
+Region: EU
+Status: active
+Current Team: Astralis (EU)
+Total Earnings: $94,971.00
+ELO Rating: 1516
+
+========================================
+PLAYER #20: bang758
+========================================
+ID: 341
+Username: bang758
+Real Name: Nathan Martinez
+Alternate IDs: None
+Role: Duelist
+Nationality: Argentinian
+Birth Date: 1998-08-22
+Region: SA
+Status: active
+Current Team: Vivo Keyd (SA)
+Total Earnings: $94,816.00
+ELO Rating: 1294
+
+========================================
+PLAYER #21: s0m439
+========================================
+ID: 84
+Username: s0m439
+Real Name: Amelia Martinez
+Alternate IDs: None
+Role: Strategist
+Nationality: American
+Birth Date: 2004-12-27
+Region: NA
+Status: active
+Current Team: Envy (NA)
+Total Earnings: $94,812.00
+ELO Rating: 1272
+
+========================================
+PLAYER #22: Marved537
+========================================
+ID: 109
+Username: Marved537
+Real Name: Kenneth Hernandez (Marved537)
+Alternate IDs: None
+Role: Strategist
+Nationality: Turkish
+Birth Date: 1995-01-28
+Region: EU
+Status: active
+Current Team: BIG (EU)
+Total Earnings: $94,596.00
+ELO Rating: 2126
+
+========================================
+PLAYER #23: Hiko669
+========================================
+ID: 179
+Username: Hiko669
+Real Name: Adam Hill
+Alternate IDs: None
+Role: Vanguard
+Nationality: Indonesian
+Birth Date: 1995-11-24
+Region: ASIA
+Status: active
+Current Team: Team Secret (ASIA)
+Total Earnings: $94,501.00
+ELO Rating: 2440
+
+========================================
+PLAYER #24: BeYN577
+========================================
+ID: 80
+Username: BeYN577
+Real Name: Christian Hall
+Alternate IDs: None
+Role: Duelist
+Nationality: American
+Birth Date: 2006-12-05
+Region: NA
+Status: active
+Current Team: Immortals (NA)
+Total Earnings: $94,385.00
+ELO Rating: 1973
+
+========================================
+PLAYER #25: nAts273
+========================================
+ID: 92
+Username: nAts273
+Real Name: Paul Scott
+Alternate IDs: None
+Role: Vanguard
+Nationality: British
+Birth Date: 1996-02-23
+Region: EU
+Status: active
+Current Team: G2 Esports (EU)
+Total Earnings: $94,189.00
+ELO Rating: 2356
+
+========================================
+PLAYER #26: BeYN267
+========================================
+ID: 271
+Username: BeYN267
+Real Name: Jackson Anderson
+Alternate IDs: None
+Role: Duelist
+Nationality: South Korean
+Birth Date: 1995-04-07
+Region: KR
+Status: active
+Current Team: Gen.G (KR)
+Total Earnings: $93,957.00
+ELO Rating: 1245
+
+========================================
+PLAYER #27: hoody896
+========================================
+ID: 140
+Username: hoody896
+Real Name: Jackson Perez
+Alternate IDs: None
+Role: Duelist
+Nationality: Spanish
+Birth Date: 2002-06-10
+Region: EU
+Status: active
+Current Team: Astralis (EU)
+Total Earnings: $93,785.00
+ELO Rating: 1929
+
+========================================
+PLAYER #28: AvovA806
+========================================
+ID: 322
+Username: AvovA806
+Real Name: William Adams
+Alternate IDs: None
+Role: Duelist
+Nationality: Unknown
+Birth Date: 1997-07-27
+Region: NA
+Status: active
+Current Team: LOUD (SA)
+Total Earnings: $93,708.00
+ELO Rating: 2477
+
+========================================
+PLAYER #29: crashies473
+========================================
+ID: 165
+Username: crashies473
+Real Name: Amelia Lee
+Alternate IDs: None
+Role: Strategist
+Nationality: Singaporean
+Birth Date: 2003-06-20
+Region: ASIA
+Status: active
+Current Team: XERXIA (ASIA)
+Total Earnings: $93,329.00
+ELO Rating: 2319
+
+========================================
+PLAYER #30: mindfreak790
+========================================
+ID: 325
+Username: mindfreak790
+Real Name: Christian Martinez
+Alternate IDs: None
+Role: Strategist
+Nationality: Chilean
+Birth Date: 2001-03-23
+Region: SA
+Status: active
+Current Team: NIP (SA)
+Total Earnings: $92,997.00
+ELO Rating: 2218
+
+========================================
+PLAYER #31: Hiko686
+========================================
+ID: 247
+Username: Hiko686
+Real Name: Gabriel Mitchell
+Alternate IDs: None
+Role: Strategist
+Nationality: Chinese
+Birth Date: 1997-01-03
+Region: CN
+Status: active
+Current Team: Rare Atom (CN)
+Total Earnings: $92,879.00
+ELO Rating: 1470
+
+========================================
+PLAYER #32: Alfajer476
+========================================
+ID: 182
+Username: Alfajer476
+Real Name: Noah Jones (Alfajer476)
+Alternate IDs: None
+Role: Duelist
+Nationality: Indian
+Birth Date: 2001-06-04
+Region: ASIA
+Status: active
+Current Team: Team Secret (ASIA)
+Total Earnings: $92,820.00
+ELO Rating: 2104
+
+========================================
+PLAYER #33: jamppi598
+========================================
+ID: 198
+Username: jamppi598
+Real Name: Daniel Garcia
+Alternate IDs: None
+Role: Vanguard
+Nationality: Indian
+Birth Date: 1996-05-19
+Region: ASIA
+Status: active
+Current Team: BLEED (ASIA)
+Total Earnings: $92,733.00
+ELO Rating: 1984
+
+========================================
+PLAYER #34: heat101
+========================================
+ID: 337
+Username: heat101
+Real Name: Emma Rodriguez
+Alternate IDs: None
+Role: Duelist
+Nationality: Brazilian
+Birth Date: 1998-09-04
+Region: SA
+Status: active
+Current Team: Sharks Esports (SA)
+Total Earnings: $92,654.00
+ELO Rating: 1188
+
+========================================
+PLAYER #35: Meteor724
+========================================
+ID: 207
+Username: Meteor724
+Real Name: Charlotte Sanchez
+Alternate IDs: None
+Role: Duelist
+Nationality: Thai
+Birth Date: 2002-07-10
+Region: ASIA
+Status: active
+Current Team: Soniqs (OCE)
+Total Earnings: $92,133.00
+ELO Rating: 1027
+
+========================================
+PLAYER #36: Redgar279
+========================================
+ID: 75
+Username: Redgar279
+Real Name: Adam Garcia
+Alternate IDs: None
+Role: Strategist
+Nationality: American
+Birth Date: 2003-08-12
+Region: NA
+Status: active
+Current Team: Rise (NA)
+Total Earnings: $92,109.00
+ELO Rating: 1408
+
+========================================
+PLAYER #37: BeYN529
+========================================
+ID: 280
+Username: BeYN529
+Real Name: Liam Perez
+Alternate IDs: None
+Role: Vanguard
+Nationality: South Korean
+Birth Date: 2003-08-07
+Region: KR
+Status: active
+Current Team: Hanwha Life Esports (KR)
+Total Earnings: $91,719.00
+ELO Rating: 2256
+
+========================================
+PLAYER #38: exy374
+========================================
+ID: 49
+Username: exy374
+Real Name: Gabriel Hill
+Alternate IDs: None
+Role: Duelist
+Nationality: Canadian
+Birth Date: 1997-05-12
+Region: NA
+Status: active
+Current Team: EDward Gaming (CN)
+Total Earnings: $91,305.00
+ELO Rating: 1080
+
+========================================
+PLAYER #39: mixwell374
+========================================
+ID: 311
+Username: mixwell374
+Real Name: Tyler Harris
+Alternate IDs: None
+Role: Duelist
+Nationality: Japanese
+Birth Date: 2000-08-13
+Region: JP
+Status: active
+Current Team: Northeption (JP)
+Total Earnings: $91,066.00
+ELO Rating: 1374
+
+========================================
+PLAYER #40: nitr0249
+========================================
+ID: 90
+Username: nitr0249
+Real Name: Sebastian Brown
+Alternate IDs: None
+Role: Vanguard
+Nationality: Spanish
+Birth Date: 2000-12-11
+Region: EU
+Status: active
+Current Team: G2 Esports (EU)
+Total Earnings: $91,000.00
+ELO Rating: 1441
+
+========================================
+PLAYER #41: stax106
+========================================
+ID: 188
+Username: stax106
+Real Name: Andrew Wright (stax106)
+Alternate IDs: None
+Role: Vanguard
+Nationality: Singaporean
+Birth Date: 2000-02-11
+Region: ASIA
+Status: active
+Current Team: Rex Regum Qeon (ASIA)
+Total Earnings: $90,956.00
+ELO Rating: 1970
+
+========================================
+PLAYER #42: allow585
+========================================
+ID: 91
+Username: allow585
+Real Name: Kenneth Hernandez
+Alternate IDs: None
+Role: Duelist
+Nationality: Russian
+Birth Date: 1999-01-17
+Region: EU
+Status: active
+Current Team: G2 Esports (EU)
+Total Earnings: $90,672.00
+ELO Rating: 2114
+
+========================================
+PLAYER #43: BuZz870
+========================================
+ID: 72
+Username: BuZz870
+Real Name: Benjamin Thompson
+Alternate IDs: None
+Role: Vanguard
+Nationality: Canadian
+Birth Date: 2003-05-05
+Region: NA
+Status: active
+Current Team: XSET (NA)
+Total Earnings: $90,015.00
+ELO Rating: 1906
+
+========================================
+PLAYER #44: Nivera420
+========================================
+ID: 30
+Username: Nivera420
+Real Name: Mia Hernandez
+Alternate IDs: None
+Role: Strategist
+Nationality: American
+Birth Date: 2003-08-30
+Region: NA
+Status: active
+Current Team: TSM (NA)
+Total Earnings: $89,067.00
+ELO Rating: 2142
+
+========================================
+PLAYER #45: jamppi189
+========================================
+ID: 3
+Username: jamppi189
+Real Name: Aaron Ramirez
+Alternate IDs: None
+Role: Duelist
+Nationality: Mexican
+Birth Date: 2000-05-24
+Region: NA
+Status: active
+Current Team: Sentinels (NA)
+Total Earnings: $88,991.00
+ELO Rating: 1971
+
+========================================
+PLAYER #46: stax864
+========================================
+ID: 9
+Username: stax864
+Real Name: Tyler Martinez
+Alternate IDs: None
+Role: Vanguard
+Nationality: Mexican
+Birth Date: 2005-03-26
+Region: NA
+Status: active
+Current Team: NRG Esports (NA)
+Total Earnings: $88,966.00
+ELO Rating: 1471
+
+========================================
+PLAYER #47: k1Ng715
+========================================
+ID: 220
+Username: k1Ng715
+Real Name: Lucas Flores
+Alternate IDs: None
+Role: Vanguard
+Nationality: Chinese
+Birth Date: 1998-09-08
+Region: CN
+Status: active
+Current Team: EDward Gaming (CN)
+Total Earnings: $88,942.00
+ELO Rating: 1184
+
+========================================
+PLAYER #48: d3ffo341
+========================================
+ID: 99
+Username: d3ffo341
+Real Name: Henry Flores
+Alternate IDs: None
+Role: Duelist
+Nationality: Dutch
+Birth Date: 1997-03-26
+Region: EU
+Status: active
+Current Team: FNATIC (EU)
+Total Earnings: $88,930.00
+ELO Rating: 1270
+
+========================================
+PLAYER #49: saadhak764
+========================================
+ID: 22
+Username: saadhak764
+Real Name: Daniel Rodriguez
+Alternate IDs: None
+Role: Strategist
+Nationality: Mexican
+Birth Date: 2003-03-28
+Region: NA
+Status: active
+Current Team: 100 Thieves (NA)
+Total Earnings: $88,581.00
+ELO Rating: 1967
+
+========================================
+PLAYER #50: Nivera178
+========================================
+ID: 81
+Username: Nivera178
+Real Name: Henry Moore
+Alternate IDs: None
+Role: Strategist
+Nationality: Canadian
+Birth Date: 2002-06-04
+Region: NA
+Status: active
+Current Team: Immortals (NA)
+Total Earnings: $88,537.00
+ELO Rating: 2400
+
+========================================
+PLAYER #51: saadhak107
+========================================
+ID: 245
+Username: saadhak107
+Real Name: Nathan Ramirez
+Alternate IDs: None
+Role: Duelist
+Nationality: Chinese
+Birth Date: 1997-01-08
+Region: CN
+Status: active
+Current Team: Rare Atom (CN)
+Total Earnings: $88,527.00
+ELO Rating: 1416
+
+========================================
+PLAYER #52: AvovA761
+========================================
+ID: 348
+Username: AvovA761
+Real Name: Isabella Roberts
+Alternate IDs: None
+Role: Vanguard
+Nationality: Australian
+Birth Date: 1995-02-21
+Region: OCE
+Status: active
+Current Team: Soniqs (OCE)
+Total Earnings: $88,350.00
+ELO Rating: 1815
+
+========================================
+PLAYER #53: Less482
+========================================
+ID: 343
+Username: Less482
+Real Name: Kenneth Thomas (Less482)
+Alternate IDs: None
+Role: Strategist
+Nationality: New Zealander
+Birth Date: 2005-01-02
+Region: OCE
+Status: active
+Current Team: ORDER (OCE)
+Total Earnings: $87,960.00
+ELO Rating: 1943
+
+========================================
+PLAYER #54: Mazin220
+========================================
+ID: 275
+Username: Mazin220
+Real Name: Isabella Smith
+Alternate IDs: None
+Role: Vanguard
+Nationality: South Korean
+Birth Date: 2000-03-02
+Region: KR
+Status: active
+Current Team: KT Rolster (KR)
+Total Earnings: $87,943.00
+ELO Rating: 1531
+
+========================================
+PLAYER #55: nAts162
+========================================
+ID: 211
+Username: nAts162
+Real Name: William King
+Alternate IDs: None
+Role: Strategist
+Nationality: Singaporean
+Birth Date: 1997-07-08
+Region: ASIA
+Status: active
+Current Team: Global Esports (ASIA)
+Total Earnings: $87,890.00
+ELO Rating: 1713
+
+========================================
+PLAYER #56: v1xen147
+========================================
+ID: 152
+Username: v1xen147
+Real Name: Samuel Harris
+Alternate IDs: None
+Role: Strategist
+Nationality: Polish
+Birth Date: 2006-10-13
+Region: EU
+Status: active
+Current Team: Excel Esports (EU)
+Total Earnings: $87,687.00
+ELO Rating: 1178
+
+========================================
+PLAYER #57: Enzo428
+========================================
+ID: 26
+Username: Enzo428
+Real Name: Gabriel Robinson
+Alternate IDs: None
+Role: Vanguard
+Nationality: Canadian
+Birth Date: 1996-09-21
+Region: NA
+Status: active
+Current Team: TSM (NA)
+Total Earnings: $87,596.00
+ELO Rating: 1272
+
+========================================
+PLAYER #58: Foxy9592
+========================================
+ID: 249
+Username: Foxy9592
+Real Name: Lucas King
+Alternate IDs: None
+Role: Strategist
+Nationality: Chinese
+Birth Date: 2001-09-28
+Region: CN
+Status: active
+Current Team: Weibo Gaming (CN)
+Total Earnings: $87,564.00
+ELO Rating: 1236
+
+========================================
+PLAYER #59: s0m905
+========================================
+ID: 57
+Username: s0m905
+Real Name: Daniel Taylor
+Alternate IDs: None
+Role: Vanguard
+Nationality: American
+Birth Date: 2006-04-26
+Region: NA
+Status: active
+Current Team: Gen.G (KR)
+Total Earnings: $86,557.00
+ELO Rating: 2000
+
+========================================
+PLAYER #60: Boaster847
+========================================
+ID: 226
+Username: Boaster847
+Real Name: Alexander Hall
+Alternate IDs: None
+Role: Duelist
+Nationality: Chinese
+Birth Date: 2002-03-19
+Region: CN
+Status: active
+Current Team: FunPlus Phoenix (CN)
+Total Earnings: $85,843.00
+ELO Rating: 1401
+
+========================================
+PLAYER #61: TenZ939
+========================================
+ID: 108
+Username: TenZ939
+Real Name: Paul Torres
+Alternate IDs: None
+Role: Vanguard
+Nationality: Turkish
+Birth Date: 1997-12-19
+Region: EU
+Status: active
+Current Team: Vitality (EU)
+Total Earnings: $84,967.00
+ELO Rating: 2263
+
+========================================
+PLAYER #62: Lakia667
+========================================
+ID: 20
+Username: Lakia667
+Real Name: Mia Wilson
+Alternate IDs: None
+Role: Vanguard
+Nationality: American
+Birth Date: 2001-12-30
+Region: NA
+Status: active
+Current Team: 100 Thieves (NA)
+Total Earnings: $84,720.00
+ELO Rating: 1287
+
+========================================
+PLAYER #63: Less808
+========================================
+ID: 175
+Username: Less808
+Real Name: Christopher Nguyen
+Alternate IDs: None
+Role: Vanguard
+Nationality: Singaporean
+Birth Date: 2004-06-05
+Region: ASIA
+Status: active
+Current Team: BOOM Esports (ASIA)
+Total Earnings: $84,323.00
+ELO Rating: 1621
+
+========================================
+PLAYER #64: ScreaM128
+========================================
+ID: 323
+Username: ScreaM128
+Real Name: Tyler Adams
+Alternate IDs: None
+Role: Strategist
+Nationality: Argentinian
+Birth Date: 2003-03-20
+Region: SA
+Status: active
+Current Team: NIP (SA)
+Total Earnings: $84,230.00
+ELO Rating: 1878
+
+========================================
+PLAYER #65: Marved129
+========================================
+ID: 142
+Username: Marved129
+Real Name: Oliver Scott (Marved129)
+Alternate IDs: None
+Role: Vanguard
+Nationality: Polish
+Birth Date: 2003-10-03
+Region: EU
+Status: active
+Current Team: Astralis (EU)
+Total Earnings: $83,671.00
+ELO Rating: 1689
+
+========================================
+PLAYER #66: pANcada739
+========================================
+ID: 213
+Username: pANcada739
+Real Name: Joseph Nelson
+Alternate IDs: None
+Role: Duelist
+Nationality: Indonesian
+Birth Date: 1996-05-06
+Region: ASIA
+Status: active
+Current Team: Global Esports (ASIA)
+Total Earnings: $83,664.00
+ELO Rating: 1110
+
+========================================
+PLAYER #67: s0m396
+========================================
+ID: 169
+Username: s0m396
+Real Name: James Young
+Alternate IDs: None
+Role: Strategist
+Nationality: Malaysian
+Birth Date: 2001-01-17
+Region: ASIA
+Status: active
+Current Team: FULL SENSE (ASIA)
+Total Earnings: $83,496.00
+ELO Rating: 1596
+
+========================================
+PLAYER #68: Benkai203
+========================================
+ID: 31
+Username: Benkai203
+Real Name: Lucas Robinson
+Alternate IDs: None
+Role: Strategist
+Nationality: Canadian
+Birth Date: 2004-07-16
+Region: NA
+Status: active
+Current Team: FaZe Clan (NA)
+Total Earnings: $83,460.00
+ELO Rating: 1926
+
+========================================
+PLAYER #69: TenZ468
+========================================
+ID: 321
+Username: TenZ468
+Real Name: Adam Jones (TenZ468)
+Alternate IDs: None
+Role: Vanguard
+Nationality: Argentinian
+Birth Date: 2002-10-15
+Region: SA
+Status: active
+Current Team: LOUD (SA)
+Total Earnings: $82,778.00
+ELO Rating: 2280
+
+========================================
+PLAYER #70: pANcada972
+========================================
+ID: 156
+Username: pANcada972
+Real Name: Samuel Robinson
+Alternate IDs: None
+Role: Strategist
+Nationality: French
+Birth Date: 2000-01-03
+Region: EU
+Status: active
+Current Team: LDLC (EU)
+Total Earnings: $82,708.00
+ELO Rating: 1862
+
+========================================
+PLAYER #71: zombs468
+========================================
+ID: 339
+Username: zombs468
+Real Name: Joseph King
+Alternate IDs: None
+Role: Strategist
+Nationality: Unknown
+Birth Date: 2004-12-20
+Region: NA
+Status: active
+Current Team: Vivo Keyd (SA)
+Total Earnings: $82,396.00
+ELO Rating: 1160
+
+========================================
+PLAYER #72: Marved886
+========================================
+ID: 48
+Username: Marved886
+Real Name: Nathan Hernandez
+Alternate IDs: None
+Role: Vanguard
+Nationality: Mexican
+Birth Date: 1995-06-15
+Region: NA
+Status: active
+Current Team: Team Liquid (EU)
+Total Earnings: $82,381.00
+ELO Rating: 1573
+
+========================================
+PLAYER #73: nAts671
+========================================
+ID: 229
+Username: nAts671
+Real Name: Anthony Williams
+Alternate IDs: None
+Role: Duelist
+Nationality: Chinese
+Birth Date: 1999-01-26
+Region: CN
+Status: active
+Current Team: Bilibili Gaming (CN)
+Total Earnings: $81,851.00
+ELO Rating: 2265
+
+========================================
+PLAYER #74: Benkai751
+========================================
+ID: 116
+Username: Benkai751
+Real Name: Sebastian Young
+Alternate IDs: None
+Role: Strategist
+Nationality: Danish
+Birth Date: 1998-02-03
+Region: EU
+Status: active
+Current Team: MAD Lions (EU)
+Total Earnings: $81,827.00
+ELO Rating: 2029
+
+========================================
+PLAYER #75: mixwell609
+========================================
+ID: 147
+Username: mixwell609
+Real Name: Samuel Sanchez (mixwell609)
+Alternate IDs: None
+Role: Duelist
+Nationality: Polish
+Birth Date: 1998-07-29
+Region: EU
+Status: active
+Current Team: FunPlus Phoenix (CN)
+Total Earnings: $81,747.00
+ELO Rating: 1005
+
+========================================
+PLAYER #76: Foxy9407
+========================================
+ID: 168
+Username: Foxy9407
+Real Name: Liam Anderson
+Alternate IDs: None
+Role: Duelist
+Nationality: Singaporean
+Birth Date: 2003-11-29
+Region: ASIA
+Status: active
+Current Team: XERXIA (ASIA)
+Total Earnings: $81,617.00
+ELO Rating: 1614
+
+========================================
+PLAYER #77: Hiko826
+========================================
+ID: 38
+Username: Hiko826
+Real Name: Logan Hill
+Alternate IDs: None
+Role: Duelist
+Nationality: American
+Birth Date: 2004-10-01
+Region: NA
+Status: active
+Current Team: OG (EU)
+Total Earnings: $81,540.00
+ELO Rating: 2059
+
+========================================
+PLAYER #78: yay581
+========================================
+ID: 318
+Username: yay581
+Real Name: Lucas Hernandez
+Alternate IDs: None
+Role: Strategist
+Nationality: Unknown
+Birth Date: 2005-06-24
+Region: NA
+Status: active
+Current Team: LOUD (SA)
+Total Earnings: $81,373.00
+ELO Rating: 1102
+
+========================================
+PLAYER #79: AvovA348
+========================================
+ID: 127
+Username: AvovA348
+Real Name: Adam Martin (AvovA348)
+Alternate IDs: None
+Role: Duelist
+Nationality: Polish
+Birth Date: 1998-07-31
+Region: EU
+Status: active
+Current Team: Alliance (EU)
+Total Earnings: $81,335.00
+ELO Rating: 1686
+
+========================================
+PLAYER #80: Meteor407
+========================================
+ID: 345
+Username: Meteor407
+Real Name: Samuel Carter
+Alternate IDs: None
+Role: Duelist
+Nationality: Australian
+Birth Date: 2005-08-28
+Region: OCE
+Status: active
+Current Team: ORDER (OCE)
+Total Earnings: $81,267.00
+ELO Rating: 1848
+
+========================================
+PLAYER #81: nAts636
+========================================
+ID: 1
+Username: nAts636
+Real Name: Charlotte Young
+Alternate IDs: None
+Role: Duelist
+Nationality: Mexican
+Birth Date: 2001-07-28
+Region: NA
+Status: active
+Current Team: Sentinels (NA)
+Total Earnings: $81,055.00
+ELO Rating: 1033
+
+========================================
+PLAYER #82: nukkye902
+========================================
+ID: 235
+Username: nukkye902
+Real Name: Andrew Anderson
+Alternate IDs: None
+Role: Vanguard
+Nationality: Chinese
+Birth Date: 2002-10-15
+Region: CN
+Status: active
+Current Team: JD Gaming (CN)
+Total Earnings: $80,924.00
+ELO Rating: 1537
+
+========================================
+PLAYER #83: Foxy9680
+========================================
+ID: 114
+Username: Foxy9680
+Real Name: Ava Mitchell
+Alternate IDs: None
+Role: Strategist
+Nationality: French
+Birth Date: 1999-10-21
+Region: EU
+Status: active
+Current Team: MAD Lions (EU)
+Total Earnings: $80,722.00
+ELO Rating: 2336
+
+========================================
+PLAYER #84: Foxy9750
+========================================
+ID: 267
+Username: Foxy9750
+Real Name: Mason Davis
+Alternate IDs: None
+Role: Vanguard
+Nationality: South Korean
+Birth Date: 2006-09-09
+Region: KR
+Status: active
+Current Team: T1 (KR)
+Total Earnings: $80,656.00
+ELO Rating: 1057
+
+========================================
+PLAYER #85: Enzo561
+========================================
+ID: 277
+Username: Enzo561
+Real Name: Thomas Carter
+Alternate IDs: None
+Role: Vanguard
+Nationality: South Korean
+Birth Date: 1995-04-24
+Region: KR
+Status: active
+Current Team: KT Rolster (KR)
+Total Earnings: $80,085.00
+ELO Rating: 1973
+
+========================================
+PLAYER #86: leaf627
+========================================
+ID: 107
+Username: leaf627
+Real Name: Mia Martin
+Alternate IDs: None
+Role: Vanguard
+Nationality: German
+Birth Date: 1998-11-26
+Region: EU
+Status: active
+Current Team: Vitality (EU)
+Total Earnings: $78,244.00
+ELO Rating: 2332
+
+========================================
+PLAYER #87: d4v41962
+========================================
+ID: 18
+Username: d4v41962
+Real Name: Donald Green
+Alternate IDs: None
+Role: Duelist
+Nationality: American
+Birth Date: 2001-12-14
+Region: NA
+Status: active
+Current Team: Cloud9 (NA)
+Total Earnings: $78,233.00
+ELO Rating: 2189
+
+========================================
+PLAYER #88: pipson115
+========================================
+ID: 189
+Username: pipson115
+Real Name: Lucas Brown
+Alternate IDs: None
+Role: Strategist
+Nationality: Filipino
+Birth Date: 1999-02-21
+Region: ASIA
+Status: active
+Current Team: Alter Ego (ASIA)
+Total Earnings: $77,712.00
+ELO Rating: 1089
+
+========================================
+PLAYER #89: ethan232
+========================================
+ID: 199
+Username: ethan232
+Real Name: Joseph White (ethan232)
+Alternate IDs: None
+Role: Vanguard
+Nationality: Indian
+Birth Date: 2000-12-23
+Region: ASIA
+Status: active
+Current Team: ORDER (OCE)
+Total Earnings: $77,501.00
+ELO Rating: 1219
+
+========================================
+PLAYER #90: steel127
+========================================
+ID: 286
+Username: steel127
+Real Name: Michael Taylor
+Alternate IDs: None
+Role: Strategist
+Nationality: South Korean
+Birth Date: 2002-08-09
+Region: KR
+Status: active
+Current Team: DAMWON KIA (KR)
+Total Earnings: $77,343.00
+ELO Rating: 2040
+
+========================================
+PLAYER #91: BeYN580
+========================================
+ID: 221
+Username: BeYN580
+Real Name: Benjamin Wright
+Alternate IDs: None
+Role: Strategist
+Nationality: Chinese
+Birth Date: 1995-08-04
+Region: CN
+Status: active
+Current Team: EDward Gaming (CN)
+Total Earnings: $76,809.00
+ELO Rating: 2401
+
+========================================
+PLAYER #92: AZK363
+========================================
+ID: 65
+Username: AZK363
+Real Name: Mia Harris
+Alternate IDs: None
+Role: Vanguard
+Nationality: American
+Birth Date: 1997-10-01
+Region: NA
+Status: active
+Current Team: Dignitas (NA)
+Total Earnings: $76,306.00
+ELO Rating: 1592
+
+========================================
+PLAYER #93: d4v41678
+========================================
+ID: 52
+Username: d4v41678
+Real Name: Gabriel Lopez
+Alternate IDs: None
+Role: Strategist
+Nationality: Mexican
+Birth Date: 2003-10-29
+Region: NA
+Status: active
+Current Team: EDward Gaming (CN)
+Total Earnings: $75,977.00
+ELO Rating: 2306
+
+========================================
+PLAYER #94: Derke823
+========================================
+ID: 145
+Username: Derke823
+Real Name: Anthony Lewis
+Alternate IDs: None
+Role: Vanguard
+Nationality: Dutch
+Birth Date: 1997-11-18
+Region: EU
+Status: active
+Current Team: FunPlus Phoenix (CN)
+Total Earnings: $75,465.00
+ELO Rating: 2051
+
+========================================
+PLAYER #95: zunba774
+========================================
+ID: 37
+Username: zunba774
+Real Name: Mason Campbell
+Alternate IDs: None
+Role: Strategist
+Nationality: Canadian
+Birth Date: 1998-08-17
+Region: NA
+Status: active
+Current Team: OG (EU)
+Total Earnings: $75,251.00
+ELO Rating: 1500
+
+========================================
+PLAYER #96: Alfajer350
+========================================
+ID: 303
+Username: Alfajer350
+Real Name: Matthew Johnson
+Alternate IDs: None
+Role: Duelist
+Nationality: Japanese
+Birth Date: 1999-11-25
+Region: JP
+Status: active
+Current Team: FENNEL (JP)
+Total Earnings: $75,174.00
+ELO Rating: 1200
+
+========================================
+PLAYER #97: ethan301
+========================================
+ID: 86
+Username: ethan301
+Real Name: Kenneth Hill
+Alternate IDs: None
+Role: Strategist
+Nationality: Canadian
+Birth Date: 2006-04-29
+Region: NA
+Status: active
+Current Team: Envy (NA)
+Total Earnings: $74,915.00
+ELO Rating: 1302
+
+========================================
+PLAYER #98: sheydos425
+========================================
+ID: 46
+Username: sheydos425
+Real Name: Michael Davis
+Alternate IDs: None
+Role: Strategist
+Nationality: American
+Birth Date: 1996-05-17
+Region: NA
+Status: active
+Current Team: Team Liquid (EU)
+Total Earnings: $74,761.00
+ELO Rating: 1614
+
+========================================
+PLAYER #99: stax638
+========================================
+ID: 33
+Username: stax638
+Real Name: Oliver Johnson
+Alternate IDs: None
+Role: Strategist
+Nationality: American
+Birth Date: 2003-05-08
+Region: NA
+Status: active
+Current Team: FaZe Clan (NA)
+Total Earnings: $74,710.00
+ELO Rating: 2287
+
+========================================
+PLAYER #100: Mistic168
+========================================
+ID: 181
+Username: Mistic168
+Real Name: Elijah Martin
+Alternate IDs: None
+Role: Vanguard
+Nationality: Singaporean
+Birth Date: 1998-05-16
+Region: ASIA
+Status: active
+Current Team: Team Secret (ASIA)
+Total Earnings: $74,297.00
+ELO Rating: 2326
+
+========================================
+PLAYER #101: d4v41340
+========================================
+ID: 115
+Username: d4v41340
+Real Name: Harper Sanchez
+Alternate IDs: None
+Role: Vanguard
+Nationality: Turkish
+Birth Date: 1998-10-20
+Region: EU
+Status: active
+Current Team: MAD Lions (EU)
+Total Earnings: $74,257.00
+ELO Rating: 1240
+
+========================================
+PLAYER #102: mixwell355
+========================================
+ID: 143
+Username: mixwell355
+Real Name: William Green
+Alternate IDs: None
+Role: Strategist
+Nationality: Dutch
+Birth Date: 1996-08-01
+Region: EU
+Status: active
+Current Team: Astralis (EU)
+Total Earnings: $73,865.00
+ELO Rating: 2430
+
+========================================
+PLAYER #103: Alfajer358
+========================================
+ID: 41
+Username: Alfajer358
+Real Name: Andrew Wright
+Alternate IDs: None
+Role: Vanguard
+Nationality: American
+Birth Date: 2003-03-08
+Region: NA
+Status: active
+Current Team: OG (EU)
+Total Earnings: $73,683.00
+ELO Rating: 1245
+
+========================================
+PLAYER #104: Khalil772
+========================================
+ID: 98
+Username: Khalil772
+Real Name: Henry King
+Alternate IDs: None
+Role: Vanguard
+Nationality: Polish
+Birth Date: 1995-04-22
+Region: EU
+Status: active
+Current Team: Team Liquid (EU)
+Total Earnings: $72,300.00
+ELO Rating: 1691
+
+========================================
+PLAYER #105: Boaster235
+========================================
+ID: 27
+Username: Boaster235
+Real Name: Kyle Robinson
+Alternate IDs: None
+Role: Duelist
+Nationality: Mexican
+Birth Date: 2006-12-10
+Region: NA
+Status: active
+Current Team: TSM (NA)
+Total Earnings: $70,332.00
+ELO Rating: 1217
+
+========================================
+PLAYER #106: leaf485
+========================================
+ID: 135
+Username: leaf485
+Real Name: Jacob Taylor
+Alternate IDs: None
+Role: Vanguard
+Nationality: British
+Birth Date: 2001-06-28
+Region: EU
+Status: active
+Current Team: Ninjas in Pyjamas (EU)
+Total Earnings: $70,247.00
+ELO Rating: 1202
+
+========================================
+PLAYER #107: Rb842
+========================================
+ID: 95
+Username: Rb842
+Real Name: Amelia Campbell
+Alternate IDs: None
+Role: Duelist
+Nationality: Spanish
+Birth Date: 1998-02-08
+Region: EU
+Status: active
+Current Team: Team Liquid (EU)
+Total Earnings: $69,914.00
+ELO Rating: 2230
+
+========================================
+PLAYER #108: Hiko771
+========================================
+ID: 100
+Username: Hiko771
+Real Name: James Moore
+Alternate IDs: None
+Role: Duelist
+Nationality: German
+Birth Date: 1997-07-09
+Region: EU
+Status: active
+Current Team: FNATIC (EU)
+Total Earnings: $69,658.00
+ELO Rating: 2323
+
+========================================
+PLAYER #109: pANcada982
+========================================
+ID: 258
+Username: pANcada982
+Real Name: Adam Jones
+Alternate IDs: None
+Role: Duelist
+Nationality: South Korean
+Birth Date: 2004-12-13
+Region: KR
+Status: active
+Current Team: DRX (KR)
+Total Earnings: $69,108.00
+ELO Rating: 1709
+
+========================================
+PLAYER #110: jamppi601
+========================================
+ID: 296
+Username: jamppi601
+Real Name: Steven Brown
+Alternate IDs: None
+Role: Duelist
+Nationality: Japanese
+Birth Date: 1996-09-17
+Region: JP
+Status: active
+Current Team: ZETA DIVISION (JP)
+Total Earnings: $69,023.00
+ELO Rating: 1250
+
+========================================
+PLAYER #111: exy691
+========================================
+ID: 8
+Username: exy691
+Real Name: Christopher Jones
+Alternate IDs: None
+Role: Strategist
+Nationality: American
+Birth Date: 1999-05-07
+Region: NA
+Status: active
+Current Team: NRG Esports (NA)
+Total Earnings: $68,840.00
+ELO Rating: 2316
+
+========================================
+PLAYER #112: dapr918
+========================================
+ID: 67
+Username: dapr918
+Real Name: Oliver Baker
+Alternate IDs: None
+Role: Duelist
+Nationality: Canadian
+Birth Date: 2006-06-10
+Region: NA
+Status: active
+Current Team: Dignitas (NA)
+Total Earnings: $68,537.00
+ELO Rating: 1636
+
+========================================
+PLAYER #113: Mazin746
+========================================
+ID: 164
+Username: Mazin746
+Real Name: William Jones
+Alternate IDs: None
+Role: Strategist
+Nationality: Vietnamese
+Birth Date: 2002-05-14
+Region: ASIA
+Status: active
+Current Team: XERXIA (ASIA)
+Total Earnings: $68,526.00
+ELO Rating: 1546
+
+========================================
+PLAYER #114: pANcada634
+========================================
+ID: 298
+Username: pANcada634
+Real Name: Joseph Hernandez (pANcada634)
+Alternate IDs: None
+Role: Duelist
+Nationality: Japanese
+Birth Date: 1996-08-10
+Region: JP
+Status: active
+Current Team: Crazy Raccoon (JP)
+Total Earnings: $68,182.00
+ELO Rating: 1522
+
+========================================
+PLAYER #115: Foxy9934
+========================================
+ID: 317
+Username: Foxy9934
+Real Name: Noah Jones (Foxy9934)
+Alternate IDs: None
+Role: Strategist
+Nationality: Japanese
+Birth Date: 2001-04-19
+Region: JP
+Status: active
+Current Team: REJECT (JP)
+Total Earnings: $67,644.00
+ELO Rating: 1285
+
+========================================
+PLAYER #116: mindfreak966
+========================================
+ID: 162
+Username: mindfreak966
+Real Name: Steven Anderson
+Alternate IDs: None
+Role: Vanguard
+Nationality: Malaysian
+Birth Date: 2006-06-03
+Region: ASIA
+Status: active
+Current Team: Paper Rex (ASIA)
+Total Earnings: $67,609.00
+ELO Rating: 1530
+
+========================================
+PLAYER #117: Suggest547
+========================================
+ID: 44
+Username: Suggest547
+Real Name: John Baker
+Alternate IDs: None
+Role: Vanguard
+Nationality: Canadian
+Birth Date: 1998-05-30
+Region: NA
+Status: active
+Current Team: Team Liquid (EU)
+Total Earnings: $67,390.00
+ELO Rating: 1839
+
+========================================
+PLAYER #118: Hiko304
+========================================
+ID: 326
+Username: Hiko304
+Real Name: Samuel Young
+Alternate IDs: None
+Role: Duelist
+Nationality: Chilean
+Birth Date: 2004-10-22
+Region: SA
+Status: active
+Current Team: NIP (SA)
+Total Earnings: $67,349.00
+ELO Rating: 1613
+
+========================================
+PLAYER #119: ethan600
+========================================
+ID: 24
+Username: ethan600
+Real Name: Isabella Nguyen
+Alternate IDs: None
+Role: Strategist
+Nationality: Mexican
+Birth Date: 1995-09-01
+Region: NA
+Status: active
+Current Team: 100 Thieves (NA)
+Total Earnings: $67,342.00
+ELO Rating: 2451
+
+========================================
+PLAYER #120: soulcas638
+========================================
+ID: 310
+Username: soulcas638
+Real Name: James Anderson
+Alternate IDs: None
+Role: Strategist
+Nationality: Japanese
+Birth Date: 1999-07-22
+Region: JP
+Status: active
+Current Team: Northeption (JP)
+Total Earnings: $67,120.00
+ELO Rating: 1735
+
+========================================
+PLAYER #121: ScreaM311
+========================================
+ID: 346
+Username: ScreaM311
+Real Name: Amelia Brown
+Alternate IDs: None
+Role: Strategist
+Nationality: New Zealander
+Birth Date: 2006-07-11
+Region: OCE
+Status: active
+Current Team: ORDER (OCE)
+Total Earnings: $65,849.00
+ELO Rating: 2426
+
+========================================
+PLAYER #122: Boaster986
+========================================
+ID: 192
+Username: Boaster986
+Real Name: Aaron Hill
+Alternate IDs: None
+Role: Vanguard
+Nationality: Thai
+Birth Date: 1998-10-06
+Region: ASIA
+Status: active
+Current Team: Alter Ego (ASIA)
+Total Earnings: $65,562.00
+ELO Rating: 1071
+
+========================================
+PLAYER #123: nitr0722
+========================================
+ID: 219
+Username: nitr0722
+Real Name: Henry Baker
+Alternate IDs: None
+Role: Vanguard
+Nationality: Chinese
+Birth Date: 1998-05-16
+Region: CN
+Status: active
+Current Team: EDward Gaming (CN)
+Total Earnings: $65,281.00
+ELO Rating: 2076
+
+========================================
+PLAYER #124: ethan215
+========================================
+ID: 125
+Username: ethan215
+Real Name: Elijah Flores
+Alternate IDs: None
+Role: Strategist
+Nationality: Polish
+Birth Date: 2003-08-04
+Region: EU
+Status: active
+Current Team: Alliance (EU)
+Total Earnings: $65,061.00
+ELO Rating: 1746
+
+========================================
+PLAYER #125: Redgar864
+========================================
+ID: 193
+Username: Redgar864
+Real Name: Harper Garcia
+Alternate IDs: None
+Role: Duelist
+Nationality: Singaporean
+Birth Date: 2004-02-29
+Region: ASIA
+Status: active
+Current Team: Alter Ego (ASIA)
+Total Earnings: $65,054.00
+ELO Rating: 1966
+
+========================================
+PLAYER #126: Foxy9209
+========================================
+ID: 218
+Username: Foxy9209
+Real Name: Anthony Rodriguez
+Alternate IDs: None
+Role: Vanguard
+Nationality: Vietnamese
+Birth Date: 2001-01-01
+Region: ASIA
+Status: active
+Current Team: Velocity Gaming (ASIA)
+Total Earnings: $64,798.00
+ELO Rating: 1947
+
+========================================
+PLAYER #127: Mistic244
+========================================
+ID: 262
+Username: Mistic244
+Real Name: David Flores
+Alternate IDs: None
+Role: Strategist
+Nationality: South Korean
+Birth Date: 1998-05-02
+Region: KR
+Status: active
+Current Team: DRX (KR)
+Total Earnings: $64,585.00
+ELO Rating: 1344
+
+========================================
+PLAYER #128: Nivera973
+========================================
+ID: 190
+Username: Nivera973
+Real Name: William Thomas
+Alternate IDs: None
+Role: Vanguard
+Nationality: Indonesian
+Birth Date: 1997-11-07
+Region: ASIA
+Status: active
+Current Team: Alter Ego (ASIA)
+Total Earnings: $64,292.00
+ELO Rating: 1191
+
+========================================
+PLAYER #129: mixwell733
+========================================
+ID: 110
+Username: mixwell733
+Real Name: Henry Lewis
+Alternate IDs: None
+Role: Strategist
+Nationality: Russian
+Birth Date: 2003-10-05
+Region: EU
+Status: active
+Current Team: BIG (EU)
+Total Earnings: $64,181.00
+ELO Rating: 2253
+
+========================================
+PLAYER #130: zunba163
+========================================
+ID: 276
+Username: zunba163
+Real Name: Elijah Allen (zunba163)
+Alternate IDs: None
+Role: Vanguard
+Nationality: South Korean
+Birth Date: 2003-11-09
+Region: KR
+Status: active
+Current Team: KT Rolster (KR)
+Total Earnings: $63,808.00
+ELO Rating: 1564
+
+========================================
+PLAYER #131: heat410
+========================================
+ID: 273
+Username: heat410
+Real Name: Sebastian Roberts (heat410)
+Alternate IDs: None
+Role: Strategist
+Nationality: South Korean
+Birth Date: 2002-09-14
+Region: KR
+Status: active
+Current Team: KT Rolster (KR)
+Total Earnings: $63,689.00
+ELO Rating: 1878
+
+========================================
+PLAYER #132: Victor810
+========================================
+ID: 23
+Username: Victor810
+Real Name: Jackson Mitchell
+Alternate IDs: None
+Role: Strategist
+Nationality: American
+Birth Date: 2000-10-19
+Region: NA
+Status: active
+Current Team: 100 Thieves (NA)
+Total Earnings: $63,321.00
+ELO Rating: 2103
+
+========================================
+PLAYER #133: dapr812
+========================================
+ID: 300
+Username: dapr812
+Real Name: Tyler Garcia
+Alternate IDs: None
+Role: Strategist
+Nationality: Japanese
+Birth Date: 2002-04-29
+Region: JP
+Status: active
+Current Team: Crazy Raccoon (JP)
+Total Earnings: $63,113.00
+ELO Rating: 1599
+
+========================================
+PLAYER #134: Enzo639
+========================================
+ID: 246
+Username: Enzo639
+Real Name: James Robinson
+Alternate IDs: None
+Role: Vanguard
+Nationality: Chinese
+Birth Date: 2002-10-02
+Region: CN
+Status: active
+Current Team: Rare Atom (CN)
+Total Earnings: $62,733.00
+ELO Rating: 2287
+
+========================================
+PLAYER #135: pANcada966
+========================================
+ID: 225
+Username: pANcada966
+Real Name: Samuel Johnson
+Alternate IDs: None
+Role: Duelist
+Nationality: Chinese
+Birth Date: 2001-08-27
+Region: CN
+Status: active
+Current Team: FunPlus Phoenix (CN)
+Total Earnings: $62,498.00
+ELO Rating: 1210
+
+========================================
+PLAYER #136: d3ffo933
+========================================
+ID: 36
+Username: d3ffo933
+Real Name: Samuel Taylor
+Alternate IDs: None
+Role: Strategist
+Nationality: Mexican
+Birth Date: 2002-03-22
+Region: NA
+Status: active
+Current Team: FaZe Clan (NA)
+Total Earnings: $62,414.00
+ELO Rating: 1551
+
+========================================
+PLAYER #137: steel134
+========================================
+ID: 261
+Username: steel134
+Real Name: Henry Clark
+Alternate IDs: None
+Role: Duelist
+Nationality: South Korean
+Birth Date: 2003-07-26
+Region: KR
+Status: active
+Current Team: DRX (KR)
+Total Earnings: $62,398.00
+ELO Rating: 2491
+
+========================================
+PLAYER #138: Lakia344
+========================================
+ID: 56
+Username: Lakia344
+Real Name: Paul Nelson
+Alternate IDs: None
+Role: Vanguard
+Nationality: American
+Birth Date: 2005-08-06
+Region: NA
+Status: active
+Current Team: Gen.G (KR)
+Total Earnings: $62,190.00
+ELO Rating: 1229
+
+========================================
+PLAYER #139: d4v41646
+========================================
+ID: 132
+Username: d4v41646
+Real Name: Thomas Gonzalez
+Alternate IDs: None
+Role: Duelist
+Nationality: Russian
+Birth Date: 2001-08-02
+Region: EU
+Status: active
+Current Team: OG (EU)
+Total Earnings: $61,981.00
+ELO Rating: 2375
+
+========================================
+PLAYER #140: soulcas740
+========================================
+ID: 155
+Username: soulcas740
+Real Name: Thomas Wright
+Alternate IDs: None
+Role: Strategist
+Nationality: Swedish
+Birth Date: 2002-06-13
+Region: EU
+Status: active
+Current Team: LDLC (EU)
+Total Earnings: $60,487.00
+ELO Rating: 2486
+
+========================================
+PLAYER #141: exy167
+========================================
+ID: 141
+Username: exy167
+Real Name: Oliver Walker
+Alternate IDs: None
+Role: Strategist
+Nationality: British
+Birth Date: 2003-11-09
+Region: EU
+Status: active
+Current Team: Astralis (EU)
+Total Earnings: $60,373.00
+ELO Rating: 1546
+
+========================================
+PLAYER #142: stellar975
+========================================
+ID: 357
+Username: stellar975
+Real Name: Joseph Campbell
+Alternate IDs: None
+Role: Strategist
+Nationality: New Zealander
+Birth Date: 1997-02-01
+Region: OCE
+Status: active
+Current Team: Legacy Esports (OCE)
+Total Earnings: $59,827.00
+ELO Rating: 1282
+
+========================================
+PLAYER #143: bang226
+========================================
+ID: 76
+Username: bang226
+Real Name: Liam Adams
+Alternate IDs: None
+Role: Strategist
+Nationality: Mexican
+Birth Date: 2005-11-13
+Region: NA
+Status: active
+Current Team: Rise (NA)
+Total Earnings: $59,492.00
+ELO Rating: 1060
+
+========================================
+PLAYER #144: Hiko886
+========================================
+ID: 236
+Username: Hiko886
+Real Name: Matthew Carter
+Alternate IDs: None
+Role: Strategist
+Nationality: Chinese
+Birth Date: 1996-11-04
+Region: CN
+Status: active
+Current Team: JD Gaming (CN)
+Total Earnings: $59,328.00
+ELO Rating: 1402
+
+========================================
+PLAYER #145: SicK936
+========================================
+ID: 63
+Username: SicK936
+Real Name: Tyler Green
+Alternate IDs: None
+Role: Vanguard
+Nationality: Mexican
+Birth Date: 1999-04-14
+Region: NA
+Status: active
+Current Team: Version1 (NA)
+Total Earnings: $59,287.00
+ELO Rating: 2447
+
+========================================
+PLAYER #146: Sacy120
+========================================
+ID: 259
+Username: Sacy120
+Real Name: Paul Miller
+Alternate IDs: None
+Role: Duelist
+Nationality: South Korean
+Birth Date: 1996-08-22
+Region: KR
+Status: active
+Current Team: DRX (KR)
+Total Earnings: $59,147.00
+ELO Rating: 2092
+
+========================================
+PLAYER #147: nukkye345
+========================================
+ID: 260
+Username: nukkye345
+Real Name: Logan Davis
+Alternate IDs: None
+Role: Strategist
+Nationality: South Korean
+Birth Date: 1998-02-19
+Region: KR
+Status: active
+Current Team: DRX (KR)
+Total Earnings: $59,021.00
+ELO Rating: 1491
+
+========================================
+PLAYER #148: Nivera763
+========================================
+ID: 180
+Username: Nivera763
+Real Name: Sebastian Carter
+Alternate IDs: None
+Role: Vanguard
+Nationality: Indian
+Birth Date: 1999-10-10
+Region: ASIA
+Status: active
+Current Team: Team Secret (ASIA)
+Total Earnings: $58,474.00
+ELO Rating: 1094
+
+========================================
+PLAYER #149: exy136
+========================================
+ID: 66
+Username: exy136
+Real Name: Joseph Mitchell
+Alternate IDs: None
+Role: Strategist
+Nationality: American
+Birth Date: 2003-11-09
+Region: NA
+Status: active
+Current Team: Dignitas (NA)
+Total Earnings: $58,065.00
+ELO Rating: 1808
+
+========================================
+PLAYER #150: Meteor896
+========================================
+ID: 308
+Username: Meteor896
+Real Name: Kenneth Garcia
+Alternate IDs: None
+Role: Strategist
+Nationality: Japanese
+Birth Date: 2002-08-01
+Region: JP
+Status: active
+Current Team: Northeption (JP)
+Total Earnings: $57,862.00
+ELO Rating: 2180
+
+========================================
+PLAYER #151: Benkai438
+========================================
+ID: 239
+Username: Benkai438
+Real Name: Nathan Davis
+Alternate IDs: None
+Role: Strategist
+Nationality: Chinese
+Birth Date: 1999-11-29
+Region: CN
+Status: active
+Current Team: ThunderTalk Gaming (CN)
+Total Earnings: $57,543.00
+ELO Rating: 1157
+
+========================================
+PLAYER #152: MaKo505
+========================================
+ID: 297
+Username: MaKo505
+Real Name: Anthony Mitchell
+Alternate IDs: None
+Role: Vanguard
+Nationality: Japanese
+Birth Date: 1998-07-05
+Region: JP
+Status: active
+Current Team: ZETA DIVISION (JP)
+Total Earnings: $57,350.00
+ELO Rating: 2283
+
+========================================
+PLAYER #153: allow302
+========================================
+ID: 101
+Username: allow302
+Real Name: Sebastian Thompson
+Alternate IDs: None
+Role: Vanguard
+Nationality: Danish
+Birth Date: 2005-10-25
+Region: EU
+Status: active
+Current Team: FNATIC (EU)
+Total Earnings: $57,259.00
+ELO Rating: 2291
+
+========================================
+PLAYER #154: AZK182
+========================================
+ID: 161
+Username: AZK182
+Real Name: John Perez
+Alternate IDs: None
+Role: Duelist
+Nationality: Indonesian
+Birth Date: 1997-09-26
+Region: ASIA
+Status: active
+Current Team: Paper Rex (ASIA)
+Total Earnings: $56,666.00
+ELO Rating: 1151
+
+========================================
+PLAYER #155: heat342
+========================================
+ID: 292
+Username: heat342
+Real Name: Paul Lee
+Alternate IDs: None
+Role: Strategist
+Nationality: South Korean
+Birth Date: 2005-07-06
+Region: KR
+Status: active
+Current Team: Liiv SANDBOX (KR)
+Total Earnings: $56,650.00
+ELO Rating: 2283
+
+========================================
+PLAYER #156: soulcas942
+========================================
+ID: 212
+Username: soulcas942
+Real Name: Mia Gonzalez
+Alternate IDs: None
+Role: Vanguard
+Nationality: Indonesian
+Birth Date: 1995-03-16
+Region: ASIA
+Status: active
+Current Team: Global Esports (ASIA)
+Total Earnings: $56,397.00
+ELO Rating: 2185
+
+========================================
+PLAYER #157: SicK961
+========================================
+ID: 43
+Username: SicK961
+Real Name: Charlotte Allen
+Alternate IDs: None
+Role: Strategist
+Nationality: Mexican
+Birth Date: 2006-08-11
+Region: NA
+Status: active
+Current Team: Team Liquid (EU)
+Total Earnings: $55,966.00
+ELO Rating: 2165
+
+========================================
+PLAYER #158: heat646
+========================================
+ID: 234
+Username: heat646
+Real Name: Noah Carter
+Alternate IDs: None
+Role: Vanguard
+Nationality: Chinese
+Birth Date: 1998-02-16
+Region: CN
+Status: active
+Current Team: JD Gaming (CN)
+Total Earnings: $55,886.00
+ELO Rating: 1584
+
+========================================
+PLAYER #159: mwzera800
+========================================
+ID: 153
+Username: mwzera800
+Real Name: Thomas Jackson
+Alternate IDs: None
+Role: Duelist
+Nationality: French
+Birth Date: 2006-08-05
+Region: EU
+Status: active
+Current Team: Excel Esports (EU)
+Total Earnings: $55,573.00
+ELO Rating: 1818
+
+========================================
+PLAYER #160: crashies909
+========================================
+ID: 149
+Username: crashies909
+Real Name: Noah Torres
+Alternate IDs: None
+Role: Vanguard
+Nationality: German
+Birth Date: 1996-05-29
+Region: EU
+Status: active
+Current Team: Excel Esports (EU)
+Total Earnings: $55,379.00
+ELO Rating: 2461
+
+========================================
+PLAYER #161: Asuna719
+========================================
+ID: 263
+Username: Asuna719
+Real Name: Ava Baker
+Alternate IDs: None
+Role: Strategist
+Nationality: South Korean
+Birth Date: 2002-01-05
+Region: KR
+Status: active
+Current Team: T1 (KR)
+Total Earnings: $55,297.00
+ELO Rating: 1035
+
+========================================
+PLAYER #162: BeYN300
+========================================
+ID: 268
+Username: BeYN300
+Real Name: Robert Robinson
+Alternate IDs: None
+Role: Strategist
+Nationality: South Korean
+Birth Date: 1995-08-11
+Region: KR
+Status: active
+Current Team: Gen.G (KR)
+Total Earnings: $54,287.00
+ELO Rating: 1631
+
+========================================
+PLAYER #163: d3ffo635
+========================================
+ID: 17
+Username: d3ffo635
+Real Name: Olivia Lee
+Alternate IDs: None
+Role: Duelist
+Nationality: American
+Birth Date: 1999-11-22
+Region: NA
+Status: active
+Current Team: Cloud9 (NA)
+Total Earnings: $54,106.00
+ELO Rating: 1399
+
+========================================
+PLAYER #164: Redgar717
+========================================
+ID: 320
+Username: Redgar717
+Real Name: Elijah Robinson
+Alternate IDs: None
+Role: Vanguard
+Nationality: Chilean
+Birth Date: 2001-02-25
+Region: SA
+Status: active
+Current Team: LOUD (SA)
+Total Earnings: $54,068.00
+ELO Rating: 1226
+
+========================================
+PLAYER #165: d3ffo670
+========================================
+ID: 257
+Username: d3ffo670
+Real Name: Steven Perez
+Alternate IDs: None
+Role: Duelist
+Nationality: Chinese
+Birth Date: 1999-03-28
+Region: CN
+Status: active
+Current Team: Legacy Esports (OCE)
+Total Earnings: $53,824.00
+ELO Rating: 1702
+
+========================================
+PLAYER #166: Chronicle941
+========================================
+ID: 299
+Username: Chronicle941
+Real Name: Gabriel Scott (Chronicle941)
+Alternate IDs: None
+Role: Vanguard
+Nationality: Japanese
+Birth Date: 2004-01-20
+Region: JP
+Status: active
+Current Team: Crazy Raccoon (JP)
+Total Earnings: $53,637.00
+ELO Rating: 1197
+
+========================================
+PLAYER #167: Derke698
+========================================
+ID: 62
+Username: Derke698
+Real Name: Donald Nelson
+Alternate IDs: None
+Role: Strategist
+Nationality: Mexican
+Birth Date: 1999-08-16
+Region: NA
+Status: active
+Current Team: Version1 (NA)
+Total Earnings: $53,256.00
+ELO Rating: 1479
+
+========================================
+PLAYER #168: yay160
+========================================
+ID: 2
+Username: yay160
+Real Name: Liam Wilson
+Alternate IDs: None
+Role: Duelist
+Nationality: Mexican
+Birth Date: 2002-10-20
+Region: NA
+Status: active
+Current Team: Sentinels (NA)
+Total Earnings: $53,163.00
+ELO Rating: 2218
+
+========================================
+PLAYER #169: Boaster603
+========================================
+ID: 89
+Username: Boaster603
+Real Name: Matthew Jones
+Alternate IDs: None
+Role: Duelist
+Nationality: Turkish
+Birth Date: 1997-08-02
+Region: EU
+Status: active
+Current Team: G2 Esports (EU)
+Total Earnings: $53,107.00
+ELO Rating: 2239
+
+========================================
+PLAYER #170: Boaster989
+========================================
+ID: 71
+Username: Boaster989
+Real Name: Thomas Nguyen
+Alternate IDs: None
+Role: Vanguard
+Nationality: Canadian
+Birth Date: 2006-02-21
+Region: NA
+Status: active
+Current Team: XSET (NA)
+Total Earnings: $52,850.00
+ELO Rating: 1450
+
+========================================
+PLAYER #171: Nivera593
+========================================
+ID: 251
+Username: Nivera593
+Real Name: Isabella Adams
+Alternate IDs: None
+Role: Duelist
+Nationality: Chinese
+Birth Date: 2005-02-23
+Region: CN
+Status: active
+Current Team: Weibo Gaming (CN)
+Total Earnings: $52,367.00
+ELO Rating: 2272
+
+========================================
+PLAYER #172: Victor726
+========================================
+ID: 176
+Username: Victor726
+Real Name: Matthew Rivera
+Alternate IDs: None
+Role: Vanguard
+Nationality: Filipino
+Birth Date: 2000-11-17
+Region: ASIA
+Status: active
+Current Team: BOOM Esports (ASIA)
+Total Earnings: $51,938.00
+ELO Rating: 1494
+
+========================================
+PLAYER #173: saadhak293
+========================================
+ID: 87
+Username: saadhak293
+Real Name: Adam Martin
+Alternate IDs: None
+Role: Vanguard
+Nationality: Chinese
+Birth Date: 1997-11-17
+Region: CN
+Status: active
+Current Team: Bilibili Gaming (CN)
+Total Earnings: $51,861.00
+ELO Rating: 1611
+
+========================================
+PLAYER #174: Khalil629
+========================================
+ID: 252
+Username: Khalil629
+Real Name: Charlotte Hall (Khalil629)
+Alternate IDs: None
+Role: Strategist
+Nationality: Chinese
+Birth Date: 1997-11-27
+Region: CN
+Status: active
+Current Team: Weibo Gaming (CN)
+Total Earnings: $51,561.00
+ELO Rating: 1757
+
+========================================
+PLAYER #175: heat540
+========================================
+ID: 28
+Username: heat540
+Real Name: Steven Torres
+Alternate IDs: None
+Role: Duelist
+Nationality: American
+Birth Date: 1996-07-24
+Region: NA
+Status: active
+Current Team: TSM (NA)
+Total Earnings: $51,528.00
+ELO Rating: 2036
+
+========================================
+PLAYER #176: Less415
+========================================
+ID: 272
+Username: Less415
+Real Name: Lucas Robinson (Less415)
+Alternate IDs: None
+Role: Duelist
+Nationality: South Korean
+Birth Date: 2000-11-22
+Region: KR
+Status: active
+Current Team: Gen.G (KR)
+Total Earnings: $51,367.00
+ELO Rating: 1237
+
+========================================
+PLAYER #177: Rb422
+========================================
+ID: 173
+Username: Rb422
+Real Name: Samuel Baker
+Alternate IDs: None
+Role: Duelist
+Nationality: Indian
+Birth Date: 1996-08-23
+Region: ASIA
+Status: active
+Current Team: FULL SENSE (ASIA)
+Total Earnings: $51,028.00
+ELO Rating: 1030
+
+========================================
+PLAYER #178: hoody917
+========================================
+ID: 335
+Username: hoody917
+Real Name: Elijah Walker
+Alternate IDs: None
+Role: Duelist
+Nationality: Chilean
+Birth Date: 2003-11-23
+Region: SA
+Status: active
+Current Team: Sharks Esports (SA)
+Total Earnings: $50,983.00
+ELO Rating: 1559
+
+========================================
+PLAYER #179: Hiko744
+========================================
+ID: 250
+Username: Hiko744
+Real Name: Isabella Sanchez
+Alternate IDs: None
+Role: Duelist
+Nationality: Chinese
+Birth Date: 2001-03-22
+Region: CN
+Status: active
+Current Team: Weibo Gaming (CN)
+Total Earnings: $50,751.00
+ELO Rating: 1561
+
+========================================
+PLAYER #180: allow574
+========================================
+ID: 266
+Username: allow574
+Real Name: Donald Torres (allow574)
+Alternate IDs: None
+Role: Vanguard
+Nationality: South Korean
+Birth Date: 2002-11-05
+Region: KR
+Status: active
+Current Team: T1 (KR)
+Total Earnings: $50,678.00
+ELO Rating: 1231
+
+========================================
+PLAYER #181: Sacy412
+========================================
+ID: 11
+Username: Sacy412
+Real Name: Benjamin Hall
+Alternate IDs: None
+Role: Vanguard
+Nationality: Mexican
+Birth Date: 1995-04-20
+Region: NA
+Status: active
+Current Team: NRG Esports (NA)
+Total Earnings: $50,355.00
+ELO Rating: 2472
+
+========================================
+PLAYER #182: FNS431
+========================================
+ID: 270
+Username: FNS431
+Real Name: John Hall
+Alternate IDs: None
+Role: Strategist
+Nationality: South Korean
+Birth Date: 1999-07-01
+Region: KR
+Status: active
+Current Team: Gen.G (KR)
+Total Earnings: $50,051.00
+ELO Rating: 2105
+
+========================================
+PLAYER #183: yay536
+========================================
+ID: 264
+Username: yay536
+Real Name: James Moore (yay536)
+Alternate IDs: None
+Role: Vanguard
+Nationality: South Korean
+Birth Date: 1996-03-29
+Region: KR
+Status: active
+Current Team: T1 (KR)
+Total Earnings: $49,482.00
+ELO Rating: 1370
+
+========================================
+PLAYER #184: AvovA925
+========================================
+ID: 208
+Username: AvovA925
+Real Name: Benjamin Taylor
+Alternate IDs: None
+Role: Strategist
+Nationality: Filipino
+Birth Date: 2003-06-03
+Region: ASIA
+Status: active
+Current Team: Soniqs (OCE)
+Total Earnings: $49,391.00
+ELO Rating: 2328
+
+========================================
+PLAYER #185: nitr0189
+========================================
+ID: 45
+Username: nitr0189
+Real Name: Kyle Williams
+Alternate IDs: None
+Role: Vanguard
+Nationality: Mexican
+Birth Date: 1999-08-12
+Region: NA
+Status: active
+Current Team: Team Liquid (EU)
+Total Earnings: $49,166.00
+ELO Rating: 2291
+
+========================================
+PLAYER #186: stax586
+========================================
+ID: 290
+Username: stax586
+Real Name: Sebastian Wilson
+Alternate IDs: None
+Role: Duelist
+Nationality: South Korean
+Birth Date: 2002-03-02
+Region: KR
+Status: active
+Current Team: Liiv SANDBOX (KR)
+Total Earnings: $49,155.00
+ELO Rating: 2043
+
+========================================
+PLAYER #187: soulcas125
+========================================
+ID: 217
+Username: soulcas125
+Real Name: Richard Nelson
+Alternate IDs: None
+Role: Vanguard
+Nationality: Filipino
+Birth Date: 2005-08-11
+Region: ASIA
+Status: active
+Current Team: Velocity Gaming (ASIA)
+Total Earnings: $49,097.00
+ELO Rating: 1927
+
+========================================
+PLAYER #188: pANcada940
+========================================
+ID: 118
+Username: pANcada940
+Real Name: Mason Miller
+Alternate IDs: None
+Role: Vanguard
+Nationality: Polish
+Birth Date: 2000-10-26
+Region: EU
+Status: active
+Current Team: MAD Lions (EU)
+Total Earnings: $48,719.00
+ELO Rating: 2107
+
+========================================
+PLAYER #189: aspas122
+========================================
+ID: 172
+Username: aspas122
+Real Name: Elijah Sanchez
+Alternate IDs: None
+Role: Vanguard
+Nationality: Malaysian
+Birth Date: 2003-09-17
+Region: ASIA
+Status: active
+Current Team: FULL SENSE (ASIA)
+Total Earnings: $48,714.00
+ELO Rating: 1609
+
+========================================
+PLAYER #190: Benkai190
+========================================
+ID: 319
+Username: Benkai190
+Real Name: Charlotte Rodriguez
+Alternate IDs: None
+Role: Duelist
+Nationality: Brazilian
+Birth Date: 1996-07-28
+Region: SA
+Status: active
+Current Team: LOUD (SA)
+Total Earnings: $48,315.00
+ELO Rating: 1145
+
+========================================
+PLAYER #191: nitr0767
+========================================
+ID: 253
+Username: nitr0767
+Real Name: Olivia Jackson
+Alternate IDs: None
+Role: Duelist
+Nationality: Chinese
+Birth Date: 2000-11-21
+Region: CN
+Status: active
+Current Team: Legacy Esports (OCE)
+Total Earnings: $48,292.00
+ELO Rating: 1256
+
+========================================
+PLAYER #192: ShahZaM605
+========================================
+ID: 330
+Username: ShahZaM605
+Real Name: Henry Williams
+Alternate IDs: None
+Role: Strategist
+Nationality: Argentinian
+Birth Date: 2001-04-15
+Region: SA
+Status: active
+Current Team: Keyd Stars (SA)
+Total Earnings: $47,554.00
+ELO Rating: 1480
+
+========================================
+PLAYER #193: FNS122
+========================================
+ID: 254
+Username: FNS122
+Real Name: Charlotte Garcia
+Alternate IDs: None
+Role: Duelist
+Nationality: Chinese
+Birth Date: 1995-07-02
+Region: CN
+Status: active
+Current Team: Legacy Esports (OCE)
+Total Earnings: $47,335.00
+ELO Rating: 1141
+
+========================================
+PLAYER #194: bang680
+========================================
+ID: 334
+Username: bang680
+Real Name: Jacob King
+Alternate IDs: None
+Role: Vanguard
+Nationality: Unknown
+Birth Date: 1997-12-10
+Region: NA
+Status: active
+Current Team: Sharks Esports (SA)
+Total Earnings: $47,183.00
+ELO Rating: 2218
+
+========================================
+PLAYER #195: d3ffo150
+========================================
+ID: 14
+Username: d3ffo150
+Real Name: Lucas Johnson
+Alternate IDs: None
+Role: Vanguard
+Nationality: Canadian
+Birth Date: 2003-02-13
+Region: NA
+Status: active
+Current Team: Cloud9 (NA)
+Total Earnings: $46,990.00
+ELO Rating: 2236
+
+========================================
+PLAYER #196: Zest939
+========================================
+ID: 355
+Username: Zest939
+Real Name: Mason King
+Alternate IDs: None
+Role: Strategist
+Nationality: Australian
+Birth Date: 2004-06-19
+Region: OCE
+Status: active
+Current Team: Legacy Esports (OCE)
+Total Earnings: $46,065.00
+ELO Rating: 1608
+
+========================================
+PLAYER #197: Enzo684
+========================================
+ID: 96
+Username: Enzo684
+Real Name: Thomas Lopez
+Alternate IDs: None
+Role: Duelist
+Nationality: German
+Birth Date: 1998-10-14
+Region: EU
+Status: active
+Current Team: Team Liquid (EU)
+Total Earnings: $45,839.00
+ELO Rating: 1561
+
+========================================
+PLAYER #198: s0m670
+========================================
+ID: 293
+Username: s0m670
+Real Name: Ethan Green
+Alternate IDs: None
+Role: Duelist
+Nationality: Japanese
+Birth Date: 1999-01-11
+Region: JP
+Status: active
+Current Team: ZETA DIVISION (JP)
+Total Earnings: $45,765.00
+ELO Rating: 1350
+
+========================================
+PLAYER #199: Suggest173
+========================================
+ID: 283
+Username: Suggest173
+Real Name: Nathan Jackson
+Alternate IDs: None
+Role: Duelist
+Nationality: South Korean
+Birth Date: 1998-11-07
+Region: KR
+Status: active
+Current Team: DAMWON KIA (KR)
+Total Earnings: $45,635.00
+ELO Rating: 2070
+
+========================================
+PLAYER #200: Khalil719
+========================================
+ID: 154
+Username: Khalil719
+Real Name: Charlotte King
+Alternate IDs: None
+Role: Vanguard
+Nationality: Dutch
+Birth Date: 2006-05-14
+Region: EU
+Status: active
+Current Team: LDLC (EU)
+Total Earnings: $45,152.00
+ELO Rating: 1738
+
+========================================
+PLAYER #201: Asuna516
+========================================
+ID: 201
+Username: Asuna516
+Real Name: Alexander Gonzalez
+Alternate IDs: None
+Role: Duelist
+Nationality: Singaporean
+Birth Date: 2001-02-18
+Region: ASIA
+Status: active
+Current Team: ORDER (OCE)
+Total Earnings: $44,815.00
+ELO Rating: 1833
+
+========================================
+PLAYER #202: mixwell832
+========================================
+ID: 97
+Username: mixwell832
+Real Name: Kyle Flores
+Alternate IDs: None
+Role: Strategist
+Nationality: Swedish
+Birth Date: 1996-02-27
+Region: EU
+Status: active
+Current Team: Team Liquid (EU)
+Total Earnings: $44,598.00
+ELO Rating: 2028
+
+========================================
+PLAYER #203: Lakia917
+========================================
+ID: 166
+Username: Lakia917
+Real Name: Robert Nguyen
+Alternate IDs: None
+Role: Vanguard
+Nationality: Thai
+Birth Date: 1995-04-29
+Region: ASIA
+Status: active
+Current Team: XERXIA (ASIA)
+Total Earnings: $44,512.00
+ELO Rating: 1671
+
+========================================
+PLAYER #204: f0rsakeN531
+========================================
+ID: 93
+Username: f0rsakeN531
+Real Name: Liam Nguyen
+Alternate IDs: None
+Role: Vanguard
+Nationality: Polish
+Birth Date: 2006-07-24
+Region: EU
+Status: active
+Current Team: G2 Esports (EU)
+Total Earnings: $44,289.00
+ELO Rating: 2052
+
+========================================
+PLAYER #205: zunba134
+========================================
+ID: 287
+Username: zunba134
+Real Name: Sebastian Anderson
+Alternate IDs: None
+Role: Duelist
+Nationality: South Korean
+Birth Date: 2006-08-21
+Region: KR
+Status: active
+Current Team: DAMWON KIA (KR)
+Total Earnings: $44,005.00
+ELO Rating: 1732
+
+========================================
+PLAYER #206: Hiko642
+========================================
+ID: 288
+Username: Hiko642
+Real Name: Ethan Hernandez
+Alternate IDs: None
+Role: Duelist
+Nationality: South Korean
+Birth Date: 1997-06-12
+Region: KR
+Status: active
+Current Team: Liiv SANDBOX (KR)
+Total Earnings: $43,871.00
+ELO Rating: 2333
+
+========================================
+PLAYER #207: FNS510
+========================================
+ID: 35
+Username: FNS510
+Real Name: Donald Martinez
+Alternate IDs: None
+Role: Vanguard
+Nationality: American
+Birth Date: 2005-05-05
+Region: NA
+Status: active
+Current Team: FaZe Clan (NA)
+Total Earnings: $43,509.00
+ELO Rating: 2202
+
+========================================
+PLAYER #208: nitr0982
+========================================
+ID: 183
+Username: nitr0982
+Real Name: Elijah Allen
+Alternate IDs: None
+Role: Duelist
+Nationality: Vietnamese
+Birth Date: 2002-07-21
+Region: ASIA
+Status: active
+Current Team: Team Secret (ASIA)
+Total Earnings: $43,357.00
+ELO Rating: 1213
+
+========================================
+PLAYER #209: s0m779
+========================================
+ID: 307
+Username: s0m779
+Real Name: Mason Harris
+Alternate IDs: None
+Role: Strategist
+Nationality: Japanese
+Birth Date: 2001-05-25
+Region: JP
+Status: active
+Current Team: FENNEL (JP)
+Total Earnings: $43,055.00
+ELO Rating: 2214
+
+========================================
+PLAYER #210: Meteor199
+========================================
+ID: 350
+Username: Meteor199
+Real Name: David Smith
+Alternate IDs: None
+Role: Strategist
+Nationality: Australian
+Birth Date: 1999-11-02
+Region: OCE
+Status: active
+Current Team: Soniqs (OCE)
+Total Earnings: $42,921.00
+ELO Rating: 2468
+
+========================================
+PLAYER #211: hoody164
+========================================
+ID: 274
+Username: hoody164
+Real Name: Christian Jones
+Alternate IDs: None
+Role: Duelist
+Nationality: South Korean
+Birth Date: 2001-12-09
+Region: KR
+Status: active
+Current Team: KT Rolster (KR)
+Total Earnings: $42,331.00
+ELO Rating: 1110
+
+========================================
+PLAYER #212: k1Ng283
+========================================
+ID: 12
+Username: k1Ng283
+Real Name: Michael Walker
+Alternate IDs: None
+Role: Strategist
+Nationality: Mexican
+Birth Date: 2005-01-26
+Region: NA
+Status: active
+Current Team: NRG Esports (NA)
+Total Earnings: $41,616.00
+ELO Rating: 1081
+
+========================================
+PLAYER #213: Foxy9905
+========================================
+ID: 150
+Username: Foxy9905
+Real Name: Charlotte Carter
+Alternate IDs: None
+Role: Strategist
+Nationality: Danish
+Birth Date: 2002-11-06
+Region: EU
+Status: active
+Current Team: Excel Esports (EU)
+Total Earnings: $41,515.00
+ELO Rating: 1524
+
+========================================
+PLAYER #214: sheydos728
+========================================
+ID: 157
+Username: sheydos728
+Real Name: Daniel Martin
+Alternate IDs: None
+Role: Vanguard
+Nationality: Dutch
+Birth Date: 2003-06-17
+Region: EU
+Status: active
+Current Team: LDLC (EU)
+Total Earnings: $41,433.00
+ELO Rating: 1599
+
+========================================
+PLAYER #215: v1xen102
+========================================
+ID: 69
+Username: v1xen102
+Real Name: Andrew Harris
+Alternate IDs: None
+Role: Duelist
+Nationality: American
+Birth Date: 2002-04-04
+Region: NA
+Status: active
+Current Team: XSET (NA)
+Total Earnings: $40,934.00
+ELO Rating: 1926
+
+========================================
+PLAYER #216: AvovA556
+========================================
+ID: 133
+Username: AvovA556
+Real Name: Samuel Sanchez
+Alternate IDs: None
+Role: Vanguard
+Nationality: Turkish
+Birth Date: 1998-08-30
+Region: EU
+Status: active
+Current Team: OG (EU)
+Total Earnings: $40,914.00
+ELO Rating: 1128
+
+========================================
+PLAYER #217: Lakia660
+========================================
+ID: 214
+Username: Lakia660
+Real Name: Joseph Wright
+Alternate IDs: None
+Role: Strategist
+Nationality: Thai
+Birth Date: 2003-04-27
+Region: ASIA
+Status: active
+Current Team: Velocity Gaming (ASIA)
+Total Earnings: $40,727.00
+ELO Rating: 1865
+
+========================================
+PLAYER #218: Khalil893
+========================================
+ID: 136
+Username: Khalil893
+Real Name: Christian Green
+Alternate IDs: None
+Role: Duelist
+Nationality: Polish
+Birth Date: 2006-09-19
+Region: EU
+Status: active
+Current Team: Ninjas in Pyjamas (EU)
+Total Earnings: $40,588.00
+ELO Rating: 1725
+
+========================================
+PLAYER #219: yay632
+========================================
+ID: 294
+Username: yay632
+Real Name: Gabriel Hall
+Alternate IDs: None
+Role: Duelist
+Nationality: Japanese
+Birth Date: 1999-04-10
+Region: JP
+Status: active
+Current Team: ZETA DIVISION (JP)
+Total Earnings: $40,354.00
+ELO Rating: 1751
+
+========================================
+PLAYER #220: stax222
+========================================
+ID: 178
+Username: stax222
+Real Name: Mia Harris (stax222)
+Alternate IDs: None
+Role: Strategist
+Nationality: Malaysian
+Birth Date: 2006-06-03
+Region: ASIA
+Status: active
+Current Team: BOOM Esports (ASIA)
+Total Earnings: $40,248.00
+ELO Rating: 1762
+
+========================================
+PLAYER #221: ScreaM711
+========================================
+ID: 243
+Username: ScreaM711
+Real Name: John Hill
+Alternate IDs: None
+Role: Strategist
+Nationality: Chinese
+Birth Date: 1996-11-30
+Region: CN
+Status: active
+Current Team: Rare Atom (CN)
+Total Earnings: $39,867.00
+ELO Rating: 1517
+
+========================================
+PLAYER #222: Zest915
+========================================
+ID: 51
+Username: Zest915
+Real Name: Kenneth Lopez
+Alternate IDs: None
+Role: Vanguard
+Nationality: American
+Birth Date: 1996-09-12
+Region: NA
+Status: active
+Current Team: EDward Gaming (CN)
+Total Earnings: $39,768.00
+ELO Rating: 1759
+
+========================================
+PLAYER #223: k1Ng235
+========================================
+ID: 29
+Username: k1Ng235
+Real Name: William Wright
+Alternate IDs: None
+Role: Duelist
+Nationality: Canadian
+Birth Date: 2002-07-29
+Region: NA
+Status: active
+Current Team: TSM (NA)
+Total Earnings: $39,627.00
+ELO Rating: 1572
+
+========================================
+PLAYER #224: nAts748
+========================================
+ID: 351
+Username: nAts748
+Real Name: Christian Rodriguez
+Alternate IDs: None
+Role: Vanguard
+Nationality: Australian
+Birth Date: 1999-10-19
+Region: OCE
+Status: active
+Current Team: Soniqs (OCE)
+Total Earnings: $39,223.00
+ELO Rating: 2153
+
+========================================
+PLAYER #225: Liquid324
+========================================
+ID: 21
+Username: Liquid324
+Real Name: Anthony Smith
+Alternate IDs: None
+Role: Duelist
+Nationality: Canadian
+Birth Date: 2006-06-06
+Region: NA
+Status: active
+Current Team: 100 Thieves (NA)
+Total Earnings: $39,096.00
+ELO Rating: 2021
+
+========================================
+PLAYER #226: Alfajer447
+========================================
+ID: 105
+Username: Alfajer447
+Real Name: Charlotte Allen (Alfajer447)
+Alternate IDs: None
+Role: Duelist
+Nationality: British
+Birth Date: 2005-09-28
+Region: EU
+Status: active
+Current Team: Vitality (EU)
+Total Earnings: $38,028.00
+ELO Rating: 2398
+
+========================================
+PLAYER #227: ScreaM908
+========================================
+ID: 126
+Username: ScreaM908
+Real Name: Mason Allen
+Alternate IDs: None
+Role: Strategist
+Nationality: French
+Birth Date: 1999-11-20
+Region: EU
+Status: active
+Current Team: Alliance (EU)
+Total Earnings: $37,788.00
+ELO Rating: 1159
+
+========================================
+PLAYER #228: Sylvan897
+========================================
+ID: 121
+Username: Sylvan897
+Real Name: Tyler Carter
+Alternate IDs: None
+Role: Strategist
+Nationality: Russian
+Birth Date: 1996-08-09
+Region: EU
+Status: active
+Current Team: Global Esports (ASIA)
+Total Earnings: $36,598.00
+ELO Rating: 2006
+
+========================================
+PLAYER #229: Redgar514
+========================================
+ID: 85
+Username: Redgar514
+Real Name: Robert Hill
+Alternate IDs: None
+Role: Strategist
+Nationality: Canadian
+Birth Date: 2005-10-20
+Region: NA
+Status: active
+Current Team: Envy (NA)
+Total Earnings: $36,296.00
+ELO Rating: 1014
+
+========================================
+PLAYER #230: nitr0880
+========================================
+ID: 324
+Username: nitr0880
+Real Name: Christopher Lee
+Alternate IDs: None
+Role: Strategist
+Nationality: Unknown
+Birth Date: 1996-12-02
+Region: NA
+Status: active
+Current Team: NIP (SA)
+Total Earnings: $36,283.00
+ELO Rating: 2410
+
+========================================
+PLAYER #231: crashies106
+========================================
+ID: 281
+Username: crashies106
+Real Name: William Anderson
+Alternate IDs: None
+Role: Duelist
+Nationality: South Korean
+Birth Date: 1995-01-05
+Region: KR
+Status: active
+Current Team: Hanwha Life Esports (KR)
+Total Earnings: $36,249.00
+ELO Rating: 2115
+
+========================================
+PLAYER #232: FNS435
+========================================
+ID: 210
+Username: FNS435
+Real Name: Anthony Martinez
+Alternate IDs: None
+Role: Strategist
+Nationality: Vietnamese
+Birth Date: 2006-01-30
+Region: ASIA
+Status: active
+Current Team: Global Esports (ASIA)
+Total Earnings: $36,010.00
+ELO Rating: 1237
+
+========================================
+PLAYER #233: mixwell675
+========================================
+ID: 202
+Username: mixwell675
+Real Name: Henry Mitchell (mixwell675)
+Alternate IDs: None
+Role: Strategist
+Nationality: Indian
+Birth Date: 1996-06-03
+Region: ASIA
+Status: active
+Current Team: ORDER (OCE)
+Total Earnings: $35,774.00
+ELO Rating: 2497
+
+========================================
+PLAYER #234: Foxy9171
+========================================
+ID: 94
+Username: Foxy9171
+Real Name: Gabriel Clark
+Alternate IDs: None
+Role: Duelist
+Nationality: Danish
+Birth Date: 2002-05-09
+Region: EU
+Status: active
+Current Team: Team Liquid (EU)
+Total Earnings: $35,091.00
+ELO Rating: 1858
+
+========================================
+PLAYER #235: Hiko793
+========================================
+ID: 122
+Username: Hiko793
+Real Name: Emma Nguyen
+Alternate IDs: None
+Role: Strategist
+Nationality: Russian
+Birth Date: 1995-01-01
+Region: EU
+Status: active
+Current Team: Global Esports (ASIA)
+Total Earnings: $34,186.00
+ELO Rating: 1681
+
+========================================
+PLAYER #236: Hiko770
+========================================
+ID: 295
+Username: Hiko770
+Real Name: Christian Martin
+Alternate IDs: None
+Role: Strategist
+Nationality: Japanese
+Birth Date: 1999-01-23
+Region: JP
+Status: active
+Current Team: ZETA DIVISION (JP)
+Total Earnings: $34,183.00
+ELO Rating: 1639
+
+========================================
+PLAYER #237: zunba529
+========================================
+ID: 123
+Username: zunba529
+Real Name: Michael Ramirez
+Alternate IDs: None
+Role: Vanguard
+Nationality: Spanish
+Birth Date: 2006-07-19
+Region: EU
+Status: active
+Current Team: Global Esports (ASIA)
+Total Earnings: $33,970.00
+ELO Rating: 1688
+
+========================================
+PLAYER #238: Alfajer264
+========================================
+ID: 195
+Username: Alfajer264
+Real Name: James Torres
+Alternate IDs: None
+Role: Strategist
+Nationality: Singaporean
+Birth Date: 2003-11-08
+Region: ASIA
+Status: active
+Current Team: BLEED (ASIA)
+Total Earnings: $33,837.00
+ELO Rating: 1035
+
+========================================
+PLAYER #239: v1xen219
+========================================
+ID: 131
+Username: v1xen219
+Real Name: Olivia King
+Alternate IDs: None
+Role: Vanguard
+Nationality: German
+Birth Date: 2000-01-02
+Region: EU
+Status: active
+Current Team: OG (EU)
+Total Earnings: $33,616.00
+ELO Rating: 2138
+
+========================================
+PLAYER #240: Hiko493
+========================================
+ID: 255
+Username: Hiko493
+Real Name: Tyler Lee
+Alternate IDs: None
+Role: Vanguard
+Nationality: Chinese
+Birth Date: 2004-06-27
+Region: CN
+Status: active
+Current Team: Legacy Esports (OCE)
+Total Earnings: $33,523.00
+ELO Rating: 1401
+
+========================================
+PLAYER #241: Zest366
+========================================
+ID: 74
+Username: Zest366
+Real Name: Andrew Mitchell
+Alternate IDs: None
+Role: Strategist
+Nationality: Mexican
+Birth Date: 2005-04-22
+Region: NA
+Status: active
+Current Team: Rise (NA)
+Total Earnings: $33,297.00
+ELO Rating: 1613
+
+========================================
+PLAYER #242: crashies143
+========================================
+ID: 58
+Username: crashies143
+Real Name: Ethan Walker
+Alternate IDs: None
+Role: Vanguard
+Nationality: American
+Birth Date: 1998-12-16
+Region: NA
+Status: active
+Current Team: Gen.G (KR)
+Total Earnings: $33,169.00
+ELO Rating: 1493
+
+========================================
+PLAYER #243: s0m991
+========================================
+ID: 314
+Username: s0m991
+Real Name: Andrew Nguyen
+Alternate IDs: None
+Role: Duelist
+Nationality: Japanese
+Birth Date: 2001-12-06
+Region: JP
+Status: active
+Current Team: REJECT (JP)
+Total Earnings: $33,046.00
+ELO Rating: 1856
+
+========================================
+PLAYER #244: ShahZaM784
+========================================
+ID: 279
+Username: ShahZaM784
+Real Name: Adam Jackson
+Alternate IDs: None
+Role: Vanguard
+Nationality: South Korean
+Birth Date: 2004-03-06
+Region: KR
+Status: active
+Current Team: Hanwha Life Esports (KR)
+Total Earnings: $32,637.00
+ELO Rating: 1976
+
+========================================
+PLAYER #245: saadhak716
+========================================
+ID: 148
+Username: saadhak716
+Real Name: Aaron Johnson
+Alternate IDs: None
+Role: Duelist
+Nationality: British
+Birth Date: 1996-06-07
+Region: EU
+Status: active
+Current Team: FunPlus Phoenix (CN)
+Total Earnings: $32,438.00
+ELO Rating: 2050
+
+========================================
+PLAYER #246: steel255
+========================================
+ID: 47
+Username: steel255
+Real Name: Kenneth Thomas
+Alternate IDs: None
+Role: Vanguard
+Nationality: Mexican
+Birth Date: 2001-02-21
+Region: NA
+Status: active
+Current Team: Team Liquid (EU)
+Total Earnings: $31,949.00
+ELO Rating: 1125
+
+========================================
+PLAYER #247: mwzera338
+========================================
+ID: 342
+Username: mwzera338
+Real Name: Nathan Thompson
+Alternate IDs: None
+Role: Strategist
+Nationality: Argentinian
+Birth Date: 1997-11-01
+Region: SA
+Status: active
+Current Team: Vivo Keyd (SA)
+Total Earnings: $31,946.00
+ELO Rating: 1117
+
+========================================
+PLAYER #248: Sylvan639
+========================================
+ID: 256
+Username: Sylvan639
+Real Name: Sophia Baker
+Alternate IDs: None
+Role: Vanguard
+Nationality: Chinese
+Birth Date: 2003-04-15
+Region: CN
+Status: active
+Current Team: Legacy Esports (OCE)
+Total Earnings: $31,936.00
+ELO Rating: 2291
+
+========================================
+PLAYER #249: Nivera333
+========================================
+ID: 352
+Username: Nivera333
+Real Name: Jacob Perez
+Alternate IDs: None
+Role: Vanguard
+Nationality: New Zealander
+Birth Date: 2004-12-20
+Region: OCE
+Status: active
+Current Team: Soniqs (OCE)
+Total Earnings: $31,896.00
+ELO Rating: 1472
+
+========================================
+PLAYER #250: steel992
+========================================
+ID: 184
+Username: steel992
+Real Name: Kenneth Wilson
+Alternate IDs: None
+Role: Duelist
+Nationality: Singaporean
+Birth Date: 2000-06-19
+Region: ASIA
+Status: active
+Current Team: Rex Regum Qeon (ASIA)
+Total Earnings: $31,535.00
+ELO Rating: 1555
+
+========================================
+PLAYER #251: mindfreak396
+========================================
+ID: 15
+Username: mindfreak396
+Real Name: Isabella Nelson
+Alternate IDs: None
+Role: Vanguard
+Nationality: Mexican
+Birth Date: 2005-06-30
+Region: NA
+Status: active
+Current Team: Cloud9 (NA)
+Total Earnings: $31,170.00
+ELO Rating: 2309
+
+========================================
+PLAYER #252: Sacy593
+========================================
+ID: 285
+Username: Sacy593
+Real Name: Adam Young
+Alternate IDs: None
+Role: Duelist
+Nationality: South Korean
+Birth Date: 2001-11-10
+Region: KR
+Status: active
+Current Team: DAMWON KIA (KR)
+Total Earnings: $30,760.00
+ELO Rating: 2128
+
+========================================
+PLAYER #253: stax571
+========================================
+ID: 353
+Username: stax571
+Real Name: Joseph Green
+Alternate IDs: None
+Role: Strategist
+Nationality: Australian
+Birth Date: 1999-06-28
+Region: OCE
+Status: active
+Current Team: Legacy Esports (OCE)
+Total Earnings: $30,457.00
+ELO Rating: 1012
+
+========================================
+PLAYER #254: s0m127
+========================================
+ID: 196
+Username: s0m127
+Real Name: Lucas Martinez
+Alternate IDs: None
+Role: Vanguard
+Nationality: Malaysian
+Birth Date: 2002-07-20
+Region: ASIA
+Status: active
+Current Team: BLEED (ASIA)
+Total Earnings: $30,354.00
+ELO Rating: 1376
+
+========================================
+PLAYER #255: allow438
+========================================
+ID: 40
+Username: allow438
+Real Name: Aaron Perez
+Alternate IDs: None
+Role: Duelist
+Nationality: American
+Birth Date: 2002-04-17
+Region: NA
+Status: active
+Current Team: OG (EU)
+Total Earnings: $29,831.00
+ELO Rating: 2375
+
+========================================
+PLAYER #256: Liquid630
+========================================
+ID: 309
+Username: Liquid630
+Real Name: Emma Sanchez
+Alternate IDs: None
+Role: Vanguard
+Nationality: Japanese
+Birth Date: 1998-03-02
+Region: JP
+Status: active
+Current Team: Northeption (JP)
+Total Earnings: $29,530.00
+ELO Rating: 2473
+
+========================================
+PLAYER #257: ScreaM247
+========================================
+ID: 16
+Username: ScreaM247
+Real Name: Thomas Sanchez
+Alternate IDs: None
+Role: Vanguard
+Nationality: Mexican
+Birth Date: 1995-02-05
+Region: NA
+Status: active
+Current Team: Cloud9 (NA)
+Total Earnings: $29,493.00
+ELO Rating: 2436
+
+========================================
+PLAYER #258: SicK818
+========================================
+ID: 216
+Username: SicK818
+Real Name: James Carter
+Alternate IDs: None
+Role: Strategist
+Nationality: Indian
+Birth Date: 2005-07-29
+Region: ASIA
+Status: active
+Current Team: Velocity Gaming (ASIA)
+Total Earnings: $29,407.00
+ELO Rating: 1563
+
+========================================
+PLAYER #259: Foxy9632
+========================================
+ID: 344
+Username: Foxy9632
+Real Name: John Flores
+Alternate IDs: None
+Role: Strategist
+Nationality: Australian
+Birth Date: 1996-04-09
+Region: OCE
+Status: active
+Current Team: ORDER (OCE)
+Total Earnings: $29,330.00
+ELO Rating: 2378
+
+========================================
+PLAYER #260: Foxy9970
+========================================
+ID: 237
+Username: Foxy9970
+Real Name: Henry Wilson
+Alternate IDs: None
+Role: Vanguard
+Nationality: Chinese
+Birth Date: 2004-05-12
+Region: CN
+Status: active
+Current Team: JD Gaming (CN)
+Total Earnings: $29,224.00
+ELO Rating: 2476
+
+========================================
+PLAYER #261: Asuna558
+========================================
+ID: 332
+Username: Asuna558
+Real Name: Aaron Brown
+Alternate IDs: None
+Role: Vanguard
+Nationality: Chilean
+Birth Date: 1999-11-11
+Region: SA
+Status: active
+Current Team: Keyd Stars (SA)
+Total Earnings: $29,140.00
+ELO Rating: 2342
+
+========================================
+PLAYER #262: stax323
+========================================
+ID: 340
+Username: stax323
+Real Name: Elijah Roberts
+Alternate IDs: None
+Role: Vanguard
+Nationality: Argentinian
+Birth Date: 2001-01-08
+Region: SA
+Status: active
+Current Team: Vivo Keyd (SA)
+Total Earnings: $29,016.00
+ELO Rating: 2163
+
+========================================
+PLAYER #263: Zest389
+========================================
+ID: 134
+Username: Zest389
+Real Name: Sebastian Garcia
+Alternate IDs: None
+Role: Vanguard
+Nationality: Turkish
+Birth Date: 2004-09-21
+Region: EU
+Status: active
+Current Team: Ninjas in Pyjamas (EU)
+Total Earnings: $28,547.00
+ELO Rating: 1551
+
+========================================
+PLAYER #264: d4v41400
+========================================
+ID: 82
+Username: d4v41400
+Real Name: Gabriel Scott
+Alternate IDs: None
+Role: Vanguard
+Nationality: Canadian
+Birth Date: 1998-09-18
+Region: NA
+Status: active
+Current Team: Immortals (NA)
+Total Earnings: $28,512.00
+ELO Rating: 2246
+
+========================================
+PLAYER #265: Victor759
+========================================
+ID: 73
+Username: Victor759
+Real Name: Charlotte Lopez
+Alternate IDs: None
+Role: Strategist
+Nationality: Mexican
+Birth Date: 1999-10-17
+Region: NA
+Status: active
+Current Team: XSET (NA)
+Total Earnings: $28,411.00
+ELO Rating: 1532
+
+========================================
+PLAYER #266: leaf608
+========================================
+ID: 151
+Username: leaf608
+Real Name: Olivia Gonzalez
+Alternate IDs: None
+Role: Vanguard
+Nationality: British
+Birth Date: 2001-08-11
+Region: EU
+Status: active
+Current Team: Excel Esports (EU)
+Total Earnings: $28,385.00
+ELO Rating: 2428
+
+========================================
+PLAYER #267: Less962
+========================================
+ID: 6
+Username: Less962
+Real Name: William Miller
+Alternate IDs: None
+Role: Vanguard
+Nationality: Canadian
+Birth Date: 2000-09-30
+Region: NA
+Status: active
+Current Team: Sentinels (NA)
+Total Earnings: $28,157.00
+ELO Rating: 1507
+
+========================================
+PLAYER #268: MaKo818
+========================================
+ID: 129
+Username: MaKo818
+Real Name: Aaron Carter
+Alternate IDs: None
+Role: Duelist
+Nationality: Russian
+Birth Date: 2006-09-16
+Region: EU
+Status: active
+Current Team: OG (EU)
+Total Earnings: $27,629.00
+ELO Rating: 1633
+
+========================================
+PLAYER #269: sheydos501
+========================================
+ID: 13
+Username: sheydos501
+Real Name: Donald Hall
+Alternate IDs: None
+Role: Vanguard
+Nationality: Canadian
+Birth Date: 1998-01-16
+Region: NA
+Status: active
+Current Team: Cloud9 (NA)
+Total Earnings: $27,391.00
+ELO Rating: 1562
+
+========================================
+PLAYER #270: ethan409
+========================================
+ID: 265
+Username: ethan409
+Real Name: Christopher Clark
+Alternate IDs: None
+Role: Duelist
+Nationality: South Korean
+Birth Date: 2004-12-14
+Region: KR
+Status: active
+Current Team: T1 (KR)
+Total Earnings: $27,332.00
+ELO Rating: 2042
+
+========================================
+PLAYER #271: Enzo511
+========================================
+ID: 301
+Username: Enzo511
+Real Name: Adam King
+Alternate IDs: None
+Role: Strategist
+Nationality: Japanese
+Birth Date: 2000-11-06
+Region: JP
+Status: active
+Current Team: Crazy Raccoon (JP)
+Total Earnings: $27,172.00
+ELO Rating: 2265
+
+========================================
+PLAYER #272: Asuna647
+========================================
+ID: 347
+Username: Asuna647
+Real Name: Amelia Martinez (Asuna647)
+Alternate IDs: None
+Role: Vanguard
+Nationality: New Zealander
+Birth Date: 2002-03-29
+Region: OCE
+Status: active
+Current Team: ORDER (OCE)
+Total Earnings: $26,718.00
+ELO Rating: 1608
+
+========================================
+PLAYER #273: stax894
+========================================
+ID: 215
+Username: stax894
+Real Name: Ethan Martinez
+Alternate IDs: None
+Role: Strategist
+Nationality: Vietnamese
+Birth Date: 1996-12-18
+Region: ASIA
+Status: active
+Current Team: Velocity Gaming (ASIA)
+Total Earnings: $26,693.00
+ELO Rating: 1017
+
+========================================
+PLAYER #274: zombs869
+========================================
+ID: 53
+Username: zombs869
+Real Name: Andrew Davis
+Alternate IDs: None
+Role: Duelist
+Nationality: Canadian
+Birth Date: 2004-11-14
+Region: NA
+Status: active
+Current Team: EDward Gaming (CN)
+Total Earnings: $26,505.00
+ELO Rating: 1805
+
+========================================
+PLAYER #275: Suggest461
+========================================
+ID: 327
+Username: Suggest461
+Real Name: Anthony Nelson
+Alternate IDs: None
+Role: Vanguard
+Nationality: Brazilian
+Birth Date: 2006-03-30
+Region: SA
+Status: active
+Current Team: NIP (SA)
+Total Earnings: $26,434.00
+ELO Rating: 2425
+
+========================================
+PLAYER #276: mindfreak745
+========================================
+ID: 328
+Username: mindfreak745
+Real Name: Thomas Lopez (mindfreak745)
+Alternate IDs: None
+Role: Strategist
+Nationality: Brazilian
+Birth Date: 2003-04-28
+Region: SA
+Status: active
+Current Team: Keyd Stars (SA)
+Total Earnings: $26,327.00
+ELO Rating: 2421
+
+========================================
+PLAYER #277: exy367
+========================================
+ID: 170
+Username: exy367
+Real Name: Isabella Lopez
+Alternate IDs: None
+Role: Strategist
+Nationality: Indonesian
+Birth Date: 2006-10-29
+Region: ASIA
+Status: active
+Current Team: FULL SENSE (ASIA)
+Total Earnings: $25,874.00
+ELO Rating: 1342
+
+========================================
+PLAYER #278: jamppi198
+========================================
+ID: 248
+Username: jamppi198
+Real Name: Andrew Williams
+Alternate IDs: None
+Role: Vanguard
+Nationality: Chinese
+Birth Date: 2003-01-21
+Region: CN
+Status: active
+Current Team: Weibo Gaming (CN)
+Total Earnings: $25,687.00
+ELO Rating: 1929
+
+========================================
+PLAYER #279: AZK738
+========================================
+ID: 103
+Username: AZK738
+Real Name: Donald Smith
+Alternate IDs: None
+Role: Duelist
+Nationality: German
+Birth Date: 2005-12-18
+Region: EU
+Status: active
+Current Team: FNATIC (EU)
+Total Earnings: $25,341.00
+ELO Rating: 2480
+
+========================================
+PLAYER #280: nukkye158
+========================================
+ID: 197
+Username: nukkye158
+Real Name: Richard Perez
+Alternate IDs: None
+Role: Duelist
+Nationality: Singaporean
+Birth Date: 2006-02-05
+Region: ASIA
+Status: active
+Current Team: BLEED (ASIA)
+Total Earnings: $25,129.00
+ELO Rating: 2071
+
+========================================
+PLAYER #281: stellar847
+========================================
+ID: 187
+Username: stellar847
+Real Name: Donald Hall (stellar847)
+Alternate IDs: None
+Role: Duelist
+Nationality: Indonesian
+Birth Date: 1995-10-08
+Region: ASIA
+Status: active
+Current Team: Rex Regum Qeon (ASIA)
+Total Earnings: $24,632.00
+ELO Rating: 1440
+
+========================================
+PLAYER #282: Jinggg561
+========================================
+ID: 224
+Username: Jinggg561
+Real Name: Sophia Carter
+Alternate IDs: None
+Role: Strategist
+Nationality: Chinese
+Birth Date: 1999-10-01
+Region: CN
+Status: active
+Current Team: FunPlus Phoenix (CN)
+Total Earnings: $24,552.00
+ELO Rating: 1202
+
+========================================
+PLAYER #283: sheydos984
+========================================
+ID: 117
+Username: sheydos984
+Real Name: Oliver Scott (sheydos984)
+Alternate IDs: None
+Role: Vanguard
+Nationality: Russian
+Birth Date: 2004-06-07
+Region: EU
+Status: active
+Current Team: MAD Lions (EU)
+Total Earnings: $24,418.00
+ELO Rating: 1275
+
+========================================
+PLAYER #284: aspas141
+========================================
+ID: 313
+Username: aspas141
+Real Name: Logan Flores
+Alternate IDs: None
+Role: Duelist
+Nationality: Japanese
+Birth Date: 1998-09-09
+Region: JP
+Status: active
+Current Team: REJECT (JP)
+Total Earnings: $24,080.00
+ELO Rating: 1192
+
+========================================
+PLAYER #285: Mistic928
+========================================
+ID: 137
+Username: Mistic928
+Real Name: Nathan Brown
+Alternate IDs: None
+Role: Strategist
+Nationality: Spanish
+Birth Date: 2003-01-23
+Region: EU
+Status: active
+Current Team: Ninjas in Pyjamas (EU)
+Total Earnings: $24,012.00
+ELO Rating: 1416
+
+========================================
+PLAYER #286: ScreaM244
+========================================
+ID: 200
+Username: ScreaM244
+Real Name: Anthony Jones
+Alternate IDs: None
+Role: Vanguard
+Nationality: Thai
+Birth Date: 1999-07-09
+Region: ASIA
+Status: active
+Current Team: ORDER (OCE)
+Total Earnings: $24,006.00
+ELO Rating: 2260
+
+========================================
+PLAYER #287: d4v41783
+========================================
+ID: 112
+Username: d4v41783
+Real Name: Christopher White
+Alternate IDs: None
+Role: Strategist
+Nationality: Swedish
+Birth Date: 2002-08-02
+Region: EU
+Status: active
+Current Team: BIG (EU)
+Total Earnings: $23,904.00
+ELO Rating: 1821
+
+========================================
+PLAYER #288: zombs531
+========================================
+ID: 167
+Username: zombs531
+Real Name: Tyler Hernandez
+Alternate IDs: None
+Role: Vanguard
+Nationality: Indian
+Birth Date: 2004-04-16
+Region: ASIA
+Status: active
+Current Team: XERXIA (ASIA)
+Total Earnings: $23,668.00
+ELO Rating: 2121
+
+========================================
+PLAYER #289: AvovA501
+========================================
+ID: 269
+Username: AvovA501
+Real Name: Isabella Ramirez
+Alternate IDs: None
+Role: Duelist
+Nationality: South Korean
+Birth Date: 2002-12-03
+Region: KR
+Status: active
+Current Team: Gen.G (KR)
+Total Earnings: $23,120.00
+ELO Rating: 2440
+
+========================================
+PLAYER #290: aspas879
+========================================
+ID: 338
+Username: aspas879
+Real Name: Logan Allen
+Alternate IDs: None
+Role: Strategist
+Nationality: Unknown
+Birth Date: 2006-12-03
+Region: NA
+Status: active
+Current Team: Vivo Keyd (SA)
+Total Earnings: $22,965.00
+ELO Rating: 1601
+
+========================================
+PLAYER #291: nukkye175
+========================================
+ID: 70
+Username: nukkye175
+Real Name: Mia Scott
+Alternate IDs: None
+Role: Duelist
+Nationality: American
+Birth Date: 2000-08-06
+Region: NA
+Status: active
+Current Team: XSET (NA)
+Total Earnings: $22,705.00
+ELO Rating: 2348
+
+========================================
+PLAYER #292: Victor787
+========================================
+ID: 68
+Username: Victor787
+Real Name: William Scott
+Alternate IDs: None
+Role: Duelist
+Nationality: Mexican
+Birth Date: 2001-07-21
+Region: NA
+Status: active
+Current Team: Dignitas (NA)
+Total Earnings: $22,667.00
+ELO Rating: 2055
+
+========================================
+PLAYER #293: ethan288
+========================================
+ID: 291
+Username: ethan288
+Real Name: Paul Young
+Alternate IDs: None
+Role: Duelist
+Nationality: South Korean
+Birth Date: 2002-06-18
+Region: KR
+Status: active
+Current Team: Liiv SANDBOX (KR)
+Total Earnings: $22,666.00
+ELO Rating: 2083
+
+========================================
+PLAYER #294: f0rsakeN620
+========================================
+ID: 356
+Username: f0rsakeN620
+Real Name: Henry Hall
+Alternate IDs: None
+Role: Duelist
+Nationality: New Zealander
+Birth Date: 2006-09-22
+Region: OCE
+Status: active
+Current Team: Legacy Esports (OCE)
+Total Earnings: $22,627.00
+ELO Rating: 1767
+
+========================================
+PLAYER #295: Benkai247
+========================================
+ID: 119
+Username: Benkai247
+Real Name: Liam Lopez
+Alternate IDs: None
+Role: Duelist
+Nationality: Turkish
+Birth Date: 2004-03-04
+Region: EU
+Status: active
+Current Team: Global Esports (ASIA)
+Total Earnings: $22,448.00
+ELO Rating: 1515
+
+========================================
+PLAYER #296: Meteor951
+========================================
+ID: 128
+Username: Meteor951
+Real Name: Amelia Lopez
+Alternate IDs: None
+Role: Duelist
+Nationality: German
+Birth Date: 1997-12-24
+Region: EU
+Status: active
+Current Team: Alliance (EU)
+Total Earnings: $22,192.00
+ELO Rating: 1823
+
+========================================
+PLAYER #297: Khalil460
+========================================
+ID: 305
+Username: Khalil460
+Real Name: Harper Rodriguez
+Alternate IDs: None
+Role: Vanguard
+Nationality: Japanese
+Birth Date: 2000-07-01
+Region: JP
+Status: active
+Current Team: FENNEL (JP)
+Total Earnings: $22,169.00
+ELO Rating: 2115
+
+========================================
+PLAYER #298: Mistic105
+========================================
+ID: 204
+Username: Mistic105
+Real Name: Anthony Hernandez
+Alternate IDs: None
+Role: Strategist
+Nationality: Filipino
+Birth Date: 2000-08-22
+Region: ASIA
+Status: active
+Current Team: Soniqs (OCE)
+Total Earnings: $20,940.00
+ELO Rating: 2410
+
+========================================
+PLAYER #299: Suggest803
+========================================
+ID: 79
+Username: Suggest803
+Real Name: Mason Mitchell
+Alternate IDs: None
+Role: Vanguard
+Nationality: Mexican
+Birth Date: 1996-01-25
+Region: NA
+Status: active
+Current Team: Immortals (NA)
+Total Earnings: $20,553.00
+ELO Rating: 2034
+
+========================================
+PLAYER #300: zunba935
+========================================
+ID: 7
+Username: zunba935
+Real Name: Christian Nguyen
+Alternate IDs: None
+Role: Strategist
+Nationality: Mexican
+Birth Date: 2003-06-26
+Region: NA
+Status: active
+Current Team: NRG Esports (NA)
+Total Earnings: $20,109.00
+ELO Rating: 2455
+
+========================================
+PLAYER #301: zombs982
+========================================
+ID: 144
+Username: zombs982
+Real Name: Gabriel Allen
+Alternate IDs: None
+Role: Duelist
+Nationality: Dutch
+Birth Date: 2000-04-20
+Region: EU
+Status: active
+Current Team: FunPlus Phoenix (CN)
+Total Earnings: $19,898.00
+ELO Rating: 2235
+
+========================================
+PLAYER #302: nitr0266
+========================================
+ID: 227
+Username: nitr0266
+Real Name: Harper Jackson
+Alternate IDs: None
+Role: Vanguard
+Nationality: Chinese
+Birth Date: 2004-12-30
+Region: CN
+Status: active
+Current Team: FunPlus Phoenix (CN)
+Total Earnings: $19,516.00
+ELO Rating: 1552
+
+========================================
+PLAYER #303: k1Ng515
+========================================
+ID: 138
+Username: k1Ng515
+Real Name: Noah Jones
+Alternate IDs: None
+Role: Strategist
+Nationality: Russian
+Birth Date: 2000-12-09
+Region: EU
+Status: active
+Current Team: Ninjas in Pyjamas (EU)
+Total Earnings: $19,189.00
+ELO Rating: 1219
+
+========================================
+PLAYER #304: Sacy825
+========================================
+ID: 312
+Username: Sacy825
+Real Name: Sebastian Baker
+Alternate IDs: None
+Role: Strategist
+Nationality: Japanese
+Birth Date: 2003-02-16
+Region: JP
+Status: active
+Current Team: Northeption (JP)
+Total Earnings: $19,149.00
+ELO Rating: 1917
+
+========================================
+PLAYER #305: hoody756
+========================================
+ID: 222
+Username: hoody756
+Real Name: Elijah King
+Alternate IDs: None
+Role: Duelist
+Nationality: Chinese
+Birth Date: 2002-01-31
+Region: CN
+Status: active
+Current Team: EDward Gaming (CN)
+Total Earnings: $19,070.00
+ELO Rating: 1191
+
+========================================
+PLAYER #306: d3ffo584
+========================================
+ID: 130
+Username: d3ffo584
+Real Name: Paul Martinez
+Alternate IDs: None
+Role: Vanguard
+Nationality: German
+Birth Date: 2001-03-19
+Region: EU
+Status: active
+Current Team: OG (EU)
+Total Earnings: $18,666.00
+ELO Rating: 1362
+
+========================================
+PLAYER #307: Mistic914
+========================================
+ID: 349
+Username: Mistic914
+Real Name: Tyler Thomas
+Alternate IDs: None
+Role: Duelist
+Nationality: Australian
+Birth Date: 2004-04-02
+Region: OCE
+Status: active
+Current Team: Soniqs (OCE)
+Total Earnings: $18,145.00
+ELO Rating: 2173
+
+========================================
+PLAYER #308: ScreaM528
+========================================
+ID: 5
+Username: ScreaM528
+Real Name: Jackson Williams
+Alternate IDs: None
+Role: Strategist
+Nationality: American
+Birth Date: 2000-04-03
+Region: NA
+Status: active
+Current Team: Sentinels (NA)
+Total Earnings: $17,709.00
+ELO Rating: 1452
+
+========================================
+PLAYER #309: pipson679
+========================================
+ID: 289
+Username: pipson679
+Real Name: Adam Carter
+Alternate IDs: None
+Role: Duelist
+Nationality: South Korean
+Birth Date: 1997-04-10
+Region: KR
+Status: active
+Current Team: Liiv SANDBOX (KR)
+Total Earnings: $17,571.00
+ELO Rating: 2311
+
+========================================
+PLAYER #310: Foxy9620
+========================================
+ID: 159
+Username: Foxy9620
+Real Name: William Young
+Alternate IDs: None
+Role: Strategist
+Nationality: Thai
+Birth Date: 2003-07-29
+Region: ASIA
+Status: active
+Current Team: Paper Rex (ASIA)
+Total Earnings: $17,348.00
+ELO Rating: 2299
+
+========================================
+PLAYER #311: mwzera271
+========================================
+ID: 158
+Username: mwzera271
+Real Name: Tyler Johnson
+Alternate IDs: None
+Role: Strategist
+Nationality: Russian
+Birth Date: 2000-08-10
+Region: EU
+Status: active
+Current Team: LDLC (EU)
+Total Earnings: $17,253.00
+ELO Rating: 1497
+
+========================================
+PLAYER #312: FNS285
+========================================
+ID: 209
+Username: FNS285
+Real Name: Matthew Smith
+Alternate IDs: None
+Role: Vanguard
+Nationality: Indian
+Birth Date: 2003-02-28
+Region: ASIA
+Status: active
+Current Team: Global Esports (ASIA)
+Total Earnings: $17,213.00
+ELO Rating: 2316
+
+========================================
+PLAYER #313: mwzera685
+========================================
+ID: 61
+Username: mwzera685
+Real Name: Lucas Garcia
+Alternate IDs: None
+Role: Duelist
+Nationality: Canadian
+Birth Date: 1999-06-23
+Region: NA
+Status: active
+Current Team: Version1 (NA)
+Total Earnings: $16,679.00
+ELO Rating: 1692
+
+========================================
+PLAYER #314: dapr442
+========================================
+ID: 241
+Username: dapr442
+Real Name: Paul Lewis
+Alternate IDs: None
+Role: Strategist
+Nationality: Chinese
+Birth Date: 2003-08-07
+Region: CN
+Status: active
+Current Team: ThunderTalk Gaming (CN)
+Total Earnings: $16,308.00
+ELO Rating: 1879
+
+========================================
+PLAYER #315: heat314
+========================================
+ID: 240
+Username: heat314
+Real Name: Charlotte Hall
+Alternate IDs: None
+Role: Strategist
+Nationality: Chinese
+Birth Date: 2001-08-13
+Region: CN
+Status: active
+Current Team: ThunderTalk Gaming (CN)
+Total Earnings: $15,942.00
+ELO Rating: 2004
+
+========================================
+PLAYER #316: Lakia742
+========================================
+ID: 174
+Username: Lakia742
+Real Name: Henry Mitchell
+Alternate IDs: None
+Role: Strategist
+Nationality: Indonesian
+Birth Date: 1997-03-01
+Region: ASIA
+Status: active
+Current Team: BOOM Esports (ASIA)
+Total Earnings: $15,934.00
+ELO Rating: 1425
+
+========================================
+PLAYER #317: crashies303
+========================================
+ID: 232
+Username: crashies303
+Real Name: Thomas Wilson
+Alternate IDs: None
+Role: Strategist
+Nationality: Chinese
+Birth Date: 2004-05-30
+Region: CN
+Status: active
+Current Team: Bilibili Gaming (CN)
+Total Earnings: $15,251.00
+ELO Rating: 1775
+
+========================================
+PLAYER #318: nitr0545
+========================================
+ID: 186
+Username: nitr0545
+Real Name: Ava Johnson
+Alternate IDs: None
+Role: Strategist
+Nationality: Filipino
+Birth Date: 2003-12-31
+Region: ASIA
+Status: active
+Current Team: Rex Regum Qeon (ASIA)
+Total Earnings: $15,050.00
+ELO Rating: 1796
+
+========================================
+PLAYER #319: Victor933
+========================================
+ID: 205
+Username: Victor933
+Real Name: Kenneth Robinson
+Alternate IDs: None
+Role: Vanguard
+Nationality: Indian
+Birth Date: 1997-08-16
+Region: ASIA
+Status: active
+Current Team: Soniqs (OCE)
+Total Earnings: $14,425.00
+ELO Rating: 1783
+
+========================================
+PLAYER #320: Less547
+========================================
+ID: 83
+Username: Less547
+Real Name: Oliver Anderson
+Alternate IDs: None
+Role: Duelist
+Nationality: American
+Birth Date: 2001-04-25
+Region: NA
+Status: active
+Current Team: Immortals (NA)
+Total Earnings: $12,780.00
+ELO Rating: 2439
+
+========================================
+PLAYER #321: Redgar526
+========================================
+ID: 104
+Username: Redgar526
+Real Name: Robert Thompson
+Alternate IDs: None
+Role: Duelist
+Nationality: German
+Birth Date: 2005-08-30
+Region: EU
+Status: active
+Current Team: Vitality (EU)
+Total Earnings: $12,668.00
+ELO Rating: 1352
+
+========================================
+PLAYER #322: zunba201
+========================================
+ID: 238
+Username: zunba201
+Real Name: Joseph Hernandez
+Alternate IDs: None
+Role: Vanguard
+Nationality: Chinese
+Birth Date: 2001-03-10
+Region: CN
+Status: active
+Current Team: ThunderTalk Gaming (CN)
+Total Earnings: $12,536.00
+ELO Rating: 2120
+
+========================================
+PLAYER #323: dapr775
+========================================
+ID: 32
+Username: dapr775
+Real Name: Benjamin Lee
+Alternate IDs: None
+Role: Duelist
+Nationality: American
+Birth Date: 1995-06-07
+Region: NA
+Status: active
+Current Team: FaZe Clan (NA)
+Total Earnings: $12,454.00
+ELO Rating: 1817
+
+========================================
+PLAYER #324: Enzo617
+========================================
+ID: 4
+Username: Enzo617
+Real Name: Oliver Young
+Alternate IDs: None
+Role: Vanguard
+Nationality: Canadian
+Birth Date: 1995-09-30
+Region: NA
+Status: active
+Current Team: Sentinels (NA)
+Total Earnings: $12,409.00
+ELO Rating: 1093
+
+========================================
+PLAYER #325: Meteor618
+========================================
+ID: 113
+Username: Meteor618
+Real Name: Oliver Scott
+Alternate IDs: None
+Role: Strategist
+Nationality: Danish
+Birth Date: 1995-08-12
+Region: EU
+Status: active
+Current Team: BIG (EU)
+Total Earnings: $10,957.00
+ELO Rating: 1570
+
+========================================
+PLAYER #326: Jinggg937
+========================================
+ID: 171
+Username: Jinggg937
+Real Name: Joseph White
+Alternate IDs: None
+Role: Vanguard
+Nationality: Indian
+Birth Date: 2005-06-04
+Region: ASIA
+Status: active
+Current Team: FULL SENSE (ASIA)
+Total Earnings: $10,945.00
+ELO Rating: 1807
+
+========================================
+PLAYER #327: Alfajer112
+========================================
+ID: 163
+Username: Alfajer112
+Real Name: Donald Torres
+Alternate IDs: None
+Role: Strategist
+Nationality: Malaysian
+Birth Date: 1999-09-20
+Region: ASIA
+Status: active
+Current Team: Paper Rex (ASIA)
+Total Earnings: $10,666.00
+ELO Rating: 1971
+
+========================================
+PLAYER #328: mixwell971
+========================================
+ID: 329
+Username: mixwell971
+Real Name: Joseph Baker
+Alternate IDs: None
+Role: Vanguard
+Nationality: Chilean
+Birth Date: 2000-12-31
+Region: SA
+Status: active
+Current Team: Keyd Stars (SA)
+Total Earnings: $10,230.00
+ELO Rating: 1339
+
+========================================
+PLAYER #329: s0m773
+========================================
+ID: 233
+Username: s0m773
+Real Name: Richard Jones
+Alternate IDs: None
+Role: Duelist
+Nationality: Chinese
+Birth Date: 2002-08-15
+Region: CN
+Status: active
+Current Team: JD Gaming (CN)
+Total Earnings: $9,695.00
+ELO Rating: 2002
+
+========================================
+PLAYER #330: Chronicle506
+========================================
+ID: 185
+Username: Chronicle506
+Real Name: Steven Harris
+Alternate IDs: None
+Role: Vanguard
+Nationality: Vietnamese
+Birth Date: 2004-05-16
+Region: ASIA
+Status: active
+Current Team: Rex Regum Qeon (ASIA)
+Total Earnings: $9,583.00
+ELO Rating: 1240
+
+========================================
+PLAYER #331: stax899
+========================================
+ID: 302
+Username: stax899
+Real Name: Sebastian Young (stax899)
+Alternate IDs: None
+Role: Vanguard
+Nationality: Japanese
+Birth Date: 1998-07-20
+Region: JP
+Status: active
+Current Team: Crazy Raccoon (JP)
+Total Earnings: $9,381.00
+ELO Rating: 2357
+
+========================================
+PLAYER #332: Hiko667
+========================================
+ID: 223
+Username: Hiko667
+Real Name: Mason White
+Alternate IDs: None
+Role: Vanguard
+Nationality: Chinese
+Birth Date: 1996-06-20
+Region: CN
+Status: active
+Current Team: EDward Gaming (CN)
+Total Earnings: $9,057.00
+ELO Rating: 2119
+
+========================================
+PLAYER #333: soulcas636
+========================================
+ID: 230
+Username: soulcas636
+Real Name: Sebastian Thompson (soulcas636)
+Alternate IDs: None
+Role: Duelist
+Nationality: Chinese
+Birth Date: 2005-12-14
+Region: CN
+Status: active
+Current Team: Bilibili Gaming (CN)
+Total Earnings: $8,634.00
+ELO Rating: 1161
+
+========================================
+PLAYER #334: exy259
+========================================
+ID: 55
+Username: exy259
+Real Name: Benjamin Thomas
+Alternate IDs: None
+Role: Duelist
+Nationality: American
+Birth Date: 2006-08-04
+Region: NA
+Status: active
+Current Team: Gen.G (KR)
+Total Earnings: $8,456.00
+ELO Rating: 1342
+
+========================================
+PLAYER #335: Meteor993
+========================================
+ID: 336
+Username: Meteor993
+Real Name: Andrew Johnson
+Alternate IDs: None
+Role: Duelist
+Nationality: Argentinian
+Birth Date: 2006-08-02
+Region: SA
+Status: active
+Current Team: Sharks Esports (SA)
+Total Earnings: $8,349.00
+ELO Rating: 1978
+
+========================================
+PLAYER #336: pANcada459
+========================================
+ID: 231
+Username: pANcada459
+Real Name: Thomas Ramirez
+Alternate IDs: None
+Role: Duelist
+Nationality: Chinese
+Birth Date: 1995-04-24
+Region: CN
+Status: active
+Current Team: Bilibili Gaming (CN)
+Total Earnings: $8,178.00
+ELO Rating: 1192
+
+========================================
+PLAYER #337: Liquid286
+========================================
+ID: 88
+Username: Liquid286
+Real Name: Donald Martin
+Alternate IDs: None
+Role: Vanguard
+Nationality: Canadian
+Birth Date: 1998-07-21
+Region: NA
+Status: active
+Current Team: Envy (NA)
+Total Earnings: $8,123.00
+ELO Rating: 1003
+
+========================================
+PLAYER #338: Foxy9969
+========================================
+ID: 242
+Username: Foxy9969
+Real Name: Sebastian Garcia (Foxy9969)
+Alternate IDs: None
+Role: Strategist
+Nationality: Chinese
+Birth Date: 1996-02-27
+Region: CN
+Status: active
+Current Team: ThunderTalk Gaming (CN)
+Total Earnings: $7,838.00
+ELO Rating: 1575
+
+========================================
+PLAYER #339: AZK696
+========================================
+ID: 106
+Username: AZK696
+Real Name: Tyler Taylor
+Alternate IDs: None
+Role: Strategist
+Nationality: Dutch
+Birth Date: 2006-01-18
+Region: EU
+Status: active
+Current Team: Vitality (EU)
+Total Earnings: $7,714.00
+ELO Rating: 2366
+
+========================================
+PLAYER #340: TenZ832
+========================================
+ID: 203
+Username: TenZ832
+Real Name: Oliver Adams
+Alternate IDs: None
+Role: Duelist
+Nationality: Indonesian
+Birth Date: 1997-09-05
+Region: ASIA
+Status: active
+Current Team: ORDER (OCE)
+Total Earnings: $7,686.00
+ELO Rating: 1860
+
+========================================
+PLAYER #341: Chronicle401
+========================================
+ID: 19
+Username: Chronicle401
+Real Name: Christopher Campbell
+Alternate IDs: None
+Role: Duelist
+Nationality: Canadian
+Birth Date: 1998-06-23
+Region: NA
+Status: active
+Current Team: 100 Thieves (NA)
+Total Earnings: $7,657.00
+ELO Rating: 1208
+
+========================================
+PLAYER #342: s0m118
+========================================
+ID: 191
+Username: s0m118
+Real Name: Adam Miller
+Alternate IDs: None
+Role: Strategist
+Nationality: Filipino
+Birth Date: 2001-07-23
+Region: ASIA
+Status: active
+Current Team: Alter Ego (ASIA)
+Total Earnings: $7,414.00
+ELO Rating: 1288
+
+========================================
+PLAYER #343: nukkye529
+========================================
+ID: 244
+Username: nukkye529
+Real Name: Richard Nelson (nukkye529)
+Alternate IDs: None
+Role: Vanguard
+Nationality: Chinese
+Birth Date: 1998-12-07
+Region: CN
+Status: active
+Current Team: Rare Atom (CN)
+Total Earnings: $7,351.00
+ELO Rating: 1592
+
+========================================
+PLAYER #344: Khalil596
+========================================
+ID: 206
+Username: Khalil596
+Real Name: Samuel Harris (Khalil596)
+Alternate IDs: None
+Role: Duelist
+Nationality: Filipino
+Birth Date: 2006-05-31
+Region: ASIA
+Status: active
+Current Team: Soniqs (OCE)
+Total Earnings: $7,144.00
+ELO Rating: 2120
+
+========================================
+PLAYER #345: Liquid436
+========================================
+ID: 34
+Username: Liquid436
+Real Name: Thomas Walker
+Alternate IDs: None
+Role: Duelist
+Nationality: Canadian
+Birth Date: 1997-01-02
+Region: NA
+Status: active
+Current Team: FaZe Clan (NA)
+Total Earnings: $6,615.00
+ELO Rating: 1133
+
+========================================
+PLAYER #346: Lakia423
+========================================
+ID: 306
+Username: Lakia423
+Real Name: William Lewis
+Alternate IDs: None
+Role: Vanguard
+Nationality: Japanese
+Birth Date: 1998-05-23
+Region: JP
+Status: active
+Current Team: FENNEL (JP)
+Total Earnings: $6,455.00
+ELO Rating: 2115
+
+========================================
+PLAYER #347: nAts888
+========================================
+ID: 282
+Username: nAts888
+Real Name: Robert Torres
+Alternate IDs: None
+Role: Strategist
+Nationality: South Korean
+Birth Date: 2006-07-11
+Region: KR
+Status: active
+Current Team: Hanwha Life Esports (KR)
+Total Earnings: $5,889.00
+ELO Rating: 1334
+
+========================================
+PLAYER #348: Khalil486
+========================================
+ID: 354
+Username: Khalil486
+Real Name: Robert Miller
+Alternate IDs: None
+Role: Duelist
+Nationality: New Zealander
+Birth Date: 2005-06-09
+Region: OCE
+Status: active
+Current Team: Legacy Esports (OCE)
+Total Earnings: $5,711.00
+ELO Rating: 1665
+
+========================================
+PLAYER #349: Boaster735
+========================================
+ID: 120
+Username: Boaster735
+Real Name: Christopher Martin
+Alternate IDs: None
+Role: Duelist
+Nationality: Danish
+Birth Date: 2004-11-25
+Region: EU
+Status: active
+Current Team: Global Esports (ASIA)
+Total Earnings: $5,511.00
+ELO Rating: 1247
+
+========================================
+PLAYER #350: Rb227
+========================================
+ID: 124
+Username: Rb227
+Real Name: Aaron Hall
+Alternate IDs: None
+Role: Strategist
+Nationality: Russian
+Birth Date: 2001-03-02
+Region: EU
+Status: active
+Current Team: Alliance (EU)
+Total Earnings: $5,135.00
+ELO Rating: 1556
+
+========================================
+PLAYER #351: Zest535
+========================================
+ID: 60
+Username: Zest535
+Real Name: Aaron Martin
+Alternate IDs: None
+Role: Strategist
+Nationality: American
+Birth Date: 2006-12-30
+Region: NA
+Status: active
+Current Team: Version1 (NA)
+Total Earnings: $4,490.00
+ELO Rating: 1168
+
+========================================
+PLAYER #352: soulcas665
+========================================
+ID: 284
+Username: soulcas665
+Real Name: Olivia Thomas
+Alternate IDs: None
+Role: Vanguard
+Nationality: South Korean
+Birth Date: 2001-07-18
+Region: KR
+Status: active
+Current Team: DAMWON KIA (KR)
+Total Earnings: $4,332.00
+ELO Rating: 2215
+
+========================================
+PLAYER #353: heat881
+========================================
+ID: 50
+Username: heat881
+Real Name: Ava Roberts
+Alternate IDs: None
+Role: Strategist
+Nationality: Mexican
+Birth Date: 1999-11-22
+Region: NA
+Status: active
+Current Team: EDward Gaming (CN)
+Total Earnings: $3,348.00
+ELO Rating: 2266
+
+========================================
+PLAYER #354: aspas380
+========================================
+ID: 77
+Username: aspas380
+Real Name: Ava Brown
+Alternate IDs: None
+Role: Duelist
+Nationality: Mexican
+Birth Date: 2005-07-13
+Region: NA
+Status: active
+Current Team: Rise (NA)
+Total Earnings: $3,063.00
+ELO Rating: 1792
+
+========================================
+PLAYER #355: Zest780
+========================================
+ID: 78
+Username: Zest780
+Real Name: James Wilson
+Alternate IDs: None
+Role: Strategist
+Nationality: Canadian
+Birth Date: 2004-12-14
+Region: NA
+Status: active
+Current Team: Rise (NA)
+Total Earnings: $3,028.00
+ELO Rating: 1972
+
+========================================
+PLAYER #356: Victor286
+========================================
+ID: 64
+Username: Victor286
+Real Name: Henry Rivera
+Alternate IDs: None
+Role: Duelist
+Nationality: Canadian
+Birth Date: 1997-11-02
+Region: NA
+Status: active
+Current Team: Dignitas (NA)
+Total Earnings: $2,885.00
+ELO Rating: 1216
+
+========================================
+PLAYER #357: k1Ng999
+========================================
+ID: 59
+Username: k1Ng999
+Real Name: Lucas Lewis
+Alternate IDs: None
+Role: Strategist
+Nationality: American
+Birth Date: 1995-03-18
+Region: NA
+Status: active
+Current Team: Version1 (NA)
+Total Earnings: $1,658.00
+ELO Rating: 2058
+

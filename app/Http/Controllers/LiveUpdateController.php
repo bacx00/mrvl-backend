@@ -10,6 +10,92 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 class LiveUpdateController extends Controller
 {
     /**
+     * Stream live updates for a tournament using Server-Sent Events (SSE)
+     * 
+     * @api GET /api/tournaments/events/{eventId}/live-stream
+     */
+    public function streamEvent($eventId)
+    {
+        $event = \App\Models\Event::findOrFail($eventId);
+        
+        // Set headers for SSE
+        $headers = [
+            'Content-Type' => 'text/event-stream',
+            'Cache-Control' => 'no-cache',
+            'X-Accel-Buffering' => 'no',
+            'Access-Control-Allow-Origin' => '*',
+            'Access-Control-Allow-Credentials' => 'true'
+        ];
+        
+        return response()->stream(function () use ($event, $eventId) {
+            // Send initial connection message
+            echo "event: connected\n";
+            echo "data: " . json_encode([
+                'status' => 'connected', 
+                'event_id' => $event->id,
+                'event_name' => $event->name,
+                'channels' => ["event.{$eventId}", "tournament.updates"]
+            ]) . "\n\n";
+            flush();
+            
+            // Keep connection alive and check for updates
+            $lastUpdate = microtime(true);
+            $lastCheck = microtime(true);
+            
+            while (true) {
+                // Check if client is still connected
+                if (connection_aborted()) {
+                    break;
+                }
+                
+                // Check for updates more frequently - every 50ms for immediate response
+                if ((microtime(true) - $lastCheck) >= 0.05) {
+                    $lastCheck = microtime(true);
+                    
+                    // Check multiple cache keys for different update types
+                    $updateTypes = [
+                        'bracket_updated', 
+                        'match_completed', 
+                        'phase_changed', 
+                        'standings_updated',
+                        'swiss_round_generated',
+                        'tournament_status'
+                    ];
+                    $foundUpdate = false;
+                    
+                    foreach ($updateTypes as $updateType) {
+                        $updateKey = "live_update_event_{$eventId}_{$updateType}";
+                        $update = cache()->pull($updateKey); // Pull removes it atomically
+                        
+                        if ($update) {
+                            // Send the update to client immediately
+                            $eventType = str_replace('_', '-', $update['type'] ?? $updateType);
+                            echo "event: {$eventType}\n";
+                            echo "data: " . json_encode($update['data'] ?? $update) . "\n\n";
+                            flush();
+                            
+                            $lastUpdate = microtime(true);
+                            $foundUpdate = true;
+                            
+                            \Illuminate\Support\Facades\Log::info("SSE: Sent {$eventType} update for event {$eventId}");
+                        }
+                    }
+                }
+                
+                // Send heartbeat every 30 seconds
+                if ((microtime(true) - $lastUpdate) > 30) {
+                    echo ": heartbeat\n\n";
+                    flush();
+                    $lastUpdate = microtime(true);
+                }
+                
+                // Sleep for a very short time - 10ms for near real-time response
+                usleep(10000); // 0.01 seconds
+            }
+        }, 200, $headers);
+    }
+
+    /**
      * Stream live updates for a match using Server-Sent Events (SSE)
      */
     public function stream($matchId)

@@ -8,6 +8,9 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use App\Models\UserActivity;
+use App\Models\Vote;
+use App\Models\News;
+use App\Models\NewsComment;
 use Exception;
 
 class VoteController extends Controller
@@ -26,7 +29,7 @@ class VoteController extends Controller
                 'vote_type' => 'required|string|in:upvote,downvote'
             ]);
 
-            $user = Auth::user();
+            $user = auth('api')->user();
             if (!$user) {
                 return response()->json([
                     'success' => false,
@@ -34,15 +37,19 @@ class VoteController extends Controller
                 ], 401);
             }
 
-            $votableType = $request->votable_type;
-            $votableId = $request->votable_id;
+            $votableType = $request->votable_type;  // Frontend sends votable_type
+            $votableId = $request->votable_id;      // Frontend sends votable_id
             $voteType = $request->vote_type;
+            
+            // Map to database column names (voteable with 'ea')
+            $voteableType = $votableType;
+            $voteableId = $votableId;
             
             // Convert vote type to integer for database storage
             $voteValue = $this->convertVoteTypeToValue($voteType);
 
             // Verify the target content exists
-            if (!$this->contentExists($votableType, $votableId)) {
+            if (!$this->contentExists($voteableType, $voteableId)) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Content not found'
@@ -52,8 +59,8 @@ class VoteController extends Controller
             // Check if user already voted
             $existingVote = DB::table('votes')
                 ->where('user_id', $user->id)
-                ->where('voteable_type', $votableType)
-                ->where('voteable_id', $votableId)
+                ->where('voteable_type', $voteableType)
+                ->where('voteable_id', $voteableId)
                 ->first();
 
             $action = null;
@@ -73,9 +80,9 @@ class VoteController extends Controller
                     UserActivity::track(
                         $user->id,
                         'vote_removed',
-                        "Removed {$voteType} on {$votableType}",
-                        $votableType,
-                        $votableId,
+                        "Removed {$voteType} on {$voteableType}",
+                        $voteableType,
+                        $voteableId,
                         ['vote_type' => $voteType]
                     );
                 } else {
@@ -93,9 +100,9 @@ class VoteController extends Controller
                     UserActivity::track(
                         $user->id,
                         'vote_changed',
-                        "Changed vote from {$oldVoteType} to {$voteType} on {$votableType}",
-                        $votableType,
-                        $votableId,
+                        "Changed vote from {$oldVoteType} to {$voteType} on {$voteableType}",
+                        $voteableType,
+                        $voteableId,
                         ['old_vote_type' => $oldVoteType, 'new_vote_type' => $voteType]
                     );
                 }
@@ -103,8 +110,8 @@ class VoteController extends Controller
                 // Create new vote
                 DB::table('votes')->insert([
                     'user_id' => $user->id,
-                    'voteable_type' => $votableType,
-                    'voteable_id' => $votableId,
+                    'voteable_type' => $voteableType,
+                    'voteable_id' => $voteableId,
                     'vote' => $voteValue,
                     'created_at' => now(),
                     'updated_at' => now()
@@ -116,24 +123,24 @@ class VoteController extends Controller
                 UserActivity::track(
                     $user->id,
                     'vote_added',
-                    "Added {$voteType} on {$votableType}",
-                    $votableType,
-                    $votableId,
+                    "Added {$voteType} on {$voteableType}",
+                    $voteableType,
+                    $voteableId,
                     ['vote_type' => $voteType]
                 );
             }
 
             // Get updated vote counts
-            $voteCounts = $this->getVoteCounts($votableType, $votableId);
+            $voteCounts = $this->getVoteCounts($voteableType, $voteableId);
             
             // Update the parent content's vote count fields
-            $this->updateContentVoteCounts($votableType, $votableId, $voteCounts);
+            $this->updateContentVoteCounts($voteableType, $voteableId, $voteCounts);
             
             // Get user's current vote
             $userVoteValue = DB::table('votes')
                 ->where('user_id', $user->id)
-                ->where('voteable_type', $votableType)
-                ->where('voteable_id', $votableId)
+                ->where('voteable_type', $voteableType)
+                ->where('voteable_id', $voteableId)
                 ->value('vote');
             
             $userVote = $userVoteValue ? $this->convertValueToVoteType($userVoteValue) : null;
@@ -155,7 +162,7 @@ class VoteController extends Controller
             ], 422);
         } catch (Exception $e) {
             Log::error('Error processing vote: ' . $e->getMessage(), [
-                'user_id' => Auth::id(),
+                'user_id' => auth('api')->id(),
                 'request' => $request->all(),
                 'trace' => $e->getTraceAsString()
             ]);
@@ -177,18 +184,22 @@ class VoteController extends Controller
                 'votable_id' => 'required|integer'
             ]);
 
-            $votableType = $request->votable_type;
-            $votableId = $request->votable_id;
-            $user = Auth::user();
+            $votableType = $request->votable_type;  // Frontend sends votable_type
+            $votableId = $request->votable_id;      // Frontend sends votable_id
+            $user = auth('api')->user();
+            
+            // Map to database column names (voteable with 'ea')
+            $voteableType = $votableType;
+            $voteableId = $votableId;
 
-            $voteCounts = $this->getVoteCounts($votableType, $votableId);
+            $voteCounts = $this->getVoteCounts($voteableType, $voteableId);
             
             $userVote = null;
             if ($user) {
                 $userVoteValue = DB::table('votes')
                     ->where('user_id', $user->id)
-                    ->where('voteable_type', $votableType)
-                    ->where('voteable_id', $votableId)
+                    ->where('voteable_type', $voteableType)
+                    ->where('voteable_id', $voteableId)
                     ->value('vote');
                 
                 $userVote = $userVoteValue ? $this->convertValueToVoteType($userVoteValue) : null;
@@ -215,23 +226,29 @@ class VoteController extends Controller
     public function getUserVotes(Request $request)
     {
         try {
-            $user = Auth::user();
+            $user = auth('api')->user();
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Authentication required'
+                ], 401);
+            }
+            
             $perPage = min($request->get('per_page', 20), 50);
             
-            $votes = DB::table('votes')
-                ->where('user_id', $user->id)
+            $votes = Vote::byUser($user->id)
                 ->orderBy('created_at', 'desc')
                 ->paginate($perPage);
 
             // Enrich votes with content information
             $enrichedVotes = [];
             foreach ($votes->items() as $vote) {
-                $contentInfo = $this->getContentInfo($vote->votable_type, $vote->votable_id);
+                $contentInfo = $this->getContentInfo($vote->voteable_type, $vote->voteable_id);
                 $enrichedVotes[] = [
                     'id' => $vote->id,
                     'vote_type' => $vote->vote_type,
-                    'votable_type' => $vote->votable_type,
-                    'votable_id' => $vote->votable_id,
+                    'voteable_type' => $vote->voteable_type,
+                    'voteable_id' => $vote->voteable_id,
                     'created_at' => $vote->created_at,
                     'content' => $contentInfo
                 ];
@@ -263,7 +280,7 @@ class VoteController extends Controller
     public function getVoteStats()
     {
         try {
-            $user = Auth::user();
+            $user = auth('api')->user();
             
             $stats = [
                 'votes_given' => DB::table('votes')->where('user_id', $user->id)->count(),
@@ -321,11 +338,11 @@ class VoteController extends Controller
     /**
      * Get vote counts for content
      */
-    private function getVoteCounts($votableType, $votableId)
+    private function getVoteCounts($voteableType, $voteableId)
     {
         $counts = DB::table('votes')
-            ->where('voteable_type', $votableType)
-            ->where('voteable_id', $votableId)
+            ->where('voteable_type', $voteableType)
+            ->where('voteable_id', $voteableId)
             ->selectRaw('vote, COUNT(*) as count')
             ->groupBy('vote')
             ->get()
@@ -348,17 +365,28 @@ class VoteController extends Controller
      */
     private function getContentInfo($votableType, $votableId)
     {
-        switch ($votableType) {
+        switch ($voteableType) {
             case 'news':
-                $news = DB::table('news')->where('id', $votableId)->first(['title', 'slug']);
+                $news = DB::table('news')->where('id', $voteableId)->first(['title', 'slug']);
                 return $news ? [
                     'type' => 'news',
                     'title' => $news->title,
                     'url' => "/news/{$news->slug}"
                 ] : null;
 
+            case 'news_comment':
+                $comment = DB::table('news_comments as nc')
+                    ->join('news as n', 'nc.news_id', '=', 'n.id')
+                    ->where('nc.id', $votableId)
+                    ->first(['n.title', 'n.slug', 'n.id as news_id']);
+                return $comment ? [
+                    'type' => 'news_comment',
+                    'title' => "Comment on: {$comment->title}",
+                    'url' => "/news/{$comment->slug}#comment-{$votableId}"
+                ] : null;
+
             case 'forum_thread':
-                $thread = DB::table('forum_threads')->where('id', $votableId)->first(['title', 'slug']);
+                $thread = DB::table('forum_threads')->where('id', $voteableId)->first(['title', 'slug']);
                 return $thread ? [
                     'type' => 'forum_thread',
                     'title' => $thread->title,
@@ -366,7 +394,7 @@ class VoteController extends Controller
                 ] : null;
 
             case 'forum_post':
-                $post = DB::table('posts as p')
+                $post = DB::table('forum_posts as p')
                     ->join('forum_threads as t', 'p.thread_id', '=', 't.id')
                     ->where('p.id', $votableId)
                     ->first(['p.content', 't.title', 't.id as thread_id']);
@@ -374,6 +402,17 @@ class VoteController extends Controller
                     'type' => 'forum_post',
                     'title' => "Reply in: {$post->title}",
                     'url' => "/forums/threads/{$post->thread_id}#post-{$votableId}"
+                ] : null;
+
+            case 'match_comment':
+                $comment = DB::table('match_comments as mc')
+                    ->join('matches as m', 'mc.match_id', '=', 'm.id')
+                    ->where('mc.id', $votableId)
+                    ->first(['m.title', 'm.id as match_id']);
+                return $comment ? [
+                    'type' => 'match_comment',
+                    'title' => "Comment on match: {$comment->title}",
+                    'url' => "/matches/{$comment->match_id}#comment-{$votableId}"
                 ] : null;
 
             default:
@@ -436,11 +475,11 @@ class VoteController extends Controller
     /**
      * Update content vote count fields in their respective tables
      */
-    private function updateContentVoteCounts($votableType, $votableId, $voteCounts)
+    private function updateContentVoteCounts($voteableType, $voteableId, $voteCounts)
     {
-        switch ($votableType) {
+        switch ($voteableType) {
             case 'news':
-                DB::table('news')->where('id', $votableId)->update([
+                DB::table('news')->where('id', $voteableId)->update([
                     'upvotes' => $voteCounts['upvotes'],
                     'downvotes' => $voteCounts['downvotes'],
                     'score' => $voteCounts['score'],
@@ -451,7 +490,7 @@ class VoteController extends Controller
             case 'news_comment':
                 // Check if news_comments table has vote count fields
                 if (Schema::hasColumn('news_comments', 'upvotes')) {
-                    DB::table('news_comments')->where('id', $votableId)->update([
+                    DB::table('news_comments')->where('id', $voteableId)->update([
                         'upvotes' => $voteCounts['upvotes'],
                         'downvotes' => $voteCounts['downvotes'],
                         'score' => $voteCounts['score'],
@@ -463,7 +502,7 @@ class VoteController extends Controller
             case 'forum_thread':
                 // Check if forum_threads table has vote count fields
                 if (Schema::hasColumn('forum_threads', 'upvotes')) {
-                    DB::table('forum_threads')->where('id', $votableId)->update([
+                    DB::table('forum_threads')->where('id', $voteableId)->update([
                         'upvotes' => $voteCounts['upvotes'],
                         'downvotes' => $voteCounts['downvotes'],
                         'score' => $voteCounts['score'],
@@ -475,7 +514,7 @@ class VoteController extends Controller
             case 'forum_post':
                 // Check if forum_posts table has vote count fields
                 if (Schema::hasColumn('forum_posts', 'upvotes')) {
-                    DB::table('forum_posts')->where('id', $votableId)->update([
+                    DB::table('forum_posts')->where('id', $voteableId)->update([
                         'upvotes' => $voteCounts['upvotes'],
                         'downvotes' => $voteCounts['downvotes'],
                         'score' => $voteCounts['score'],
@@ -521,19 +560,19 @@ class VoteController extends Controller
     /**
      * Check if content exists
      */
-    private function contentExists($votableType, $votableId)
+    private function contentExists($voteableType, $voteableId)
     {
-        switch ($votableType) {
+        switch ($voteableType) {
             case 'news':
-                return DB::table('news')->where('id', $votableId)->exists();
+                return DB::table('news')->where('id', $voteableId)->exists();
             case 'news_comment':
-                return DB::table('news_comments')->where('id', $votableId)->exists();
+                return DB::table('news_comments')->where('id', $voteableId)->exists();
             case 'forum_thread':
-                return DB::table('forum_threads')->where('id', $votableId)->exists();
+                return DB::table('forum_threads')->where('id', $voteableId)->exists();
             case 'forum_post':
-                return DB::table('forum_posts')->where('id', $votableId)->exists();
+                return DB::table('forum_posts')->where('id', $voteableId)->exists();
             case 'match_comment':
-                return DB::table('match_comments')->where('id', $votableId)->exists();
+                return DB::table('match_comments')->where('id', $voteableId)->exists();
             default:
                 return false;
         }

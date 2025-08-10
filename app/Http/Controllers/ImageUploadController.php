@@ -243,6 +243,15 @@ class ImageUploadController extends Controller
     // News Featured Image Upload
     public function uploadNewsFeaturedImage(Request $request, News $news)
     {
+        // Check authentication first
+        $user = auth('api')->user();
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Authentication required. Please provide a valid Bearer token.'
+            ], 401);
+        }
+
         // Support both 'featured_image' and 'image' field names for backward compatibility
         $fieldName = $request->hasFile('featured_image') ? 'featured_image' : 'image';
         
@@ -252,7 +261,7 @@ class ImageUploadController extends Controller
 
         try {
             // Check permissions
-            if (!$news->canBeEditedBy(auth()->user())) {
+            if (!$news->canBeEditedBy($user)) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Unauthorized to edit this article'
@@ -305,6 +314,15 @@ class ImageUploadController extends Controller
     // News Gallery Images Upload
     public function uploadNewsGalleryImages(Request $request, News $news)
     {
+        // Check authentication first
+        $user = auth('api')->user();
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Authentication required. Please provide a valid Bearer token.'
+            ], 401);
+        }
+
         $request->validate([
             'images' => 'required|array|max:10',
             'images.*' => 'image|mimes:jpeg,jpg,png,webp|max:' . $this->maxFileSize,
@@ -312,7 +330,7 @@ class ImageUploadController extends Controller
 
         try {
             // Check permissions
-            if (!$news->canBeEditedBy(auth()->user())) {
+            if (!$news->canBeEditedBy($user)) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Unauthorized to edit this article'
@@ -358,13 +376,22 @@ class ImageUploadController extends Controller
     // Remove News Gallery Image
     public function removeNewsGalleryImage(Request $request, News $news)
     {
+        // Check authentication first
+        $user = auth('api')->user();
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Authentication required. Please provide a valid Bearer token.'
+            ], 401);
+        }
+
         $request->validate([
             'image_path' => 'required|string'
         ]);
 
         try {
             // Check permissions
-            if (!$news->canBeEditedBy(auth()->user())) {
+            if (!$news->canBeEditedBy($user)) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Unauthorized to edit this article'
@@ -406,36 +433,68 @@ class ImageUploadController extends Controller
     // Private helper method to process and store images
     private function processAndStoreImage($file, $directory, $options = [])
     {
-        // Generate unique filename
+        // Validate file first
+        if (!$file->isValid()) {
+            throw new \Exception('Invalid file upload: ' . $file->getError());
+        }
+
+        // Generate unique filename with additional timestamp
         $extension = $file->getClientOriginalExtension();
-        $filename = Str::random(40) . '.' . $extension;
+        $filename = Str::random(32) . '_' . time() . '.' . $extension;
         $fullPath = $directory . '/' . $filename;
 
-        // Create directory if it doesn't exist
-        Storage::disk('public')->makeDirectory($directory);
+        // Ensure the directory exists with proper permissions
+        $fullDirectoryPath = storage_path('app/public/' . $directory);
+        if (!is_dir($fullDirectoryPath)) {
+            if (!mkdir($fullDirectoryPath, 0775, true)) {
+                throw new \Exception('Failed to create storage directory: ' . $directory);
+            }
+        }
 
-        // Store original file
-        $result = $file->storeAs($directory, $filename, 'public');
-        
-        if (!$result) {
-            throw new \Exception('File storage failed - upload returned false');
+        // Try Laravel's storeAs method first
+        try {
+            $result = $file->storeAs($directory, $filename, 'public');
+            
+            if (!$result) {
+                // Fallback to manual file move
+                $destinationPath = storage_path('app/public/' . $fullPath);
+                
+                if (!move_uploaded_file($file->path(), $destinationPath)) {
+                    throw new \Exception('File storage failed - both storeAs and manual move failed');
+                }
+                
+                // Set proper permissions
+                chmod($destinationPath, 0644);
+                $result = $fullPath;
+            }
+        } catch (\Exception $e) {
+            // Fallback to manual file move
+            $destinationPath = storage_path('app/public/' . $fullPath);
+            
+            if (!move_uploaded_file($file->path(), $destinationPath)) {
+                throw new \Exception('File storage failed - ' . $e->getMessage());
+            }
+            
+            // Set proper permissions
+            chmod($destinationPath, 0644);
+            $result = $fullPath;
         }
 
         // Verify file was stored
-        if (!Storage::disk('public')->exists($fullPath)) {
-            throw new \Exception('File storage failed - file not found after upload');
+        if (!Storage::disk('public')->exists($result)) {
+            throw new \Exception('File storage failed - file not found after upload: ' . $result);
         }
 
         // If image processing is available and options are provided, resize
         if (class_exists('Intervention\Image\Facades\Image') && !empty($options)) {
             try {
-                $this->resizeImage(Storage::disk('public')->path($fullPath), $options);
+                $this->resizeImage(Storage::disk('public')->path($result), $options);
             } catch (\Exception $e) {
                 \Log::warning('Image resizing failed: ' . $e->getMessage());
             }
         }
 
-        return $fullPath;
+        return $result;
     }
 
     // Private helper method to resize images (optional - requires intervention/image)
@@ -597,7 +656,7 @@ class ImageUploadController extends Controller
         }
         
         // Check if user has admin role
-        if (!$user->hasRole(['admin', 'super_admin']) && !$user->hasPermissionTo('manage-events')) {
+        if (!($user->hasRole('admin') || $user->hasRole('super_admin')) && !$user->hasPermissionTo('manage-events')) {
             return response()->json([
                 'success' => false,
                 'message' => 'You do not have permission to upload event images. Admin role required.'
@@ -644,18 +703,18 @@ class ImageUploadController extends Controller
             // Set proper permissions
             chmod($destinationPath, 0644);
             
-            // Generate full URL for the logo
-            $logoUrl = url('storage/' . $finalPath);
+            // Save just the path, not full URL
+            $storagePath = '/storage/' . $finalPath;
             
-            // Update event with logo URL
-            $event->update(['logo' => $logoUrl]);
+            // Update event with logo path
+            $event->update(['logo' => $storagePath]);
 
             return response()->json([
                 'success' => true,
                 'message' => 'Event logo uploaded successfully',
                 'data' => [
-                    'logo' => $finalPath,
-                    'logo_url' => $logoUrl
+                    'logo' => $storagePath,
+                    'logo_url' => url($storagePath)
                 ]
             ]);
 
@@ -683,8 +742,17 @@ class ImageUploadController extends Controller
     {
         $user = \App\Models\User::findOrFail($userId);
         
+        // Check authentication first
+        $authUser = auth('api')->user();
+        if (!$authUser) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Authentication required. Please provide a valid Bearer token.'
+            ], 401);
+        }
+        
         // Check if user can edit this profile
-        if (auth()->id() !== $user->id && !auth()->user()->hasRole('admin')) {
+        if ($authUser->id !== $user->id && !$authUser->hasRole('admin')) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized to edit this profile'
@@ -844,8 +912,17 @@ class ImageUploadController extends Controller
     {
         $user = \App\Models\User::findOrFail($userId);
         
+        // Check authentication first
+        $authUser = auth('api')->user();
+        if (!$authUser) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Authentication required. Please provide a valid Bearer token.'
+            ], 401);
+        }
+        
         // Check if user can edit this profile
-        if (auth()->id() !== $user->id && !auth()->user()->hasRole('admin')) {
+        if ($authUser->id !== $user->id && !$authUser->hasRole('admin')) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized to edit this profile'

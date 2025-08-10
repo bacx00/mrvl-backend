@@ -4,12 +4,28 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
+use App\Services\EloRatingService;
 
 class RankingController extends Controller
 {
     public function index(Request $request)
     {
         try {
+            // Create cache key based on request parameters
+            $cacheKey = 'player_rankings_' . md5(serialize([
+                'rank' => $request->rank,
+                'region' => $request->region,
+                'role' => $request->role,
+                'search' => $request->search,
+                'page' => $request->page ?? 1
+            ]));
+            
+            // Check cache first (cache for 15 minutes)
+            if ($cachedData = Cache::get($cacheKey)) {
+                return response()->json($cachedData);
+            }
+            
             $query = DB::table('players as p')
                 ->leftJoin('teams as t', 'p.team_id', '=', 't.id')
                 ->select([
@@ -87,7 +103,7 @@ class RankingController extends Controller
             // Get leaderboard statistics
             $stats = $this->getLeaderboardStats();
 
-            return response()->json([
+            $responseData = [
                 'data' => $playersData,
                 'pagination' => [
                     'current_page' => $players->currentPage(),
@@ -97,7 +113,12 @@ class RankingController extends Controller
                 ],
                 'stats' => $stats,
                 'success' => true
-            ]);
+            ];
+            
+            // Cache the response for 15 minutes
+            Cache::put($cacheKey, $responseData, 900);
+
+            return response()->json($responseData);
 
         } catch (\Exception $e) {
             return response()->json([
@@ -605,5 +626,357 @@ class RankingController extends Controller
             ],
             'success' => true
         ]);
+    }
+
+    // Admin methods for ranking management
+    public function recalculateRankings()
+    {
+        try {
+            // Recalculate all player rankings based on match results
+            $players = DB::table('players')->get();
+            $updatedCount = 0;
+            
+            foreach ($players as $player) {
+                $newRating = $this->calculatePlayerELO($player->id);
+                if ($newRating !== $player->rating) {
+                    DB::table('players')
+                        ->where('id', $player->id)
+                        ->update([
+                            'rating' => $newRating,
+                            'updated_at' => now()
+                        ]);
+                    $updatedCount++;
+                }
+            }
+            
+            // Also recalculate team rankings
+            $teams = DB::table('teams')->get();
+            $updatedTeams = 0;
+            
+            foreach ($teams as $team) {
+                $newRating = $this->calculateTeamELO($team->id);
+                if ($newRating !== $team->rating) {
+                    DB::table('teams')
+                        ->where('id', $team->id)
+                        ->update([
+                            'rating' => $newRating,
+                            'updated_at' => now()
+                        ]);
+                    $updatedTeams++;
+                }
+            }
+            
+            // Clear all ranking caches after recalculation
+            $this->clearRankingCaches();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Rankings recalculated successfully',
+                'data' => [
+                    'players_updated' => $updatedCount,
+                    'teams_updated' => $updatedTeams,
+                    'total_players' => $players->count(),
+                    'total_teams' => $teams->count()
+                ]
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error recalculating rankings: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+    
+    public function performSeasonReset()
+    {
+        try {
+            // Marvel Rivals season reset: 9 divisions down
+            $players = DB::table('players')->where('rating', '>', 0)->get();
+            $resetCount = 0;
+            
+            foreach ($players as $player) {
+                $currentRating = $player->rating;
+                $resetRating = $this->applySeasonReset($currentRating);
+                
+                if ($resetRating !== $currentRating) {
+                    DB::table('players')
+                        ->where('id', $player->id)
+                        ->update([
+                            'rating' => $resetRating,
+                            'peak_rating' => $player->rating, // Save current as peak if higher
+                            'updated_at' => now()
+                        ]);
+                    $resetCount++;
+                }
+            }
+            
+            // Reset team ratings too
+            $teams = DB::table('teams')->where('rating', '>', 0)->get();
+            $resetTeams = 0;
+            
+            foreach ($teams as $team) {
+                $currentRating = $team->rating;
+                $resetRating = $this->applySeasonReset($currentRating);
+                
+                if ($resetRating !== $currentRating) {
+                    DB::table('teams')
+                        ->where('id', $team->id)
+                        ->update([
+                            'rating' => $resetRating,
+                            'updated_at' => now()
+                        ]);
+                    $resetTeams++;
+                }
+            }
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Season reset completed successfully',
+                'data' => [
+                    'players_reset' => $resetCount,
+                    'teams_reset' => $resetTeams,
+                    'reset_formula' => '9 divisions down (Marvel Rivals standard)'
+                ]
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error performing season reset: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+    
+    public function updatePlayerRating(Request $request, $playerId)
+    {
+        try {
+            $request->validate([
+                'rating' => 'required|integer|min:0|max:10000',
+                'reason' => 'required|string|max:255'
+            ]);
+            
+            $player = DB::table('players')->where('id', $playerId)->first();
+            
+            if (!$player) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Player not found'
+                ], 404);
+            }
+            
+            $oldRating = $player->rating;
+            $newRating = $request->rating;
+            
+            DB::table('players')
+                ->where('id', $playerId)
+                ->update([
+                    'rating' => $newRating,
+                    'peak_rating' => max($player->peak_rating, $newRating),
+                    'updated_at' => now()
+                ]);
+            
+            // Log the rating change
+            DB::table('rating_changes')->insert([
+                'player_id' => $playerId,
+                'old_rating' => $oldRating,
+                'new_rating' => $newRating,
+                'change_reason' => $request->reason,
+                'changed_by' => Auth::id(),
+                'created_at' => now()
+            ]);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Player rating updated successfully',
+                'data' => [
+                    'player_id' => $playerId,
+                    'old_rating' => $oldRating,
+                    'new_rating' => $newRating,
+                    'change' => $newRating - $oldRating,
+                    'reason' => $request->reason
+                ]
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating player rating: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+    
+    private function calculatePlayerELO($playerId)
+    {
+        // Basic ELO calculation based on match results
+        // This would integrate with match results to calculate proper ELO
+        $baseRating = 1000;
+        
+        // Get player's match results
+        $matches = DB::table('matches')
+            ->whereRaw('JSON_CONTAINS(team1_players, ?)', [json_encode(['id' => $playerId])])
+            ->orWhereRaw('JSON_CONTAINS(team2_players, ?)', [json_encode(['id' => $playerId])])
+            ->orderBy('date', 'desc')
+            ->limit(100)
+            ->get();
+        
+        $currentRating = $baseRating;
+        
+        foreach ($matches as $match) {
+            // Simplified ELO calculation
+            $isWin = $this->didPlayerWin($playerId, $match);
+            $opponent_rating = $this->getOpponentAverageRating($playerId, $match);
+            
+            $expected = 1 / (1 + pow(10, ($opponent_rating - $currentRating) / 400));
+            $actual = $isWin ? 1 : 0;
+            $k_factor = 32; // Standard K-factor
+            
+            $currentRating = $currentRating + $k_factor * ($actual - $expected);
+        }
+        
+        return max(0, round($currentRating));
+    }
+    
+    /**
+     * Clear all ranking caches
+     */
+    public function clearRankingCaches()
+    {
+        try {
+            // Clear all player ranking caches
+            $cacheKeys = [];
+            
+            // Get all possible cache keys (this is simplified - in production you might want to use cache tags)
+            foreach (['all', 'na', 'eu', 'asia', 'china', 'oce'] as $region) {
+                foreach (['all', 'vanguard', 'duelist', 'strategist'] as $role) {
+                    for ($page = 1; $page <= 10; $page++) { // Assume max 10 pages
+                        $cacheKey = 'player_rankings_' . md5(serialize([
+                            'rank' => 'all',
+                            'region' => $region,
+                            'role' => $role,
+                            'search' => '',
+                            'page' => $page
+                        ]));
+                        Cache::forget($cacheKey);
+                    }
+                }
+            }
+            
+            // Clear team ranking caches
+            foreach (['all', 'na', 'eu', 'asia', 'china', 'oce'] as $region) {
+                foreach (['rating', 'earnings', 'wins', 'winrate'] as $sort) {
+                    for ($page = 1; $page <= 10; $page++) {
+                        $cacheKey = 'team_rankings_' . md5(serialize([
+                            'region' => $region,
+                            'sort' => $sort,
+                            'search' => '',
+                            'page' => $page
+                        ]));
+                        Cache::forget($cacheKey);
+                    }
+                }
+            }
+            
+            // Clear related caches
+            Cache::forget('ranking_stats');
+            Cache::forget('leaderboard_stats');
+            Cache::forget('rank_distribution');
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'All ranking caches cleared successfully'
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error clearing caches: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+    
+    private function calculateTeamELO($teamId)
+    {
+        // Calculate team ELO based on average player ratings and team performance
+        $teamPlayers = DB::table('players')
+            ->where('team_id', $teamId)
+            ->where('status', 'active')
+            ->get();
+        
+        if ($teamPlayers->isEmpty()) {
+            return 1000; // Default rating
+        }
+        
+        $averagePlayerRating = $teamPlayers->avg('rating');
+        
+        // Get team's recent match performance
+        $teamMatches = DB::table('matches')
+            ->where(function($query) use ($teamId) {
+                $query->where('team1_id', $teamId)
+                      ->orWhere('team2_id', $teamId);
+            })
+            ->where('status', 'completed')
+            ->orderBy('date', 'desc')
+            ->limit(50)
+            ->get();
+        
+        $teamPerformanceModifier = 0;
+        foreach ($teamMatches as $match) {
+            if ($this->didTeamWin($teamId, $match)) {
+                $teamPerformanceModifier += 10;
+            } else {
+                $teamPerformanceModifier -= 8;
+            }
+        }
+        
+        return max(0, round($averagePlayerRating + $teamPerformanceModifier));
+    }
+    
+    private function applySeasonReset($rating)
+    {
+        // Marvel Rivals: 9 divisions down
+        // Each division is approximately 100 points, so 9 divisions = 900 points
+        return max(0, $rating - 900);
+    }
+    
+    private function didPlayerWin($playerId, $match)
+    {
+        // Simplified win detection - would need proper implementation based on match structure
+        if ($match->team1_score > $match->team2_score) {
+            return $this->isPlayerInTeam($playerId, $match->team1_id);
+        } else {
+            return $this->isPlayerInTeam($playerId, $match->team2_id);
+        }
+    }
+    
+    private function didTeamWin($teamId, $match)
+    {
+        if ($match->team1_id == $teamId) {
+            return $match->team1_score > $match->team2_score;
+        } else if ($match->team2_id == $teamId) {
+            return $match->team2_score > $match->team1_score;
+        }
+        return false;
+    }
+    
+    private function isPlayerInTeam($playerId, $teamId)
+    {
+        return DB::table('players')
+            ->where('id', $playerId)
+            ->where('team_id', $teamId)
+            ->exists();
+    }
+    
+    private function getOpponentAverageRating($playerId, $match)
+    {
+        // Simplified - get opponent team's average rating
+        $playerTeamId = DB::table('players')->where('id', $playerId)->value('team_id');
+        
+        $opponentTeamId = $match->team1_id == $playerTeamId ? $match->team2_id : $match->team1_id;
+        
+        return DB::table('players')
+            ->where('team_id', $opponentTeamId)
+            ->where('status', 'active')
+            ->avg('rating') ?? 1000;
     }
 }

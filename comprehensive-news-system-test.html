@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comprehensive News System Test</title>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        h1, h2, h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+
+        .test-section {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .test-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #c0392b;
+        }
+
+        .btn-secondary {
+            background: #95a5a6;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+
+        .btn-success {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-warning {
+            background: #f39c12;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .results {
+            background: #ecf0f1;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .success {
+            color: #27ae60;
+            font-weight: 600;
+        }
+
+        .error {
+            color: #e74c3c;
+            font-weight: 600;
+        }
+
+        .warning {
+            color: #f39c12;
+            font-weight: 600;
+        }
+
+        .test-case {
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin: 10px 0;
+            background: #f8f9fa;
+        }
+
+        .test-case.passed {
+            border-left-color: #27ae60;
+            background: #d5f4e6;
+        }
+
+        .test-case.failed {
+            border-left-color: #e74c3c;
+            background: #ffeaea;
+        }
+
+        .test-case.warning {
+            border-left-color: #f39c12;
+            background: #fff3cd;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-passed {
+            background: #27ae60;
+        }
+
+        .status-failed {
+            background: #e74c3c;
+        }
+
+        .status-warning {
+            background: #f39c12;
+        }
+
+        .news-article {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            background: white;
+        }
+
+        .news-article img {
+            max-width: 200px;
+            height: auto;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+
+        .comment {
+            border-left: 3px solid #3498db;
+            padding: 10px;
+            margin: 10px 0;
+            background: #f8f9fa;
+        }
+
+        .comment.reply {
+            margin-left: 20px;
+            border-left-color: #95a5a6;
+        }
+
+        .mention {
+            color: #e74c3c;
+            font-weight: 600;
+        }
+
+        .video-embed {
+            margin: 15px 0;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        #statusSummary {
+            position: sticky;
+            top: 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .mobile-test {
+            max-width: 375px;
+            margin: 20px auto;
+            border: 2px solid #95a5a6;
+            border-radius: 20px;
+            padding: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .test-controls {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Comprehensive News System Test</h1>
+        
+        <div id="statusSummary">
+            <h3>Test Status Summary</h3>
+            <div id="summaryContent">
+                <p>Click "Run All Tests" to begin comprehensive testing</p>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>🚀 Test Controls</h2>
+            <div class="test-controls">
+                <button class="btn btn-primary" onclick="runAllTests()">🔄 Run All Tests</button>
+                <button class="btn btn-secondary" onclick="clearResults()">🧹 Clear Results</button>
+                <button class="btn btn-success" onclick="runNewsDisplayTest()">📰 Test News Display</button>
+                <button class="btn btn-success" onclick="runCommentsTest()">💬 Test Comments</button>
+                <button class="btn btn-success" onclick="runMentionsTest()">@ Test Mentions</button>
+                <button class="btn btn-success" onclick="runAdminTest()">⚙️ Test Admin</button>
+                <button class="btn btn-warning" onclick="runMobileTest()">📱 Test Mobile</button>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>📰 News Article Display Test</h2>
+            <div class="test-controls">
+                <button class="btn btn-primary" onclick="testNewsList()">Test News List</button>
+                <button class="btn btn-primary" onclick="testNewsDetail()">Test News Detail</button>
+                <button class="btn btn-primary" onclick="testFeaturedImages()">Test Featured Images</button>
+                <button class="btn btn-primary" onclick="testVideoEmbeds()">Test Video Embeds</button>
+            </div>
+            <div id="newsDisplayResults" class="results"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>💬 Comments System Test</h2>
+            <div class="test-controls">
+                <button class="btn btn-primary" onclick="testCommentPosting()">Test Comment Posting</button>
+                <button class="btn btn-primary" onclick="testCommentReplies()">Test Comment Replies</button>
+                <button class="btn btn-primary" onclick="testCommentEditing()">Test Comment Editing</button>
+                <button class="btn btn-primary" onclick="testCommentDeleting()">Test Comment Deleting</button>
+                <button class="btn btn-primary" onclick="testCommentVoting()">Test Comment Voting</button>
+            </div>
+            <div id="commentsResults" class="results"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>@ Mention System Test</h2>
+            <div class="test-controls">
+                <button class="btn btn-primary" onclick="testMentionAutocomplete()">Test Mention Autocomplete</button>
+                <button class="btn btn-primary" onclick="testMentionDisplay()">Test Mention Display</button>
+                <button class="btn btn-primary" onclick="testMentionLinks()">Test Mention Links</button>
+                <button class="btn btn-primary" onclick="testTeamPlayerMentions()">Test Team/Player Mentions</button>
+            </div>
+            <div id="mentionsResults" class="results"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>⚙️ News Creation/Admin Test</h2>
+            <div class="test-controls">
+                <button class="btn btn-primary" onclick="testNewsCreation()">Test News Creation</button>
+                <button class="btn btn-primary" onclick="testImageUpload()">Test Image Upload</button>
+                <button class="btn btn-primary" onclick="testCategoryAssignment()">Test Categories</button>
+                <button class="btn btn-primary" onclick="testNewsEditing()">Test News Editing</button>
+            </div>
+            <div id="adminResults" class="results"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>📱 Mobile/Responsive Test</h2>
+            <div class="test-controls">
+                <button class="btn btn-warning" onclick="testMobileReading()">Test Mobile Reading</button>
+                <button class="btn btn-warning" onclick="testMobileCommenting()">Test Mobile Commenting</button>
+                <button class="btn btn-warning" onclick="testMobileMentions()">Test Mobile Mentions</button>
+                <button class="btn btn-warning" onclick="testTabletView()">Test Tablet View</button>
+            </div>
+            <div id="mobileResults" class="results"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>📊 Final Test Report</h2>
+            <div id="finalReport" class="results">
+                Test results will appear here after running tests
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const API_BASE = 'http://localhost:8000/api';
+        let testResults = {
+            newsDisplay: [],
+            comments: [],
+            mentions: [],
+            admin: [],
+            mobile: [],
+            total: 0,
+            passed: 0,
+            failed: 0,
+            warnings: 0
+        };
+
+        // Utility Functions
+        function logResult(category, test, status, message, details = null) {
+            const result = {
+                test,
+                status, // 'passed', 'failed', 'warning'
+                message,
+                details,
+                timestamp: new Date().toISOString()
+            };
+            
+            testResults[category].push(result);
+            testResults.total++;
+            testResults[status]++;
+            
+            updateStatusSummary();
+        }
+
+        function updateStatusSummary() {
+            const summaryEl = document.getElementById('summaryContent');
+            const { total, passed, failed, warnings } = testResults;
+            
+            summaryEl.innerHTML = `
+                <div style="display: flex; gap: 20px; align-items: center;">
+                    <div><strong>Total Tests:</strong> ${total}</div>
+                    <div class="success"><span class="status-indicator status-passed"></span>Passed: ${passed}</div>
+                    <div class="error"><span class="status-indicator status-failed"></span>Failed: ${failed}</div>
+                    <div class="warning"><span class="status-indicator status-warning"></span>Warnings: ${warnings}</div>
+                    <div><strong>Success Rate:</strong> ${total > 0 ? Math.round((passed / total) * 100) : 0}%</div>
+                </div>
+            `;
+        }
+
+        function displayResults(containerId, category) {
+            const container = document.getElementById(containerId);
+            const results = testResults[category];
+            
+            if (results.length === 0) {
+                container.innerHTML = '<p>No tests run yet.</p>';
+                return;
+            }
+            
+            let html = '';
+            results.forEach(result => {
+                html += `
+                    <div class="test-case ${result.status}">
+                        <h4><span class="status-indicator status-${result.status}"></span>${result.test}</h4>
+                        <p><strong>Status:</strong> <span class="${result.status}">${result.status.toUpperCase()}</span></p>
+                        <p><strong>Message:</strong> ${result.message}</p>
+                        ${result.details ? `<p><strong>Details:</strong> ${result.details}</p>` : ''}
+                        <small>Time: ${new Date(result.timestamp).toLocaleTimeString()}</small>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        // API Helper Functions
+        async function apiRequest(method, endpoint, data = null) {
+            try {
+                const config = {
+                    method: method.toUpperCase(),
+                    url: `${API_BASE}${endpoint}`,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                };
+                
+                if (data) {
+                    config.data = data;
+                }
+                
+                const response = await axios(config);
+                return { success: true, data: response.data };
+            } catch (error) {
+                return { 
+                    success: false, 
+                    error: error.response?.data?.message || error.message,
+                    status: error.response?.status
+                };
+            }
+        }
+
+        // News Display Tests
+        async function testNewsList() {
+            const result = await apiRequest('GET', '/news');
+            
+            if (result.success) {
+                const newsData = result.data?.data || result.data || [];
+                if (Array.isArray(newsData) && newsData.length > 0) {
+                    logResult('newsDisplay', 'News List Loading', 'passed', 
+                        `Successfully loaded ${newsData.length} news articles`);
+                    
+                    // Test article structure
+                    const firstArticle = newsData[0];
+                    const requiredFields = ['id', 'title', 'content'];
+                    const missingFields = requiredFields.filter(field => !firstArticle[field]);
+                    
+                    if (missingFields.length === 0) {
+                        logResult('newsDisplay', 'Article Data Structure', 'passed', 
+                            'All required article fields are present');
+                    } else {
+                        logResult('newsDisplay', 'Article Data Structure', 'failed', 
+                            `Missing required fields: ${missingFields.join(', ')}`);
+                    }
+                } else {
+                    logResult('newsDisplay', 'News List Loading', 'warning', 
+                        'News list loaded but no articles found');
+                }
+            } else {
+                logResult('newsDisplay', 'News List Loading', 'failed', 
+                    `Failed to load news list: ${result.error}`);
+            }
+            
+            displayResults('newsDisplayResults', 'newsDisplay');
+        }
+
+        async function testNewsDetail() {
+            // First get a news article ID
+            const listResult = await apiRequest('GET', '/news');
+            
+            if (!listResult.success) {
+                logResult('newsDisplay', 'News Detail Loading', 'failed', 
+                    'Cannot test detail view - news list failed to load');
+                displayResults('newsDisplayResults', 'newsDisplay');
+                return;
+            }
+            
+            const newsData = listResult.data?.data || listResult.data || [];
+            if (newsData.length === 0) {
+                logResult('newsDisplay', 'News Detail Loading', 'warning', 
+                    'No news articles available to test detail view');
+                displayResults('newsDisplayResults', 'newsDisplay');
+                return;
+            }
+            
+            const articleId = newsData[0].id;
+            const detailResult = await apiRequest('GET', `/news/${articleId}`);
+            
+            if (detailResult.success) {
+                const article = detailResult.data?.data || detailResult.data;
+                if (article && article.id) {
+                    logResult('newsDisplay', 'News Detail Loading', 'passed', 
+                        `Successfully loaded article: "${article.title}"`);
+                    
+                    // Test for comments
+                    if (article.comments !== undefined) {
+                        logResult('newsDisplay', 'Comments Loading', 'passed', 
+                            `Article has ${Array.isArray(article.comments) ? article.comments.length : 0} comments`);
+                    } else {
+                        logResult('newsDisplay', 'Comments Loading', 'warning', 
+                            'Comments data not found in article response');
+                    }
+                } else {
+                    logResult('newsDisplay', 'News Detail Loading', 'failed', 
+                        'Article detail loaded but data is incomplete');
+                }
+            } else {
+                logResult('newsDisplay', 'News Detail Loading', 'failed', 
+                    `Failed to load article detail: ${detailResult.error}`);
+            }
+            
+            displayResults('newsDisplayResults', 'newsDisplay');
+        }
+
+        async function testFeaturedImages() {
+            const result = await apiRequest('GET', '/news');
+            
+            if (result.success) {
+                const newsData = result.data?.data || result.data || [];
+                const articlesWithImages = newsData.filter(article => article.featured_image);
+                
+                if (articlesWithImages.length > 0) {
+                    logResult('newsDisplay', 'Featured Images', 'passed', 
+                        `Found ${articlesWithImages.length} articles with featured images`);
+                    
+                    // Test image URL accessibility
+                    const firstImageArticle = articlesWithImages[0];
+                    if (firstImageArticle.featured_image) {
+                        // Create image element to test loading
+                        const img = new Image();
+                        img.onload = () => {
+                            logResult('newsDisplay', 'Image Loading', 'passed', 
+                                'Featured image loaded successfully');
+                            displayResults('newsDisplayResults', 'newsDisplay');
+                        };
+                        img.onerror = () => {
+                            logResult('newsDisplay', 'Image Loading', 'failed', 
+                                'Featured image failed to load - check image URL or path');
+                            displayResults('newsDisplayResults', 'newsDisplay');
+                        };
+                        img.src = firstImageArticle.featured_image;
+                    }
+                } else {
+                    logResult('newsDisplay', 'Featured Images', 'warning', 
+                        'No articles with featured images found');
+                }
+            } else {
+                logResult('newsDisplay', 'Featured Images', 'failed', 
+                    `Cannot test images - news loading failed: ${result.error}`);
+            }
+            
+            displayResults('newsDisplayResults', 'newsDisplay');
+        }
+
+        async function testVideoEmbeds() {
+            const result = await apiRequest('GET', '/news');
+            
+            if (result.success) {
+                const newsData = result.data?.data || result.data || [];
+                let foundVideos = false;
+                
+                newsData.forEach(article => {
+                    // Check for video URLs in content
+                    if (article.content) {
+                        const youtubePattern = /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/g;
+                        const twitchPattern = /(?:twitch\.tv\/videos\/|clips\.twitch\.tv\/)([a-zA-Z0-9_-]+)/g;
+                        
+                        const youtubeMatches = article.content.match(youtubePattern);
+                        const twitchMatches = article.content.match(twitchPattern);
+                        
+                        if (youtubeMatches || twitchMatches) {
+                            foundVideos = true;
+                        }
+                    }
+                    
+                    // Check for video embeds array
+                    if (article.videos && Array.isArray(article.videos) && article.videos.length > 0) {
+                        foundVideos = true;
+                    }
+                });
+                
+                if (foundVideos) {
+                    logResult('newsDisplay', 'Video Embeds', 'passed', 
+                        'Found video content in news articles');
+                } else {
+                    logResult('newsDisplay', 'Video Embeds', 'warning', 
+                        'No video embeds found in news articles');
+                }
+            } else {
+                logResult('newsDisplay', 'Video Embeds', 'failed', 
+                    `Cannot test videos - news loading failed: ${result.error}`);
+            }
+            
+            displayResults('newsDisplayResults', 'newsDisplay');
+        }
+
+        // Comments System Tests
+        async function testCommentPosting() {
+            // First get a news article to comment on
+            const newsResult = await apiRequest('GET', '/news');
+            
+            if (!newsResult.success) {
+                logResult('comments', 'Comment Posting', 'failed', 
+                    'Cannot test comments - news loading failed');
+                displayResults('commentsResults', 'comments');
+                return;
+            }
+            
+            const newsData = newsResult.data?.data || newsResult.data || [];
+            if (newsData.length === 0) {
+                logResult('comments', 'Comment Posting', 'warning', 
+                    'No news articles available to test commenting');
+                displayResults('commentsResults', 'comments');
+                return;
+            }
+            
+            const articleId = newsData[0].id;
+            const testComment = {
+                content: "This is a test comment from the automated test system."
+            };
+            
+            const commentResult = await apiRequest('POST', `/news/${articleId}/comments`, testComment);
+            
+            if (commentResult.success) {
+                logResult('comments', 'Comment Posting', 'passed', 
+                    'Successfully posted test comment');
+            } else {
+                if (commentResult.status === 401) {
+                    logResult('comments', 'Comment Posting', 'warning', 
+                        'Comment posting requires authentication - this is expected behavior');
+                } else {
+                    logResult('comments', 'Comment Posting', 'failed', 
+                        `Failed to post comment: ${commentResult.error}`);
+                }
+            }
+            
+            displayResults('commentsResults', 'comments');
+        }
+
+        async function testCommentReplies() {
+            logResult('comments', 'Comment Replies', 'warning', 
+                'Comment reply testing requires existing comment data - check manually');
+            displayResults('commentsResults', 'comments');
+        }
+
+        async function testCommentEditing() {
+            logResult('comments', 'Comment Editing', 'warning', 
+                'Comment editing requires user authentication - test manually');
+            displayResults('commentsResults', 'comments');
+        }
+
+        async function testCommentDeleting() {
+            logResult('comments', 'Comment Deleting', 'warning', 
+                'Comment deletion requires user authentication and ownership - test manually');
+            displayResults('commentsResults', 'comments');
+        }
+
+        async function testCommentVoting() {
+            logResult('comments', 'Comment Voting', 'warning', 
+                'Comment voting requires user authentication - test manually');
+            displayResults('commentsResults', 'comments');
+        }
+
+        // Mention System Tests
+        async function testMentionAutocomplete() {
+            // Test if mention autocomplete endpoints are accessible
+            const usersResult = await apiRequest('GET', '/search/users?query=test');
+            const teamsResult = await apiRequest('GET', '/search/teams?query=test');
+            const playersResult = await apiRequest('GET', '/search/players?query=test');
+            
+            if (usersResult.success || teamsResult.success || playersResult.success) {
+                logResult('mentions', 'Mention Autocomplete API', 'passed', 
+                    'Mention search endpoints are accessible');
+            } else {
+                logResult('mentions', 'Mention Autocomplete API', 'warning', 
+                    'Mention search endpoints may not be implemented or require authentication');
+            }
+            
+            displayResults('mentionsResults', 'mentions');
+        }
+
+        async function testMentionDisplay() {
+            // Test if mentions are properly displayed in content
+            const result = await apiRequest('GET', '/news');
+            
+            if (result.success) {
+                const newsData = result.data?.data || result.data || [];
+                let foundMentions = false;
+                
+                newsData.forEach(article => {
+                    if (article.content && article.content.includes('@')) {
+                        foundMentions = true;
+                    }
+                    if (article.mentions && Array.isArray(article.mentions) && article.mentions.length > 0) {
+                        foundMentions = true;
+                    }
+                });
+                
+                if (foundMentions) {
+                    logResult('mentions', 'Mention Display', 'passed', 
+                        'Found mention content in news articles');
+                } else {
+                    logResult('mentions', 'Mention Display', 'warning', 
+                        'No mention content found - create test articles with mentions');
+                }
+            } else {
+                logResult('mentions', 'Mention Display', 'failed', 
+                    'Cannot test mentions - news loading failed');
+            }
+            
+            displayResults('mentionsResults', 'mentions');
+        }
+
+        async function testMentionLinks() {
+            logResult('mentions', 'Mention Links', 'warning', 
+                'Mention link functionality requires frontend testing - check click behavior manually');
+            displayResults('mentionsResults', 'mentions');
+        }
+
+        async function testTeamPlayerMentions() {
+            // Check if team and player data is available for mentions
+            const teamsResult = await apiRequest('GET', '/teams');
+            const playersResult = await apiRequest('GET', '/players');
+            
+            let mentionDataAvailable = false;
+            
+            if (teamsResult.success) {
+                const teams = teamsResult.data?.data || teamsResult.data || [];
+                if (teams.length > 0) {
+                    mentionDataAvailable = true;
+                    logResult('mentions', 'Team Data for Mentions', 'passed', 
+                        `Found ${teams.length} teams available for mentions`);
+                }
+            }
+            
+            if (playersResult.success) {
+                const players = playersResult.data?.data || playersResult.data || [];
+                if (players.length > 0) {
+                    mentionDataAvailable = true;
+                    logResult('mentions', 'Player Data for Mentions', 'passed', 
+                        `Found ${players.length} players available for mentions`);
+                }
+            }
+            
+            if (!mentionDataAvailable) {
+                logResult('mentions', 'Team/Player Mentions', 'warning', 
+                    'No team or player data found - mentions may not work properly');
+            }
+            
+            displayResults('mentionsResults', 'mentions');
+        }
+
+        // Admin/News Creation Tests
+        async function testNewsCreation() {
+            const testNews = {
+                title: "Test News Article",
+                content: "This is a test news article created by the automated test system.",
+                status: "draft"
+            };
+            
+            const result = await apiRequest('POST', '/admin/news', testNews);
+            
+            if (result.success) {
+                logResult('admin', 'News Creation', 'passed', 
+                    'Successfully created test news article');
+            } else {
+                if (result.status === 401 || result.status === 403) {
+                    logResult('admin', 'News Creation', 'warning', 
+                        'News creation requires admin authentication - this is expected');
+                } else {
+                    logResult('admin', 'News Creation', 'failed', 
+                        `Failed to create news: ${result.error}`);
+                }
+            }
+            
+            displayResults('adminResults', 'admin');
+        }
+
+        async function testImageUpload() {
+            logResult('admin', 'Image Upload', 'warning', 
+                'Image upload testing requires file input - test manually in admin interface');
+            displayResults('adminResults', 'admin');
+        }
+
+        async function testCategoryAssignment() {
+            const result = await apiRequest('GET', '/news/categories');
+            
+            if (result.success) {
+                const categories = result.data?.data || result.data || [];
+                if (categories.length > 0) {
+                    logResult('admin', 'News Categories', 'passed', 
+                        `Found ${categories.length} news categories available`);
+                } else {
+                    logResult('admin', 'News Categories', 'warning', 
+                        'No news categories found - create categories in admin panel');
+                }
+            } else {
+                logResult('admin', 'News Categories', 'failed', 
+                    `Failed to load categories: ${result.error}`);
+            }
+            
+            displayResults('adminResults', 'admin');
+        }
+
+        async function testNewsEditing() {
+            logResult('admin', 'News Editing', 'warning', 
+                'News editing requires admin authentication and existing articles - test manually');
+            displayResults('adminResults', 'admin');
+        }
+
+        // Mobile/Responsive Tests
+        async function testMobileReading() {
+            // Simulate mobile viewport
+            const mobileTest = document.createElement('div');
+            mobileTest.className = 'mobile-test';
+            mobileTest.innerHTML = '<p>Testing mobile layout simulation...</p>';
+            
+            logResult('mobile', 'Mobile Reading Layout', 'warning', 
+                'Mobile reading test requires visual inspection - check responsive design manually');
+            displayResults('mobileResults', 'mobile');
+        }
+
+        async function testMobileCommenting() {
+            logResult('mobile', 'Mobile Commenting', 'warning', 
+                'Mobile commenting test requires touch interaction - test on actual mobile device');
+            displayResults('mobileResults', 'mobile');
+        }
+
+        async function testMobileMentions() {
+            logResult('mobile', 'Mobile Mention Autocomplete', 'warning', 
+                'Mobile mention testing requires touch keyboard - test on actual mobile device');
+            displayResults('mobileResults', 'mobile');
+        }
+
+        async function testTabletView() {
+            logResult('mobile', 'Tablet View', 'warning', 
+                'Tablet view testing requires tablet-sized screen - test on actual tablet');
+            displayResults('mobileResults', 'mobile');
+        }
+
+        // Main Test Functions
+        async function runNewsDisplayTest() {
+            document.getElementById('newsDisplayResults').innerHTML = '<p>Running news display tests...</p>';
+            await testNewsList();
+            await testNewsDetail();
+            await testFeaturedImages();
+            await testVideoEmbeds();
+        }
+
+        async function runCommentsTest() {
+            document.getElementById('commentsResults').innerHTML = '<p>Running comments tests...</p>';
+            await testCommentPosting();
+            await testCommentReplies();
+            await testCommentEditing();
+            await testCommentDeleting();
+            await testCommentVoting();
+        }
+
+        async function runMentionsTest() {
+            document.getElementById('mentionsResults').innerHTML = '<p>Running mention tests...</p>';
+            await testMentionAutocomplete();
+            await testMentionDisplay();
+            await testMentionLinks();
+            await testTeamPlayerMentions();
+        }
+
+        async function runAdminTest() {
+            document.getElementById('adminResults').innerHTML = '<p>Running admin tests...</p>';
+            await testNewsCreation();
+            await testImageUpload();
+            await testCategoryAssignment();
+            await testNewsEditing();
+        }
+
+        async function runMobileTest() {
+            document.getElementById('mobileResults').innerHTML = '<p>Running mobile tests...</p>';
+            await testMobileReading();
+            await testMobileCommenting();
+            await testMobileMentions();
+            await testTabletView();
+        }
+
+        async function runAllTests() {
+            clearResults();
+            
+            // Show progress
+            document.getElementById('summaryContent').innerHTML = '<p>🔄 Running comprehensive news system tests...</p>';
+            
+            await runNewsDisplayTest();
+            await runCommentsTest();
+            await runMentionsTest();
+            await runAdminTest();
+            await runMobileTest();
+            
+            generateFinalReport();
+        }
+
+        function clearResults() {
+            testResults = {
+                newsDisplay: [],
+                comments: [],
+                mentions: [],
+                admin: [],
+                mobile: [],
+                total: 0,
+                passed: 0,
+                failed: 0,
+                warnings: 0
+            };
+            
+            updateStatusSummary();
+            
+            ['newsDisplayResults', 'commentsResults', 'mentionsResults', 'adminResults', 'mobileResults', 'finalReport'].forEach(id => {
+                document.getElementById(id).innerHTML = '<p>No tests run yet.</p>';
+            });
+        }
+
+        function generateFinalReport() {
+            const report = document.getElementById('finalReport');
+            const { total, passed, failed, warnings } = testResults;
+            
+            let reportHtml = `
+                <h3>📊 Test Execution Summary</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin: 20px 0;">
+                    <div style="background: #e8f5e8; padding: 15px; border-radius: 8px; text-align: center;">
+                        <h4 style="color: #27ae60; margin: 0;">✅ Passed</h4>
+                        <div style="font-size: 24px; font-weight: bold; color: #27ae60;">${passed}</div>
+                    </div>
+                    <div style="background: #ffeaea; padding: 15px; border-radius: 8px; text-align: center;">
+                        <h4 style="color: #e74c3c; margin: 0;">❌ Failed</h4>
+                        <div style="font-size: 24px; font-weight: bold; color: #e74c3c;">${failed}</div>
+                    </div>
+                    <div style="background: #fff3cd; padding: 15px; border-radius: 8px; text-align: center;">
+                        <h4 style="color: #f39c12; margin: 0;">⚠️ Warnings</h4>
+                        <div style="font-size: 24px; font-weight: bold; color: #f39c12;">${warnings}</div>
+                    </div>
+                    <div style="background: #e7f3ff; padding: 15px; border-radius: 8px; text-align: center;">
+                        <h4 style="color: #3498db; margin: 0;">📊 Total</h4>
+                        <div style="font-size: 24px; font-weight: bold; color: #3498db;">${total}</div>
+                    </div>
+                </div>
+                
+                <h3>🎯 Key Findings</h3>
+            `;
+            
+            // Critical Issues
+            const criticalIssues = [];
+            Object.values(testResults).forEach(category => {
+                if (Array.isArray(category)) {
+                    category.forEach(test => {
+                        if (test.status === 'failed') {
+                            criticalIssues.push(test);
+                        }
+                    });
+                }
+            });
+            
+            if (criticalIssues.length > 0) {
+                reportHtml += `
+                    <div style="background: #ffeaea; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                        <h4 style="color: #e74c3c;">🚨 Critical Issues</h4>
+                        <ul>
+                `;
+                criticalIssues.forEach(issue => {
+                    reportHtml += `<li><strong>${issue.test}:</strong> ${issue.message}</li>`;
+                });
+                reportHtml += `</ul></div>`;
+            }
+            
+            // Recommendations
+            reportHtml += `
+                <h3>💡 Recommendations</h3>
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
+                    <ul>
+                        <li><strong>Authentication Testing:</strong> Many tests require user login - test manually with authenticated user</li>
+                        <li><strong>Mobile Testing:</strong> Use actual mobile devices to test touch interactions and responsive design</li>
+                        <li><strong>Content Creation:</strong> Create sample news articles with mentions, images, and videos for comprehensive testing</li>
+                        <li><strong>Error Handling:</strong> Test edge cases like network failures, invalid data, and permission errors</li>
+                        <li><strong>Performance:</strong> Monitor page load times and API response times with browser dev tools</li>
+                    </ul>
+                </div>
+                
+                <h3>📋 Manual Testing Checklist</h3>
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
+                    <h4>✅ News Display</h4>
+                    <ul>
+                        <li>Featured images load correctly</li>
+                        <li>Video embeds play properly</li>
+                        <li>Article content formats correctly</li>
+                        <li>Categories display with correct colors/icons</li>
+                    </ul>
+                    
+                    <h4>✅ Comments</h4>
+                    <ul>
+                        <li>Post new comments (check for [object Object] errors)</li>
+                        <li>Reply to existing comments</li>
+                        <li>Edit and delete own comments</li>
+                        <li>Vote on comments</li>
+                    </ul>
+                    
+                    <h4>✅ Mentions</h4>
+                    <ul>
+                        <li>@ autocomplete works while typing</li>
+                        <li>@team: and @player: mentions work</li>
+                        <li>Mention links are clickable</li>
+                        <li>No [object Object] in mention display</li>
+                    </ul>
+                    
+                    <h4>✅ Admin</h4>
+                    <ul>
+                        <li>Create news articles with rich content</li>
+                        <li>Upload and crop featured images</li>
+                        <li>Assign categories</li>
+                        <li>Feature/unfeature articles</li>
+                    </ul>
+                    
+                    <h4>✅ Mobile</h4>
+                    <ul>
+                        <li>News articles readable on mobile</li>
+                        <li>Comment forms work on touch keyboards</li>
+                        <li>Mention autocomplete works on mobile</li>
+                        <li>Images and videos display correctly</li>
+                    </ul>
+                </div>
+                
+                <p style="margin-top: 20px; padding: 15px; background: #e7f3ff; border-radius: 8px;">
+                    <strong>Test completed at:</strong> ${new Date().toLocaleString()}<br>
+                    <strong>Success Rate:</strong> ${total > 0 ? Math.round((passed / total) * 100) : 0}%
+                </p>
+            `;
+            
+            report.innerHTML = reportHtml;
+        }
+
+        // Initialize
+        updateStatusSummary();
+    </script>
+</body>
+</html>

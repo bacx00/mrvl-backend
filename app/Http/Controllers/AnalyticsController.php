@@ -860,4 +860,96 @@ class AnalyticsController extends Controller
             'message' => 'Using fallback demo data due to system limitations'
         ];
     }
+
+    /**
+     * Get public analytics overview (no authentication required)
+     */
+    public function getPublicOverview()
+    {
+        try {
+            $publicData = [
+                'platform_stats' => [
+                    'total_users' => User::count(),
+                    'total_teams' => Team::count(),
+                    'total_matches' => GameMatch::count(),
+                    'active_events' => Event::where('status', 'live')->count(),
+                    'completed_matches' => GameMatch::where('status', 'completed')->count()
+                ],
+                'recent_activity' => [
+                    'matches_today' => GameMatch::whereDate('created_at', today())->count(),
+                    'new_users_today' => User::whereDate('created_at', today())->count(),
+                    'active_tournaments' => Event::where('status', 'live')->count()
+                ],
+                'top_performers' => [
+                    'top_teams' => Team::orderBy('rating', 'desc')->limit(5)->get(['id', 'name', 'rating', 'wins', 'losses']),
+                    'top_players' => Player::orderBy('rating', 'desc')->limit(5)->get(['id', 'name', 'rating', 'team_id'])
+                ],
+                'live_stats' => [
+                    'live_matches' => GameMatch::where('status', 'live')->count(),
+                    'current_viewers' => GameMatch::where('status', 'live')->sum('viewers'),
+                    'online_users' => User::where('last_seen', '>=', now()->subMinutes(10))->count()
+                ]
+            ];
+
+            return response()->json([
+                'success' => true,
+                'data' => $publicData,
+                'generated_at' => now()->toISOString()
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching public analytics',
+                'data' => [
+                    'platform_stats' => [
+                        'total_users' => 15000,
+                        'total_teams' => 250,
+                        'total_matches' => 1250,
+                        'active_events' => 5
+                    ]
+                ]
+            ], 500);
+        }
+    }
+
+    /**
+     * Get trending content (no authentication required)
+     */
+    public function getTrendingContent()
+    {
+        try {
+            $trending = [
+                'trending_teams' => Team::orderBy('updated_at', 'desc')
+                    ->limit(10)
+                    ->get(['id', 'name', 'rating', 'wins', 'losses']),
+                'popular_matches' => GameMatch::where('created_at', '>=', now()->subDays(7))
+                    ->orderBy('viewers', 'desc')
+                    ->limit(10)
+                    ->with(['team1:id,name', 'team2:id,name'])
+                    ->get(),
+                'active_tournaments' => Event::where('status', 'live')
+                    ->orderBy('start_date', 'desc')
+                    ->limit(5)
+                    ->get(['id', 'name', 'prize_pool', 'start_date']),
+                'top_news' => News::where('created_at', '>=', now()->subDays(7))
+                    ->orderBy('views', 'desc')
+                    ->limit(5)
+                    ->get(['id', 'title', 'views', 'created_at'])
+            ];
+
+            return response()->json([
+                'success' => true,
+                'data' => $trending,
+                'generated_at' => now()->toISOString()
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching trending content',
+                'data' => []
+            ], 500);
+        }
+    }
 }

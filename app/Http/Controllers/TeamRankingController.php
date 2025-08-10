@@ -6,12 +6,25 @@ use Illuminate\Http\Request;
 use App\Models\Team;
 use App\Models\EventStanding;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 
 class TeamRankingController extends Controller
 {
     public function index(Request $request)
     {
         try {
+            // Create cache key based on request parameters
+            $cacheKey = 'team_rankings_' . md5(serialize([
+                'region' => $request->region,
+                'sort' => $request->sort,
+                'search' => $request->search,
+                'page' => $request->page ?? 1
+            ]));
+            
+            // Check cache first (cache for 10 minutes)
+            if ($cachedData = Cache::get($cacheKey)) {
+                return response()->json($cachedData);
+            }
             $query = Team::with(['players' => function($q) {
                 $q->where('status', 'active');
             }])
@@ -45,6 +58,19 @@ class TeamRankingController extends Controller
                 } else {
                     $query->where('region', $mappedRegion);
                 }
+            }
+
+            // Search functionality
+            if ($request->has('search') && $request->search) {
+                $searchTerm = $request->search;
+                $query->where(function($q) use ($searchTerm) {
+                    $q->where('name', 'LIKE', "%{$searchTerm}%")
+                      ->orWhere('short_name', 'LIKE', "%{$searchTerm}%")
+                      ->orWhereHas('players', function($playerQuery) use ($searchTerm) {
+                          $playerQuery->where('username', 'LIKE', "%{$searchTerm}%")
+                                      ->orWhere('real_name', 'LIKE', "%{$searchTerm}%");
+                      });
+                });
             }
 
             // Sort by different criteria
@@ -100,7 +126,7 @@ class TeamRankingController extends Controller
             // Get region statistics
             $regionStats = $this->getRegionStats();
 
-            return response()->json([
+            $responseData = [
                 'success' => true,
                 'data' => $teamsData,
                 'pagination' => [
@@ -111,7 +137,12 @@ class TeamRankingController extends Controller
                 ],
                 'region_stats' => $regionStats,
                 'available_regions' => $this->getAvailableRegions()
-            ]);
+            ];
+            
+            // Cache the response for 10 minutes
+            Cache::put($cacheKey, $responseData, 600);
+
+            return response()->json($responseData);
 
         } catch (\Exception $e) {
             return response()->json([

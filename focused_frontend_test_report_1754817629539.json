@@ -1,0 +1,137 @@
+{
+  "summary": {
+    "total_tests": 18,
+    "successful": 13,
+    "failed": 4,
+    "critical": 1,
+    "high": 0,
+    "medium": 3
+  },
+  "issues": {
+    "critical": [
+      {
+        "type": "ERROR",
+        "message": "Authentication error: HTTP 401: {\"success\":false,\"message\":\"Invalid credentials\"}",
+        "severity": "CRITICAL",
+        "timestamp": "2025-08-10T09:20:28.902Z"
+      }
+    ],
+    "high": [],
+    "medium": [
+      {
+        "type": "ERROR",
+        "message": "Team ranking missing field: ranking",
+        "severity": "MEDIUM",
+        "timestamp": "2025-08-10T09:20:29.141Z"
+      },
+      {
+        "type": "ERROR",
+        "message": "Player ranking missing field: name",
+        "severity": "MEDIUM",
+        "timestamp": "2025-08-10T09:20:29.207Z"
+      },
+      {
+        "type": "ERROR",
+        "message": "Player ranking missing field: elo_rating",
+        "severity": "MEDIUM",
+        "timestamp": "2025-08-10T09:20:29.207Z"
+      }
+    ]
+  },
+  "allResults": [
+    {
+      "type": "SUCCESS",
+      "message": "✅ API connectivity working",
+      "timestamp": "2025-08-10T09:20:28.548Z"
+    },
+    {
+      "type": "SUCCESS",
+      "message": "✅ Found 1 events in system",
+      "timestamp": "2025-08-10T09:20:28.548Z"
+    },
+    {
+      "type": "ERROR",
+      "message": "Authentication error: HTTP 401: {\"success\":false,\"message\":\"Invalid credentials\"}",
+      "severity": "CRITICAL",
+      "timestamp": "2025-08-10T09:20:28.902Z"
+    },
+    {
+      "type": "SUCCESS",
+      "message": "✅ Events listing works - 1 events",
+      "timestamp": "2025-08-10T09:20:28.955Z"
+    },
+    {
+      "type": "SUCCESS",
+      "message": "✅ Event detail page works",
+      "timestamp": "2025-08-10T09:20:29.036Z"
+    },
+    {
+      "type": "SUCCESS",
+      "message": "✅ Brackets API accessible - 0 brackets found",
+      "timestamp": "2025-08-10T09:20:29.089Z"
+    },
+    {
+      "type": "SUCCESS",
+      "message": "✅ Team rankings works - 20 teams",
+      "timestamp": "2025-08-10T09:20:29.140Z"
+    },
+    {
+      "type": "ERROR",
+      "message": "Team ranking missing field: ranking",
+      "severity": "MEDIUM",
+      "timestamp": "2025-08-10T09:20:29.141Z"
+    },
+    {
+      "type": "SUCCESS",
+      "message": "✅ Player rankings works - 50 players",
+      "timestamp": "2025-08-10T09:20:29.207Z"
+    },
+    {
+      "type": "ERROR",
+      "message": "Player ranking missing field: name",
+      "severity": "MEDIUM",
+      "timestamp": "2025-08-10T09:20:29.207Z"
+    },
+    {
+      "type": "ERROR",
+      "message": "Player ranking missing field: elo_rating",
+      "severity": "MEDIUM",
+      "timestamp": "2025-08-10T09:20:29.207Z"
+    },
+    {
+      "type": "SUCCESS",
+      "message": "✅ Team ranking search works",
+      "timestamp": "2025-08-10T09:20:29.248Z"
+    },
+    {
+      "type": "SUCCESS",
+      "message": "✅ Team ranking region filter works",
+      "timestamp": "2025-08-10T09:20:29.288Z"
+    },
+    {
+      "type": "SUCCESS",
+      "message": "✅ Fallback image works: /images/team-placeholder.svg",
+      "timestamp": "2025-08-10T09:20:29.291Z"
+    },
+    {
+      "type": "SUCCESS",
+      "message": "✅ Fallback image works: /images/player-placeholder.svg",
+      "timestamp": "2025-08-10T09:20:29.298Z"
+    },
+    {
+      "type": "SUCCESS",
+      "message": "✅ Fallback image works: /images/news-placeholder.svg",
+      "timestamp": "2025-08-10T09:20:29.303Z"
+    },
+    {
+      "type": "SUCCESS",
+      "message": "✅ Fallback image works: /images/default-placeholder.svg",
+      "timestamp": "2025-08-10T09:20:29.306Z"
+    },
+    {
+      "type": "INFO",
+      "message": "ℹ️ No teams with logos found for testing",
+      "timestamp": "2025-08-10T09:20:29.538Z"
+    }
+  ]
+}

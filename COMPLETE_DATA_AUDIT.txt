@@ -1,0 +1,29 @@
+
+========================================
+MARVEL RIVALS DATABASE AUDIT REPORT
+========================================
+Generated: 2025-08-10 08:44:59
+
+1. CHECKING FOR DUPLICATE PLAYERS
+----------------------------------------
+
+   Illuminate\Database\QueryException 
+
+  SQLSTATE[42S22]: Column not found: 1054 Unknown column 'handle' in 'field list' (Connection: mysql, SQL: select `handle`, COUNT(*) as count from `players` group by `handle` having `count` > 1)
+
+  at vendor/laravel/framework/src/Illuminate/Database/Connection.php:825
+    821▕                     $this->getName(), $query, $this->prepareBindings($bindings), $e
+    822▕                 );
+    823▕             }
+    824▕ 
+  ➜ 825▕             throw new QueryException(
+    826▕                 $this->getName(), $query, $this->prepareBindings($bindings), $e
+    827▕             );
+    828▕         }
+    829▕     }
+
+      [2m+9 vendor frames [22m
+
+  10  check_all_duplicates_and_list_data.php:24
+      Illuminate\Database\Query\Builder::get()
+

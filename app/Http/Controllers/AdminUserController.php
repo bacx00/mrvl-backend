@@ -130,9 +130,12 @@ class AdminUserController extends Controller
     /**
      * Update a user
      */
-    public function update(Request $request, User $user)
+    public function update(Request $request, $userId)
     {
         try {
+            // Find user by ID first
+            $user = User::findOrFail($userId);
+
             $data = $request->validate([
                 'role' => 'string|in:admin,moderator,user',
                 'status' => 'string|in:active,inactive,banned',
@@ -210,8 +213,22 @@ class AdminUserController extends Controller
                     'profile_picture_type' => $user->profile_picture_type
                 ]
             ]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User not found'
+            ], 404);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->validator->errors()
+            ], 422);
         } catch (Exception $e) {
-            Log::error('Error updating user: ' . $e->getMessage());
+            Log::error('Error updating user: ' . $e->getMessage(), [
+                'user_id' => $userId,
+                'trace' => $e->getTraceAsString()
+            ]);
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to update user: ' . $e->getMessage()
@@ -222,9 +239,12 @@ class AdminUserController extends Controller
     /**
      * Delete a user
      */
-    public function destroy(User $user)
+    public function destroy($userId)
     {
         try {
+            // Find user by ID first
+            $user = User::findOrFail($userId);
+
             // Prevent deleting the last admin
             if ($user->hasRole('admin')) {
                 $adminCount = User::role('admin')->count();
@@ -248,8 +268,16 @@ class AdminUserController extends Controller
                 'success' => true,
                 'message' => 'User deleted successfully'
             ]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User not found'
+            ], 404);
         } catch (Exception $e) {
-            Log::error('Error deleting user: ' . $e->getMessage());
+            Log::error('Error deleting user: ' . $e->getMessage(), [
+                'user_id' => $userId,
+                'trace' => $e->getTraceAsString()
+            ]);
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to delete user'
@@ -651,13 +679,11 @@ class AdminUserController extends Controller
 
     public function updateUser(Request $request, $userId)
     {
-        $user = User::findOrFail($userId);
-        return $this->update($request, $user);
+        return $this->update($request, $userId);
     }
 
     public function deleteUser($userId)
     {
-        $user = User::findOrFail($userId);
-        return $this->destroy($user);
+        return $this->destroy($userId);
     }
 }

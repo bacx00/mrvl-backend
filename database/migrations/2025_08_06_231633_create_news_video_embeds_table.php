@@ -11,7 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('news_video_embeds', function (Blueprint $table) {
+        if (!Schema::hasTable('news_video_embeds')) {
+            Schema::create('news_video_embeds', function (Blueprint $table) {
             $table->id();
             $table->foreignId('news_id')->constrained('news')->onDelete('cascade');
             $table->string('platform', 50); // youtube, twitch-clip, twitch-video, twitter, vlrgg
@@ -25,7 +26,8 @@ return new class extends Migration
             $table->timestamps();
             
             $table->index(['news_id', 'platform']);
-        });
+            });
+        }
     }
 
     /**

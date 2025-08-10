@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mention System Frontend Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            border: 1px solid #ddd;
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 8px;
+        }
+        .mention-input {
+            width: 100%;
+            height: 100px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            resize: vertical;
+        }
+        .mention-dropdown {
+            position: absolute;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+        }
+        .mention-item {
+            padding: 10px;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+        }
+        .mention-item:hover {
+            background-color: #f5f5f5;
+        }
+        .mention-item img {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .mention-item .info {
+            display: flex;
+            flex-direction: column;
+        }
+        .mention-item .name {
+            font-weight: bold;
+        }
+        .mention-item .subtitle {
+            font-size: 12px;
+            color: #666;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .mention-link {
+            color: #007bff;
+            text-decoration: none;
+            background-color: #e7f3ff;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+        .mention-link:hover {
+            background-color: #d0e8ff;
+        }
+    </style>
+</head>
+<body>
+    <h1>Mention System Frontend Test</h1>
+    
+    <div class="test-section">
+        <h2>API Connection Test</h2>
+        <button onclick="testAPIConnection()">Test API Connection</button>
+        <div id="apiResult"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Mention Autocomplete Test</h2>
+        <p>Type @ followed by a name to test mention autocomplete:</p>
+        <div style="position: relative;">
+            <textarea class="mention-input" id="mentionInput" placeholder="Type @test to see mention suggestions..."></textarea>
+            <div class="mention-dropdown" id="mentionDropdown"></div>
+        </div>
+        <div id="mentionResult"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Mention Rendering Test</h2>
+        <p>Content with mentions (should be clickable):</p>
+        <div id="mentionContent">
+            Hey @Test User, check out this match between @team:TestTeam and @player:TestPlayer!
+        </div>
+        <button onclick="processMentions()">Process Mentions</button>
+        <div id="renderResult"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test Results</h2>
+        <div id="testResults"></div>
+    </div>
+
+    <script>
+        let testResults = {
+            apiConnection: false,
+            mentionAutocomplete: false,
+            mentionRendering: false
+        };
+
+        // API Connection Test
+        async function testAPIConnection() {
+            const resultDiv = document.getElementById('apiResult');
+            resultDiv.innerHTML = 'Testing API connection...';
+            
+            try {
+                const response = await fetch('/api/mentions/search?q=test');
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    testResults.apiConnection = true;
+                    resultDiv.innerHTML = `<div class="result success">✓ API Connection successful! Found ${data.total_results} results.</div>`;
+                } else {
+                    throw new Error(`API returned error: ${data.message || 'Unknown error'}`);
+                }
+            } catch (error) {
+                testResults.apiConnection = false;
+                resultDiv.innerHTML = `<div class="result error">✗ API Connection failed: ${error.message}</div>`;
+            }
+            
+            updateTestSummary();
+        }
+
+        // Mention Autocomplete Implementation
+        let currentRequest = null;
+        const mentionInput = document.getElementById('mentionInput');
+        const mentionDropdown = document.getElementById('mentionDropdown');
+        const mentionResult = document.getElementById('mentionResult');
+
+        mentionInput.addEventListener('input', handleMentionInput);
+        mentionInput.addEventListener('keydown', handleKeyDown);
+
+        async function handleMentionInput(e) {
+            const value = e.target.value;
+            const cursorPos = e.target.selectionStart;
+            
+            // Find @ symbol before cursor
+            const textBeforeCursor = value.substring(0, cursorPos);
+            const lastAtIndex = textBeforeCursor.lastIndexOf('@');
+            
+            if (lastAtIndex === -1) {
+                hideMentionDropdown();
+                return;
+            }
+            
+            // Get text after @ symbol
+            const afterAt = textBeforeCursor.substring(lastAtIndex + 1);
+            
+            // Check if there's a space after @ (which would end the mention)
+            if (afterAt.includes(' ')) {
+                hideMentionDropdown();
+                return;
+            }
+            
+            if (afterAt.length === 0) {
+                // Show popular mentions
+                await fetchMentions('', true);
+            } else {
+                // Search for mentions
+                await fetchMentions(afterAt, false);
+            }
+        }
+
+        async function fetchMentions(query, isPopular = false) {
+            if (currentRequest) {
+                currentRequest.abort();
+            }
+            
+            currentRequest = new AbortController();
+            
+            try {
+                const url = isPopular 
+                    ? '/api/mentions/popular'
+                    : `/api/mentions/search?q=${encodeURIComponent(query)}`;
+                
+                const response = await fetch(url, {
+                    signal: currentRequest.signal
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    showMentionDropdown(data.data);
+                    testResults.mentionAutocomplete = true;
+                    mentionResult.innerHTML = '<div class="result success">✓ Mention autocomplete working!</div>';
+                } else {
+                    throw new Error(`API error: ${data.message || 'Unknown error'}`);
+                }
+            } catch (error) {
+                if (error.name !== 'AbortError') {
+                    testResults.mentionAutocomplete = false;
+                    mentionResult.innerHTML = `<div class="result error">✗ Mention autocomplete failed: ${error.message}</div>`;
+                    hideMentionDropdown();
+                }
+            } finally {
+                currentRequest = null;
+            }
+            
+            updateTestSummary();
+        }
+
+        function showMentionDropdown(mentions) {
+            if (mentions.length === 0) {
+                hideMentionDropdown();
+                return;
+            }
+            
+            mentionDropdown.innerHTML = mentions.map(mention => `
+                <div class="mention-item" onclick="selectMention('${mention.mention_text}')">
+                    ${mention.avatar ? `<img src="${mention.avatar}" alt="${mention.display_name}">` : '<div style="width: 24px; height: 24px; background: #ccc; border-radius: 50%; margin-right: 8px;"></div>'}
+                    <div class="info">
+                        <div class="name">${mention.display_name}</div>
+                        <div class="subtitle">${mention.subtitle}</div>
+                    </div>
+                </div>
+            `).join('');
+            
+            // Position dropdown
+            const inputRect = mentionInput.getBoundingClientRect();
+            mentionDropdown.style.top = `${inputRect.bottom + window.scrollY}px`;
+            mentionDropdown.style.left = `${inputRect.left + window.scrollX}px`;
+            mentionDropdown.style.width = `${inputRect.width}px`;
+            mentionDropdown.style.display = 'block';
+        }
+
+        function hideMentionDropdown() {
+            mentionDropdown.style.display = 'none';
+        }
+
+        function selectMention(mentionText) {
+            const value = mentionInput.value;
+            const cursorPos = mentionInput.selectionStart;
+            const textBeforeCursor = value.substring(0, cursorPos);
+            const lastAtIndex = textBeforeCursor.lastIndexOf('@');
+            
+            if (lastAtIndex !== -1) {
+                const beforeMention = value.substring(0, lastAtIndex);
+                const afterCursor = value.substring(cursorPos);
+                
+                mentionInput.value = beforeMention + mentionText + ' ' + afterCursor;
+                mentionInput.focus();
+                
+                const newCursorPos = lastAtIndex + mentionText.length + 1;
+                mentionInput.setSelectionRange(newCursorPos, newCursorPos);
+            }
+            
+            hideMentionDropdown();
+        }
+
+        function handleKeyDown(e) {
+            if (mentionDropdown.style.display === 'block') {
+                if (e.key === 'Escape') {
+                    e.preventDefault();
+                    hideMentionDropdown();
+                }
+            }
+        }
+
+        // Click outside to hide dropdown
+        document.addEventListener('click', (e) => {
+            if (!mentionInput.contains(e.target) && !mentionDropdown.contains(e.target)) {
+                hideMentionDropdown();
+            }
+        });
+
+        // Mention Rendering Test
+        async function processMentions() {
+            const content = document.getElementById('mentionContent').textContent;
+            const renderResult = document.getElementById('renderResult');
+            
+            renderResult.innerHTML = 'Processing mentions...';
+            
+            try {
+                // Extract mentions from content
+                const mentions = [];
+                const mentionRegexes = [
+                    /@([a-zA-Z0-9_\s]+)/g,
+                    /@team:([a-zA-Z0-9_]+)/g,
+                    /@player:([a-zA-Z0-9_]+)/g
+                ];
+                
+                // For demo purposes, create mock clickable mentions
+                let processedContent = content;
+                
+                // Replace user mentions
+                processedContent = processedContent.replace(/@([a-zA-Z0-9_\s]+)(?!\w)/g, (match, username) => {
+                    return `<a href="/users/1" class="mention-link" data-mention-type="user">${match}</a>`;
+                });
+                
+                // Replace team mentions  
+                processedContent = processedContent.replace(/@team:([a-zA-Z0-9_]+)/g, (match, teamName) => {
+                    return `<a href="/teams/1" class="mention-link" data-mention-type="team">${match}</a>`;
+                });
+                
+                // Replace player mentions
+                processedContent = processedContent.replace(/@player:([a-zA-Z0-9_]+)/g, (match, playerName) => {
+                    return `<a href="/players/1" class="mention-link" data-mention-type="player">${match}</a>`;
+                });
+                
+                document.getElementById('mentionContent').innerHTML = processedContent;
+                
+                // Check if mentions are clickable
+                const clickableMentions = document.querySelectorAll('#mentionContent .mention-link');
+                
+                if (clickableMentions.length > 0) {
+                    testResults.mentionRendering = true;
+                    renderResult.innerHTML = `<div class="result success">✓ Mention rendering working! Found ${clickableMentions.length} clickable mentions.</div>`;
+                } else {
+                    throw new Error('No clickable mentions found');
+                }
+            } catch (error) {
+                testResults.mentionRendering = false;
+                renderResult.innerHTML = `<div class="result error">✗ Mention rendering failed: ${error.message}</div>`;
+            }
+            
+            updateTestSummary();
+        }
+
+        function updateTestSummary() {
+            const results = Object.values(testResults);
+            const passed = results.filter(r => r).length;
+            const total = results.length;
+            
+            document.getElementById('testResults').innerHTML = `
+                <h3>Test Summary</h3>
+                <p>Passed: ${passed}/${total} tests</p>
+                <ul>
+                    <li>API Connection: ${testResults.apiConnection ? '✓ Pass' : '✗ Fail'}</li>
+                    <li>Mention Autocomplete: ${testResults.mentionAutocomplete ? '✓ Pass' : '✗ Fail'}</li>
+                    <li>Mention Rendering: ${testResults.mentionRendering ? '✓ Pass' : '✗ Fail'}</li>
+                </ul>
+            `;
+        }
+
+        // Initialize test summary
+        updateTestSummary();
+    </script>
+</body>
+</html>

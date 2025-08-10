@@ -28,7 +28,12 @@ class ForumCategory extends Model
 
     public function threads()
     {
-        return $this->hasMany(Thread::class, 'category_id');
+        return $this->hasMany(ForumThread::class, 'category_id');
+    }
+
+    public function posts()
+    {
+        return $this->hasManyThrough(Post::class, ForumThread::class, 'category_id', 'thread_id');
     }
 
     public function scopeActive($query)

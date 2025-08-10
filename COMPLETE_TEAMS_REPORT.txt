@@ -1,0 +1,1397 @@
+COMPLETE MARVEL RIVALS TEAMS REPORT
+Generated: 2025-08-10 08:50:03
+
+========================================
+TEAM #1: Alter Ego
+========================================
+ID: 35
+Region: ASIA
+Country: India
+Founded: 2021-05-24
+Status: Active
+Platform: PC
+Total Earnings: $176,141.00
+Wins: 0
+Losses: 0
+ELO Rating: 1302
+Logo: https://liquipedia.net/commons/images/thumb/Alter+Ego.svg/400px-Alter+Ego.svg.png
+
+ROSTER (5/6 players):
+  • Redgar864 (Harper Garcia) - Duelist [Singaporean] - $65,054
+  • pipson115 (Lucas Brown) - Strategist [Filipino] - $77,712
+  • s0m118 (Adam Miller) - Strategist [Filipino] - $7,414
+  • Boaster986 (Aaron Hill) - Vanguard [Thai] - $65,562
+  • Nivera973 (William Thomas) - Vanguard [Indonesian] - $64,292
+
+========================================
+TEAM #2: BLEED
+========================================
+ID: 36
+Region: ASIA
+Country: Singapore
+Founded: 2019-03-08
+Status: Active
+Platform: PC
+Total Earnings: $62,638.00
+Wins: 0
+Losses: 0
+ELO Rating: 1418
+Logo: https://liquipedia.net/commons/images/thumb/BLEED.svg/400px-BLEED.svg.png
+
+ROSTER (5/6 players):
+  • d4v41935 (Sebastian Roberts) - Duelist [Malaysian] - $98,576
+  • nukkye158 (Richard Perez) - Duelist [Singaporean] - $25,129
+  • Alfajer264 (James Torres) - Strategist [Singaporean] - $33,837
+  • jamppi598 (Daniel Garcia) - Vanguard [Indian] - $92,733
+  • s0m127 (Lucas Martinez) - Vanguard [Malaysian] - $30,354
+
+========================================
+TEAM #3: BOOM Esports
+========================================
+ID: 32
+Region: ASIA
+Country: Malaysia
+Founded: 2023-04-19
+Status: Active
+Platform: PC
+Total Earnings: $166,442.00
+Wins: 0
+Losses: 0
+ELO Rating: 2213
+Logo: https://liquipedia.net/commons/images/thumb/BOOM+Esports.svg/400px-BOOM+Esports.svg.png
+
+ROSTER (5/6 players):
+  • stax134 (Isabella Wilson) - Duelist [Indonesian] - $98,475
+  • Lakia742 (Henry Mitchell) - Strategist [Indonesian] - $15,934
+  • stax222 (Mia Harris (stax222)) - Strategist [Malaysian] - $40,248
+  • Less808 (Christopher Nguyen) - Vanguard [Singaporean] - $84,323
+  • Victor726 (Matthew Rivera) - Vanguard [Filipino] - $51,938
+
+========================================
+TEAM #4: FULL SENSE
+========================================
+ID: 31
+Region: ASIA
+Country: Philippines
+Founded: 2023-11-18
+Status: Inactive
+Platform: PC
+Total Earnings: $80,329.00
+Wins: 0
+Losses: 0
+ELO Rating: 2121
+Logo: https://liquipedia.net/commons/images/thumb/FULL+SENSE.svg/400px-FULL+SENSE.svg.png
+
+ROSTER (5/6 players):
+  • Rb422 (Samuel Baker) - Duelist [Indian] - $51,028
+  • exy367 (Isabella Lopez) - Strategist [Indonesian] - $25,874
+  • s0m396 (James Young) - Strategist [Malaysian] - $83,496
+  • aspas122 (Elijah Sanchez) - Vanguard [Malaysian] - $48,714
+  • Jinggg937 (Joseph White) - Vanguard [Indian] - $10,945
+
+========================================
+TEAM #5: Global Esports
+========================================
+ID: 22
+Region: ASIA
+Country: Thailand
+Founded: 2022-04-24
+Status: Active
+Platform: PC
+Total Earnings: $90,200.00
+Wins: 0
+Losses: 0
+ELO Rating: 2317
+Logo: https://liquipedia.net/commons/images/thumb/Global+Esports.svg/400px-Global+Esports.svg.png
+
+ROSTER (10/6 players):
+  • Benkai247 (Liam Lopez) - Duelist [Turkish] - $22,448
+  • Boaster735 (Christopher Martin) - Duelist [Danish] - $5,511
+  • pANcada739 (Joseph Nelson) - Duelist [Indonesian] - $83,664
+  • FNS435 (Anthony Martinez) - Strategist [Vietnamese] - $36,010
+  • Hiko793 (Emma Nguyen) - Strategist [Russian] - $34,186
+  • nAts162 (William King) - Strategist [Singaporean] - $87,890
+  • Sylvan897 (Tyler Carter) - Strategist [Russian] - $36,598
+  • FNS285 (Matthew Smith) - Vanguard [Indian] - $17,213
+  • soulcas942 (Mia Gonzalez) - Vanguard [Indonesian] - $56,397
+  • zunba529 (Michael Ramirez) - Vanguard [Spanish] - $33,970
+
+========================================
+TEAM #6: Paper Rex
+========================================
+ID: 29
+Region: ASIA
+Country: Vietnam
+Founded: 2022-10-22
+Status: Active
+Platform: PC
+Total Earnings: $48,208.00
+Wins: 0
+Losses: 0
+ELO Rating: 1550
+Logo: https://liquipedia.net/commons/images/thumb/Paper+Rex.svg/400px-Paper+Rex.svg.png
+
+ROSTER (5/6 players):
+  • AZK182 (John Perez) - Duelist [Indonesian] - $56,666
+  • nukkye847 (Oliver Carter) - Duelist [Indian] - $95,947
+  • Alfajer112 (Donald Torres) - Strategist [Malaysian] - $10,666
+  • Foxy9620 (William Young) - Strategist [Thai] - $17,348
+  • mindfreak966 (Steven Anderson) - Vanguard [Malaysian] - $67,609
+
+========================================
+TEAM #7: Rex Regum Qeon
+========================================
+ID: 34
+Region: ASIA
+Country: Thailand
+Founded: 2022-10-07
+Status: Active
+Platform: PC
+Total Earnings: $48,956.00
+Wins: 0
+Losses: 0
+ELO Rating: 1055
+Logo: https://liquipedia.net/commons/images/thumb/Rex+Regum+Qeon.svg/400px-Rex+Regum+Qeon.svg.png
+
+ROSTER (5/6 players):
+  • steel992 (Kenneth Wilson) - Duelist [Singaporean] - $31,535
+  • stellar847 (Donald Hall (stellar847)) - Duelist [Indonesian] - $24,632
+  • nitr0545 (Ava Johnson) - Strategist [Filipino] - $15,050
+  • Chronicle506 (Steven Harris) - Vanguard [Vietnamese] - $9,583
+  • stax106 (Andrew Wright (stax106)) - Vanguard [Singaporean] - $90,956
+
+========================================
+TEAM #8: Team Secret
+========================================
+ID: 33
+Region: ASIA
+Country: Philippines
+Founded: 2021-07-16
+Status: Active
+Platform: PC
+Total Earnings: $35,466.00
+Wins: 0
+Losses: 0
+ELO Rating: 2500
+Logo: https://liquipedia.net/commons/images/thumb/Team+Secret.svg/400px-Team+Secret.svg.png
+
+ROSTER (5/6 players):
+  • Alfajer476 (Noah Jones (Alfajer476)) - Duelist [Indian] - $92,820
+  • nitr0982 (Elijah Allen) - Duelist [Vietnamese] - $43,357
+  • Hiko669 (Adam Hill) - Vanguard [Indonesian] - $94,501
+  • Mistic168 (Elijah Martin) - Vanguard [Singaporean] - $74,297
+  • Nivera763 (Sebastian Carter) - Vanguard [Indian] - $58,474
+
+========================================
+TEAM #9: Velocity Gaming
+========================================
+ID: 39
+Region: ASIA
+Country: Thailand
+Founded: 2022-04-20
+Status: Active
+Platform: PC
+Total Earnings: $74,846.00
+Wins: 0
+Losses: 0
+ELO Rating: 1926
+Logo: https://liquipedia.net/commons/images/thumb/Velocity+Gaming.svg/400px-Velocity+Gaming.svg.png
+
+ROSTER (5/6 players):
+  • Lakia660 (Joseph Wright) - Strategist [Thai] - $40,727
+  • SicK818 (James Carter) - Strategist [Indian] - $29,407
+  • stax894 (Ethan Martinez) - Strategist [Vietnamese] - $26,693
+  • Foxy9209 (Anthony Rodriguez) - Vanguard [Vietnamese] - $64,798
+  • soulcas125 (Richard Nelson) - Vanguard [Filipino] - $49,097
+
+========================================
+TEAM #10: XERXIA
+========================================
+ID: 30
+Region: ASIA
+Country: Thailand
+Founded: 2021-11-11
+Status: Active
+Platform: PC
+Total Earnings: $158,774.00
+Wins: 0
+Losses: 0
+ELO Rating: 2323
+Logo: https://liquipedia.net/commons/images/thumb/XERXIA.svg/400px-XERXIA.svg.png
+
+ROSTER (5/6 players):
+  • Foxy9407 (Liam Anderson) - Duelist [Singaporean] - $81,617
+  • crashies473 (Amelia Lee) - Strategist [Singaporean] - $93,329
+  • Mazin746 (William Jones) - Strategist [Vietnamese] - $68,526
+  • Lakia917 (Robert Nguyen) - Vanguard [Thai] - $44,512
+  • zombs531 (Tyler Hernandez) - Vanguard [Indian] - $23,668
+
+========================================
+TEAM #11: Bilibili Gaming
+========================================
+ID: 40
+Region: CN
+Country: China
+Founded: 2022-11-19
+Status: Active
+Platform: PC
+Total Earnings: $39,550.00
+Wins: 0
+Losses: 0
+ELO Rating: 2286
+Logo: https://liquipedia.net/commons/images/thumb/Bilibili+Gaming.svg/400px-Bilibili+Gaming.svg.png
+
+ROSTER (5/6 players):
+  • nAts671 (Anthony Williams) - Duelist [Chinese] - $81,851
+  • pANcada459 (Thomas Ramirez) - Duelist [Chinese] - $8,178
+  • soulcas636 (Sebastian Thompson (soulcas636)) - Duelist [Chinese] - $8,634
+  • crashies303 (Thomas Wilson) - Strategist [Chinese] - $15,251
+  • saadhak293 (Adam Martin) - Vanguard [Chinese] - $51,861
+
+========================================
+TEAM #12: EDward Gaming
+========================================
+ID: 9
+Region: CN
+Country: China
+Founded: 2021-11-30
+Status: Inactive
+Platform: PC
+Total Earnings: $110,745.00
+Wins: 0
+Losses: 0
+ELO Rating: 1397
+Logo: https://liquipedia.net/commons/images/thumb/EDward+Gaming.svg/400px-EDward+Gaming.svg.png
+
+ROSTER (10/6 players):
+  • exy374 (Gabriel Hill) - Duelist [Canadian] - $91,305
+  • hoody756 (Elijah King) - Duelist [Chinese] - $19,070
+  • zombs869 (Andrew Davis) - Duelist [Canadian] - $26,505
+  • BeYN580 (Benjamin Wright) - Strategist [Chinese] - $76,809
+  • d4v41678 (Gabriel Lopez) - Strategist [Mexican] - $75,977
+  • heat881 (Ava Roberts) - Strategist [Mexican] - $3,348
+  • Hiko667 (Mason White) - Vanguard [Chinese] - $9,057
+  • k1Ng715 (Lucas Flores) - Vanguard [Chinese] - $88,942
+  • nitr0722 (Henry Baker) - Vanguard [Chinese] - $65,281
+  • Zest915 (Kenneth Lopez) - Vanguard [American] - $39,768
+
+========================================
+TEAM #13: FunPlus Phoenix
+========================================
+ID: 26
+Region: CN
+Country: China
+Founded: 2023-12-16
+Status: Active
+Platform: PC
+Total Earnings: $186,604.00
+Wins: 0
+Losses: 0
+ELO Rating: 2328
+Logo: https://liquipedia.net/commons/images/thumb/FunPlus+Phoenix.svg/400px-FunPlus+Phoenix.svg.png
+
+ROSTER (10/6 players):
+  • Boaster847 (Alexander Hall) - Duelist [Chinese] - $85,843
+  • mixwell609 (Samuel Sanchez (mixwell609)) - Duelist [Polish] - $81,747
+  • pANcada966 (Samuel Johnson) - Duelist [Chinese] - $62,498
+  • saadhak716 (Aaron Johnson) - Duelist [British] - $32,438
+  • zombs982 (Gabriel Allen) - Duelist [Dutch] - $19,898
+  • Jinggg561 (Sophia Carter) - Strategist [Chinese] - $24,552
+  • Chronicle865 (Joseph Rivera) - Vanguard [German] - $99,141
+  • Derke823 (Anthony Lewis) - Vanguard [Dutch] - $75,465
+  • Less371 (Kenneth Hill (Less371)) - Vanguard [Chinese] - $96,965
+  • nitr0266 (Harper Jackson) - Vanguard [Chinese] - $19,516
+
+========================================
+TEAM #14: JD Gaming
+========================================
+ID: 41
+Region: CN
+Country: China
+Founded: 2019-05-09
+Status: Active
+Platform: PC
+Total Earnings: $118,224.00
+Wins: 0
+Losses: 0
+ELO Rating: 1770
+Logo: https://liquipedia.net/commons/images/thumb/JD+Gaming.svg/400px-JD+Gaming.svg.png
+
+ROSTER (5/6 players):
+  • s0m773 (Richard Jones) - Duelist [Chinese] - $9,695
+  • Hiko886 (Matthew Carter) - Strategist [Chinese] - $59,328
+  • Foxy9970 (Henry Wilson) - Vanguard [Chinese] - $29,224
+  • heat646 (Noah Carter) - Vanguard [Chinese] - $55,886
+  • nukkye902 (Andrew Anderson) - Vanguard [Chinese] - $80,924
+
+========================================
+TEAM #15: Rare Atom
+========================================
+ID: 43
+Region: CN
+Country: China
+Founded: 2020-10-30
+Status: Active
+Platform: PC
+Total Earnings: $127,540.00
+Wins: 0
+Losses: 0
+ELO Rating: 2388
+Logo: https://liquipedia.net/commons/images/thumb/Rare+Atom.svg/400px-Rare+Atom.svg.png
+
+ROSTER (5/6 players):
+  • saadhak107 (Nathan Ramirez) - Duelist [Chinese] - $88,527
+  • Hiko686 (Gabriel Mitchell) - Strategist [Chinese] - $92,879
+  • ScreaM711 (John Hill) - Strategist [Chinese] - $39,867
+  • Enzo639 (James Robinson) - Vanguard [Chinese] - $62,733
+  • nukkye529 (Richard Nelson (nukkye529)) - Vanguard [Chinese] - $7,351
+
+========================================
+TEAM #16: ThunderTalk Gaming
+========================================
+ID: 42
+Region: CN
+Country: China
+Founded: 2020-01-25
+Status: Active
+Platform: PC
+Total Earnings: $38,325.00
+Wins: 0
+Losses: 0
+ELO Rating: 1331
+Logo: https://liquipedia.net/commons/images/thumb/ThunderTalk+Gaming.svg/400px-ThunderTalk+Gaming.svg.png
+
+ROSTER (5/6 players):
+  • Benkai438 (Nathan Davis) - Strategist [Chinese] - $57,543
+  • dapr442 (Paul Lewis) - Strategist [Chinese] - $16,308
+  • Foxy9969 (Sebastian Garcia (Foxy9969)) - Strategist [Chinese] - $7,838
+  • heat314 (Charlotte Hall) - Strategist [Chinese] - $15,942
+  • zunba201 (Joseph Hernandez) - Vanguard [Chinese] - $12,536
+
+========================================
+TEAM #17: Weibo Gaming
+========================================
+ID: 44
+Region: CN
+Country: China
+Founded: 2022-04-29
+Status: Active
+Platform: PC
+Total Earnings: $6,900.00
+Wins: 0
+Losses: 0
+ELO Rating: 2297
+Logo: https://liquipedia.net/commons/images/thumb/Weibo+Gaming.svg/400px-Weibo+Gaming.svg.png
+
+ROSTER (5/6 players):
+  • Hiko744 (Isabella Sanchez) - Duelist [Chinese] - $50,751
+  • Nivera593 (Isabella Adams) - Duelist [Chinese] - $52,367
+  • Foxy9592 (Lucas King) - Strategist [Chinese] - $87,564
+  • Khalil629 (Charlotte Hall (Khalil629)) - Strategist [Chinese] - $51,561
+  • jamppi198 (Andrew Williams) - Vanguard [Chinese] - $25,687
+
+========================================
+TEAM #18: Alliance
+========================================
+ID: 23
+Region: EU
+Country: United Kingdom
+Founded: 2023-08-21
+Status: Active
+Platform: PC
+Total Earnings: $110,886.00
+Wins: 0
+Losses: 0
+ELO Rating: 1105
+Logo: https://liquipedia.net/commons/images/thumb/Alliance.svg/400px-Alliance.svg.png
+
+ROSTER (5/6 players):
+  • AvovA348 (Adam Martin (AvovA348)) - Duelist [Polish] - $81,335
+  • Meteor951 (Amelia Lopez) - Duelist [German] - $22,192
+  • ethan215 (Elijah Flores) - Strategist [Polish] - $65,061
+  • Rb227 (Aaron Hall) - Strategist [Russian] - $5,135
+  • ScreaM908 (Mason Allen) - Strategist [French] - $37,788
+
+========================================
+TEAM #19: Astralis
+========================================
+ID: 25
+Region: EU
+Country: Russia
+Founded: 2021-01-09
+Status: Inactive
+Platform: PC
+Total Earnings: $88,162.00
+Wins: 0
+Losses: 0
+ELO Rating: 2086
+Logo: https://liquipedia.net/commons/images/thumb/Astralis.svg/400px-Astralis.svg.png
+
+ROSTER (5/6 players):
+  • hoody896 (Jackson Perez) - Duelist [Spanish] - $93,785
+  • exy167 (Oliver Walker) - Strategist [British] - $60,373
+  • mixwell355 (William Green) - Strategist [Dutch] - $73,865
+  • Marved129 (Oliver Scott (Marved129)) - Vanguard [Polish] - $83,671
+  • soulcas930 (Christian Mitchell) - Vanguard [Spanish] - $94,971
+
+========================================
+TEAM #20: BIG
+========================================
+ID: 20
+Region: EU
+Country: Spain
+Founded: 2020-01-13
+Status: Active
+Platform: PC
+Total Earnings: $43,654.00
+Wins: 0
+Losses: 0
+ELO Rating: 2346
+Logo: https://liquipedia.net/commons/images/thumb/BIG.svg/400px-BIG.svg.png
+
+ROSTER (5/6 players):
+  • d4v41783 (Christopher White) - Strategist [Swedish] - $23,904
+  • Marved537 (Kenneth Hernandez (Marved537)) - Strategist [Turkish] - $94,596
+  • Meteor618 (Oliver Scott) - Strategist [Danish] - $10,957
+  • mixwell733 (Henry Lewis) - Strategist [Russian] - $64,181
+  • nitr0486 (John Smith) - Vanguard [French] - $98,169
+
+========================================
+TEAM #21: Excel Esports
+========================================
+ID: 27
+Region: EU
+Country: Russia
+Founded: 2020-12-10
+Status: Active
+Platform: PC
+Total Earnings: $77,653.00
+Wins: 0
+Losses: 0
+ELO Rating: 1922
+Logo: https://liquipedia.net/commons/images/thumb/Excel+Esports.svg/400px-Excel+Esports.svg.png
+
+ROSTER (5/6 players):
+  • mwzera800 (Thomas Jackson) - Duelist [French] - $55,573
+  • Foxy9905 (Charlotte Carter) - Strategist [Danish] - $41,515
+  • v1xen147 (Samuel Harris) - Strategist [Polish] - $87,687
+  • crashies909 (Noah Torres) - Vanguard [German] - $55,379
+  • leaf608 (Olivia Gonzalez) - Vanguard [British] - $28,385
+
+========================================
+TEAM #22: FNATIC
+========================================
+ID: 18
+Region: EU
+Country: Turkey
+Founded: 2021-02-06
+Status: Active
+Platform: PC
+Total Earnings: $64,667.00
+Wins: 0
+Losses: 0
+ELO Rating: 1223
+Logo: /storage/teams/logos/fnatic-logo.png
+
+ROSTER (5/6 players):
+  • AZK738 (Donald Smith) - Duelist [German] - $25,341
+  • d3ffo341 (Henry Flores) - Duelist [Dutch] - $88,930
+  • Hiko771 (James Moore) - Duelist [German] - $69,658
+  • allow302 (Sebastian Thompson) - Vanguard [Danish] - $57,259
+  • mwzera776 (Tyler Rodriguez) - Vanguard [Danish] - $97,219
+
+========================================
+TEAM #23: G2 Esports
+========================================
+ID: 17
+Region: EU
+Country: Netherlands
+Founded: 2019-05-13
+Status: Active
+Platform: PC
+Total Earnings: $112,418.00
+Wins: 0
+Losses: 0
+ELO Rating: 1825
+Logo: /storage/teams/logos/g2-logo.png
+
+ROSTER (5/6 players):
+  • allow585 (Kenneth Hernandez) - Duelist [Russian] - $90,672
+  • Boaster603 (Matthew Jones) - Duelist [Turkish] - $53,107
+  • f0rsakeN531 (Liam Nguyen) - Vanguard [Polish] - $44,289
+  • nAts273 (Paul Scott) - Vanguard [British] - $94,189
+  • nitr0249 (Sebastian Brown) - Vanguard [Spanish] - $91,000
+
+========================================
+TEAM #24: LDLC
+========================================
+ID: 28
+Region: EU
+Country: France
+Founded: 2022-01-23
+Status: Active
+Platform: PC
+Total Earnings: $126,785.00
+Wins: 0
+Losses: 0
+ELO Rating: 1419
+Logo: https://liquipedia.net/commons/images/thumb/LDLC.svg/400px-LDLC.svg.png
+
+ROSTER (5/6 players):
+  • mwzera271 (Tyler Johnson) - Strategist [Russian] - $17,253
+  • pANcada972 (Samuel Robinson) - Strategist [French] - $82,708
+  • soulcas740 (Thomas Wright) - Strategist [Swedish] - $60,487
+  • Khalil719 (Charlotte King) - Vanguard [Dutch] - $45,152
+  • sheydos728 (Daniel Martin) - Vanguard [Dutch] - $41,433
+
+========================================
+TEAM #25: MAD Lions
+========================================
+ID: 21
+Region: EU
+Country: United Kingdom
+Founded: 2019-09-12
+Status: Active
+Platform: PC
+Total Earnings: $190,718.00
+Wins: 0
+Losses: 0
+ELO Rating: 2000
+Logo: https://liquipedia.net/commons/images/thumb/MAD+Lions.svg/400px-MAD+Lions.svg.png
+
+ROSTER (5/6 players):
+  • Benkai751 (Sebastian Young) - Strategist [Danish] - $81,827
+  • Foxy9680 (Ava Mitchell) - Strategist [French] - $80,722
+  • d4v41340 (Harper Sanchez) - Vanguard [Turkish] - $74,257
+  • pANcada940 (Mason Miller) - Vanguard [Polish] - $48,719
+  • sheydos984 (Oliver Scott (sheydos984)) - Vanguard [Russian] - $24,418
+
+========================================
+TEAM #26: Ninjas in Pyjamas
+========================================
+ID: 24
+Region: EU
+Country: Spain
+Founded: 2019-05-23
+Status: Inactive
+Platform: PC
+Total Earnings: $129,130.00
+Wins: 0
+Losses: 0
+ELO Rating: 2179
+Logo: https://liquipedia.net/commons/images/thumb/Ninjas+in+Pyjamas.svg/400px-Ninjas+in+Pyjamas.svg.png
+
+ROSTER (5/6 players):
+  • Khalil893 (Christian Green) - Duelist [Polish] - $40,588
+  • k1Ng515 (Noah Jones) - Strategist [Russian] - $19,189
+  • Mistic928 (Nathan Brown) - Strategist [Spanish] - $24,012
+  • leaf485 (Jacob Taylor) - Vanguard [British] - $70,247
+  • Zest389 (Sebastian Garcia) - Vanguard [Turkish] - $28,547
+
+========================================
+TEAM #27: OG
+========================================
+ID: 7
+Region: EU
+Country: France
+Founded: 2022-04-23
+Status: Active
+Platform: PC
+Total Earnings: $188,629.00
+Wins: 0
+Losses: 0
+ELO Rating: 2141
+Logo: https://liquipedia.net/commons/images/thumb/OG.svg/400px-OG.svg.png
+
+ROSTER (11/6 players):
+  • allow438 (Aaron Perez) - Duelist [American] - $29,831
+  • d4v41646 (Thomas Gonzalez) - Duelist [Russian] - $61,981
+  • Hiko826 (Logan Hill) - Duelist [American] - $81,540
+  • MaKo818 (Aaron Carter) - Duelist [Russian] - $27,629
+  • Victor686 (Liam Ramirez) - Strategist [Canadian] - $95,972
+  • zunba774 (Mason Campbell) - Strategist [Canadian] - $75,251
+  • Alfajer358 (Andrew Wright) - Vanguard [American] - $73,683
+  • AvovA556 (Samuel Sanchez) - Vanguard [Turkish] - $40,914
+  • d3ffo584 (Paul Martinez) - Vanguard [German] - $18,666
+  • nitr0457 (Matthew Wright) - Vanguard [Mexican] - $97,237
+  • v1xen219 (Olivia King) - Vanguard [German] - $33,616
+
+========================================
+TEAM #28: Team Liquid
+========================================
+ID: 8
+Region: EU
+Country: Turkey
+Founded: 2022-10-05
+Status: Active
+Platform: PC
+Total Earnings: $120,530.00
+Wins: 0
+Losses: 0
+ELO Rating: 1632
+Logo: /storage/teams/logos/liquid-logo.png
+
+ROSTER (11/6 players):
+  • Enzo684 (Thomas Lopez) - Duelist [German] - $45,839
+  • Foxy9171 (Gabriel Clark) - Duelist [Danish] - $35,091
+  • Rb842 (Amelia Campbell) - Duelist [Spanish] - $69,914
+  • mixwell832 (Kyle Flores) - Strategist [Swedish] - $44,598
+  • sheydos425 (Michael Davis) - Strategist [American] - $74,761
+  • SicK961 (Charlotte Allen) - Strategist [Mexican] - $55,966
+  • Khalil772 (Henry King) - Vanguard [Polish] - $72,300
+  • Marved886 (Nathan Hernandez) - Vanguard [Mexican] - $82,381
+  • nitr0189 (Kyle Williams) - Vanguard [Mexican] - $49,166
+  • steel255 (Kenneth Thomas) - Vanguard [Mexican] - $31,949
+  • Suggest547 (John Baker) - Vanguard [Canadian] - $67,390
+
+========================================
+TEAM #29: Vitality
+========================================
+ID: 19
+Region: EU
+Country: Netherlands
+Founded: 2019-04-06
+Status: Active
+Platform: PC
+Total Earnings: $149,385.00
+Wins: 0
+Losses: 0
+ELO Rating: 1439
+Logo: https://liquipedia.net/commons/images/thumb/Vitality.svg/400px-Vitality.svg.png
+
+ROSTER (5/6 players):
+  • Alfajer447 (Charlotte Allen (Alfajer447)) - Duelist [British] - $38,028
+  • Redgar526 (Robert Thompson) - Duelist [German] - $12,668
+  • AZK696 (Tyler Taylor) - Strategist [Dutch] - $7,714
+  • leaf627 (Mia Martin) - Vanguard [German] - $78,244
+  • TenZ939 (Paul Torres) - Vanguard [Turkish] - $84,967
+
+========================================
+TEAM #30: Crazy Raccoon
+========================================
+ID: 53
+Region: JP
+Country: Japan
+Founded: 2023-06-21
+Status: Active
+Platform: PC
+Total Earnings: $113,384.00
+Wins: 0
+Losses: 0
+ELO Rating: 1949
+Logo: https://liquipedia.net/commons/images/thumb/Crazy+Raccoon.svg/400px-Crazy+Raccoon.svg.png
+
+ROSTER (5/6 players):
+  • pANcada634 (Joseph Hernandez (pANcada634)) - Duelist [Japanese] - $68,182
+  • dapr812 (Tyler Garcia) - Strategist [Japanese] - $63,113
+  • Enzo511 (Adam King) - Strategist [Japanese] - $27,172
+  • Chronicle941 (Gabriel Scott (Chronicle941)) - Vanguard [Japanese] - $53,637
+  • stax899 (Sebastian Young (stax899)) - Vanguard [Japanese] - $9,381
+
+========================================
+TEAM #31: FENNEL
+========================================
+ID: 54
+Region: JP
+Country: Japan
+Founded: 2023-12-28
+Status: Active
+Platform: PC
+Total Earnings: $191,994.00
+Wins: 0
+Losses: 0
+ELO Rating: 1459
+Logo: https://liquipedia.net/commons/images/thumb/FENNEL.svg/400px-FENNEL.svg.png
+
+ROSTER (5/6 players):
+  • Alfajer350 (Matthew Johnson) - Duelist [Japanese] - $75,174
+  • s0m779 (Mason Harris) - Strategist [Japanese] - $43,055
+  • k1Ng158 (Jackson Harris) - Vanguard [Japanese] - $95,950
+  • Khalil460 (Harper Rodriguez) - Vanguard [Japanese] - $22,169
+  • Lakia423 (William Lewis) - Vanguard [Japanese] - $6,455
+
+========================================
+TEAM #32: Northeption
+========================================
+ID: 55
+Region: JP
+Country: Japan
+Founded: 2021-04-28
+Status: Inactive
+Platform: PC
+Total Earnings: $188,396.00
+Wins: 0
+Losses: 0
+ELO Rating: 1767
+Logo: https://liquipedia.net/commons/images/thumb/Northeption.svg/400px-Northeption.svg.png
+
+ROSTER (5/6 players):
+  • mixwell374 (Tyler Harris) - Duelist [Japanese] - $91,066
+  • Meteor896 (Kenneth Garcia) - Strategist [Japanese] - $57,862
+  • Sacy825 (Sebastian Baker) - Strategist [Japanese] - $19,149
+  • soulcas638 (James Anderson) - Strategist [Japanese] - $67,120
+  • Liquid630 (Emma Sanchez) - Vanguard [Japanese] - $29,530
+
+========================================
+TEAM #33: REJECT
+========================================
+ID: 56
+Region: JP
+Country: Japan
+Founded: 2021-07-19
+Status: Inactive
+Platform: PC
+Total Earnings: $123,426.00
+Wins: 0
+Losses: 0
+ELO Rating: 1915
+Logo: https://liquipedia.net/commons/images/thumb/REJECT.svg/400px-REJECT.svg.png
+
+ROSTER (5/6 players):
+  • aspas141 (Logan Flores) - Duelist [Japanese] - $24,080
+  • Khalil781 (Donald Wilson) - Duelist [Japanese] - $99,065
+  • nukkye703 (Liam Martin) - Duelist [Japanese] - $95,031
+  • s0m991 (Andrew Nguyen) - Duelist [Japanese] - $33,046
+  • Foxy9934 (Noah Jones (Foxy9934)) - Strategist [Japanese] - $67,644
+
+========================================
+TEAM #34: ZETA DIVISION
+========================================
+ID: 52
+Region: JP
+Country: Japan
+Founded: 2021-04-06
+Status: Active
+Platform: PC
+Total Earnings: $179,631.00
+Wins: 0
+Losses: 0
+ELO Rating: 1709
+Logo: https://liquipedia.net/commons/images/thumb/ZETA+DIVISION.svg/400px-ZETA+DIVISION.svg.png
+
+ROSTER (5/6 players):
+  • jamppi601 (Steven Brown) - Duelist [Japanese] - $69,023
+  • s0m670 (Ethan Green) - Duelist [Japanese] - $45,765
+  • yay632 (Gabriel Hall) - Duelist [Japanese] - $40,354
+  • Hiko770 (Christian Martin) - Strategist [Japanese] - $34,183
+  • MaKo505 (Anthony Mitchell) - Vanguard [Japanese] - $57,350
+
+========================================
+TEAM #35: DAMWON KIA
+========================================
+ID: 50
+Region: KR
+Country: South Korea
+Founded: 2023-04-22
+Status: Inactive
+Platform: PC
+Total Earnings: $119,788.00
+Wins: 0
+Losses: 0
+ELO Rating: 1123
+Logo: https://liquipedia.net/commons/images/thumb/DAMWON+KIA.svg/400px-DAMWON+KIA.svg.png
+
+ROSTER (5/6 players):
+  • Sacy593 (Adam Young) - Duelist [South Korean] - $30,760
+  • Suggest173 (Nathan Jackson) - Duelist [South Korean] - $45,635
+  • zunba134 (Sebastian Anderson) - Duelist [South Korean] - $44,005
+  • steel127 (Michael Taylor) - Strategist [South Korean] - $77,343
+  • soulcas665 (Olivia Thomas) - Vanguard [South Korean] - $4,332
+
+========================================
+TEAM #36: DRX
+========================================
+ID: 46
+Region: KR
+Country: South Korea
+Founded: 2020-01-28
+Status: Active
+Platform: PC
+Total Earnings: $132,811.00
+Wins: 0
+Losses: 0
+ELO Rating: 2194
+Logo: https://liquipedia.net/commons/images/thumb/DRX.svg/400px-DRX.svg.png
+
+ROSTER (5/6 players):
+  • pANcada982 (Adam Jones) - Duelist [South Korean] - $69,108
+  • Sacy120 (Paul Miller) - Duelist [South Korean] - $59,147
+  • steel134 (Henry Clark) - Duelist [South Korean] - $62,398
+  • Mistic244 (David Flores) - Strategist [South Korean] - $64,585
+  • nukkye345 (Logan Davis) - Strategist [South Korean] - $59,021
+
+========================================
+TEAM #37: Gen.G
+========================================
+ID: 10
+Region: KR
+Country: South Korea
+Founded: 2019-07-19
+Status: Inactive
+Platform: PC
+Total Earnings: $51,129.00
+Wins: 0
+Losses: 0
+ELO Rating: 1745
+Logo: /storage/teams/logos/geng-logo.png
+
+ROSTER (10/6 players):
+  • AvovA501 (Isabella Ramirez) - Duelist [South Korean] - $23,120
+  • BeYN267 (Jackson Anderson) - Duelist [South Korean] - $93,957
+  • BuZz803 (Steven White) - Duelist [Canadian] - $99,032
+  • exy259 (Benjamin Thomas) - Duelist [American] - $8,456
+  • Less415 (Lucas Robinson (Less415)) - Duelist [South Korean] - $51,367
+  • BeYN300 (Robert Robinson) - Strategist [South Korean] - $54,287
+  • FNS431 (John Hall) - Strategist [South Korean] - $50,051
+  • crashies143 (Ethan Walker) - Vanguard [American] - $33,169
+  • Lakia344 (Paul Nelson) - Vanguard [American] - $62,190
+  • s0m905 (Daniel Taylor) - Vanguard [American] - $86,557
+
+========================================
+TEAM #38: Hanwha Life Esports
+========================================
+ID: 49
+Region: KR
+Country: South Korea
+Founded: 2022-06-01
+Status: Active
+Platform: PC
+Total Earnings: $192,690.00
+Wins: 0
+Losses: 0
+ELO Rating: 1000
+Logo: https://liquipedia.net/commons/images/thumb/Hanwha+Life+Esports.svg/400px-Hanwha+Life+Esports.svg.png
+
+ROSTER (5/6 players):
+  • crashies106 (William Anderson) - Duelist [South Korean] - $36,249
+  • Alfajer708 (Mia Anderson) - Strategist [South Korean] - $98,974
+  • nAts888 (Robert Torres) - Strategist [South Korean] - $5,889
+  • BeYN529 (Liam Perez) - Vanguard [South Korean] - $91,719
+  • ShahZaM784 (Adam Jackson) - Vanguard [South Korean] - $32,637
+
+========================================
+TEAM #39: KT Rolster
+========================================
+ID: 48
+Region: KR
+Country: South Korea
+Founded: 2023-07-17
+Status: Active
+Platform: PC
+Total Earnings: $191,186.00
+Wins: 0
+Losses: 0
+ELO Rating: 2026
+Logo: https://liquipedia.net/commons/images/thumb/KT+Rolster.svg/400px-KT+Rolster.svg.png
+
+ROSTER (5/6 players):
+  • hoody164 (Christian Jones) - Duelist [South Korean] - $42,331
+  • heat410 (Sebastian Roberts (heat410)) - Strategist [South Korean] - $63,689
+  • Enzo561 (Thomas Carter) - Vanguard [South Korean] - $80,085
+  • Mazin220 (Isabella Smith) - Vanguard [South Korean] - $87,943
+  • zunba163 (Elijah Allen (zunba163)) - Vanguard [South Korean] - $63,808
+
+========================================
+TEAM #40: Liiv SANDBOX
+========================================
+ID: 51
+Region: KR
+Country: South Korea
+Founded: 2020-03-10
+Status: Active
+Platform: PC
+Total Earnings: $123,612.00
+Wins: 0
+Losses: 0
+ELO Rating: 1715
+Logo: https://liquipedia.net/commons/images/thumb/Liiv+SANDBOX.svg/400px-Liiv+SANDBOX.svg.png
+
+ROSTER (5/6 players):
+  • ethan288 (Paul Young) - Duelist [South Korean] - $22,666
+  • Hiko642 (Ethan Hernandez) - Duelist [South Korean] - $43,871
+  • pipson679 (Adam Carter) - Duelist [South Korean] - $17,571
+  • stax586 (Sebastian Wilson) - Duelist [South Korean] - $49,155
+  • heat342 (Paul Lee) - Strategist [South Korean] - $56,650
+
+========================================
+TEAM #41: T1
+========================================
+ID: 47
+Region: KR
+Country: South Korea
+Founded: 2019-06-13
+Status: Active
+Platform: PC
+Total Earnings: $57,096.00
+Wins: 0
+Losses: 0
+ELO Rating: 1043
+Logo: https://liquipedia.net/commons/images/thumb/T1.svg/400px-T1.svg.png
+
+ROSTER (5/6 players):
+  • ethan409 (Christopher Clark) - Duelist [South Korean] - $27,332
+  • Asuna719 (Ava Baker) - Strategist [South Korean] - $55,297
+  • allow574 (Donald Torres (allow574)) - Vanguard [South Korean] - $50,678
+  • Foxy9750 (Mason Davis) - Vanguard [South Korean] - $80,656
+  • yay536 (James Moore (yay536)) - Vanguard [South Korean] - $49,482
+
+========================================
+TEAM #42: 100 Thieves
+========================================
+ID: 4
+Region: NA
+Country: Mexico
+Founded: 2022-04-21
+Status: Active
+Platform: PC
+Total Earnings: $135,093.00
+Wins: 0
+Losses: 0
+ELO Rating: 2006
+Logo: /storage/teams/logos/100t-logo.png
+
+ROSTER (6/6 players):
+  • Chronicle401 (Christopher Campbell) - Duelist [Canadian] - $7,657
+  • Liquid324 (Anthony Smith) - Duelist [Canadian] - $39,096
+  • ethan600 (Isabella Nguyen) - Strategist [Mexican] - $67,342
+  • saadhak764 (Daniel Rodriguez) - Strategist [Mexican] - $88,581
+  • Victor810 (Jackson Mitchell) - Strategist [American] - $63,321
+  • Lakia667 (Mia Wilson) - Vanguard [American] - $84,720
+
+========================================
+TEAM #43: Cloud9
+========================================
+ID: 3
+Region: NA
+Country: Canada
+Founded: 2023-02-28
+Status: Active
+Platform: PC
+Total Earnings: $30,808.00
+Wins: 0
+Losses: 0
+ELO Rating: 1411
+Logo: /storage/teams/logos/cloud9-logo.png
+
+ROSTER (6/6 players):
+  • d3ffo635 (Olivia Lee) - Duelist [American] - $54,106
+  • d4v41962 (Donald Green) - Duelist [American] - $78,233
+  • d3ffo150 (Lucas Johnson) - Vanguard [Canadian] - $46,990
+  • mindfreak396 (Isabella Nelson) - Vanguard [Mexican] - $31,170
+  • ScreaM247 (Thomas Sanchez) - Vanguard [Mexican] - $29,493
+  • sheydos501 (Donald Hall) - Vanguard [Canadian] - $27,391
+
+========================================
+TEAM #44: Dignitas
+========================================
+ID: 12
+Region: NA
+Country: Canada
+Founded: 2021-03-11
+Status: Active
+Platform: PC
+Total Earnings: $13,068.00
+Wins: 0
+Losses: 0
+ELO Rating: 2225
+Logo: https://liquipedia.net/commons/images/thumb/Dignitas.svg/400px-Dignitas.svg.png
+
+ROSTER (5/6 players):
+  • dapr918 (Oliver Baker) - Duelist [Canadian] - $68,537
+  • Victor286 (Henry Rivera) - Duelist [Canadian] - $2,885
+  • Victor787 (William Scott) - Duelist [Mexican] - $22,667
+  • exy136 (Joseph Mitchell) - Strategist [American] - $58,065
+  • AZK363 (Mia Harris) - Vanguard [American] - $76,306
+
+========================================
+TEAM #45: Envy
+========================================
+ID: 16
+Region: NA
+Country: United States
+Founded: 2020-09-20
+Status: Active
+Platform: PC
+Total Earnings: $199,948.00
+Wins: 0
+Losses: 0
+ELO Rating: 2352
+Logo: https://liquipedia.net/commons/images/thumb/Envy.svg/400px-Envy.svg.png
+
+ROSTER (4/6 players):
+  • ethan301 (Kenneth Hill) - Strategist [Canadian] - $74,915
+  • Redgar514 (Robert Hill) - Strategist [Canadian] - $36,296
+  • s0m439 (Amelia Martinez) - Strategist [American] - $94,812
+  • Liquid286 (Donald Martin) - Vanguard [Canadian] - $8,123
+
+========================================
+TEAM #46: FaZe Clan
+========================================
+ID: 6
+Region: NA
+Country: United States
+Founded: 2019-09-22
+Status: Inactive
+Platform: PC
+Total Earnings: $146,565.00
+Wins: 0
+Losses: 0
+ELO Rating: 1265
+Logo: https://liquipedia.net/commons/images/thumb/FaZe+Clan.svg/400px-FaZe+Clan.svg.png
+
+ROSTER (6/6 players):
+  • dapr775 (Benjamin Lee) - Duelist [American] - $12,454
+  • Liquid436 (Thomas Walker) - Duelist [Canadian] - $6,615
+  • Benkai203 (Lucas Robinson) - Strategist [Canadian] - $83,460
+  • d3ffo933 (Samuel Taylor) - Strategist [Mexican] - $62,414
+  • stax638 (Oliver Johnson) - Strategist [American] - $74,710
+  • FNS510 (Donald Martinez) - Vanguard [American] - $43,509
+
+========================================
+TEAM #47: Immortals
+========================================
+ID: 15
+Region: NA
+Country: Canada
+Founded: 2021-01-28
+Status: Active
+Platform: PC
+Total Earnings: $38,796.00
+Wins: 0
+Losses: 0
+ELO Rating: 1588
+Logo: https://liquipedia.net/commons/images/thumb/Immortals.svg/400px-Immortals.svg.png
+
+ROSTER (5/6 players):
+  • BeYN577 (Christian Hall) - Duelist [American] - $94,385
+  • Less547 (Oliver Anderson) - Duelist [American] - $12,780
+  • Nivera178 (Henry Moore) - Strategist [Canadian] - $88,537
+  • d4v41400 (Gabriel Scott) - Vanguard [Canadian] - $28,512
+  • Suggest803 (Mason Mitchell) - Vanguard [Mexican] - $20,553
+
+========================================
+TEAM #48: NRG Esports
+========================================
+ID: 2
+Region: NA
+Country: Mexico
+Founded: 2021-02-27
+Status: Active
+Platform: PC
+Total Earnings: $119,801.00
+Wins: 0
+Losses: 0
+ELO Rating: 1714
+Logo: /storage/teams/logos/nrg-logo.png
+
+ROSTER (6/6 players):
+  • Alfajer842 (Robert Davis) - Strategist [Canadian] - $97,830
+  • exy691 (Christopher Jones) - Strategist [American] - $68,840
+  • k1Ng283 (Michael Walker) - Strategist [Mexican] - $41,616
+  • zunba935 (Christian Nguyen) - Strategist [Mexican] - $20,109
+  • Sacy412 (Benjamin Hall) - Vanguard [Mexican] - $50,355
+  • stax864 (Tyler Martinez) - Vanguard [Mexican] - $88,966
+
+========================================
+TEAM #49: Rise
+========================================
+ID: 14
+Region: NA
+Country: United States
+Founded: 2019-07-16
+Status: Inactive
+Platform: PC
+Total Earnings: $40,028.00
+Wins: 0
+Losses: 0
+ELO Rating: 1437
+Logo: https://liquipedia.net/commons/images/thumb/Rise.svg/400px-Rise.svg.png
+
+ROSTER (5/6 players):
+  • aspas380 (Ava Brown) - Duelist [Mexican] - $3,063
+  • bang226 (Liam Adams) - Strategist [Mexican] - $59,492
+  • Redgar279 (Adam Garcia) - Strategist [American] - $92,109
+  • Zest366 (Andrew Mitchell) - Strategist [Mexican] - $33,297
+  • Zest780 (James Wilson) - Strategist [Canadian] - $3,028
+
+========================================
+TEAM #50: Sentinels
+========================================
+ID: 1
+Region: NA
+Country: United States
+Founded: 2020-08-01
+Status: Active
+Platform: PC
+Total Earnings: $68,357.00
+Wins: 0
+Losses: 0
+ELO Rating: 1001
+Logo: /storage/teams/logos/sentinels-logo.png
+
+ROSTER (6/6 players):
+  • jamppi189 (Aaron Ramirez) - Duelist [Mexican] - $88,991
+  • nAts636 (Charlotte Young) - Duelist [Mexican] - $81,055
+  • yay160 (Liam Wilson) - Duelist [Mexican] - $53,163
+  • ScreaM528 (Jackson Williams) - Strategist [American] - $17,709
+  • Enzo617 (Oliver Young) - Vanguard [Canadian] - $12,409
+  • Less962 (William Miller) - Vanguard [Canadian] - $28,157
+
+========================================
+TEAM #51: TSM
+========================================
+ID: 5
+Region: NA
+Country: Canada
+Founded: 2019-06-15
+Status: Active
+Platform: PC
+Total Earnings: $96,385.00
+Wins: 0
+Losses: 0
+ELO Rating: 2010
+Logo: https://liquipedia.net/commons/images/thumb/TSM.svg/400px-TSM.svg.png
+
+ROSTER (6/6 players):
+  • Boaster235 (Kyle Robinson) - Duelist [Mexican] - $70,332
+  • heat540 (Steven Torres) - Duelist [American] - $51,528
+  • k1Ng235 (William Wright) - Duelist [Canadian] - $39,627
+  • heat884 (Kyle Carter) - Strategist [American] - $99,390
+  • Nivera420 (Mia Hernandez) - Strategist [American] - $89,067
+  • Enzo428 (Gabriel Robinson) - Vanguard [Canadian] - $87,596
+
+========================================
+TEAM #52: Version1
+========================================
+ID: 11
+Region: NA
+Country: United States
+Founded: 2020-07-29
+Status: Active
+Platform: PC
+Total Earnings: $137,905.00
+Wins: 0
+Losses: 0
+ELO Rating: 1707
+Logo: https://liquipedia.net/commons/images/thumb/Version1.svg/400px-Version1.svg.png
+
+ROSTER (5/6 players):
+  • mwzera685 (Lucas Garcia) - Duelist [Canadian] - $16,679
+  • Derke698 (Donald Nelson) - Strategist [Mexican] - $53,256
+  • k1Ng999 (Lucas Lewis) - Strategist [American] - $1,658
+  • Zest535 (Aaron Martin) - Strategist [American] - $4,490
+  • SicK936 (Tyler Green) - Vanguard [Mexican] - $59,287
+
+========================================
+TEAM #53: XSET
+========================================
+ID: 13
+Region: NA
+Country: United States
+Founded: 2021-03-25
+Status: Active
+Platform: PC
+Total Earnings: $170,174.00
+Wins: 0
+Losses: 0
+ELO Rating: 2068
+Logo: https://liquipedia.net/commons/images/thumb/XSET.svg/400px-XSET.svg.png
+
+ROSTER (5/6 players):
+  • nukkye175 (Mia Scott) - Duelist [American] - $22,705
+  • v1xen102 (Andrew Harris) - Duelist [American] - $40,934
+  • Victor759 (Charlotte Lopez) - Strategist [Mexican] - $28,411
+  • Boaster989 (Thomas Nguyen) - Vanguard [Canadian] - $52,850
+  • BuZz870 (Benjamin Thompson) - Vanguard [Canadian] - $90,015
+
+========================================
+TEAM #54: Legacy Esports
+========================================
+ID: 45
+Region: OCE
+Country: Australia
+Founded: 2019-12-27
+Status: Active
+Platform: PC
+Total Earnings: $147,818.00
+Wins: 0
+Losses: 0
+ELO Rating: 1574
+Logo: https://liquipedia.net/commons/images/thumb/Legacy+Esports.svg/400px-Legacy+Esports.svg.png
+
+ROSTER (10/6 players):
+  • d3ffo670 (Steven Perez) - Duelist [Chinese] - $53,824
+  • f0rsakeN620 (Henry Hall) - Duelist [New Zealander] - $22,627
+  • FNS122 (Charlotte Garcia) - Duelist [Chinese] - $47,335
+  • Khalil486 (Robert Miller) - Duelist [New Zealander] - $5,711
+  • nitr0767 (Olivia Jackson) - Duelist [Chinese] - $48,292
+  • stax571 (Joseph Green) - Strategist [Australian] - $30,457
+  • stellar975 (Joseph Campbell) - Strategist [New Zealander] - $59,827
+  • Zest939 (Mason King) - Strategist [Australian] - $46,065
+  • Hiko493 (Tyler Lee) - Vanguard [Chinese] - $33,523
+  • Sylvan639 (Sophia Baker) - Vanguard [Chinese] - $31,936
+
+========================================
+TEAM #55: ORDER
+========================================
+ID: 37
+Region: OCE
+Country: Australia
+Founded: 2021-03-14
+Status: Active
+Platform: PC
+Total Earnings: $192,261.00
+Wins: 0
+Losses: 0
+ELO Rating: 1347
+Logo: https://liquipedia.net/commons/images/thumb/ORDER.svg/400px-ORDER.svg.png
+
+ROSTER (10/6 players):
+  • Asuna516 (Alexander Gonzalez) - Duelist [Singaporean] - $44,815
+  • Meteor407 (Samuel Carter) - Duelist [Australian] - $81,267
+  • TenZ832 (Oliver Adams) - Duelist [Indonesian] - $7,686
+  • Foxy9632 (John Flores) - Strategist [Australian] - $29,330
+  • Less482 (Kenneth Thomas (Less482)) - Strategist [New Zealander] - $87,960
+  • mixwell675 (Henry Mitchell (mixwell675)) - Strategist [Indian] - $35,774
+  • ScreaM311 (Amelia Brown) - Strategist [New Zealander] - $65,849
+  • Asuna647 (Amelia Martinez (Asuna647)) - Vanguard [New Zealander] - $26,718
+  • ethan232 (Joseph White (ethan232)) - Vanguard [Indian] - $77,501
+  • ScreaM244 (Anthony Jones) - Vanguard [Thai] - $24,006
+
+========================================
+TEAM #56: Soniqs
+========================================
+ID: 38
+Region: OCE
+Country: Australia
+Founded: 2019-06-04
+Status: Active
+Platform: PC
+Total Earnings: $16,079.00
+Wins: 0
+Losses: 0
+ELO Rating: 2371
+Logo: https://liquipedia.net/commons/images/thumb/Soniqs.svg/400px-Soniqs.svg.png
+
+ROSTER (10/6 players):
+  • Khalil596 (Samuel Harris (Khalil596)) - Duelist [Filipino] - $7,144
+  • Meteor724 (Charlotte Sanchez) - Duelist [Thai] - $92,133
+  • Mistic914 (Tyler Thomas) - Duelist [Australian] - $18,145
+  • AvovA925 (Benjamin Taylor) - Strategist [Filipino] - $49,391
+  • Meteor199 (David Smith) - Strategist [Australian] - $42,921
+  • Mistic105 (Anthony Hernandez) - Strategist [Filipino] - $20,940
+  • AvovA761 (Isabella Roberts) - Vanguard [Australian] - $88,350
+  • nAts748 (Christian Rodriguez) - Vanguard [Australian] - $39,223
+  • Nivera333 (Jacob Perez) - Vanguard [New Zealander] - $31,896
+  • Victor933 (Kenneth Robinson) - Vanguard [Indian] - $14,425
+
+========================================
+TEAM #57: Keyd Stars
+========================================
+ID: 59
+Region: SA
+Country: Colombia
+Founded: 2021-03-28
+Status: Active
+Platform: PC
+Total Earnings: $13,207.00
+Wins: 0
+Losses: 0
+ELO Rating: 1771
+Logo: https://liquipedia.net/commons/images/thumb/Keyd+Stars.svg/400px-Keyd+Stars.svg.png
+
+ROSTER (5/6 players):
+  • mindfreak745 (Thomas Lopez (mindfreak745)) - Strategist [Brazilian] - $26,327
+  • ShahZaM605 (Henry Williams) - Strategist [Argentinian] - $47,554
+  • zunba287 (Charlotte Nguyen) - Strategist [Brazilian] - $98,854
+  • Asuna558 (Aaron Brown) - Vanguard [Chilean] - $29,140
+  • mixwell971 (Joseph Baker) - Vanguard [Chilean] - $10,230
+
+========================================
+TEAM #58: LOUD
+========================================
+ID: 57
+Region: SA
+Country: Colombia
+Founded: 2019-08-22
+Status: Active
+Platform: PC
+Total Earnings: $187,941.00
+Wins: 0
+Losses: 0
+ELO Rating: 1799
+Logo: https://liquipedia.net/commons/images/thumb/LOUD.svg/400px-LOUD.svg.png
+
+ROSTER (5/6 players):
+  • AvovA806 (William Adams) - Duelist [Unknown] - $93,708
+  • Benkai190 (Charlotte Rodriguez) - Duelist [Brazilian] - $48,315
+  • yay581 (Lucas Hernandez) - Strategist [Unknown] - $81,373
+  • Redgar717 (Elijah Robinson) - Vanguard [Chilean] - $54,068
+  • TenZ468 (Adam Jones (TenZ468)) - Vanguard [Argentinian] - $82,778
+
+========================================
+TEAM #59: NIP
+========================================
+ID: 58
+Region: SA
+Country: Brazil
+Founded: 2023-08-02
+Status: Active
+Platform: PC
+Total Earnings: $179,510.00
+Wins: 0
+Losses: 0
+ELO Rating: 2246
+Logo: https://liquipedia.net/commons/images/thumb/NIP.svg/400px-NIP.svg.png
+
+ROSTER (5/6 players):
+  • Hiko304 (Samuel Young) - Duelist [Chilean] - $67,349
+  • mindfreak790 (Christian Martinez) - Strategist [Chilean] - $92,997
+  • nitr0880 (Christopher Lee) - Strategist [Unknown] - $36,283
+  • ScreaM128 (Tyler Adams) - Strategist [Argentinian] - $84,230
+  • Suggest461 (Anthony Nelson) - Vanguard [Brazilian] - $26,434
+
+========================================
+TEAM #60: Sharks Esports
+========================================
+ID: 60
+Region: SA
+Country: Argentina
+Founded: 2019-05-29
+Status: Active
+Platform: PC
+Total Earnings: $174,074.00
+Wins: 0
+Losses: 0
+ELO Rating: 2058
+Logo: https://liquipedia.net/commons/images/thumb/Sharks+Esports.svg/400px-Sharks+Esports.svg.png
+
+ROSTER (5/6 players):
+  • heat101 (Emma Rodriguez) - Duelist [Brazilian] - $92,654
+  • hoody917 (Elijah Walker) - Duelist [Chilean] - $50,983
+  • Meteor993 (Andrew Johnson) - Duelist [Argentinian] - $8,349
+  • bang680 (Jacob King) - Vanguard [Unknown] - $47,183
+  • nukkye464 (Kenneth Robinson (nukkye464)) - Vanguard [Chilean] - $98,418
+
+========================================
+TEAM #61: Vivo Keyd
+========================================
+ID: 61
+Region: SA
+Country: Argentina
+Founded: 2019-08-29
+Status: Active
+Platform: PC
+Total Earnings: $153,207.00
+Wins: 0
+Losses: 0
+ELO Rating: 1923
+Logo: https://liquipedia.net/commons/images/thumb/Vivo+Keyd.svg/400px-Vivo+Keyd.svg.png
+
+ROSTER (5/6 players):
+  • bang758 (Nathan Martinez) - Duelist [Argentinian] - $94,816
+  • aspas879 (Logan Allen) - Strategist [Unknown] - $22,965
+  • mwzera338 (Nathan Thompson) - Strategist [Argentinian] - $31,946
+  • zombs468 (Joseph King) - Strategist [Unknown] - $82,396
+  • stax323 (Elijah Roberts) - Vanguard [Argentinian] - $29,016
+

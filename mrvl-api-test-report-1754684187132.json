@@ -1,0 +1,126 @@
+{
+  "timestamp": "2025-08-08T20:16:27.131Z",
+  "summary": {
+    "total": 16,
+    "passed": 10,
+    "failed": 6,
+    "warnings": 0
+  },
+  "details": {
+    "api": {
+      "API Health Check": {
+        "passed": false,
+        "details": "Status: 500",
+        "timestamp": "2025-08-08T20:16:26.230Z"
+      },
+      "Events API Endpoint": {
+        "passed": true,
+        "details": "Status: 200, Data: Present",
+        "timestamp": "2025-08-08T20:16:26.332Z"
+      },
+      "Events Data Structure": {
+        "passed": true,
+        "details": "Events found: 1",
+        "timestamp": "2025-08-08T20:16:26.332Z"
+      },
+      "Events Read Operation": {
+        "passed": true,
+        "details": "Events GET: 200",
+        "timestamp": "2025-08-08T20:16:26.517Z"
+      },
+      "Teams Read Operation": {
+        "passed": true,
+        "details": "Teams GET: 200",
+        "timestamp": "2025-08-08T20:16:26.632Z"
+      },
+      "Players Read Operation": {
+        "passed": true,
+        "details": "Players GET: 200",
+        "timestamp": "2025-08-08T20:16:26.687Z"
+      }
+    },
+    "database": {
+      "Event-Team Relationships": {
+        "passed": true,
+        "details": "Events with teams: 1",
+        "timestamp": "2025-08-08T20:16:26.904Z"
+      },
+      "Bracket System": {
+        "passed": false,
+        "details": "Bracket endpoint: 500",
+        "timestamp": "2025-08-08T20:16:26.956Z"
+      },
+      "Bracket Table Issues": {
+        "passed": false,
+        "details": "Bracket endpoint stable: 500",
+        "timestamp": "2025-08-08T20:16:27.125Z"
+      }
+    },
+    "auth": {
+      "Login Endpoint": {
+        "passed": true,
+        "details": "Login endpoint exists: 401",
+        "timestamp": "2025-08-08T20:16:26.420Z"
+      },
+      "Invalid Credentials Handling": {
+        "passed": true,
+        "details": "Proper error response: 401",
+        "timestamp": "2025-08-08T20:16:26.464Z"
+      }
+    },
+    "admin": {
+      "Admin Authorization Check": {
+        "passed": true,
+        "details": "Admin endpoint protected: 401",
+        "timestamp": "2025-08-08T20:16:26.720Z"
+      },
+      "Force Delete Endpoint": {
+        "passed": false,
+        "details": "Force delete endpoint exists: 500",
+        "timestamp": "2025-08-08T20:16:27.041Z"
+      },
+      "Authorization Fixes": {
+        "passed": true,
+        "details": "Admin endpoints protected: 401",
+        "timestamp": "2025-08-08T20:16:27.075Z"
+      }
+    },
+    "files": {
+      "Storage Directory Structure": {
+        "passed": false,
+        "details": "Storage directories: Missing",
+        "timestamp": "2025-08-08T20:16:26.957Z"
+      },
+      "Image URL Serving": {
+        "passed": false,
+        "details": "Image serving: 500",
+        "timestamp": "2025-08-08T20:16:26.995Z"
+      }
+    },
+    "summary": {
+      "total": 16,
+      "passed": 10,
+      "failed": 6,
+      "warnings": 0
+    }
+  },
+  "platformStatus": "Fair",
+  "recommendations": [
+    "Review api functionality",
+    "Review database functionality",
+    "Review admin functionality",
+    "Review files functionality"
+  ],
+  "criticalIssues": [
+    "API: 1 failed tests",
+    "DATABASE: 2 failed tests",
+    "ADMIN: 1 failed tests",
+    "FILES: 2 failed tests"
+  ],
+  "passedSystems": [
+    "API: 5 tests passed",
+    "DATABASE: 1 tests passed",
+    "AUTH: 2 tests passed",
+    "ADMIN: 2 tests passed"
+  ]
+}

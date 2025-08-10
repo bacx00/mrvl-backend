@@ -485,24 +485,62 @@ class AuthController extends Controller
                 return response()->json(['message' => 'Unauthenticated.'], 401);
             }
 
+            // Rate limiting: 5 attempts per minute per user
+            $key = 'password_change_' . $user->id;
+            if (\Illuminate\Support\Facades\RateLimiter::tooManyAttempts($key, 5)) {
+                $seconds = \Illuminate\Support\Facades\RateLimiter::availableIn($key);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Too many password change attempts. Please try again in ' . $seconds . ' seconds.'
+                ], 429);
+            }
+
             $validated = $request->validate([
-                'current_password' => 'required',
-                'new_password' => 'required|min:8',
-                'new_password_confirmation' => 'required|same:new_password'
+                'current_password' => 'required|string|min:1',
+                'new_password' => 'required|string|min:8|max:255|confirmed|different:current_password|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/',
+                'new_password_confirmation' => 'required|string'
+            ], [
+                'new_password.regex' => 'New password must contain at least one lowercase letter, one uppercase letter, one digit, and one special character.'
             ]);
 
             if (!Hash::check($validated['current_password'], $user->password)) {
+                \Illuminate\Support\Facades\RateLimiter::hit($key, 60); // 1 minute decay
+                
+                // Log failed password change attempt
+                \Log::warning('Failed password change attempt', [
+                    'user_id' => $user->id,
+                    'user_email' => $user->email,
+                    'ip' => $request->ip(),
+                    'user_agent' => $request->header('User-Agent')
+                ]);
+                
                 return response()->json([
                     'success' => false,
                     'message' => 'Current password is incorrect'
                 ], 422);
             }
 
+            // Clear rate limit on successful current password verification
+            \Illuminate\Support\Facades\RateLimiter::clear($key);
+
+            // Update password
             $user->update(['password' => Hash::make($validated['new_password'])]);
+
+            // Log successful password change
+            \Log::info('Password changed successfully', [
+                'user_id' => $user->id,
+                'user_email' => $user->email,
+                'ip' => $request->ip(),
+                'user_agent' => $request->header('User-Agent')
+            ]);
+
+            // Revoke all existing tokens to force re-login
+            $user->tokens()->delete();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Password updated successfully'
+                'message' => 'Password updated successfully. Please log in again with your new password.',
+                'requires_reauth' => true
             ]);
 
         } catch (\Exception $e) {
@@ -606,11 +644,29 @@ class AuthController extends Controller
                 'email' => 'required|email|exists:users,email'
             ]);
 
+            // Rate limiting: 3 password reset requests per hour per IP
+            $key = 'password_reset_' . $request->ip();
+            if (\Illuminate\Support\Facades\RateLimiter::tooManyAttempts($key, 3)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Too many password reset requests. Please try again later.'
+                ], 429);
+            }
+
             $status = Password::sendResetLink(
                 $request->only('email')
             );
 
             if ($status === Password::RESET_LINK_SENT) {
+                \Illuminate\Support\Facades\RateLimiter::hit($key, 3600); // 1 hour decay
+                
+                // Log password reset request
+                \Log::info('Password reset link sent', [
+                    'email' => $request->email,
+                    'ip' => $request->ip(),
+                    'user_agent' => $request->header('User-Agent')
+                ]);
+                
                 return response()->json([
                     'success' => true,
                     'message' => 'Password reset link sent to your email address'
@@ -641,19 +697,33 @@ class AuthController extends Controller
     {
         try {
             $request->validate([
-                'token' => 'required',
+                'token' => 'required|string',
                 'email' => 'required|email',
-                'password' => 'required|min:8|confirmed'
+                'password' => 'required|string|min:8|max:255|confirmed|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/',
+                'password_confirmation' => 'required|string'
+            ], [
+                'password.regex' => 'Password must contain at least one lowercase letter, one uppercase letter, one digit, and one special character.'
             ]);
 
             $status = Password::reset(
                 $request->only('email', 'password', 'password_confirmation', 'token'),
-                function ($user, $password) {
+                function ($user, $password) use ($request) {
                     $user->forceFill([
                         'password' => Hash::make($password)
                     ])->setRememberToken(Str::random(60));
 
                     $user->save();
+
+                    // Revoke all existing tokens
+                    $user->tokens()->delete();
+
+                    // Log successful password reset
+                    \Log::info('Password reset completed successfully', [
+                        'user_id' => $user->id,
+                        'user_email' => $user->email,
+                        'ip' => $request->ip(),
+                        'user_agent' => $request->header('User-Agent')
+                    ]);
 
                     event(new PasswordReset($user));
                 }
@@ -662,7 +732,8 @@ class AuthController extends Controller
             if ($status === Password::PASSWORD_RESET) {
                 return response()->json([
                     'success' => true,
-                    'message' => 'Your password has been reset successfully'
+                    'message' => 'Your password has been reset successfully. All existing sessions have been terminated for security.',
+                    'requires_login' => true
                 ]);
             }
 

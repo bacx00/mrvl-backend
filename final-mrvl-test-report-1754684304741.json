@@ -1,0 +1,131 @@
+{
+  "timestamp": "2025-08-08T20:18:24.741Z",
+  "platformStatus": "🟡 GOOD",
+  "successRate": "78.9%",
+  "summary": {
+    "total": 19,
+    "passed": 15,
+    "failed": 4,
+    "warnings": 0
+  },
+  "details": {
+    "frontend": {},
+    "api": {
+      "Events API": {
+        "passed": true,
+        "details": "Status: 200",
+        "timestamp": "2025-08-08T20:18:23.557Z"
+      },
+      "Teams API": {
+        "passed": true,
+        "details": "Status: 200",
+        "timestamp": "2025-08-08T20:18:23.739Z"
+      },
+      "Players API": {
+        "passed": true,
+        "details": "Status: 200",
+        "timestamp": "2025-08-08T20:18:23.782Z"
+      },
+      "Matches API": {
+        "passed": true,
+        "details": "Status: 200",
+        "timestamp": "2025-08-08T20:18:23.844Z"
+      },
+      "News API": {
+        "passed": true,
+        "details": "Status: 200",
+        "timestamp": "2025-08-08T20:18:23.913Z"
+      },
+      "Heroes API": {
+        "passed": true,
+        "details": "Status: 200",
+        "timestamp": "2025-08-08T20:18:23.992Z"
+      },
+      "Forums API": {
+        "passed": true,
+        "details": "Status: 200",
+        "timestamp": "2025-08-08T20:18:24.120Z"
+      },
+      "Event-Team Relationships": {
+        "passed": true,
+        "details": "Event-team relationships working",
+        "timestamp": "2025-08-08T20:18:24.641Z"
+      }
+    },
+    "auth": {
+      "Login Endpoint Response": {
+        "passed": true,
+        "details": "Login properly rejects bad credentials: 401",
+        "timestamp": "2025-08-08T20:18:24.175Z"
+      },
+      "Admin Protection: /api/admin/events": {
+        "passed": true,
+        "details": "Properly protected: 401",
+        "timestamp": "2025-08-08T20:18:24.211Z"
+      },
+      "Admin Protection: /api/admin/teams": {
+        "passed": true,
+        "details": "Properly protected: 401",
+        "timestamp": "2025-08-08T20:18:24.248Z"
+      },
+      "Admin Protection: /api/admin/users": {
+        "passed": true,
+        "details": "Properly protected: 401",
+        "timestamp": "2025-08-08T20:18:24.283Z"
+      }
+    },
+    "admin": {},
+    "storage": {
+      "Storage Directory Structure": {
+        "passed": true,
+        "details": "4/4 storage directories exist",
+        "timestamp": "2025-08-08T20:18:24.283Z"
+      },
+      "Event Images Available": {
+        "passed": false,
+        "details": "Found 0 event images",
+        "timestamp": "2025-08-08T20:18:24.284Z"
+      }
+    },
+    "fixes": {
+      "Event-Specific Bracket System": {
+        "passed": true,
+        "details": "Event bracket endpoint: 200",
+        "timestamp": "2025-08-08T20:18:24.405Z"
+      },
+      "Force Delete Authorization": {
+        "passed": true,
+        "details": "Force delete properly protected: 401",
+        "timestamp": "2025-08-08T20:18:24.439Z"
+      },
+      "Image URL Routing": {
+        "passed": false,
+        "details": "Image URLs properly handled: 500",
+        "timestamp": "2025-08-08T20:18:24.488Z"
+      },
+      "404 Error Handling": {
+        "passed": false,
+        "details": "404s properly handled: 500",
+        "timestamp": "2025-08-08T20:18:24.698Z"
+      },
+      "Malformed Request Handling": {
+        "passed": false,
+        "details": "Malformed requests properly handled: 500",
+        "timestamp": "2025-08-08T20:18:24.739Z"
+      }
+    },
+    "summary": {
+      "total": 19,
+      "passed": 15,
+      "failed": 4,
+      "warnings": 0
+    }
+  },
+  "workingSystems": [
+    "API",
+    "AUTH"
+  ],
+  "brokenSystems": [
+    "FIXES"
+  ]
+}

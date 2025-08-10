@@ -1,0 +1,88 @@
+{
+  "timestamp": "2025-08-08T20:21:50.925Z",
+  "frontendStatus": "🔴 NEEDS ATTENTION",
+  "successRate": "15.4%",
+  "summary": {
+    "total": 13,
+    "passed": 2,
+    "failed": 11
+  },
+  "details": {
+    "frontend": {
+      "Frontend Home Page Loading": {
+        "passed": false,
+        "details": "Status: 404",
+        "timestamp": "2025-08-08T20:21:50.807Z"
+      },
+      "React App Structure": {
+        "passed": true,
+        "details": "React root element found",
+        "timestamp": "2025-08-08T20:21:50.807Z"
+      },
+      "Vite Assets Loading": {
+        "passed": true,
+        "details": "JavaScript assets detected",
+        "timestamp": "2025-08-08T20:21:50.807Z"
+      }
+    },
+    "components": {
+      "Component Files Present": {
+        "passed": false,
+        "details": "0/7 component files found",
+        "timestamp": "2025-08-08T20:21:50.924Z"
+      },
+      "Image Utility Files": {
+        "passed": false,
+        "details": "0/2 image utility files found",
+        "timestamp": "2025-08-08T20:21:50.924Z"
+      }
+    },
+    "routing": {
+      "Route: /": {
+        "passed": false,
+        "details": "Status: 404",
+        "timestamp": "2025-08-08T20:21:50.818Z"
+      },
+      "Route: /events": {
+        "passed": false,
+        "details": "Status: 404",
+        "timestamp": "2025-08-08T20:21:50.837Z"
+      },
+      "Route: /teams": {
+        "passed": false,
+        "details": "Status: 404",
+        "timestamp": "2025-08-08T20:21:50.845Z"
+      },
+      "Route: /players": {
+        "passed": false,
+        "details": "Status: 404",
+        "timestamp": "2025-08-08T20:21:50.870Z"
+      },
+      "Route: /matches": {
+        "passed": false,
+        "details": "Status: 404",
+        "timestamp": "2025-08-08T20:21:50.888Z"
+      },
+      "Route: /news": {
+        "passed": false,
+        "details": "Status: 404",
+        "timestamp": "2025-08-08T20:21:50.897Z"
+      },
+      "Route: /forums": {
+        "passed": false,
+        "details": "Status: 404",
+        "timestamp": "2025-08-08T20:21:50.904Z"
+      },
+      "Route: /rankings": {
+        "passed": false,
+        "details": "Status: 404",
+        "timestamp": "2025-08-08T20:21:50.923Z"
+      }
+    },
+    "summary": {
+      "total": 13,
+      "passed": 2,
+      "failed": 11
+    }
+  }
+}

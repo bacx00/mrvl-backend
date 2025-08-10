@@ -1,0 +1,265 @@
+{
+  "testSuite": "MRVL Authenticated Admin Test",
+  "timestamp": "2025-08-08T20:25:49.782Z",
+  "authenticationSuccessful": false,
+  "summary": {
+    "totalTests": 13,
+    "passed": 0,
+    "failed": 13,
+    "successRate": 0
+  },
+  "categoryResults": {
+    "authentication": {
+      "tests": [
+        {
+          "name": "Admin Login",
+          "method": "POST",
+          "endpoint": "/auth/login",
+          "status": "failed",
+          "httpStatus": "unknown",
+          "response": "API returned error response",
+          "data": {
+            "success": false,
+            "message": "The GET method is not supported for route api/auth/login. Supported methods: POST.",
+            "error": "MethodNotAllowedHttpException",
+            "file": "/var/www/mrvl-backend/vendor/laravel/framework/src/Illuminate/Routing/AbstractRouteCollection.php",
+            "line": 123,
+            "_httpStatus": 500,
+            "_httpStatusText": "Internal Server Error"
+          },
+          "error": "The GET method is not supported for route api/auth/login. Supported methods: POST."
+        },
+        {
+          "name": "Admin Login Alt",
+          "method": "POST",
+          "endpoint": "/auth/login",
+          "status": "failed",
+          "httpStatus": "unknown",
+          "response": "API returned error response",
+          "data": {
+            "success": false,
+            "message": "The GET method is not supported for route api/auth/login. Supported methods: POST.",
+            "error": "MethodNotAllowedHttpException",
+            "file": "/var/www/mrvl-backend/vendor/laravel/framework/src/Illuminate/Routing/AbstractRouteCollection.php",
+            "line": 123,
+            "_httpStatus": 500,
+            "_httpStatusText": "Internal Server Error"
+          },
+          "error": "The GET method is not supported for route api/auth/login. Supported methods: POST."
+        },
+        {
+          "name": "Admin Login Default",
+          "method": "POST",
+          "endpoint": "/auth/login",
+          "status": "failed",
+          "httpStatus": "unknown",
+          "response": "API returned error response",
+          "data": {
+            "success": false,
+            "message": "The GET method is not supported for route api/auth/login. Supported methods: POST.",
+            "error": "MethodNotAllowedHttpException",
+            "file": "/var/www/mrvl-backend/vendor/laravel/framework/src/Illuminate/Routing/AbstractRouteCollection.php",
+            "line": 123,
+            "_httpStatus": 500,
+            "_httpStatusText": "Internal Server Error"
+          },
+          "error": "The GET method is not supported for route api/auth/login. Supported methods: POST."
+        }
+      ],
+      "passed": 0,
+      "failed": 3
+    },
+    "adminOverview": {
+      "tests": [
+        {
+          "name": "Dashboard Stats",
+          "method": "GET",
+          "endpoint": "/admin/dashboard",
+          "status": "auth_required",
+          "httpStatus": "unknown",
+          "response": "Authentication required",
+          "data": {
+            "success": false,
+            "message": "Unauthenticated. Please provide a valid authentication token.",
+            "error": "Authentication required",
+            "_httpStatus": 401,
+            "_httpStatusText": "Unauthorized"
+          },
+          "error": "Needs valid authentication token"
+        },
+        {
+          "name": "System Settings",
+          "method": "GET",
+          "endpoint": "/admin/system-settings",
+          "status": "auth_required",
+          "httpStatus": "unknown",
+          "response": "Authentication required",
+          "data": {
+            "success": false,
+            "message": "Unauthenticated. Please provide a valid authentication token.",
+            "error": "Authentication required",
+            "_httpStatus": 401,
+            "_httpStatusText": "Unauthorized"
+          },
+          "error": "Needs valid authentication token"
+        }
+      ],
+      "passed": 0,
+      "failed": 2
+    },
+    "userManagement": {
+      "tests": [
+        {
+          "name": "List All Users",
+          "method": "GET",
+          "endpoint": "/admin/users",
+          "status": "auth_required",
+          "httpStatus": "unknown",
+          "response": "Authentication required",
+          "data": {
+            "success": false,
+            "message": "Unauthenticated. Please provide a valid authentication token.",
+            "error": "Authentication required",
+            "_httpStatus": 401,
+            "_httpStatusText": "Unauthorized"
+          },
+          "error": "Needs valid authentication token"
+        },
+        {
+          "name": "Get User Details",
+          "method": "GET",
+          "endpoint": "/admin/users/1",
+          "status": "auth_required",
+          "httpStatus": "unknown",
+          "response": "Authentication required",
+          "data": {
+            "success": false,
+            "message": "Unauthenticated. Please provide a valid authentication token.",
+            "error": "Authentication required",
+            "_httpStatus": 401,
+            "_httpStatusText": "Unauthorized"
+          },
+          "error": "Needs valid authentication token"
+        },
+        {
+          "name": "User Management Dashboard",
+          "method": "GET",
+          "endpoint": "/admin/user-management",
+          "status": "auth_required",
+          "httpStatus": "unknown",
+          "response": "Authentication required",
+          "data": {
+            "success": false,
+            "message": "Unauthenticated. Please provide a valid authentication token.",
+            "error": "Authentication required",
+            "_httpStatus": 401,
+            "_httpStatusText": "Unauthorized"
+          },
+          "error": "Needs valid authentication token"
+        }
+      ],
+      "passed": 0,
+      "failed": 3
+    },
+    "analytics": {
+      "tests": [
+        {
+          "name": "Analytics 7 Days",
+          "method": "GET",
+          "endpoint": "/admin/analytics?period=7days",
+          "status": "auth_required",
+          "httpStatus": "unknown",
+          "response": "Authentication required",
+          "data": {
+            "success": false,
+            "message": "Unauthenticated. Please provide a valid authentication token.",
+            "error": "Authentication required",
+            "_httpStatus": 401,
+            "_httpStatusText": "Unauthorized"
+          },
+          "error": "Needs valid authentication token"
+        },
+        {
+          "name": "Analytics 30 Days",
+          "method": "GET",
+          "endpoint": "/admin/analytics?period=30days",
+          "status": "auth_required",
+          "httpStatus": "unknown",
+          "response": "Authentication required",
+          "data": {
+            "success": false,
+            "message": "Unauthenticated. Please provide a valid authentication token.",
+            "error": "Authentication required",
+            "_httpStatus": 401,
+            "_httpStatusText": "Unauthorized"
+          },
+          "error": "Needs valid authentication token"
+        }
+      ],
+      "passed": 0,
+      "failed": 2
+    },
+    "contentModeration": {
+      "tests": [
+        {
+          "name": "Content Moderation Dashboard",
+          "method": "GET",
+          "endpoint": "/admin/content-moderation",
+          "status": "auth_required",
+          "httpStatus": "unknown",
+          "response": "Authentication required",
+          "data": {
+            "success": false,
+            "message": "Unauthenticated. Please provide a valid authentication token.",
+            "error": "Authentication required",
+            "_httpStatus": 401,
+            "_httpStatusText": "Unauthorized"
+          },
+          "error": "Needs valid authentication token"
+        }
+      ],
+      "passed": 0,
+      "failed": 1
+    },
+    "systemSettings": {
+      "tests": [
+        {
+          "name": "Clear Cache",
+          "method": "POST",
+          "endpoint": "/admin/clear-cache",
+          "status": "failed",
+          "httpStatus": "unknown",
+          "response": "API returned error response",
+          "data": {
+            "success": false,
+            "message": "The GET method is not supported for route api/admin/clear-cache. Supported methods: POST.",
+            "error": "MethodNotAllowedHttpException",
+            "file": "/var/www/mrvl-backend/vendor/laravel/framework/src/Illuminate/Routing/AbstractRouteCollection.php",
+            "line": 123,
+            "_httpStatus": 500,
+            "_httpStatusText": "Internal Server Error"
+          },
+          "error": "The GET method is not supported for route api/admin/clear-cache. Supported methods: POST."
+        },
+        {
+          "name": "System Settings",
+          "method": "GET",
+          "endpoint": "/admin/system-settings",
+          "status": "auth_required",
+          "httpStatus": "unknown",
+          "response": "Authentication required",
+          "data": {
+            "success": false,
+            "message": "Unauthenticated. Please provide a valid authentication token.",
+            "error": "Authentication required",
+            "_httpStatus": 401,
+            "_httpStatusText": "Unauthorized"
+          },
+          "error": "Needs valid authentication token"
+        }
+      ],
+      "passed": 0,
+      "failed": 2
+    }
+  }
+}

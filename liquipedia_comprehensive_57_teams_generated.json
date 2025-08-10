@@ -1,0 +1,4328 @@
+[
+    {
+        "id": 1,
+        "name": "Sentinels",
+        "short_name": "SEN",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/Sentinels.svg\/400px-Sentinels.svg.png",
+        "region": "North America",
+        "country": "United States",
+        "country_code": "US",
+        "platform": "PC",
+        "tier": "C",
+        "rating": 1001,
+        "rank": 1,
+        "total_earnings": 68357,
+        "founded": "2020-08-01",
+        "status": "Active",
+        "website": "https:\/\/www.sentinels.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/sentinels",
+            "instagram": "https:\/\/instagram.com\/sentinels",
+            "youtube": "https:\/\/youtube.com\/c\/Sentinels",
+            "twitch": "https:\/\/twitch.tv\/sentinels"
+        },
+        "roster": [
+            {
+                "username": "nAts636",
+                "real_name": "Charlotte Young",
+                "role": "Duelist",
+                "country": "Mexico",
+                "is_captain": true
+            },
+            {
+                "username": "yay160",
+                "real_name": "Liam Wilson",
+                "role": "Duelist",
+                "country": "Mexico",
+                "is_captain": false
+            },
+            {
+                "username": "jamppi189",
+                "real_name": "Aaron Ramirez",
+                "role": "Duelist",
+                "country": "Mexico",
+                "is_captain": false
+            },
+            {
+                "username": "Enzo617",
+                "real_name": "Oliver Young",
+                "role": "Vanguard",
+                "country": "Canada",
+                "is_captain": false
+            },
+            {
+                "username": "ScreaM528",
+                "real_name": "Jackson Williams",
+                "role": "Strategist",
+                "country": "United States",
+                "is_captain": false
+            },
+            {
+                "username": "Less962",
+                "real_name": "William Miller",
+                "role": "Vanguard",
+                "country": "Canada",
+                "is_captain": false
+            }
+        ],
+        "player_count": 6
+    },
+    {
+        "id": 2,
+        "name": "NRG Esports",
+        "short_name": "NE",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/NRG+Esports.svg\/400px-NRG+Esports.svg.png",
+        "region": "North America",
+        "country": "Mexico",
+        "country_code": "MX",
+        "platform": "PC",
+        "tier": "A",
+        "rating": 1714,
+        "rank": 2,
+        "total_earnings": 119801,
+        "founded": "2021-02-27",
+        "status": "Active",
+        "website": "https:\/\/www.nrgesports.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/nrgesports",
+            "instagram": "https:\/\/instagram.com\/nrgesports",
+            "youtube": "https:\/\/youtube.com\/c\/NRGEsports",
+            "twitch": "https:\/\/twitch.tv\/nrgesports"
+        },
+        "roster": [
+            {
+                "username": "zunba935",
+                "real_name": "Christian Nguyen",
+                "role": "Strategist",
+                "country": "Mexico",
+                "is_captain": true
+            },
+            {
+                "username": "exy691",
+                "real_name": "Christopher Jones",
+                "role": "Strategist",
+                "country": "United States",
+                "is_captain": false
+            },
+            {
+                "username": "stax864",
+                "real_name": "Tyler Martinez",
+                "role": "Vanguard",
+                "country": "Mexico",
+                "is_captain": false
+            },
+            {
+                "username": "Alfajer842",
+                "real_name": "Robert Davis",
+                "role": "Strategist",
+                "country": "Canada",
+                "is_captain": false
+            },
+            {
+                "username": "Sacy412",
+                "real_name": "Benjamin Hall",
+                "role": "Vanguard",
+                "country": "Mexico",
+                "is_captain": false
+            },
+            {
+                "username": "k1Ng283",
+                "real_name": "Michael Walker",
+                "role": "Strategist",
+                "country": "Mexico",
+                "is_captain": false
+            }
+        ],
+        "player_count": 6
+    },
+    {
+        "id": 3,
+        "name": "Cloud9",
+        "short_name": "CLO",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/Cloud9.svg\/400px-Cloud9.svg.png",
+        "region": "North America",
+        "country": "Canada",
+        "country_code": "CA",
+        "platform": "PC",
+        "tier": "A",
+        "rating": 1411,
+        "rank": 3,
+        "total_earnings": 30808,
+        "founded": "2023-02-28",
+        "status": "Active",
+        "website": "https:\/\/www.cloud9.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/cloud9",
+            "instagram": "https:\/\/instagram.com\/cloud9",
+            "youtube": "https:\/\/youtube.com\/c\/Cloud9",
+            "twitch": "https:\/\/twitch.tv\/cloud9"
+        },
+        "roster": [
+            {
+                "username": "sheydos501",
+                "real_name": "Donald Hall",
+                "role": "Vanguard",
+                "country": "Canada",
+                "is_captain": true
+            },
+            {
+                "username": "d3ffo150",
+                "real_name": "Lucas Johnson",
+                "role": "Vanguard",
+                "country": "Canada",
+                "is_captain": false
+            },
+            {
+                "username": "mindfreak396",
+                "real_name": "Isabella Nelson",
+                "role": "Vanguard",
+                "country": "Mexico",
+                "is_captain": false
+            },
+            {
+                "username": "ScreaM247",
+                "real_name": "Thomas Sanchez",
+                "role": "Vanguard",
+                "country": "Mexico",
+                "is_captain": false
+            },
+            {
+                "username": "d3ffo635",
+                "real_name": "Olivia Lee",
+                "role": "Duelist",
+                "country": "United States",
+                "is_captain": false
+            },
+            {
+                "username": "d4v41962",
+                "real_name": "Donald Green",
+                "role": "Duelist",
+                "country": "United States",
+                "is_captain": false
+            }
+        ],
+        "player_count": 6
+    },
+    {
+        "id": 4,
+        "name": "100 Thieves",
+        "short_name": "1T",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/100+Thieves.svg\/400px-100+Thieves.svg.png",
+        "region": "North America",
+        "country": "Mexico",
+        "country_code": "MX",
+        "platform": "PC",
+        "tier": "B",
+        "rating": 2006,
+        "rank": 4,
+        "total_earnings": 135093,
+        "founded": "2022-04-21",
+        "status": "Active",
+        "website": "https:\/\/www.100thieves.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/100thieves",
+            "instagram": "https:\/\/instagram.com\/100thieves",
+            "youtube": "https:\/\/youtube.com\/c\/100Thieves",
+            "twitch": "https:\/\/twitch.tv\/100thieves"
+        },
+        "roster": [
+            {
+                "username": "Chronicle401",
+                "real_name": "Christopher Campbell",
+                "role": "Duelist",
+                "country": "Canada",
+                "is_captain": true
+            },
+            {
+                "username": "Lakia667",
+                "real_name": "Mia Wilson",
+                "role": "Vanguard",
+                "country": "United States",
+                "is_captain": false
+            },
+            {
+                "username": "Liquid324",
+                "real_name": "Anthony Smith",
+                "role": "Duelist",
+                "country": "Canada",
+                "is_captain": false
+            },
+            {
+                "username": "saadhak764",
+                "real_name": "Daniel Rodriguez",
+                "role": "Strategist",
+                "country": "Mexico",
+                "is_captain": false
+            },
+            {
+                "username": "Victor810",
+                "real_name": "Jackson Mitchell",
+                "role": "Strategist",
+                "country": "United States",
+                "is_captain": false
+            },
+            {
+                "username": "ethan600",
+                "real_name": "Isabella Nguyen",
+                "role": "Strategist",
+                "country": "Mexico",
+                "is_captain": false
+            }
+        ],
+        "player_count": 6
+    },
+    {
+        "id": 5,
+        "name": "TSM",
+        "short_name": "TSM",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/TSM.svg\/400px-TSM.svg.png",
+        "region": "North America",
+        "country": "Canada",
+        "country_code": "CA",
+        "platform": "PC",
+        "tier": "B",
+        "rating": 2010,
+        "rank": 5,
+        "total_earnings": 96385,
+        "founded": "2019-06-15",
+        "status": "Active",
+        "website": "https:\/\/www.tsm.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/tsm",
+            "instagram": "https:\/\/instagram.com\/tsm",
+            "youtube": "https:\/\/youtube.com\/c\/TSM",
+            "twitch": "https:\/\/twitch.tv\/tsm"
+        },
+        "roster": [
+            {
+                "username": "heat884",
+                "real_name": "Kyle Carter",
+                "role": "Strategist",
+                "country": "United States",
+                "is_captain": true
+            },
+            {
+                "username": "Enzo428",
+                "real_name": "Gabriel Robinson",
+                "role": "Vanguard",
+                "country": "Canada",
+                "is_captain": false
+            },
+            {
+                "username": "Boaster235",
+                "real_name": "Kyle Robinson",
+                "role": "Duelist",
+                "country": "Mexico",
+                "is_captain": false
+            },
+            {
+                "username": "heat540",
+                "real_name": "Steven Torres",
+                "role": "Duelist",
+                "country": "United States",
+                "is_captain": false
+            },
+            {
+                "username": "k1Ng235",
+                "real_name": "William Wright",
+                "role": "Duelist",
+                "country": "Canada",
+                "is_captain": false
+            },
+            {
+                "username": "Nivera420",
+                "real_name": "Mia Hernandez",
+                "role": "Strategist",
+                "country": "United States",
+                "is_captain": false
+            }
+        ],
+        "player_count": 6
+    },
+    {
+        "id": 6,
+        "name": "FaZe Clan",
+        "short_name": "FC",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/FaZe+Clan.svg\/400px-FaZe+Clan.svg.png",
+        "region": "North America",
+        "country": "United States",
+        "country_code": "US",
+        "platform": "PC",
+        "tier": "S",
+        "rating": 1265,
+        "rank": 6,
+        "total_earnings": 146565,
+        "founded": "2019-09-22",
+        "status": "Inactive",
+        "website": "https:\/\/www.fazeclan.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/fazeclan",
+            "instagram": "https:\/\/instagram.com\/fazeclan",
+            "youtube": "https:\/\/youtube.com\/c\/FaZeClan",
+            "twitch": "https:\/\/twitch.tv\/fazeclan"
+        },
+        "roster": [
+            {
+                "username": "Benkai203",
+                "real_name": "Lucas Robinson",
+                "role": "Strategist",
+                "country": "Canada",
+                "is_captain": true
+            },
+            {
+                "username": "dapr775",
+                "real_name": "Benjamin Lee",
+                "role": "Duelist",
+                "country": "United States",
+                "is_captain": false
+            },
+            {
+                "username": "stax638",
+                "real_name": "Oliver Johnson",
+                "role": "Strategist",
+                "country": "United States",
+                "is_captain": false
+            },
+            {
+                "username": "Liquid436",
+                "real_name": "Thomas Walker",
+                "role": "Duelist",
+                "country": "Canada",
+                "is_captain": false
+            },
+            {
+                "username": "FNS510",
+                "real_name": "Donald Martinez",
+                "role": "Vanguard",
+                "country": "United States",
+                "is_captain": false
+            },
+            {
+                "username": "d3ffo933",
+                "real_name": "Samuel Taylor",
+                "role": "Strategist",
+                "country": "Mexico",
+                "is_captain": false
+            }
+        ],
+        "player_count": 6
+    },
+    {
+        "id": 7,
+        "name": "OpTic Gaming",
+        "short_name": "OG",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/OpTic+Gaming.svg\/400px-OpTic+Gaming.svg.png",
+        "region": "North America",
+        "country": "United States",
+        "country_code": "US",
+        "platform": "PC",
+        "tier": "C",
+        "rating": 1640,
+        "rank": 7,
+        "total_earnings": 178330,
+        "founded": "2021-04-05",
+        "status": "Active",
+        "website": "https:\/\/www.opticgaming.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/opticgaming",
+            "instagram": "https:\/\/instagram.com\/opticgaming",
+            "youtube": "https:\/\/youtube.com\/c\/OpTicGaming",
+            "twitch": "https:\/\/twitch.tv\/opticgaming"
+        },
+        "roster": [
+            {
+                "username": "zunba774",
+                "real_name": "Mason Campbell",
+                "role": "Strategist",
+                "country": "Canada",
+                "is_captain": true
+            },
+            {
+                "username": "Hiko826",
+                "real_name": "Logan Hill",
+                "role": "Duelist",
+                "country": "United States",
+                "is_captain": false
+            },
+            {
+                "username": "nitr0457",
+                "real_name": "Matthew Wright",
+                "role": "Vanguard",
+                "country": "Mexico",
+                "is_captain": false
+            },
+            {
+                "username": "allow438",
+                "real_name": "Aaron Perez",
+                "role": "Duelist",
+                "country": "United States",
+                "is_captain": false
+            },
+            {
+                "username": "Alfajer358",
+                "real_name": "Andrew Wright",
+                "role": "Vanguard",
+                "country": "United States",
+                "is_captain": false
+            },
+            {
+                "username": "Victor686",
+                "real_name": "Liam Ramirez",
+                "role": "Strategist",
+                "country": "Canada",
+                "is_captain": false
+            }
+        ],
+        "player_count": 6
+    },
+    {
+        "id": 8,
+        "name": "Team Liquid NA",
+        "short_name": "TL",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/Team+Liquid+NA.svg\/400px-Team+Liquid+NA.svg.png",
+        "region": "North America",
+        "country": "Canada",
+        "country_code": "CA",
+        "platform": "PC",
+        "tier": "S",
+        "rating": 1086,
+        "rank": 8,
+        "total_earnings": 36823,
+        "founded": "2020-05-22",
+        "status": "Active",
+        "website": "https:\/\/www.teamliquidna.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/teamliquidna",
+            "instagram": "https:\/\/instagram.com\/teamliquidna",
+            "youtube": "https:\/\/youtube.com\/c\/TeamLiquidNA",
+            "twitch": "https:\/\/twitch.tv\/teamliquidna"
+        },
+        "roster": [
+            {
+                "username": "SicK961",
+                "real_name": "Charlotte Allen",
+                "role": "Strategist",
+                "country": "Mexico",
+                "is_captain": true
+            },
+            {
+                "username": "Suggest547",
+                "real_name": "John Baker",
+                "role": "Vanguard",
+                "country": "Canada",
+                "is_captain": false
+            },
+            {
+                "username": "nitr0189",
+                "real_name": "Kyle Williams",
+                "role": "Vanguard",
+                "country": "Mexico",
+                "is_captain": false
+            },
+            {
+                "username": "sheydos425",
+                "real_name": "Michael Davis",
+                "role": "Strategist",
+                "country": "United States",
+                "is_captain": false
+            },
+            {
+                "username": "steel255",
+                "real_name": "Kenneth Thomas",
+                "role": "Vanguard",
+                "country": "Mexico",
+                "is_captain": false
+            },
+            {
+                "username": "Marved886",
+                "real_name": "Nathan Hernandez",
+                "role": "Vanguard",
+                "country": "Mexico",
+                "is_captain": false
+            }
+        ],
+        "player_count": 6
+    },
+    {
+        "id": 9,
+        "name": "Evil Geniuses",
+        "short_name": "EG",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/Evil+Geniuses.svg\/400px-Evil+Geniuses.svg.png",
+        "region": "North America",
+        "country": "Mexico",
+        "country_code": "MX",
+        "platform": "PC",
+        "tier": "A",
+        "rating": 1843,
+        "rank": 9,
+        "total_earnings": 51958,
+        "founded": "2021-11-17",
+        "status": "Inactive",
+        "website": "https:\/\/www.evilgeniuses.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/evilgeniuses",
+            "instagram": "https:\/\/instagram.com\/evilgeniuses",
+            "youtube": "https:\/\/youtube.com\/c\/EvilGeniuses",
+            "twitch": "https:\/\/twitch.tv\/evilgeniuses"
+        },
+        "roster": [
+            {
+                "username": "exy374",
+                "real_name": "Gabriel Hill",
+                "role": "Duelist",
+                "country": "Canada",
+                "is_captain": true
+            },
+            {
+                "username": "heat881",
+                "real_name": "Ava Roberts",
+                "role": "Strategist",
+                "country": "Mexico",
+                "is_captain": false
+            },
+            {
+                "username": "Zest915",
+                "real_name": "Kenneth Lopez",
+                "role": "Vanguard",
+                "country": "United States",
+                "is_captain": false
+            },
+            {
+                "username": "d4v41678",
+                "real_name": "Gabriel Lopez",
+                "role": "Strategist",
+                "country": "Mexico",
+                "is_captain": false
+            },
+            {
+                "username": "zombs869",
+                "real_name": "Andrew Davis",
+                "role": "Duelist",
+                "country": "Canada",
+                "is_captain": false
+            }
+        ],
+        "player_count": 5
+    },
+    {
+        "id": 10,
+        "name": "Gen.G",
+        "short_name": "GEN",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/Gen.G.svg\/400px-Gen.G.svg.png",
+        "region": "North America",
+        "country": "Mexico",
+        "country_code": "MX",
+        "platform": "PC",
+        "tier": "A",
+        "rating": 1069,
+        "rank": 10,
+        "total_earnings": 153114,
+        "founded": "2021-07-12",
+        "status": "Active",
+        "website": "https:\/\/www.gen.g.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/gen.g",
+            "instagram": "https:\/\/instagram.com\/gen.g",
+            "youtube": "https:\/\/youtube.com\/c\/Gen.G",
+            "twitch": "https:\/\/twitch.tv\/gen.g"
+        },
+        "roster": [
+            {
+                "username": "BuZz803",
+                "real_name": "Steven White",
+                "role": "Duelist",
+                "country": "Canada",
+                "is_captain": true
+            },
+            {
+                "username": "exy259",
+                "real_name": "Benjamin Thomas",
+                "role": "Duelist",
+                "country": "United States",
+                "is_captain": false
+            },
+            {
+                "username": "Lakia344",
+                "real_name": "Paul Nelson",
+                "role": "Vanguard",
+                "country": "United States",
+                "is_captain": false
+            },
+            {
+                "username": "s0m905",
+                "real_name": "Daniel Taylor",
+                "role": "Vanguard",
+                "country": "United States",
+                "is_captain": false
+            },
+            {
+                "username": "crashies143",
+                "real_name": "Ethan Walker",
+                "role": "Vanguard",
+                "country": "United States",
+                "is_captain": false
+            }
+        ],
+        "player_count": 5
+    },
+    {
+        "id": 11,
+        "name": "Version1",
+        "short_name": "VER",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/Version1.svg\/400px-Version1.svg.png",
+        "region": "North America",
+        "country": "United States",
+        "country_code": "US",
+        "platform": "PC",
+        "tier": "B",
+        "rating": 1707,
+        "rank": 11,
+        "total_earnings": 137905,
+        "founded": "2020-07-29",
+        "status": "Active",
+        "website": "https:\/\/www.version1.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/version1",
+            "instagram": "https:\/\/instagram.com\/version1",
+            "youtube": "https:\/\/youtube.com\/c\/Version1",
+            "twitch": "https:\/\/twitch.tv\/version1"
+        },
+        "roster": [
+            {
+                "username": "k1Ng999",
+                "real_name": "Lucas Lewis",
+                "role": "Strategist",
+                "country": "United States",
+                "is_captain": true
+            },
+            {
+                "username": "Zest535",
+                "real_name": "Aaron Martin",
+                "role": "Strategist",
+                "country": "United States",
+                "is_captain": false
+            },
+            {
+                "username": "mwzera685",
+                "real_name": "Lucas Garcia",
+                "role": "Duelist",
+                "country": "Canada",
+                "is_captain": false
+            },
+            {
+                "username": "Derke698",
+                "real_name": "Donald Nelson",
+                "role": "Strategist",
+                "country": "Mexico",
+                "is_captain": false
+            },
+            {
+                "username": "SicK936",
+                "real_name": "Tyler Green",
+                "role": "Vanguard",
+                "country": "Mexico",
+                "is_captain": false
+            }
+        ],
+        "player_count": 5
+    },
+    {
+        "id": 12,
+        "name": "Dignitas",
+        "short_name": "DIG",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/Dignitas.svg\/400px-Dignitas.svg.png",
+        "region": "North America",
+        "country": "Canada",
+        "country_code": "CA",
+        "platform": "PC",
+        "tier": "C",
+        "rating": 2225,
+        "rank": 12,
+        "total_earnings": 13068,
+        "founded": "2021-03-11",
+        "status": "Active",
+        "website": "https:\/\/www.dignitas.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/dignitas",
+            "instagram": "https:\/\/instagram.com\/dignitas",
+            "youtube": "https:\/\/youtube.com\/c\/Dignitas",
+            "twitch": "https:\/\/twitch.tv\/dignitas"
+        },
+        "roster": [
+            {
+                "username": "Victor286",
+                "real_name": "Henry Rivera",
+                "role": "Duelist",
+                "country": "Canada",
+                "is_captain": true
+            },
+            {
+                "username": "AZK363",
+                "real_name": "Mia Harris",
+                "role": "Vanguard",
+                "country": "United States",
+                "is_captain": false
+            },
+            {
+                "username": "exy136",
+                "real_name": "Joseph Mitchell",
+                "role": "Strategist",
+                "country": "United States",
+                "is_captain": false
+            },
+            {
+                "username": "dapr918",
+                "real_name": "Oliver Baker",
+                "role": "Duelist",
+                "country": "Canada",
+                "is_captain": false
+            },
+            {
+                "username": "Victor787",
+                "real_name": "William Scott",
+                "role": "Duelist",
+                "country": "Mexico",
+                "is_captain": false
+            }
+        ],
+        "player_count": 5
+    },
+    {
+        "id": 13,
+        "name": "XSET",
+        "short_name": "XSE",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/XSET.svg\/400px-XSET.svg.png",
+        "region": "North America",
+        "country": "United States",
+        "country_code": "US",
+        "platform": "PC",
+        "tier": "B",
+        "rating": 2068,
+        "rank": 13,
+        "total_earnings": 170174,
+        "founded": "2021-03-25",
+        "status": "Active",
+        "website": "https:\/\/www.xset.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/xset",
+            "instagram": "https:\/\/instagram.com\/xset",
+            "youtube": "https:\/\/youtube.com\/c\/XSET",
+            "twitch": "https:\/\/twitch.tv\/xset"
+        },
+        "roster": [
+            {
+                "username": "v1xen102",
+                "real_name": "Andrew Harris",
+                "role": "Duelist",
+                "country": "United States",
+                "is_captain": true
+            },
+            {
+                "username": "nukkye175",
+                "real_name": "Mia Scott",
+                "role": "Duelist",
+                "country": "United States",
+                "is_captain": false
+            },
+            {
+                "username": "Boaster989",
+                "real_name": "Thomas Nguyen",
+                "role": "Vanguard",
+                "country": "Canada",
+                "is_captain": false
+            },
+            {
+                "username": "BuZz870",
+                "real_name": "Benjamin Thompson",
+                "role": "Vanguard",
+                "country": "Canada",
+                "is_captain": false
+            },
+            {
+                "username": "Victor759",
+                "real_name": "Charlotte Lopez",
+                "role": "Strategist",
+                "country": "Mexico",
+                "is_captain": false
+            }
+        ],
+        "player_count": 5
+    },
+    {
+        "id": 14,
+        "name": "Rise",
+        "short_name": "RIS",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/Rise.svg\/400px-Rise.svg.png",
+        "region": "North America",
+        "country": "United States",
+        "country_code": "US",
+        "platform": "PC",
+        "tier": "S",
+        "rating": 1437,
+        "rank": 14,
+        "total_earnings": 40028,
+        "founded": "2019-07-16",
+        "status": "Inactive",
+        "website": "https:\/\/www.rise.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/rise",
+            "instagram": "https:\/\/instagram.com\/rise",
+            "youtube": "https:\/\/youtube.com\/c\/Rise",
+            "twitch": "https:\/\/twitch.tv\/rise"
+        },
+        "roster": [
+            {
+                "username": "Zest366",
+                "real_name": "Andrew Mitchell",
+                "role": "Strategist",
+                "country": "Mexico",
+                "is_captain": true
+            },
+            {
+                "username": "Redgar279",
+                "real_name": "Adam Garcia",
+                "role": "Strategist",
+                "country": "United States",
+                "is_captain": false
+            },
+            {
+                "username": "bang226",
+                "real_name": "Liam Adams",
+                "role": "Strategist",
+                "country": "Mexico",
+                "is_captain": false
+            },
+            {
+                "username": "aspas380",
+                "real_name": "Ava Brown",
+                "role": "Duelist",
+                "country": "Mexico",
+                "is_captain": false
+            },
+            {
+                "username": "Zest780",
+                "real_name": "James Wilson",
+                "role": "Strategist",
+                "country": "Canada",
+                "is_captain": false
+            }
+        ],
+        "player_count": 5
+    },
+    {
+        "id": 15,
+        "name": "Immortals",
+        "short_name": "IMM",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/Immortals.svg\/400px-Immortals.svg.png",
+        "region": "North America",
+        "country": "Canada",
+        "country_code": "CA",
+        "platform": "PC",
+        "tier": "A",
+        "rating": 1588,
+        "rank": 15,
+        "total_earnings": 38796,
+        "founded": "2021-01-28",
+        "status": "Active",
+        "website": "https:\/\/www.immortals.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/immortals",
+            "instagram": "https:\/\/instagram.com\/immortals",
+            "youtube": "https:\/\/youtube.com\/c\/Immortals",
+            "twitch": "https:\/\/twitch.tv\/immortals"
+        },
+        "roster": [
+            {
+                "username": "Suggest803",
+                "real_name": "Mason Mitchell",
+                "role": "Vanguard",
+                "country": "Mexico",
+                "is_captain": true
+            },
+            {
+                "username": "BeYN577",
+                "real_name": "Christian Hall",
+                "role": "Duelist",
+                "country": "United States",
+                "is_captain": false
+            },
+            {
+                "username": "Nivera178",
+                "real_name": "Henry Moore",
+                "role": "Strategist",
+                "country": "Canada",
+                "is_captain": false
+            },
+            {
+                "username": "d4v41400",
+                "real_name": "Gabriel Scott",
+                "role": "Vanguard",
+                "country": "Canada",
+                "is_captain": false
+            },
+            {
+                "username": "Less547",
+                "real_name": "Oliver Anderson",
+                "role": "Duelist",
+                "country": "United States",
+                "is_captain": false
+            }
+        ],
+        "player_count": 5
+    },
+    {
+        "id": 16,
+        "name": "Envy",
+        "short_name": "ENV",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/Envy.svg\/400px-Envy.svg.png",
+        "region": "North America",
+        "country": "United States",
+        "country_code": "US",
+        "platform": "PC",
+        "tier": "C",
+        "rating": 2352,
+        "rank": 16,
+        "total_earnings": 199948,
+        "founded": "2020-09-20",
+        "status": "Active",
+        "website": "https:\/\/www.envy.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/envy",
+            "instagram": "https:\/\/instagram.com\/envy",
+            "youtube": "https:\/\/youtube.com\/c\/Envy",
+            "twitch": "https:\/\/twitch.tv\/envy"
+        },
+        "roster": [
+            {
+                "username": "s0m439",
+                "real_name": "Amelia Martinez",
+                "role": "Strategist",
+                "country": "United States",
+                "is_captain": true
+            },
+            {
+                "username": "Redgar514",
+                "real_name": "Robert Hill",
+                "role": "Strategist",
+                "country": "Canada",
+                "is_captain": false
+            },
+            {
+                "username": "ethan301",
+                "real_name": "Kenneth Hill",
+                "role": "Strategist",
+                "country": "Canada",
+                "is_captain": false
+            },
+            {
+                "username": "saadhak293",
+                "real_name": "Daniel Lopez",
+                "role": "Vanguard",
+                "country": "Mexico",
+                "is_captain": false
+            },
+            {
+                "username": "Liquid286",
+                "real_name": "Donald Martin",
+                "role": "Vanguard",
+                "country": "Canada",
+                "is_captain": false
+            }
+        ],
+        "player_count": 5
+    },
+    {
+        "id": 17,
+        "name": "G2 Esports",
+        "short_name": "E",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/G2+Esports.svg\/400px-G2+Esports.svg.png",
+        "region": "Europe",
+        "country": "Netherlands",
+        "country_code": "NL",
+        "platform": "PC",
+        "tier": "S",
+        "rating": 1825,
+        "rank": 17,
+        "total_earnings": 112418,
+        "founded": "2019-05-13",
+        "status": "Active",
+        "website": "https:\/\/www.g2esports.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/g2esports",
+            "instagram": "https:\/\/instagram.com\/g2esports",
+            "youtube": "https:\/\/youtube.com\/c\/G2Esports",
+            "twitch": "https:\/\/twitch.tv\/g2esports"
+        },
+        "roster": [
+            {
+                "username": "Boaster603",
+                "real_name": "Matthew Jones",
+                "role": "Duelist",
+                "country": "Turkey",
+                "is_captain": true
+            },
+            {
+                "username": "nitr0249",
+                "real_name": "Sebastian Brown",
+                "role": "Vanguard",
+                "country": "Spain",
+                "is_captain": false
+            },
+            {
+                "username": "allow585",
+                "real_name": "Kenneth Hernandez",
+                "role": "Duelist",
+                "country": "Russia",
+                "is_captain": false
+            },
+            {
+                "username": "nAts273",
+                "real_name": "Paul Scott",
+                "role": "Vanguard",
+                "country": "United Kingdom",
+                "is_captain": false
+            },
+            {
+                "username": "f0rsakeN531",
+                "real_name": "Liam Nguyen",
+                "role": "Vanguard",
+                "country": "Poland",
+                "is_captain": false
+            }
+        ],
+        "player_count": 5
+    },
+    {
+        "id": 18,
+        "name": "Team Liquid",
+        "short_name": "TL",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/Team+Liquid.svg\/400px-Team+Liquid.svg.png",
+        "region": "Europe",
+        "country": "Turkey",
+        "country_code": "TR",
+        "platform": "PC",
+        "tier": "C",
+        "rating": 1632,
+        "rank": 18,
+        "total_earnings": 120530,
+        "founded": "2022-10-05",
+        "status": "Active",
+        "website": "https:\/\/www.teamliquid.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/teamliquid",
+            "instagram": "https:\/\/instagram.com\/teamliquid",
+            "youtube": "https:\/\/youtube.com\/c\/TeamLiquid",
+            "twitch": "https:\/\/twitch.tv\/teamliquid"
+        },
+        "roster": [
+            {
+                "username": "Foxy9171",
+                "real_name": "Gabriel Clark",
+                "role": "Duelist",
+                "country": "Denmark",
+                "is_captain": true
+            },
+            {
+                "username": "Rb842",
+                "real_name": "Amelia Campbell",
+                "role": "Duelist",
+                "country": "Spain",
+                "is_captain": false
+            },
+            {
+                "username": "Enzo684",
+                "real_name": "Thomas Lopez",
+                "role": "Duelist",
+                "country": "Germany",
+                "is_captain": false
+            },
+            {
+                "username": "mixwell832",
+                "real_name": "Kyle Flores",
+                "role": "Strategist",
+                "country": "Sweden",
+                "is_captain": false
+            },
+            {
+                "username": "Khalil772",
+                "real_name": "Henry King",
+                "role": "Vanguard",
+                "country": "Poland",
+                "is_captain": false
+            }
+        ],
+        "player_count": 5
+    },
+    {
+        "id": 19,
+        "name": "FNATIC",
+        "short_name": "FNA",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/FNATIC.svg\/400px-FNATIC.svg.png",
+        "region": "Europe",
+        "country": "Turkey",
+        "country_code": "TR",
+        "platform": "PC",
+        "tier": "B",
+        "rating": 1223,
+        "rank": 19,
+        "total_earnings": 64667,
+        "founded": "2021-02-06",
+        "status": "Active",
+        "website": "https:\/\/www.fnatic.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/fnatic",
+            "instagram": "https:\/\/instagram.com\/fnatic",
+            "youtube": "https:\/\/youtube.com\/c\/FNATIC",
+            "twitch": "https:\/\/twitch.tv\/fnatic"
+        },
+        "roster": [
+            {
+                "username": "d3ffo341",
+                "real_name": "Henry Flores",
+                "role": "Duelist",
+                "country": "Netherlands",
+                "is_captain": true
+            },
+            {
+                "username": "Hiko771",
+                "real_name": "James Moore",
+                "role": "Duelist",
+                "country": "Germany",
+                "is_captain": false
+            },
+            {
+                "username": "allow302",
+                "real_name": "Sebastian Thompson",
+                "role": "Vanguard",
+                "country": "Denmark",
+                "is_captain": false
+            },
+            {
+                "username": "mwzera776",
+                "real_name": "Tyler Rodriguez",
+                "role": "Vanguard",
+                "country": "Denmark",
+                "is_captain": false
+            },
+            {
+                "username": "AZK738",
+                "real_name": "Donald Smith",
+                "role": "Duelist",
+                "country": "Germany",
+                "is_captain": false
+            }
+        ],
+        "player_count": 5
+    },
+    {
+        "id": 20,
+        "name": "Vitality",
+        "short_name": "VIT",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/Vitality.svg\/400px-Vitality.svg.png",
+        "region": "Europe",
+        "country": "Netherlands",
+        "country_code": "NL",
+        "platform": "PC",
+        "tier": "C",
+        "rating": 1439,
+        "rank": 20,
+        "total_earnings": 149385,
+        "founded": "2019-04-06",
+        "status": "Active",
+        "website": "https:\/\/www.vitality.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/vitality",
+            "instagram": "https:\/\/instagram.com\/vitality",
+            "youtube": "https:\/\/youtube.com\/c\/Vitality",
+            "twitch": "https:\/\/twitch.tv\/vitality"
+        },
+        "roster": [
+            {
+                "username": "Redgar526",
+                "real_name": "Robert Thompson",
+                "role": "Duelist",
+                "country": "Germany",
+                "is_captain": true
+            },
+            {
+                "username": "Alfajer447",
+                "real_name": "Charlotte Allen",
+                "role": "Duelist",
+                "country": "United Kingdom",
+                "is_captain": false
+            },
+            {
+                "username": "AZK696",
+                "real_name": "Tyler Taylor",
+                "role": "Strategist",
+                "country": "Netherlands",
+                "is_captain": false
+            },
+            {
+                "username": "leaf627",
+                "real_name": "Mia Martin",
+                "role": "Vanguard",
+                "country": "Germany",
+                "is_captain": false
+            },
+            {
+                "username": "TenZ939",
+                "real_name": "Paul Torres",
+                "role": "Vanguard",
+                "country": "Turkey",
+                "is_captain": false
+            }
+        ],
+        "player_count": 5
+    },
+    {
+        "id": 21,
+        "name": "BIG",
+        "short_name": "BIG",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/BIG.svg\/400px-BIG.svg.png",
+        "region": "Europe",
+        "country": "Spain",
+        "country_code": "ES",
+        "platform": "PC",
+        "tier": "B",
+        "rating": 2346,
+        "rank": 21,
+        "total_earnings": 43654,
+        "founded": "2020-01-13",
+        "status": "Active",
+        "website": "https:\/\/www.big.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/big",
+            "instagram": "https:\/\/instagram.com\/big",
+            "youtube": "https:\/\/youtube.com\/c\/BIG",
+            "twitch": "https:\/\/twitch.tv\/big"
+        },
+        "roster": [
+            {
+                "username": "Marved537",
+                "real_name": "Kenneth Hernandez",
+                "role": "Strategist",
+                "country": "Turkey",
+                "is_captain": true
+            },
+            {
+                "username": "mixwell733",
+                "real_name": "Henry Lewis",
+                "role": "Strategist",
+                "country": "Russia",
+                "is_captain": false
+            },
+            {
+                "username": "nitr0486",
+                "real_name": "John Smith",
+                "role": "Vanguard",
+                "country": "France",
+                "is_captain": false
+            },
+            {
+                "username": "d4v41783",
+                "real_name": "Christopher White",
+                "role": "Strategist",
+                "country": "Sweden",
+                "is_captain": false
+            },
+            {
+                "username": "Meteor618",
+                "real_name": "Oliver Scott",
+                "role": "Strategist",
+                "country": "Denmark",
+                "is_captain": false
+            }
+        ],
+        "player_count": 5
+    },
+    {
+        "id": 22,
+        "name": "MAD Lions",
+        "short_name": "ML",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/MAD+Lions.svg\/400px-MAD+Lions.svg.png",
+        "region": "Europe",
+        "country": "United Kingdom",
+        "country_code": "GB",
+        "platform": "PC",
+        "tier": "A",
+        "rating": 2000,
+        "rank": 22,
+        "total_earnings": 190718,
+        "founded": "2019-09-12",
+        "status": "Active",
+        "website": "https:\/\/www.madlions.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/madlions",
+            "instagram": "https:\/\/instagram.com\/madlions",
+            "youtube": "https:\/\/youtube.com\/c\/MADLions",
+            "twitch": "https:\/\/twitch.tv\/madlions"
+        },
+        "roster": [
+            {
+                "username": "Foxy9680",
+                "real_name": "Ava Mitchell",
+                "role": "Strategist",
+                "country": "France",
+                "is_captain": true
+            },
+            {
+                "username": "d4v41340",
+                "real_name": "Harper Sanchez",
+                "role": "Vanguard",
+                "country": "Turkey",
+                "is_captain": false
+            },
+            {
+                "username": "Benkai751",
+                "real_name": "Sebastian Young",
+                "role": "Strategist",
+                "country": "Denmark",
+                "is_captain": false
+            },
+            {
+                "username": "sheydos984",
+                "real_name": "Oliver Scott",
+                "role": "Vanguard",
+                "country": "Russia",
+                "is_captain": false
+            },
+            {
+                "username": "pANcada940",
+                "real_name": "Mason Miller",
+                "role": "Vanguard",
+                "country": "Poland",
+                "is_captain": false
+            }
+        ],
+        "player_count": 5
+    },
+    {
+        "id": 23,
+        "name": "Guild Esports",
+        "short_name": "GE",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/Guild+Esports.svg\/400px-Guild+Esports.svg.png",
+        "region": "Europe",
+        "country": "United Kingdom",
+        "country_code": "GB",
+        "platform": "PC",
+        "tier": "C",
+        "rating": 2406,
+        "rank": 23,
+        "total_earnings": 160756,
+        "founded": "2019-03-15",
+        "status": "Inactive",
+        "website": "https:\/\/www.guildesports.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/guildesports",
+            "instagram": "https:\/\/instagram.com\/guildesports",
+            "youtube": "https:\/\/youtube.com\/c\/GuildEsports",
+            "twitch": "https:\/\/twitch.tv\/guildesports"
+        },
+        "roster": [
+            {
+                "username": "Benkai247",
+                "real_name": "Liam Lopez",
+                "role": "Duelist",
+                "country": "Turkey",
+                "is_captain": true
+            },
+            {
+                "username": "Boaster735",
+                "real_name": "Christopher Martin",
+                "role": "Duelist",
+                "country": "Denmark",
+                "is_captain": false
+            },
+            {
+                "username": "Sylvan897",
+                "real_name": "Tyler Carter",
+                "role": "Strategist",
+                "country": "Russia",
+                "is_captain": false
+            },
+            {
+                "username": "Hiko793",
+                "real_name": "Emma Nguyen",
+                "role": "Strategist",
+                "country": "Russia",
+                "is_captain": false
+            },
+            {
+                "username": "zunba529",
+                "real_name": "Michael Ramirez",
+                "role": "Vanguard",
+                "country": "Spain",
+                "is_captain": false
+            }
+        ],
+        "player_count": 5
+    },
+    {
+        "id": 24,
+        "name": "Alliance",
+        "short_name": "ALL",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/Alliance.svg\/400px-Alliance.svg.png",
+        "region": "Europe",
+        "country": "United Kingdom",
+        "country_code": "GB",
+        "platform": "PC",
+        "tier": "B",
+        "rating": 1105,
+        "rank": 24,
+        "total_earnings": 110886,
+        "founded": "2023-08-21",
+        "status": "Active",
+        "website": "https:\/\/www.alliance.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/alliance",
+            "instagram": "https:\/\/instagram.com\/alliance",
+            "youtube": "https:\/\/youtube.com\/c\/Alliance",
+            "twitch": "https:\/\/twitch.tv\/alliance"
+        },
+        "roster": [
+            {
+                "username": "Rb227",
+                "real_name": "Aaron Hall",
+                "role": "Strategist",
+                "country": "Russia",
+                "is_captain": true
+            },
+            {
+                "username": "ethan215",
+                "real_name": "Elijah Flores",
+                "role": "Strategist",
+                "country": "Poland",
+                "is_captain": false
+            },
+            {
+                "username": "ScreaM908",
+                "real_name": "Mason Allen",
+                "role": "Strategist",
+                "country": "France",
+                "is_captain": false
+            },
+            {
+                "username": "AvovA348",
+                "real_name": "Adam Martin",
+                "role": "Duelist",
+                "country": "Poland",
+                "is_captain": false
+            },
+            {
+                "username": "Meteor951",
+                "real_name": "Amelia Lopez",
+                "role": "Duelist",
+                "country": "Germany",
+                "is_captain": false
+            }
+        ],
+        "player_count": 5
+    },
+    {
+        "id": 25,
+        "name": "OG",
+        "short_name": "OG",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/OG.svg\/400px-OG.svg.png",
+        "region": "Europe",
+        "country": "France",
+        "country_code": "FR",
+        "platform": "PC",
+        "tier": "B",
+        "rating": 2141,
+        "rank": 25,
+        "total_earnings": 188629,
+        "founded": "2022-04-23",
+        "status": "Active",
+        "website": "https:\/\/www.og.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/og",
+            "instagram": "https:\/\/instagram.com\/og",
+            "youtube": "https:\/\/youtube.com\/c\/OG",
+            "twitch": "https:\/\/twitch.tv\/og"
+        },
+        "roster": [
+            {
+                "username": "MaKo818",
+                "real_name": "Aaron Carter",
+                "role": "Duelist",
+                "country": "Russia",
+                "is_captain": true
+            },
+            {
+                "username": "d3ffo584",
+                "real_name": "Paul Martinez",
+                "role": "Vanguard",
+                "country": "Germany",
+                "is_captain": false
+            },
+            {
+                "username": "v1xen219",
+                "real_name": "Olivia King",
+                "role": "Vanguard",
+                "country": "Germany",
+                "is_captain": false
+            },
+            {
+                "username": "d4v41646",
+                "real_name": "Thomas Gonzalez",
+                "role": "Duelist",
+                "country": "Russia",
+                "is_captain": false
+            },
+            {
+                "username": "AvovA556",
+                "real_name": "Samuel Sanchez",
+                "role": "Vanguard",
+                "country": "Turkey",
+                "is_captain": false
+            }
+        ],
+        "player_count": 5
+    },
+    {
+        "id": 26,
+        "name": "Ninjas in Pyjamas",
+        "short_name": "NP",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/Ninjas+in+Pyjamas.svg\/400px-Ninjas+in+Pyjamas.svg.png",
+        "region": "Europe",
+        "country": "Spain",
+        "country_code": "ES",
+        "platform": "PC",
+        "tier": "C",
+        "rating": 2179,
+        "rank": 26,
+        "total_earnings": 129130,
+        "founded": "2019-05-23",
+        "status": "Inactive",
+        "website": "https:\/\/www.ninjasinpyjamas.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/ninjasinpyjamas",
+            "instagram": "https:\/\/instagram.com\/ninjasinpyjamas",
+            "youtube": "https:\/\/youtube.com\/c\/NinjasinPyjamas",
+            "twitch": "https:\/\/twitch.tv\/ninjasinpyjamas"
+        },
+        "roster": [
+            {
+                "username": "Zest389",
+                "real_name": "Sebastian Garcia",
+                "role": "Vanguard",
+                "country": "Turkey",
+                "is_captain": true
+            },
+            {
+                "username": "leaf485",
+                "real_name": "Jacob Taylor",
+                "role": "Vanguard",
+                "country": "United Kingdom",
+                "is_captain": false
+            },
+            {
+                "username": "Khalil893",
+                "real_name": "Christian Green",
+                "role": "Duelist",
+                "country": "Poland",
+                "is_captain": false
+            },
+            {
+                "username": "Mistic928",
+                "real_name": "Nathan Brown",
+                "role": "Strategist",
+                "country": "Spain",
+                "is_captain": false
+            },
+            {
+                "username": "k1Ng515",
+                "real_name": "Noah Jones",
+                "role": "Strategist",
+                "country": "Russia",
+                "is_captain": false
+            }
+        ],
+        "player_count": 5
+    },
+    {
+        "id": 27,
+        "name": "Astralis",
+        "short_name": "AST",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/Astralis.svg\/400px-Astralis.svg.png",
+        "region": "Europe",
+        "country": "Russia",
+        "country_code": "RU",
+        "platform": "PC",
+        "tier": "C",
+        "rating": 2086,
+        "rank": 27,
+        "total_earnings": 88162,
+        "founded": "2021-01-09",
+        "status": "Inactive",
+        "website": "https:\/\/www.astralis.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/astralis",
+            "instagram": "https:\/\/instagram.com\/astralis",
+            "youtube": "https:\/\/youtube.com\/c\/Astralis",
+            "twitch": "https:\/\/twitch.tv\/astralis"
+        },
+        "roster": [
+            {
+                "username": "soulcas930",
+                "real_name": "Christian Mitchell",
+                "role": "Vanguard",
+                "country": "Spain",
+                "is_captain": true
+            },
+            {
+                "username": "hoody896",
+                "real_name": "Jackson Perez",
+                "role": "Duelist",
+                "country": "Spain",
+                "is_captain": false
+            },
+            {
+                "username": "exy167",
+                "real_name": "Oliver Walker",
+                "role": "Strategist",
+                "country": "United Kingdom",
+                "is_captain": false
+            },
+            {
+                "username": "Marved129",
+                "real_name": "Oliver Scott",
+                "role": "Vanguard",
+                "country": "Poland",
+                "is_captain": false
+            },
+            {
+                "username": "mixwell355",
+                "real_name": "William Green",
+                "role": "Strategist",
+                "country": "Netherlands",
+                "is_captain": false
+            }
+        ],
+        "player_count": 5
+    },
+    {
+        "id": 28,
+        "name": "FunPlus Phoenix",
+        "short_name": "FP",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/FunPlus+Phoenix.svg\/400px-FunPlus+Phoenix.svg.png",
+        "region": "Europe",
+        "country": "Netherlands",
+        "country_code": "NL",
+        "platform": "PC",
+        "tier": "B",
+        "rating": 1459,
+        "rank": 28,
+        "total_earnings": 180119,
+        "founded": "2020-06-03",
+        "status": "Active",
+        "website": "https:\/\/www.funplusphoenix.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/funplusphoenix",
+            "instagram": "https:\/\/instagram.com\/funplusphoenix",
+            "youtube": "https:\/\/youtube.com\/c\/FunPlusPhoenix",
+            "twitch": "https:\/\/twitch.tv\/funplusphoenix"
+        },
+        "roster": [
+            {
+                "username": "zombs982",
+                "real_name": "Gabriel Allen",
+                "role": "Duelist",
+                "country": "Netherlands",
+                "is_captain": true
+            },
+            {
+                "username": "Derke823",
+                "real_name": "Anthony Lewis",
+                "role": "Vanguard",
+                "country": "Netherlands",
+                "is_captain": false
+            },
+            {
+                "username": "Chronicle865",
+                "real_name": "Joseph Rivera",
+                "role": "Vanguard",
+                "country": "Germany",
+                "is_captain": false
+            },
+            {
+                "username": "mixwell609",
+                "real_name": "Samuel Sanchez",
+                "role": "Duelist",
+                "country": "Poland",
+                "is_captain": false
+            },
+            {
+                "username": "saadhak716",
+                "real_name": "Aaron Johnson",
+                "role": "Duelist",
+                "country": "United Kingdom",
+                "is_captain": false
+            }
+        ],
+        "player_count": 5
+    },
+    {
+        "id": 29,
+        "name": "Excel Esports",
+        "short_name": "EE",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/Excel+Esports.svg\/400px-Excel+Esports.svg.png",
+        "region": "Europe",
+        "country": "Russia",
+        "country_code": "RU",
+        "platform": "PC",
+        "tier": "A",
+        "rating": 1922,
+        "rank": 29,
+        "total_earnings": 77653,
+        "founded": "2020-12-10",
+        "status": "Active",
+        "website": "https:\/\/www.excelesports.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/excelesports",
+            "instagram": "https:\/\/instagram.com\/excelesports",
+            "youtube": "https:\/\/youtube.com\/c\/ExcelEsports",
+            "twitch": "https:\/\/twitch.tv\/excelesports"
+        },
+        "roster": [
+            {
+                "username": "crashies909",
+                "real_name": "Noah Torres",
+                "role": "Vanguard",
+                "country": "Germany",
+                "is_captain": true
+            },
+            {
+                "username": "Foxy9905",
+                "real_name": "Charlotte Carter",
+                "role": "Strategist",
+                "country": "Denmark",
+                "is_captain": false
+            },
+            {
+                "username": "leaf608",
+                "real_name": "Olivia Gonzalez",
+                "role": "Vanguard",
+                "country": "United Kingdom",
+                "is_captain": false
+            },
+            {
+                "username": "v1xen147",
+                "real_name": "Samuel Harris",
+                "role": "Strategist",
+                "country": "Poland",
+                "is_captain": false
+            },
+            {
+                "username": "mwzera800",
+                "real_name": "Thomas Jackson",
+                "role": "Duelist",
+                "country": "France",
+                "is_captain": false
+            }
+        ],
+        "player_count": 5
+    },
+    {
+        "id": 30,
+        "name": "LDLC",
+        "short_name": "LDL",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/LDLC.svg\/400px-LDLC.svg.png",
+        "region": "Europe",
+        "country": "France",
+        "country_code": "FR",
+        "platform": "PC",
+        "tier": "B",
+        "rating": 1419,
+        "rank": 30,
+        "total_earnings": 126785,
+        "founded": "2022-01-23",
+        "status": "Active",
+        "website": "https:\/\/www.ldlc.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/ldlc",
+            "instagram": "https:\/\/instagram.com\/ldlc",
+            "youtube": "https:\/\/youtube.com\/c\/LDLC",
+            "twitch": "https:\/\/twitch.tv\/ldlc"
+        },
+        "roster": [
+            {
+                "username": "Khalil719",
+                "real_name": "Charlotte King",
+                "role": "Vanguard",
+                "country": "Netherlands",
+                "is_captain": true
+            },
+            {
+                "username": "soulcas740",
+                "real_name": "Thomas Wright",
+                "role": "Strategist",
+                "country": "Sweden",
+                "is_captain": false
+            },
+            {
+                "username": "pANcada972",
+                "real_name": "Samuel Robinson",
+                "role": "Strategist",
+                "country": "France",
+                "is_captain": false
+            },
+            {
+                "username": "sheydos728",
+                "real_name": "Daniel Martin",
+                "role": "Vanguard",
+                "country": "Netherlands",
+                "is_captain": false
+            },
+            {
+                "username": "mwzera271",
+                "real_name": "Tyler Johnson",
+                "role": "Strategist",
+                "country": "Russia",
+                "is_captain": false
+            }
+        ],
+        "player_count": 5
+    },
+    {
+        "id": 31,
+        "name": "Paper Rex",
+        "short_name": "PR",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/Paper+Rex.svg\/400px-Paper+Rex.svg.png",
+        "region": "Asia",
+        "country": "Vietnam",
+        "country_code": "VN",
+        "platform": "PC",
+        "tier": "C",
+        "rating": 1550,
+        "rank": 31,
+        "total_earnings": 48208,
+        "founded": "2022-10-22",
+        "status": "Active",
+        "website": "https:\/\/www.paperrex.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/paperrex",
+            "instagram": "https:\/\/instagram.com\/paperrex",
+            "youtube": "https:\/\/youtube.com\/c\/PaperRex",
+            "twitch": "https:\/\/twitch.tv\/paperrex"
+        },
+        "roster": [
+            {
+                "username": "Foxy9620",
+                "real_name": "William Young",
+                "role": "Strategist",
+                "country": "Thailand",
+                "is_captain": true
+            },
+            {
+                "username": "nukkye847",
+                "real_name": "Oliver Carter",
+                "role": "Duelist",
+                "country": "India",
+                "is_captain": false
+            },
+            {
+                "username": "AZK182",
+                "real_name": "John Perez",
+                "role": "Duelist",
+                "country": "Indonesia",
+                "is_captain": false
+            },
+            {
+                "username": "mindfreak966",
+                "real_name": "Steven Anderson",
+                "role": "Vanguard",
+                "country": "Malaysia",
+                "is_captain": false
+            },
+            {
+                "username": "Alfajer112",
+                "real_name": "Donald Torres",
+                "role": "Strategist",
+                "country": "Malaysia",
+                "is_captain": false
+            }
+        ],
+        "player_count": 5
+    },
+    {
+        "id": 32,
+        "name": "XERXIA",
+        "short_name": "XER",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/XERXIA.svg\/400px-XERXIA.svg.png",
+        "region": "Asia",
+        "country": "Thailand",
+        "country_code": "TH",
+        "platform": "PC",
+        "tier": "C",
+        "rating": 2323,
+        "rank": 32,
+        "total_earnings": 158774,
+        "founded": "2021-11-11",
+        "status": "Active",
+        "website": "https:\/\/www.xerxia.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/xerxia",
+            "instagram": "https:\/\/instagram.com\/xerxia",
+            "youtube": "https:\/\/youtube.com\/c\/XERXIA",
+            "twitch": "https:\/\/twitch.tv\/xerxia"
+        },
+        "roster": [
+            {
+                "username": "Mazin746",
+                "real_name": "William Jones",
+                "role": "Strategist",
+                "country": "Vietnam",
+                "is_captain": true
+            },
+            {
+                "username": "crashies473",
+                "real_name": "Amelia Lee",
+                "role": "Strategist",
+                "country": "Singapore",
+                "is_captain": false
+            },
+            {
+                "username": "Lakia917",
+                "real_name": "Robert Nguyen",
+                "role": "Vanguard",
+                "country": "Thailand",
+                "is_captain": false
+            },
+            {
+                "username": "zombs531",
+                "real_name": "Tyler Hernandez",
+                "role": "Vanguard",
+                "country": "India",
+                "is_captain": false
+            },
+            {
+                "username": "Foxy9407",
+                "real_name": "Liam Anderson",
+                "role": "Duelist",
+                "country": "Singapore",
+                "is_captain": false
+            }
+        ],
+        "player_count": 5
+    },
+    {
+        "id": 33,
+        "name": "FULL SENSE",
+        "short_name": "FS",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/FULL+SENSE.svg\/400px-FULL+SENSE.svg.png",
+        "region": "Asia",
+        "country": "Philippines",
+        "country_code": "PH",
+        "platform": "PC",
+        "tier": "A",
+        "rating": 2121,
+        "rank": 33,
+        "total_earnings": 80329,
+        "founded": "2023-11-18",
+        "status": "Inactive",
+        "website": "https:\/\/www.fullsense.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/fullsense",
+            "instagram": "https:\/\/instagram.com\/fullsense",
+            "youtube": "https:\/\/youtube.com\/c\/FULLSENSE",
+            "twitch": "https:\/\/twitch.tv\/fullsense"
+        },
+        "roster": [
+            {
+                "username": "s0m396",
+                "real_name": "James Young",
+                "role": "Strategist",
+                "country": "Malaysia",
+                "is_captain": true
+            },
+            {
+                "username": "exy367",
+                "real_name": "Isabella Lopez",
+                "role": "Strategist",
+                "country": "Indonesia",
+                "is_captain": false
+            },
+            {
+                "username": "Jinggg937",
+                "real_name": "Joseph White",
+                "role": "Vanguard",
+                "country": "India",
+                "is_captain": false
+            },
+            {
+                "username": "aspas122",
+                "real_name": "Elijah Sanchez",
+                "role": "Vanguard",
+                "country": "Malaysia",
+                "is_captain": false
+            },
+            {
+                "username": "Rb422",
+                "real_name": "Samuel Baker",
+                "role": "Duelist",
+                "country": "India",
+                "is_captain": false
+            }
+        ],
+        "player_count": 5
+    },
+    {
+        "id": 34,
+        "name": "BOOM Esports",
+        "short_name": "BE",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/BOOM+Esports.svg\/400px-BOOM+Esports.svg.png",
+        "region": "Asia",
+        "country": "Malaysia",
+        "country_code": "MY",
+        "platform": "PC",
+        "tier": "C",
+        "rating": 2213,
+        "rank": 34,
+        "total_earnings": 166442,
+        "founded": "2023-04-19",
+        "status": "Active",
+        "website": "https:\/\/www.boomesports.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/boomesports",
+            "instagram": "https:\/\/instagram.com\/boomesports",
+            "youtube": "https:\/\/youtube.com\/c\/BOOMEsports",
+            "twitch": "https:\/\/twitch.tv\/boomesports"
+        },
+        "roster": [
+            {
+                "username": "Lakia742",
+                "real_name": "Henry Mitchell",
+                "role": "Strategist",
+                "country": "Indonesia",
+                "is_captain": true
+            },
+            {
+                "username": "Less808",
+                "real_name": "Christopher Nguyen",
+                "role": "Vanguard",
+                "country": "Singapore",
+                "is_captain": false
+            },
+            {
+                "username": "Victor726",
+                "real_name": "Matthew Rivera",
+                "role": "Vanguard",
+                "country": "Philippines",
+                "is_captain": false
+            },
+            {
+                "username": "stax134",
+                "real_name": "Isabella Wilson",
+                "role": "Duelist",
+                "country": "Indonesia",
+                "is_captain": false
+            },
+            {
+                "username": "stax222",
+                "real_name": "Mia Harris",
+                "role": "Strategist",
+                "country": "Malaysia",
+                "is_captain": false
+            }
+        ],
+        "player_count": 5
+    },
+    {
+        "id": 35,
+        "name": "Team Secret",
+        "short_name": "TS",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/Team+Secret.svg\/400px-Team+Secret.svg.png",
+        "region": "Asia",
+        "country": "Philippines",
+        "country_code": "PH",
+        "platform": "PC",
+        "tier": "A",
+        "rating": 2500,
+        "rank": 35,
+        "total_earnings": 35466,
+        "founded": "2021-07-16",
+        "status": "Active",
+        "website": "https:\/\/www.teamsecret.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/teamsecret",
+            "instagram": "https:\/\/instagram.com\/teamsecret",
+            "youtube": "https:\/\/youtube.com\/c\/TeamSecret",
+            "twitch": "https:\/\/twitch.tv\/teamsecret"
+        },
+        "roster": [
+            {
+                "username": "Hiko669",
+                "real_name": "Adam Hill",
+                "role": "Vanguard",
+                "country": "Indonesia",
+                "is_captain": true
+            },
+            {
+                "username": "Nivera763",
+                "real_name": "Sebastian Carter",
+                "role": "Vanguard",
+                "country": "India",
+                "is_captain": false
+            },
+            {
+                "username": "Mistic168",
+                "real_name": "Elijah Martin",
+                "role": "Vanguard",
+                "country": "Singapore",
+                "is_captain": false
+            },
+            {
+                "username": "Alfajer476",
+                "real_name": "Noah Jones",
+                "role": "Duelist",
+                "country": "India",
+                "is_captain": false
+            },
+            {
+                "username": "nitr0982",
+                "real_name": "Elijah Allen",
+                "role": "Duelist",
+                "country": "Vietnam",
+                "is_captain": false
+            }
+        ],
+        "player_count": 5
+    },
+    {
+        "id": 36,
+        "name": "Rex Regum Qeon",
+        "short_name": "RRQ",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/Rex+Regum+Qeon.svg\/400px-Rex+Regum+Qeon.svg.png",
+        "region": "Asia",
+        "country": "Thailand",
+        "country_code": "TH",
+        "platform": "PC",
+        "tier": "C",
+        "rating": 1055,
+        "rank": 36,
+        "total_earnings": 48956,
+        "founded": "2022-10-07",
+        "status": "Active",
+        "website": "https:\/\/www.rexregumqeon.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/rexregumqeon",
+            "instagram": "https:\/\/instagram.com\/rexregumqeon",
+            "youtube": "https:\/\/youtube.com\/c\/RexRegumQeon",
+            "twitch": "https:\/\/twitch.tv\/rexregumqeon"
+        },
+        "roster": [
+            {
+                "username": "steel992",
+                "real_name": "Kenneth Wilson",
+                "role": "Duelist",
+                "country": "Singapore",
+                "is_captain": true
+            },
+            {
+                "username": "Chronicle506",
+                "real_name": "Steven Harris",
+                "role": "Vanguard",
+                "country": "Vietnam",
+                "is_captain": false
+            },
+            {
+                "username": "nitr0545",
+                "real_name": "Ava Johnson",
+                "role": "Strategist",
+                "country": "Philippines",
+                "is_captain": false
+            },
+            {
+                "username": "stellar847",
+                "real_name": "Donald Hall",
+                "role": "Duelist",
+                "country": "Indonesia",
+                "is_captain": false
+            },
+            {
+                "username": "stax106",
+                "real_name": "Andrew Wright",
+                "role": "Vanguard",
+                "country": "Singapore",
+                "is_captain": false
+            }
+        ],
+        "player_count": 5
+    },
+    {
+        "id": 37,
+        "name": "Alter Ego",
+        "short_name": "AE",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/Alter+Ego.svg\/400px-Alter+Ego.svg.png",
+        "region": "Asia",
+        "country": "India",
+        "country_code": "IN",
+        "platform": "PC",
+        "tier": "B",
+        "rating": 1302,
+        "rank": 37,
+        "total_earnings": 176141,
+        "founded": "2021-05-24",
+        "status": "Active",
+        "website": "https:\/\/www.alterego.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/alterego",
+            "instagram": "https:\/\/instagram.com\/alterego",
+            "youtube": "https:\/\/youtube.com\/c\/AlterEgo",
+            "twitch": "https:\/\/twitch.tv\/alterego"
+        },
+        "roster": [
+            {
+                "username": "pipson115",
+                "real_name": "Lucas Brown",
+                "role": "Strategist",
+                "country": "Philippines",
+                "is_captain": true
+            },
+            {
+                "username": "Nivera973",
+                "real_name": "William Thomas",
+                "role": "Vanguard",
+                "country": "Indonesia",
+                "is_captain": false
+            },
+            {
+                "username": "s0m118",
+                "real_name": "Adam Miller",
+                "role": "Strategist",
+                "country": "Philippines",
+                "is_captain": false
+            },
+            {
+                "username": "Boaster986",
+                "real_name": "Aaron Hill",
+                "role": "Vanguard",
+                "country": "Thailand",
+                "is_captain": false
+            },
+            {
+                "username": "Redgar864",
+                "real_name": "Harper Garcia",
+                "role": "Duelist",
+                "country": "Singapore",
+                "is_captain": false
+            }
+        ],
+        "player_count": 5
+    },
+    {
+        "id": 38,
+        "name": "BLEED",
+        "short_name": "BLE",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/BLEED.svg\/400px-BLEED.svg.png",
+        "region": "Asia",
+        "country": "Singapore",
+        "country_code": "SG",
+        "platform": "PC",
+        "tier": "A",
+        "rating": 1418,
+        "rank": 38,
+        "total_earnings": 62638,
+        "founded": "2019-03-08",
+        "status": "Active",
+        "website": "https:\/\/www.bleed.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/bleed",
+            "instagram": "https:\/\/instagram.com\/bleed",
+            "youtube": "https:\/\/youtube.com\/c\/BLEED",
+            "twitch": "https:\/\/twitch.tv\/bleed"
+        },
+        "roster": [
+            {
+                "username": "d4v41935",
+                "real_name": "Sebastian Roberts",
+                "role": "Duelist",
+                "country": "Malaysia",
+                "is_captain": true
+            },
+            {
+                "username": "Alfajer264",
+                "real_name": "James Torres",
+                "role": "Strategist",
+                "country": "Singapore",
+                "is_captain": false
+            },
+            {
+                "username": "s0m127",
+                "real_name": "Lucas Martinez",
+                "role": "Vanguard",
+                "country": "Malaysia",
+                "is_captain": false
+            },
+            {
+                "username": "nukkye158",
+                "real_name": "Richard Perez",
+                "role": "Duelist",
+                "country": "Singapore",
+                "is_captain": false
+            },
+            {
+                "username": "jamppi598",
+                "real_name": "Daniel Garcia",
+                "role": "Vanguard",
+                "country": "India",
+                "is_captain": false
+            }
+        ],
+        "player_count": 5
+    },
+    {
+        "id": 39,
+        "name": "ORDER",
+        "short_name": "ORD",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/ORDER.svg\/400px-ORDER.svg.png",
+        "region": "Asia",
+        "country": "Indonesia",
+        "country_code": "ID",
+        "platform": "PC",
+        "tier": "B",
+        "rating": 1087,
+        "rank": 39,
+        "total_earnings": 149463,
+        "founded": "2022-02-11",
+        "status": "Active",
+        "website": "https:\/\/www.order.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/order",
+            "instagram": "https:\/\/instagram.com\/order",
+            "youtube": "https:\/\/youtube.com\/c\/ORDER",
+            "twitch": "https:\/\/twitch.tv\/order"
+        },
+        "roster": [
+            {
+                "username": "ethan232",
+                "real_name": "Joseph White",
+                "role": "Vanguard",
+                "country": "India",
+                "is_captain": true
+            },
+            {
+                "username": "ScreaM244",
+                "real_name": "Anthony Jones",
+                "role": "Vanguard",
+                "country": "Thailand",
+                "is_captain": false
+            },
+            {
+                "username": "Asuna516",
+                "real_name": "Alexander Gonzalez",
+                "role": "Duelist",
+                "country": "Singapore",
+                "is_captain": false
+            },
+            {
+                "username": "mixwell675",
+                "real_name": "Henry Mitchell",
+                "role": "Strategist",
+                "country": "India",
+                "is_captain": false
+            },
+            {
+                "username": "TenZ832",
+                "real_name": "Oliver Adams",
+                "role": "Duelist",
+                "country": "Indonesia",
+                "is_captain": false
+            }
+        ],
+        "player_count": 5
+    },
+    {
+        "id": 40,
+        "name": "Soniqs",
+        "short_name": "SON",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/Soniqs.svg\/400px-Soniqs.svg.png",
+        "region": "Asia",
+        "country": "Philippines",
+        "country_code": "PH",
+        "platform": "PC",
+        "tier": "B",
+        "rating": 1795,
+        "rank": 40,
+        "total_earnings": 88295,
+        "founded": "2021-10-23",
+        "status": "Inactive",
+        "website": "https:\/\/www.soniqs.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/soniqs",
+            "instagram": "https:\/\/instagram.com\/soniqs",
+            "youtube": "https:\/\/youtube.com\/c\/Soniqs",
+            "twitch": "https:\/\/twitch.tv\/soniqs"
+        },
+        "roster": [
+            {
+                "username": "Mistic105",
+                "real_name": "Anthony Hernandez",
+                "role": "Strategist",
+                "country": "Philippines",
+                "is_captain": true
+            },
+            {
+                "username": "Victor933",
+                "real_name": "Kenneth Robinson",
+                "role": "Vanguard",
+                "country": "India",
+                "is_captain": false
+            },
+            {
+                "username": "Khalil596",
+                "real_name": "Samuel Harris",
+                "role": "Duelist",
+                "country": "Philippines",
+                "is_captain": false
+            },
+            {
+                "username": "Meteor724",
+                "real_name": "Charlotte Sanchez",
+                "role": "Duelist",
+                "country": "Thailand",
+                "is_captain": false
+            },
+            {
+                "username": "AvovA925",
+                "real_name": "Benjamin Taylor",
+                "role": "Strategist",
+                "country": "Philippines",
+                "is_captain": false
+            }
+        ],
+        "player_count": 5
+    },
+    {
+        "id": 41,
+        "name": "Global Esports",
+        "short_name": "GE",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/Global+Esports.svg\/400px-Global+Esports.svg.png",
+        "region": "Asia",
+        "country": "Thailand",
+        "country_code": "TH",
+        "platform": "PC",
+        "tier": "C",
+        "rating": 2317,
+        "rank": 41,
+        "total_earnings": 90200,
+        "founded": "2022-04-24",
+        "status": "Active",
+        "website": "https:\/\/www.globalesports.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/globalesports",
+            "instagram": "https:\/\/instagram.com\/globalesports",
+            "youtube": "https:\/\/youtube.com\/c\/GlobalEsports",
+            "twitch": "https:\/\/twitch.tv\/globalesports"
+        },
+        "roster": [
+            {
+                "username": "FNS285",
+                "real_name": "Matthew Smith",
+                "role": "Vanguard",
+                "country": "India",
+                "is_captain": true
+            },
+            {
+                "username": "FNS435",
+                "real_name": "Anthony Martinez",
+                "role": "Strategist",
+                "country": "Vietnam",
+                "is_captain": false
+            },
+            {
+                "username": "nAts162",
+                "real_name": "William King",
+                "role": "Strategist",
+                "country": "Singapore",
+                "is_captain": false
+            },
+            {
+                "username": "soulcas942",
+                "real_name": "Mia Gonzalez",
+                "role": "Vanguard",
+                "country": "Indonesia",
+                "is_captain": false
+            },
+            {
+                "username": "pANcada739",
+                "real_name": "Joseph Nelson",
+                "role": "Duelist",
+                "country": "Indonesia",
+                "is_captain": false
+            }
+        ],
+        "player_count": 5
+    },
+    {
+        "id": 42,
+        "name": "Velocity Gaming",
+        "short_name": "VG",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/Velocity+Gaming.svg\/400px-Velocity+Gaming.svg.png",
+        "region": "Asia",
+        "country": "Thailand",
+        "country_code": "TH",
+        "platform": "PC",
+        "tier": "B",
+        "rating": 1926,
+        "rank": 42,
+        "total_earnings": 74846,
+        "founded": "2022-04-20",
+        "status": "Active",
+        "website": "https:\/\/www.velocitygaming.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/velocitygaming",
+            "instagram": "https:\/\/instagram.com\/velocitygaming",
+            "youtube": "https:\/\/youtube.com\/c\/VelocityGaming",
+            "twitch": "https:\/\/twitch.tv\/velocitygaming"
+        },
+        "roster": [
+            {
+                "username": "Lakia660",
+                "real_name": "Joseph Wright",
+                "role": "Strategist",
+                "country": "Thailand",
+                "is_captain": true
+            },
+            {
+                "username": "stax894",
+                "real_name": "Ethan Martinez",
+                "role": "Strategist",
+                "country": "Vietnam",
+                "is_captain": false
+            },
+            {
+                "username": "SicK818",
+                "real_name": "James Carter",
+                "role": "Strategist",
+                "country": "India",
+                "is_captain": false
+            },
+            {
+                "username": "soulcas125",
+                "real_name": "Richard Nelson",
+                "role": "Vanguard",
+                "country": "Philippines",
+                "is_captain": false
+            },
+            {
+                "username": "Foxy9209",
+                "real_name": "Anthony Rodriguez",
+                "role": "Vanguard",
+                "country": "Vietnam",
+                "is_captain": false
+            }
+        ],
+        "player_count": 5
+    },
+    {
+        "id": 43,
+        "name": "EDward Gaming",
+        "short_name": "EG",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/EDward+Gaming.svg\/400px-EDward+Gaming.svg.png",
+        "region": "China",
+        "country": "China",
+        "country_code": "CN",
+        "platform": "PC",
+        "tier": "B",
+        "rating": 1397,
+        "rank": 43,
+        "total_earnings": 110745,
+        "founded": "2021-11-30",
+        "status": "Inactive",
+        "website": "https:\/\/www.edwardgaming.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/edwardgaming",
+            "instagram": "https:\/\/instagram.com\/edwardgaming",
+            "youtube": "https:\/\/youtube.com\/c\/EDwardGaming",
+            "twitch": "https:\/\/twitch.tv\/edwardgaming"
+        },
+        "roster": [
+            {
+                "username": "nitr0722",
+                "real_name": "Henry Baker",
+                "role": "Vanguard",
+                "country": "China",
+                "is_captain": true
+            },
+            {
+                "username": "k1Ng715",
+                "real_name": "Lucas Flores",
+                "role": "Vanguard",
+                "country": "China",
+                "is_captain": false
+            },
+            {
+                "username": "BeYN580",
+                "real_name": "Benjamin Wright",
+                "role": "Strategist",
+                "country": "China",
+                "is_captain": false
+            },
+            {
+                "username": "hoody756",
+                "real_name": "Elijah King",
+                "role": "Duelist",
+                "country": "China",
+                "is_captain": false
+            },
+            {
+                "username": "Hiko667",
+                "real_name": "Mason White",
+                "role": "Vanguard",
+                "country": "China",
+                "is_captain": false
+            }
+        ],
+        "player_count": 5
+    },
+    {
+        "id": 44,
+        "name": "FunPlus Phoenix",
+        "short_name": "FP",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/FunPlus+Phoenix.svg\/400px-FunPlus+Phoenix.svg.png",
+        "region": "China",
+        "country": "China",
+        "country_code": "CN",
+        "platform": "PC",
+        "tier": "A",
+        "rating": 2328,
+        "rank": 44,
+        "total_earnings": 186604,
+        "founded": "2023-12-16",
+        "status": "Active",
+        "website": "https:\/\/www.funplusphoenix.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/funplusphoenix",
+            "instagram": "https:\/\/instagram.com\/funplusphoenix",
+            "youtube": "https:\/\/youtube.com\/c\/FunPlusPhoenix",
+            "twitch": "https:\/\/twitch.tv\/funplusphoenix"
+        },
+        "roster": [
+            {
+                "username": "Jinggg561",
+                "real_name": "Sophia Carter",
+                "role": "Strategist",
+                "country": "China",
+                "is_captain": true
+            },
+            {
+                "username": "pANcada966",
+                "real_name": "Samuel Johnson",
+                "role": "Duelist",
+                "country": "China",
+                "is_captain": false
+            },
+            {
+                "username": "Boaster847",
+                "real_name": "Alexander Hall",
+                "role": "Duelist",
+                "country": "China",
+                "is_captain": false
+            },
+            {
+                "username": "nitr0266",
+                "real_name": "Harper Jackson",
+                "role": "Vanguard",
+                "country": "China",
+                "is_captain": false
+            },
+            {
+                "username": "Less371",
+                "real_name": "Kenneth Hill",
+                "role": "Vanguard",
+                "country": "China",
+                "is_captain": false
+            }
+        ],
+        "player_count": 5
+    },
+    {
+        "id": 45,
+        "name": "Bilibili Gaming",
+        "short_name": "BG",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/Bilibili+Gaming.svg\/400px-Bilibili+Gaming.svg.png",
+        "region": "China",
+        "country": "China",
+        "country_code": "CN",
+        "platform": "PC",
+        "tier": "B",
+        "rating": 2286,
+        "rank": 45,
+        "total_earnings": 39550,
+        "founded": "2022-11-19",
+        "status": "Active",
+        "website": "https:\/\/www.bilibiligaming.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/bilibiligaming",
+            "instagram": "https:\/\/instagram.com\/bilibiligaming",
+            "youtube": "https:\/\/youtube.com\/c\/BilibiliGaming",
+            "twitch": "https:\/\/twitch.tv\/bilibiligaming"
+        },
+        "roster": [
+            {
+                "username": "nAts671",
+                "real_name": "Anthony Williams",
+                "role": "Duelist",
+                "country": "China",
+                "is_captain": true
+            },
+            {
+                "username": "soulcas636",
+                "real_name": "Sebastian Thompson",
+                "role": "Duelist",
+                "country": "China",
+                "is_captain": false
+            },
+            {
+                "username": "saadhak293",
+                "real_name": "Adam Martin",
+                "role": "Vanguard",
+                "country": "China",
+                "is_captain": false
+            },
+            {
+                "username": "pANcada459",
+                "real_name": "Thomas Ramirez",
+                "role": "Duelist",
+                "country": "China",
+                "is_captain": false
+            },
+            {
+                "username": "crashies303",
+                "real_name": "Thomas Wilson",
+                "role": "Strategist",
+                "country": "China",
+                "is_captain": false
+            }
+        ],
+        "player_count": 5
+    },
+    {
+        "id": 46,
+        "name": "JD Gaming",
+        "short_name": "G",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/JD+Gaming.svg\/400px-JD+Gaming.svg.png",
+        "region": "China",
+        "country": "China",
+        "country_code": "CN",
+        "platform": "PC",
+        "tier": "A",
+        "rating": 1770,
+        "rank": 46,
+        "total_earnings": 118224,
+        "founded": "2019-05-09",
+        "status": "Active",
+        "website": "https:\/\/www.jdgaming.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/jdgaming",
+            "instagram": "https:\/\/instagram.com\/jdgaming",
+            "youtube": "https:\/\/youtube.com\/c\/JDGaming",
+            "twitch": "https:\/\/twitch.tv\/jdgaming"
+        },
+        "roster": [
+            {
+                "username": "s0m773",
+                "real_name": "Richard Jones",
+                "role": "Duelist",
+                "country": "China",
+                "is_captain": true
+            },
+            {
+                "username": "heat646",
+                "real_name": "Noah Carter",
+                "role": "Vanguard",
+                "country": "China",
+                "is_captain": false
+            },
+            {
+                "username": "nukkye902",
+                "real_name": "Andrew Anderson",
+                "role": "Vanguard",
+                "country": "China",
+                "is_captain": false
+            },
+            {
+                "username": "Hiko886",
+                "real_name": "Matthew Carter",
+                "role": "Strategist",
+                "country": "China",
+                "is_captain": false
+            },
+            {
+                "username": "Foxy9970",
+                "real_name": "Henry Wilson",
+                "role": "Vanguard",
+                "country": "China",
+                "is_captain": false
+            }
+        ],
+        "player_count": 5
+    },
+    {
+        "id": 47,
+        "name": "ThunderTalk Gaming",
+        "short_name": "TG",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/ThunderTalk+Gaming.svg\/400px-ThunderTalk+Gaming.svg.png",
+        "region": "China",
+        "country": "China",
+        "country_code": "CN",
+        "platform": "PC",
+        "tier": "A",
+        "rating": 1331,
+        "rank": 47,
+        "total_earnings": 38325,
+        "founded": "2020-01-25",
+        "status": "Active",
+        "website": "https:\/\/www.thundertalkgaming.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/thundertalkgaming",
+            "instagram": "https:\/\/instagram.com\/thundertalkgaming",
+            "youtube": "https:\/\/youtube.com\/c\/ThunderTalkGaming",
+            "twitch": "https:\/\/twitch.tv\/thundertalkgaming"
+        },
+        "roster": [
+            {
+                "username": "zunba201",
+                "real_name": "Joseph Hernandez",
+                "role": "Vanguard",
+                "country": "China",
+                "is_captain": true
+            },
+            {
+                "username": "Benkai438",
+                "real_name": "Nathan Davis",
+                "role": "Strategist",
+                "country": "China",
+                "is_captain": false
+            },
+            {
+                "username": "heat314",
+                "real_name": "Charlotte Hall",
+                "role": "Strategist",
+                "country": "China",
+                "is_captain": false
+            },
+            {
+                "username": "dapr442",
+                "real_name": "Paul Lewis",
+                "role": "Strategist",
+                "country": "China",
+                "is_captain": false
+            },
+            {
+                "username": "Foxy9969",
+                "real_name": "Sebastian Garcia",
+                "role": "Strategist",
+                "country": "China",
+                "is_captain": false
+            }
+        ],
+        "player_count": 5
+    },
+    {
+        "id": 48,
+        "name": "Rare Atom",
+        "short_name": "RA",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/Rare+Atom.svg\/400px-Rare+Atom.svg.png",
+        "region": "China",
+        "country": "China",
+        "country_code": "CN",
+        "platform": "PC",
+        "tier": "A",
+        "rating": 2388,
+        "rank": 48,
+        "total_earnings": 127540,
+        "founded": "2020-10-30",
+        "status": "Active",
+        "website": "https:\/\/www.rareatom.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/rareatom",
+            "instagram": "https:\/\/instagram.com\/rareatom",
+            "youtube": "https:\/\/youtube.com\/c\/RareAtom",
+            "twitch": "https:\/\/twitch.tv\/rareatom"
+        },
+        "roster": [
+            {
+                "username": "ScreaM711",
+                "real_name": "John Hill",
+                "role": "Strategist",
+                "country": "China",
+                "is_captain": true
+            },
+            {
+                "username": "nukkye529",
+                "real_name": "Richard Nelson",
+                "role": "Vanguard",
+                "country": "China",
+                "is_captain": false
+            },
+            {
+                "username": "saadhak107",
+                "real_name": "Nathan Ramirez",
+                "role": "Duelist",
+                "country": "China",
+                "is_captain": false
+            },
+            {
+                "username": "Enzo639",
+                "real_name": "James Robinson",
+                "role": "Vanguard",
+                "country": "China",
+                "is_captain": false
+            },
+            {
+                "username": "Hiko686",
+                "real_name": "Gabriel Mitchell",
+                "role": "Strategist",
+                "country": "China",
+                "is_captain": false
+            }
+        ],
+        "player_count": 5
+    },
+    {
+        "id": 49,
+        "name": "Weibo Gaming",
+        "short_name": "WG",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/Weibo+Gaming.svg\/400px-Weibo+Gaming.svg.png",
+        "region": "China",
+        "country": "China",
+        "country_code": "CN",
+        "platform": "PC",
+        "tier": "A",
+        "rating": 2297,
+        "rank": 49,
+        "total_earnings": 6900,
+        "founded": "2022-04-29",
+        "status": "Active",
+        "website": "https:\/\/www.weibogaming.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/weibogaming",
+            "instagram": "https:\/\/instagram.com\/weibogaming",
+            "youtube": "https:\/\/youtube.com\/c\/WeiboGaming",
+            "twitch": "https:\/\/twitch.tv\/weibogaming"
+        },
+        "roster": [
+            {
+                "username": "jamppi198",
+                "real_name": "Andrew Williams",
+                "role": "Vanguard",
+                "country": "China",
+                "is_captain": true
+            },
+            {
+                "username": "Foxy9592",
+                "real_name": "Lucas King",
+                "role": "Strategist",
+                "country": "China",
+                "is_captain": false
+            },
+            {
+                "username": "Hiko744",
+                "real_name": "Isabella Sanchez",
+                "role": "Duelist",
+                "country": "China",
+                "is_captain": false
+            },
+            {
+                "username": "Nivera593",
+                "real_name": "Isabella Adams",
+                "role": "Duelist",
+                "country": "China",
+                "is_captain": false
+            },
+            {
+                "username": "Khalil629",
+                "real_name": "Charlotte Hall",
+                "role": "Strategist",
+                "country": "China",
+                "is_captain": false
+            }
+        ],
+        "player_count": 5
+    },
+    {
+        "id": 50,
+        "name": "LNG Esports",
+        "short_name": "LE",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/LNG+Esports.svg\/400px-LNG+Esports.svg.png",
+        "region": "China",
+        "country": "China",
+        "country_code": "CN",
+        "platform": "PC",
+        "tier": "B",
+        "rating": 1636,
+        "rank": 50,
+        "total_earnings": 80801,
+        "founded": "2020-08-29",
+        "status": "Active",
+        "website": "https:\/\/www.lngesports.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/lngesports",
+            "instagram": "https:\/\/instagram.com\/lngesports",
+            "youtube": "https:\/\/youtube.com\/c\/LNGEsports",
+            "twitch": "https:\/\/twitch.tv\/lngesports"
+        },
+        "roster": [
+            {
+                "username": "nitr0767",
+                "real_name": "Olivia Jackson",
+                "role": "Duelist",
+                "country": "China",
+                "is_captain": true
+            },
+            {
+                "username": "FNS122",
+                "real_name": "Charlotte Garcia",
+                "role": "Duelist",
+                "country": "China",
+                "is_captain": false
+            },
+            {
+                "username": "Hiko493",
+                "real_name": "Tyler Lee",
+                "role": "Vanguard",
+                "country": "China",
+                "is_captain": false
+            },
+            {
+                "username": "Sylvan639",
+                "real_name": "Sophia Baker",
+                "role": "Vanguard",
+                "country": "China",
+                "is_captain": false
+            },
+            {
+                "username": "d3ffo670",
+                "real_name": "Steven Perez",
+                "role": "Duelist",
+                "country": "China",
+                "is_captain": false
+            }
+        ],
+        "player_count": 5
+    },
+    {
+        "id": 51,
+        "name": "DRX",
+        "short_name": "DRX",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/DRX.svg\/400px-DRX.svg.png",
+        "region": "Korea",
+        "country": "South Korea",
+        "country_code": "KR",
+        "platform": "PC",
+        "tier": "A",
+        "rating": 2194,
+        "rank": 51,
+        "total_earnings": 132811,
+        "founded": "2020-01-28",
+        "status": "Active",
+        "website": "https:\/\/www.drx.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/drx",
+            "instagram": "https:\/\/instagram.com\/drx",
+            "youtube": "https:\/\/youtube.com\/c\/DRX",
+            "twitch": "https:\/\/twitch.tv\/drx"
+        },
+        "roster": [
+            {
+                "username": "pANcada982",
+                "real_name": "Adam Jones",
+                "role": "Duelist",
+                "country": "South Korea",
+                "is_captain": true
+            },
+            {
+                "username": "Sacy120",
+                "real_name": "Paul Miller",
+                "role": "Duelist",
+                "country": "South Korea",
+                "is_captain": false
+            },
+            {
+                "username": "nukkye345",
+                "real_name": "Logan Davis",
+                "role": "Strategist",
+                "country": "South Korea",
+                "is_captain": false
+            },
+            {
+                "username": "steel134",
+                "real_name": "Henry Clark",
+                "role": "Duelist",
+                "country": "South Korea",
+                "is_captain": false
+            },
+            {
+                "username": "Mistic244",
+                "real_name": "David Flores",
+                "role": "Strategist",
+                "country": "South Korea",
+                "is_captain": false
+            }
+        ],
+        "player_count": 5
+    },
+    {
+        "id": 52,
+        "name": "T1",
+        "short_name": "T1",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/T1.svg\/400px-T1.svg.png",
+        "region": "Korea",
+        "country": "South Korea",
+        "country_code": "KR",
+        "platform": "PC",
+        "tier": "C",
+        "rating": 1043,
+        "rank": 52,
+        "total_earnings": 57096,
+        "founded": "2019-06-13",
+        "status": "Active",
+        "website": "https:\/\/www.t1.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/t1",
+            "instagram": "https:\/\/instagram.com\/t1",
+            "youtube": "https:\/\/youtube.com\/c\/T1",
+            "twitch": "https:\/\/twitch.tv\/t1"
+        },
+        "roster": [
+            {
+                "username": "Asuna719",
+                "real_name": "Ava Baker",
+                "role": "Strategist",
+                "country": "South Korea",
+                "is_captain": true
+            },
+            {
+                "username": "yay536",
+                "real_name": "James Moore",
+                "role": "Vanguard",
+                "country": "South Korea",
+                "is_captain": false
+            },
+            {
+                "username": "ethan409",
+                "real_name": "Christopher Clark",
+                "role": "Duelist",
+                "country": "South Korea",
+                "is_captain": false
+            },
+            {
+                "username": "allow574",
+                "real_name": "Donald Torres",
+                "role": "Vanguard",
+                "country": "South Korea",
+                "is_captain": false
+            },
+            {
+                "username": "Foxy9750",
+                "real_name": "Mason Davis",
+                "role": "Vanguard",
+                "country": "South Korea",
+                "is_captain": false
+            }
+        ],
+        "player_count": 5
+    },
+    {
+        "id": 53,
+        "name": "Gen.G",
+        "short_name": "GEN",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/Gen.G.svg\/400px-Gen.G.svg.png",
+        "region": "Korea",
+        "country": "South Korea",
+        "country_code": "KR",
+        "platform": "PC",
+        "tier": "C",
+        "rating": 1745,
+        "rank": 53,
+        "total_earnings": 51129,
+        "founded": "2019-07-19",
+        "status": "Inactive",
+        "website": "https:\/\/www.gen.g.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/gen.g",
+            "instagram": "https:\/\/instagram.com\/gen.g",
+            "youtube": "https:\/\/youtube.com\/c\/Gen.G",
+            "twitch": "https:\/\/twitch.tv\/gen.g"
+        },
+        "roster": [
+            {
+                "username": "BeYN300",
+                "real_name": "Robert Robinson",
+                "role": "Strategist",
+                "country": "South Korea",
+                "is_captain": true
+            },
+            {
+                "username": "AvovA501",
+                "real_name": "Isabella Ramirez",
+                "role": "Duelist",
+                "country": "South Korea",
+                "is_captain": false
+            },
+            {
+                "username": "FNS431",
+                "real_name": "John Hall",
+                "role": "Strategist",
+                "country": "South Korea",
+                "is_captain": false
+            },
+            {
+                "username": "BeYN267",
+                "real_name": "Jackson Anderson",
+                "role": "Duelist",
+                "country": "South Korea",
+                "is_captain": false
+            },
+            {
+                "username": "Less415",
+                "real_name": "Lucas Robinson",
+                "role": "Duelist",
+                "country": "South Korea",
+                "is_captain": false
+            }
+        ],
+        "player_count": 5
+    },
+    {
+        "id": 54,
+        "name": "KT Rolster",
+        "short_name": "R",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/KT+Rolster.svg\/400px-KT+Rolster.svg.png",
+        "region": "Korea",
+        "country": "South Korea",
+        "country_code": "KR",
+        "platform": "PC",
+        "tier": "B",
+        "rating": 2026,
+        "rank": 54,
+        "total_earnings": 191186,
+        "founded": "2023-07-17",
+        "status": "Active",
+        "website": "https:\/\/www.ktrolster.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/ktrolster",
+            "instagram": "https:\/\/instagram.com\/ktrolster",
+            "youtube": "https:\/\/youtube.com\/c\/KTRolster",
+            "twitch": "https:\/\/twitch.tv\/ktrolster"
+        },
+        "roster": [
+            {
+                "username": "heat410",
+                "real_name": "Sebastian Roberts",
+                "role": "Strategist",
+                "country": "South Korea",
+                "is_captain": true
+            },
+            {
+                "username": "hoody164",
+                "real_name": "Christian Jones",
+                "role": "Duelist",
+                "country": "South Korea",
+                "is_captain": false
+            },
+            {
+                "username": "Mazin220",
+                "real_name": "Isabella Smith",
+                "role": "Vanguard",
+                "country": "South Korea",
+                "is_captain": false
+            },
+            {
+                "username": "zunba163",
+                "real_name": "Elijah Allen",
+                "role": "Vanguard",
+                "country": "South Korea",
+                "is_captain": false
+            },
+            {
+                "username": "Enzo561",
+                "real_name": "Thomas Carter",
+                "role": "Vanguard",
+                "country": "South Korea",
+                "is_captain": false
+            }
+        ],
+        "player_count": 5
+    },
+    {
+        "id": 55,
+        "name": "Hanwha Life Esports",
+        "short_name": "HLE",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/Hanwha+Life+Esports.svg\/400px-Hanwha+Life+Esports.svg.png",
+        "region": "Korea",
+        "country": "South Korea",
+        "country_code": "KR",
+        "platform": "PC",
+        "tier": "B",
+        "rating": 1000,
+        "rank": 55,
+        "total_earnings": 192690,
+        "founded": "2022-06-01",
+        "status": "Active",
+        "website": "https:\/\/www.hanwhalifeesports.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/hanwhalifeesports",
+            "instagram": "https:\/\/instagram.com\/hanwhalifeesports",
+            "youtube": "https:\/\/youtube.com\/c\/HanwhaLifeEsports",
+            "twitch": "https:\/\/twitch.tv\/hanwhalifeesports"
+        },
+        "roster": [
+            {
+                "username": "Alfajer708",
+                "real_name": "Mia Anderson",
+                "role": "Strategist",
+                "country": "South Korea",
+                "is_captain": true
+            },
+            {
+                "username": "ShahZaM784",
+                "real_name": "Adam Jackson",
+                "role": "Vanguard",
+                "country": "South Korea",
+                "is_captain": false
+            },
+            {
+                "username": "BeYN529",
+                "real_name": "Liam Perez",
+                "role": "Vanguard",
+                "country": "South Korea",
+                "is_captain": false
+            },
+            {
+                "username": "crashies106",
+                "real_name": "William Anderson",
+                "role": "Duelist",
+                "country": "South Korea",
+                "is_captain": false
+            },
+            {
+                "username": "nAts888",
+                "real_name": "Robert Torres",
+                "role": "Strategist",
+                "country": "South Korea",
+                "is_captain": false
+            }
+        ],
+        "player_count": 5
+    },
+    {
+        "id": 56,
+        "name": "DAMWON KIA",
+        "short_name": "DK",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/DAMWON+KIA.svg\/400px-DAMWON+KIA.svg.png",
+        "region": "Korea",
+        "country": "South Korea",
+        "country_code": "KR",
+        "platform": "PC",
+        "tier": "A",
+        "rating": 1123,
+        "rank": 56,
+        "total_earnings": 119788,
+        "founded": "2023-04-22",
+        "status": "Inactive",
+        "website": "https:\/\/www.damwonkia.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/damwonkia",
+            "instagram": "https:\/\/instagram.com\/damwonkia",
+            "youtube": "https:\/\/youtube.com\/c\/DAMWONKIA",
+            "twitch": "https:\/\/twitch.tv\/damwonkia"
+        },
+        "roster": [
+            {
+                "username": "Suggest173",
+                "real_name": "Nathan Jackson",
+                "role": "Duelist",
+                "country": "South Korea",
+                "is_captain": true
+            },
+            {
+                "username": "soulcas665",
+                "real_name": "Olivia Thomas",
+                "role": "Vanguard",
+                "country": "South Korea",
+                "is_captain": false
+            },
+            {
+                "username": "Sacy593",
+                "real_name": "Adam Young",
+                "role": "Duelist",
+                "country": "South Korea",
+                "is_captain": false
+            },
+            {
+                "username": "steel127",
+                "real_name": "Michael Taylor",
+                "role": "Strategist",
+                "country": "South Korea",
+                "is_captain": false
+            },
+            {
+                "username": "zunba134",
+                "real_name": "Sebastian Anderson",
+                "role": "Duelist",
+                "country": "South Korea",
+                "is_captain": false
+            }
+        ],
+        "player_count": 5
+    },
+    {
+        "id": 57,
+        "name": "Liiv SANDBOX",
+        "short_name": "LS",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/Liiv+SANDBOX.svg\/400px-Liiv+SANDBOX.svg.png",
+        "region": "Korea",
+        "country": "South Korea",
+        "country_code": "KR",
+        "platform": "PC",
+        "tier": "S",
+        "rating": 1715,
+        "rank": 57,
+        "total_earnings": 123612,
+        "founded": "2020-03-10",
+        "status": "Active",
+        "website": "https:\/\/www.liivsandbox.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/liivsandbox",
+            "instagram": "https:\/\/instagram.com\/liivsandbox",
+            "youtube": "https:\/\/youtube.com\/c\/LiivSANDBOX",
+            "twitch": "https:\/\/twitch.tv\/liivsandbox"
+        },
+        "roster": [
+            {
+                "username": "Hiko642",
+                "real_name": "Ethan Hernandez",
+                "role": "Duelist",
+                "country": "South Korea",
+                "is_captain": true
+            },
+            {
+                "username": "pipson679",
+                "real_name": "Adam Carter",
+                "role": "Duelist",
+                "country": "South Korea",
+                "is_captain": false
+            },
+            {
+                "username": "stax586",
+                "real_name": "Sebastian Wilson",
+                "role": "Duelist",
+                "country": "South Korea",
+                "is_captain": false
+            },
+            {
+                "username": "ethan288",
+                "real_name": "Paul Young",
+                "role": "Duelist",
+                "country": "South Korea",
+                "is_captain": false
+            },
+            {
+                "username": "heat342",
+                "real_name": "Paul Lee",
+                "role": "Strategist",
+                "country": "South Korea",
+                "is_captain": false
+            }
+        ],
+        "player_count": 5
+    },
+    {
+        "id": 58,
+        "name": "ZETA DIVISION",
+        "short_name": "ZD",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/ZETA+DIVISION.svg\/400px-ZETA+DIVISION.svg.png",
+        "region": "Japan",
+        "country": "Japan",
+        "country_code": "JP",
+        "platform": "PC",
+        "tier": "B",
+        "rating": 1709,
+        "rank": 58,
+        "total_earnings": 179631,
+        "founded": "2021-04-06",
+        "status": "Active",
+        "website": "https:\/\/www.zetadivision.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/zetadivision",
+            "instagram": "https:\/\/instagram.com\/zetadivision",
+            "youtube": "https:\/\/youtube.com\/c\/ZETADIVISION",
+            "twitch": "https:\/\/twitch.tv\/zetadivision"
+        },
+        "roster": [
+            {
+                "username": "s0m670",
+                "real_name": "Ethan Green",
+                "role": "Duelist",
+                "country": "Japan",
+                "is_captain": true
+            },
+            {
+                "username": "yay632",
+                "real_name": "Gabriel Hall",
+                "role": "Duelist",
+                "country": "Japan",
+                "is_captain": false
+            },
+            {
+                "username": "Hiko770",
+                "real_name": "Christian Martin",
+                "role": "Strategist",
+                "country": "Japan",
+                "is_captain": false
+            },
+            {
+                "username": "jamppi601",
+                "real_name": "Steven Brown",
+                "role": "Duelist",
+                "country": "Japan",
+                "is_captain": false
+            },
+            {
+                "username": "MaKo505",
+                "real_name": "Anthony Mitchell",
+                "role": "Vanguard",
+                "country": "Japan",
+                "is_captain": false
+            }
+        ],
+        "player_count": 5
+    },
+    {
+        "id": 59,
+        "name": "Crazy Raccoon",
+        "short_name": "CR",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/Crazy+Raccoon.svg\/400px-Crazy+Raccoon.svg.png",
+        "region": "Japan",
+        "country": "Japan",
+        "country_code": "JP",
+        "platform": "PC",
+        "tier": "A",
+        "rating": 1949,
+        "rank": 59,
+        "total_earnings": 113384,
+        "founded": "2023-06-21",
+        "status": "Active",
+        "website": "https:\/\/www.crazyraccoon.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/crazyraccoon",
+            "instagram": "https:\/\/instagram.com\/crazyraccoon",
+            "youtube": "https:\/\/youtube.com\/c\/CrazyRaccoon",
+            "twitch": "https:\/\/twitch.tv\/crazyraccoon"
+        },
+        "roster": [
+            {
+                "username": "pANcada634",
+                "real_name": "Joseph Hernandez",
+                "role": "Duelist",
+                "country": "Japan",
+                "is_captain": true
+            },
+            {
+                "username": "Chronicle941",
+                "real_name": "Gabriel Scott",
+                "role": "Vanguard",
+                "country": "Japan",
+                "is_captain": false
+            },
+            {
+                "username": "dapr812",
+                "real_name": "Tyler Garcia",
+                "role": "Strategist",
+                "country": "Japan",
+                "is_captain": false
+            },
+            {
+                "username": "Enzo511",
+                "real_name": "Adam King",
+                "role": "Strategist",
+                "country": "Japan",
+                "is_captain": false
+            },
+            {
+                "username": "stax899",
+                "real_name": "Sebastian Young",
+                "role": "Vanguard",
+                "country": "Japan",
+                "is_captain": false
+            }
+        ],
+        "player_count": 5
+    },
+    {
+        "id": 60,
+        "name": "FENNEL",
+        "short_name": "FEN",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/FENNEL.svg\/400px-FENNEL.svg.png",
+        "region": "Japan",
+        "country": "Japan",
+        "country_code": "JP",
+        "platform": "PC",
+        "tier": "B",
+        "rating": 1459,
+        "rank": 60,
+        "total_earnings": 191994,
+        "founded": "2023-12-28",
+        "status": "Active",
+        "website": "https:\/\/www.fennel.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/fennel",
+            "instagram": "https:\/\/instagram.com\/fennel",
+            "youtube": "https:\/\/youtube.com\/c\/FENNEL",
+            "twitch": "https:\/\/twitch.tv\/fennel"
+        },
+        "roster": [
+            {
+                "username": "Alfajer350",
+                "real_name": "Matthew Johnson",
+                "role": "Duelist",
+                "country": "Japan",
+                "is_captain": true
+            },
+            {
+                "username": "k1Ng158",
+                "real_name": "Jackson Harris",
+                "role": "Vanguard",
+                "country": "Japan",
+                "is_captain": false
+            },
+            {
+                "username": "Khalil460",
+                "real_name": "Harper Rodriguez",
+                "role": "Vanguard",
+                "country": "Japan",
+                "is_captain": false
+            },
+            {
+                "username": "Lakia423",
+                "real_name": "William Lewis",
+                "role": "Vanguard",
+                "country": "Japan",
+                "is_captain": false
+            },
+            {
+                "username": "s0m779",
+                "real_name": "Mason Harris",
+                "role": "Strategist",
+                "country": "Japan",
+                "is_captain": false
+            }
+        ],
+        "player_count": 5
+    },
+    {
+        "id": 61,
+        "name": "Northeption",
+        "short_name": "NOR",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/Northeption.svg\/400px-Northeption.svg.png",
+        "region": "Japan",
+        "country": "Japan",
+        "country_code": "JP",
+        "platform": "PC",
+        "tier": "A",
+        "rating": 1767,
+        "rank": 61,
+        "total_earnings": 188396,
+        "founded": "2021-04-28",
+        "status": "Inactive",
+        "website": "https:\/\/www.northeption.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/northeption",
+            "instagram": "https:\/\/instagram.com\/northeption",
+            "youtube": "https:\/\/youtube.com\/c\/Northeption",
+            "twitch": "https:\/\/twitch.tv\/northeption"
+        },
+        "roster": [
+            {
+                "username": "Meteor896",
+                "real_name": "Kenneth Garcia",
+                "role": "Strategist",
+                "country": "Japan",
+                "is_captain": true
+            },
+            {
+                "username": "Liquid630",
+                "real_name": "Emma Sanchez",
+                "role": "Vanguard",
+                "country": "Japan",
+                "is_captain": false
+            },
+            {
+                "username": "soulcas638",
+                "real_name": "James Anderson",
+                "role": "Strategist",
+                "country": "Japan",
+                "is_captain": false
+            },
+            {
+                "username": "mixwell374",
+                "real_name": "Tyler Harris",
+                "role": "Duelist",
+                "country": "Japan",
+                "is_captain": false
+            },
+            {
+                "username": "Sacy825",
+                "real_name": "Sebastian Baker",
+                "role": "Strategist",
+                "country": "Japan",
+                "is_captain": false
+            }
+        ],
+        "player_count": 5
+    },
+    {
+        "id": 62,
+        "name": "REJECT",
+        "short_name": "REJ",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/REJECT.svg\/400px-REJECT.svg.png",
+        "region": "Japan",
+        "country": "Japan",
+        "country_code": "JP",
+        "platform": "PC",
+        "tier": "A",
+        "rating": 1915,
+        "rank": 62,
+        "total_earnings": 123426,
+        "founded": "2021-07-19",
+        "status": "Inactive",
+        "website": "https:\/\/www.reject.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/reject",
+            "instagram": "https:\/\/instagram.com\/reject",
+            "youtube": "https:\/\/youtube.com\/c\/REJECT",
+            "twitch": "https:\/\/twitch.tv\/reject"
+        },
+        "roster": [
+            {
+                "username": "aspas141",
+                "real_name": "Logan Flores",
+                "role": "Duelist",
+                "country": "Japan",
+                "is_captain": true
+            },
+            {
+                "username": "s0m991",
+                "real_name": "Andrew Nguyen",
+                "role": "Duelist",
+                "country": "Japan",
+                "is_captain": false
+            },
+            {
+                "username": "nukkye703",
+                "real_name": "Liam Martin",
+                "role": "Duelist",
+                "country": "Japan",
+                "is_captain": false
+            },
+            {
+                "username": "Khalil781",
+                "real_name": "Donald Wilson",
+                "role": "Duelist",
+                "country": "Japan",
+                "is_captain": false
+            },
+            {
+                "username": "Foxy9934",
+                "real_name": "Noah Jones",
+                "role": "Strategist",
+                "country": "Japan",
+                "is_captain": false
+            }
+        ],
+        "player_count": 5
+    },
+    {
+        "id": 63,
+        "name": "LOUD",
+        "short_name": "LOU",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/LOUD.svg\/400px-LOUD.svg.png",
+        "region": "South America",
+        "country": "Colombia",
+        "country_code": "CO",
+        "platform": "PC",
+        "tier": "B",
+        "rating": 1799,
+        "rank": 63,
+        "total_earnings": 187941,
+        "founded": "2019-08-22",
+        "status": "Active",
+        "website": "https:\/\/www.loud.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/loud",
+            "instagram": "https:\/\/instagram.com\/loud",
+            "youtube": "https:\/\/youtube.com\/c\/LOUD",
+            "twitch": "https:\/\/twitch.tv\/loud"
+        },
+        "roster": [
+            {
+                "username": "yay581",
+                "real_name": "Lucas Hernandez",
+                "role": "Strategist",
+                "country": "Colombia",
+                "is_captain": true
+            },
+            {
+                "username": "Benkai190",
+                "real_name": "Charlotte Rodriguez",
+                "role": "Duelist",
+                "country": "Brazil",
+                "is_captain": false
+            },
+            {
+                "username": "Redgar717",
+                "real_name": "Elijah Robinson",
+                "role": "Vanguard",
+                "country": "Chile",
+                "is_captain": false
+            },
+            {
+                "username": "TenZ468",
+                "real_name": "Adam Jones",
+                "role": "Vanguard",
+                "country": "Argentina",
+                "is_captain": false
+            },
+            {
+                "username": "AvovA806",
+                "real_name": "William Adams",
+                "role": "Duelist",
+                "country": "Colombia",
+                "is_captain": false
+            }
+        ],
+        "player_count": 5
+    },
+    {
+        "id": 64,
+        "name": "NIP",
+        "short_name": "NIP",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/NIP.svg\/400px-NIP.svg.png",
+        "region": "South America",
+        "country": "Brazil",
+        "country_code": "BR",
+        "platform": "PC",
+        "tier": "C",
+        "rating": 2246,
+        "rank": 64,
+        "total_earnings": 179510,
+        "founded": "2023-08-02",
+        "status": "Active",
+        "website": "https:\/\/www.nip.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/nip",
+            "instagram": "https:\/\/instagram.com\/nip",
+            "youtube": "https:\/\/youtube.com\/c\/NIP",
+            "twitch": "https:\/\/twitch.tv\/nip"
+        },
+        "roster": [
+            {
+                "username": "ScreaM128",
+                "real_name": "Tyler Adams",
+                "role": "Strategist",
+                "country": "Argentina",
+                "is_captain": true
+            },
+            {
+                "username": "nitr0880",
+                "real_name": "Christopher Lee",
+                "role": "Strategist",
+                "country": "Colombia",
+                "is_captain": false
+            },
+            {
+                "username": "mindfreak790",
+                "real_name": "Christian Martinez",
+                "role": "Strategist",
+                "country": "Chile",
+                "is_captain": false
+            },
+            {
+                "username": "Hiko304",
+                "real_name": "Samuel Young",
+                "role": "Duelist",
+                "country": "Chile",
+                "is_captain": false
+            },
+            {
+                "username": "Suggest461",
+                "real_name": "Anthony Nelson",
+                "role": "Vanguard",
+                "country": "Brazil",
+                "is_captain": false
+            }
+        ],
+        "player_count": 5
+    },
+    {
+        "id": 65,
+        "name": "Keyd Stars",
+        "short_name": "KS",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/Keyd+Stars.svg\/400px-Keyd+Stars.svg.png",
+        "region": "South America",
+        "country": "Colombia",
+        "country_code": "CO",
+        "platform": "PC",
+        "tier": "C",
+        "rating": 1771,
+        "rank": 65,
+        "total_earnings": 13207,
+        "founded": "2021-03-28",
+        "status": "Active",
+        "website": "https:\/\/www.keydstars.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/keydstars",
+            "instagram": "https:\/\/instagram.com\/keydstars",
+            "youtube": "https:\/\/youtube.com\/c\/KeydStars",
+            "twitch": "https:\/\/twitch.tv\/keydstars"
+        },
+        "roster": [
+            {
+                "username": "mindfreak745",
+                "real_name": "Thomas Lopez",
+                "role": "Strategist",
+                "country": "Brazil",
+                "is_captain": true
+            },
+            {
+                "username": "mixwell971",
+                "real_name": "Joseph Baker",
+                "role": "Vanguard",
+                "country": "Chile",
+                "is_captain": false
+            },
+            {
+                "username": "ShahZaM605",
+                "real_name": "Henry Williams",
+                "role": "Strategist",
+                "country": "Argentina",
+                "is_captain": false
+            },
+            {
+                "username": "zunba287",
+                "real_name": "Charlotte Nguyen",
+                "role": "Strategist",
+                "country": "Brazil",
+                "is_captain": false
+            },
+            {
+                "username": "Asuna558",
+                "real_name": "Aaron Brown",
+                "role": "Vanguard",
+                "country": "Chile",
+                "is_captain": false
+            }
+        ],
+        "player_count": 5
+    },
+    {
+        "id": 66,
+        "name": "Sharks Esports",
+        "short_name": "SE",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/Sharks+Esports.svg\/400px-Sharks+Esports.svg.png",
+        "region": "South America",
+        "country": "Argentina",
+        "country_code": "AR",
+        "platform": "PC",
+        "tier": "A",
+        "rating": 2058,
+        "rank": 66,
+        "total_earnings": 174074,
+        "founded": "2019-05-29",
+        "status": "Active",
+        "website": "https:\/\/www.sharksesports.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/sharksesports",
+            "instagram": "https:\/\/instagram.com\/sharksesports",
+            "youtube": "https:\/\/youtube.com\/c\/SharksEsports",
+            "twitch": "https:\/\/twitch.tv\/sharksesports"
+        },
+        "roster": [
+            {
+                "username": "nukkye464",
+                "real_name": "Kenneth Robinson",
+                "role": "Vanguard",
+                "country": "Chile",
+                "is_captain": true
+            },
+            {
+                "username": "bang680",
+                "real_name": "Jacob King",
+                "role": "Vanguard",
+                "country": "Colombia",
+                "is_captain": false
+            },
+            {
+                "username": "hoody917",
+                "real_name": "Elijah Walker",
+                "role": "Duelist",
+                "country": "Chile",
+                "is_captain": false
+            },
+            {
+                "username": "Meteor993",
+                "real_name": "Andrew Johnson",
+                "role": "Duelist",
+                "country": "Argentina",
+                "is_captain": false
+            },
+            {
+                "username": "heat101",
+                "real_name": "Emma Rodriguez",
+                "role": "Duelist",
+                "country": "Brazil",
+                "is_captain": false
+            }
+        ],
+        "player_count": 5
+    },
+    {
+        "id": 67,
+        "name": "Vivo Keyd",
+        "short_name": "VK",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/Vivo+Keyd.svg\/400px-Vivo+Keyd.svg.png",
+        "region": "South America",
+        "country": "Argentina",
+        "country_code": "AR",
+        "platform": "PC",
+        "tier": "B",
+        "rating": 1923,
+        "rank": 67,
+        "total_earnings": 153207,
+        "founded": "2019-08-29",
+        "status": "Active",
+        "website": "https:\/\/www.vivokeyd.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/vivokeyd",
+            "instagram": "https:\/\/instagram.com\/vivokeyd",
+            "youtube": "https:\/\/youtube.com\/c\/VivoKeyd",
+            "twitch": "https:\/\/twitch.tv\/vivokeyd"
+        },
+        "roster": [
+            {
+                "username": "aspas879",
+                "real_name": "Logan Allen",
+                "role": "Strategist",
+                "country": "Colombia",
+                "is_captain": true
+            },
+            {
+                "username": "zombs468",
+                "real_name": "Joseph King",
+                "role": "Strategist",
+                "country": "Colombia",
+                "is_captain": false
+            },
+            {
+                "username": "stax323",
+                "real_name": "Elijah Roberts",
+                "role": "Vanguard",
+                "country": "Argentina",
+                "is_captain": false
+            },
+            {
+                "username": "bang758",
+                "real_name": "Nathan Martinez",
+                "role": "Duelist",
+                "country": "Argentina",
+                "is_captain": false
+            },
+            {
+                "username": "mwzera338",
+                "real_name": "Nathan Thompson",
+                "role": "Strategist",
+                "country": "Argentina",
+                "is_captain": false
+            }
+        ],
+        "player_count": 5
+    },
+    {
+        "id": 68,
+        "name": "ORDER",
+        "short_name": "ORD",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/ORDER.svg\/400px-ORDER.svg.png",
+        "region": "Oceania",
+        "country": "Australia",
+        "country_code": "AU",
+        "platform": "PC",
+        "tier": "B",
+        "rating": 1347,
+        "rank": 68,
+        "total_earnings": 192261,
+        "founded": "2021-03-14",
+        "status": "Active",
+        "website": "https:\/\/www.order.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/order",
+            "instagram": "https:\/\/instagram.com\/order",
+            "youtube": "https:\/\/youtube.com\/c\/ORDER",
+            "twitch": "https:\/\/twitch.tv\/order"
+        },
+        "roster": [
+            {
+                "username": "Less482",
+                "real_name": "Kenneth Thomas",
+                "role": "Strategist",
+                "country": "New Zealand",
+                "is_captain": true
+            },
+            {
+                "username": "Foxy9632",
+                "real_name": "John Flores",
+                "role": "Strategist",
+                "country": "Australia",
+                "is_captain": false
+            },
+            {
+                "username": "Meteor407",
+                "real_name": "Samuel Carter",
+                "role": "Duelist",
+                "country": "Australia",
+                "is_captain": false
+            },
+            {
+                "username": "ScreaM311",
+                "real_name": "Amelia Brown",
+                "role": "Strategist",
+                "country": "New Zealand",
+                "is_captain": false
+            },
+            {
+                "username": "Asuna647",
+                "real_name": "Amelia Martinez",
+                "role": "Vanguard",
+                "country": "New Zealand",
+                "is_captain": false
+            }
+        ],
+        "player_count": 5
+    },
+    {
+        "id": 69,
+        "name": "Soniqs",
+        "short_name": "SON",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/Soniqs.svg\/400px-Soniqs.svg.png",
+        "region": "Oceania",
+        "country": "Australia",
+        "country_code": "AU",
+        "platform": "PC",
+        "tier": "B",
+        "rating": 2371,
+        "rank": 69,
+        "total_earnings": 16079,
+        "founded": "2019-06-04",
+        "status": "Active",
+        "website": "https:\/\/www.soniqs.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/soniqs",
+            "instagram": "https:\/\/instagram.com\/soniqs",
+            "youtube": "https:\/\/youtube.com\/c\/Soniqs",
+            "twitch": "https:\/\/twitch.tv\/soniqs"
+        },
+        "roster": [
+            {
+                "username": "AvovA761",
+                "real_name": "Isabella Roberts",
+                "role": "Vanguard",
+                "country": "Australia",
+                "is_captain": true
+            },
+            {
+                "username": "Mistic914",
+                "real_name": "Tyler Thomas",
+                "role": "Duelist",
+                "country": "Australia",
+                "is_captain": false
+            },
+            {
+                "username": "Meteor199",
+                "real_name": "David Smith",
+                "role": "Strategist",
+                "country": "Australia",
+                "is_captain": false
+            },
+            {
+                "username": "nAts748",
+                "real_name": "Christian Rodriguez",
+                "role": "Vanguard",
+                "country": "Australia",
+                "is_captain": false
+            },
+            {
+                "username": "Nivera333",
+                "real_name": "Jacob Perez",
+                "role": "Vanguard",
+                "country": "New Zealand",
+                "is_captain": false
+            }
+        ],
+        "player_count": 5
+    },
+    {
+        "id": 70,
+        "name": "Legacy Esports",
+        "short_name": "LE",
+        "logo_url": "https:\/\/liquipedia.net\/commons\/images\/thumb\/Legacy+Esports.svg\/400px-Legacy+Esports.svg.png",
+        "region": "Oceania",
+        "country": "Australia",
+        "country_code": "AU",
+        "platform": "PC",
+        "tier": "B",
+        "rating": 1574,
+        "rank": 70,
+        "total_earnings": 147818,
+        "founded": "2019-12-27",
+        "status": "Active",
+        "website": "https:\/\/www.legacyesports.gg\/",
+        "social_media": {
+            "twitter": "https:\/\/twitter.com\/legacyesports",
+            "instagram": "https:\/\/instagram.com\/legacyesports",
+            "youtube": "https:\/\/youtube.com\/c\/LegacyEsports",
+            "twitch": "https:\/\/twitch.tv\/legacyesports"
+        },
+        "roster": [
+            {
+                "username": "stax571",
+                "real_name": "Joseph Green",
+                "role": "Strategist",
+                "country": "Australia",
+                "is_captain": true
+            },
+            {
+                "username": "Khalil486",
+                "real_name": "Robert Miller",
+                "role": "Duelist",
+                "country": "New Zealand",
+                "is_captain": false
+            },
+            {
+                "username": "Zest939",
+                "real_name": "Mason King",
+                "role": "Strategist",
+                "country": "Australia",
+                "is_captain": false
+            },
+            {
+                "username": "f0rsakeN620",
+                "real_name": "Henry Hall",
+                "role": "Duelist",
+                "country": "New Zealand",
+                "is_captain": false
+            },
+            {
+                "username": "stellar975",
+                "real_name": "Joseph Campbell",
+                "role": "Strategist",
+                "country": "New Zealand",
+                "is_captain": false
+            }
+        ],
+        "player_count": 5
+    }
+]

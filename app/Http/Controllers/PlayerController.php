@@ -5,6 +5,7 @@ use App\Models\Player;
 use App\Models\Mention;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Helpers\ImageHelper;
 
 class PlayerController extends Controller
 {
@@ -37,11 +38,16 @@ class PlayerController extends Controller
             $players = $query->orderBy('p.rating', 'desc')->limit(100)->get();
 
             $formattedPlayers = $players->map(function($player) {
+                $avatarInfo = ImageHelper::getPlayerAvatar($player->avatar, $player->username);
+                $teamLogoInfo = $player->team_logo ? ImageHelper::getTeamLogo($player->team_logo, $player->team_name) : null;
+                
                 return [
                     'id' => $player->id,
                     'username' => $player->username,
                     'real_name' => $player->real_name,
-                    'avatar' => $player->avatar,
+                    'avatar' => $avatarInfo['url'],
+                    'avatar_exists' => $avatarInfo['exists'],
+                    'avatar_fallback' => $avatarInfo['fallback'],
                     'role' => $player->role,
                     'main_hero' => $player->main_hero,
                     'rating' => $player->rating ?? 1000,
@@ -54,7 +60,9 @@ class PlayerController extends Controller
                     'team' => $player->team_name ? [
                         'name' => $player->team_name,
                         'short_name' => $player->team_short,
-                        'logo' => $player->team_logo
+                        'logo' => $teamLogoInfo ? $teamLogoInfo['url'] : '/images/team-placeholder.svg',
+                        'logo_exists' => $teamLogoInfo ? $teamLogoInfo['exists'] : false,
+                        'logo_fallback' => $teamLogoInfo ? $teamLogoInfo['fallback'] : null
                     ] : null
                 ];
             });

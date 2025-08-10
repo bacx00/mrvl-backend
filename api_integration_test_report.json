@@ -1,0 +1,69 @@
+{
+    "test_summary": {
+        "total_tests": 11,
+        "passed_tests": 5,
+        "success_rate": "45.45%",
+        "timestamp": "2025-08-08 23:58:57"
+    },
+    "detailed_results": {
+        "cors": {
+            "status": "FAIL",
+            "http_code": 204,
+            "cors_headers_present": true
+        },
+        "auth_without_token": {
+            "status": "PASS",
+            "http_code": 401,
+            "response_structure": false
+        },
+        "auth_invalid_token": {
+            "status": "PASS",
+            "http_code": 401,
+            "response_structure": false
+        },
+        "news_comment_unauth": {
+            "status": "PASS",
+            "http_code": 401,
+            "response_structure": false
+        },
+        "news_comments_get": {
+            "status": "PASS",
+            "http_code": 200,
+            "response_structure": false
+        },
+        "forum_post_unauth": {
+            "status": "FAIL",
+            "http_code": 500,
+            "response_structure": false
+        },
+        "forum_threads_get": {
+            "status": "PASS",
+            "http_code": 200,
+            "response_structure": false
+        },
+        "format__api_public_news": {
+            "endpoint": "\/api\/public\/news",
+            "status": "FAIL",
+            "http_code": 200,
+            "has_success_field": false
+        },
+        "format__api_public_teams": {
+            "endpoint": "\/api\/public\/teams",
+            "status": "FAIL",
+            "http_code": 200,
+            "has_success_field": false
+        },
+        "format__api_public_players": {
+            "endpoint": "\/api\/public\/players",
+            "status": "FAIL",
+            "http_code": 200,
+            "has_success_field": false
+        },
+        "format__api_forums_categories": {
+            "endpoint": "\/api\/forums\/categories",
+            "status": "FAIL",
+            "http_code": 200,
+            "has_success_field": false
+        }
+    }
+}

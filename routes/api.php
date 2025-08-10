@@ -12,6 +12,9 @@ use App\Http\Controllers\{
     ForumController,
     AdminStatsController,
     AnalyticsController,
+    RealTimeAnalyticsController,
+    UserActivityController,
+    ResourceAnalyticsController,
     AdminUserController,
     AdminMatchController,
     LiveUpdateController,
@@ -20,16 +23,40 @@ use App\Http\Controllers\{
     BracketController,
     ComprehensiveBracketController,
     RankingController,
+    TeamRankingController,
     HeroController,
     UserProfileController,
     GameDataController,
     AdminController,
+    OptimizedAdminController,
     BulkOperationController,
     MentionController,
     TestDataController,
     VoteController,
-    ImageTestController
+    ImageTestController,
+    AchievementController,
+    ChallengeController,
+    LeaderboardController,
+    StreakController,
+    UserTitleController,
+    AchievementNotificationController,
+    TournamentController,
+    TournamentPhaseController,
+    TournamentRegistrationController,
+    TournamentBracketController,
+    TournamentMatchController,
+    TournamentProgressionController,
+    TournamentAnalyticsController,
+    TournamentSettingsController,
+    SwissController,
+    TournamentBroadcastController
 };
+
+use App\Http\Controllers\Admin\AdminTournamentController;
+use App\Http\Controllers\Admin\AdminForumsController;
+use App\Http\Controllers\Admin\AdminUsersController;
+use App\Http\Controllers\Admin\AdminMatchesController;
+use App\Http\Controllers\Admin\AdminEventsController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -58,8 +85,8 @@ Route::get('/login', function () {
 Route::prefix('auth')->group(function () {
     Route::post('/login', [AuthController::class, 'login']);
     Route::post('/register', [AuthController::class, 'register']);
-    Route::post('/forgot-password', [AuthController::class, 'sendPasswordResetLinkEmail']);
-    Route::post('/reset-password', [AuthController::class, 'resetPassword']);
+    Route::middleware('sensitive.rate:forgot_password,3,60')->post('/forgot-password', [AuthController::class, 'sendPasswordResetLinkEmail']);
+    Route::middleware('sensitive.rate:reset_password,5,60')->post('/reset-password', [AuthController::class, 'resetPassword']);
     Route::middleware('auth:api')->post('/logout', [AuthController::class, 'logout']);
     Route::middleware('auth:api')->get('/me', [AuthController::class, 'me']);
     Route::middleware('auth:api')->get('/user', [AuthController::class, 'user']);
@@ -138,6 +165,11 @@ Route::prefix('public')->group(function () {
     Route::get('/rankings/distribution', [RankingController::class, 'getRankDistribution']);
     Route::get('/rankings/marvel-rivals-info', [RankingController::class, 'getMarvelRivalsInfo']);
     
+    // Team Rankings
+    Route::get('/team-rankings', [TeamRankingController::class, 'index']);
+    Route::get('/team-rankings/{id}', [TeamRankingController::class, 'show']);
+    Route::get('/team-rankings/top-earners', [TeamRankingController::class, 'getTopEarners']);
+    
     // Heroes
     Route::get('/heroes', [HeroController::class, 'index']);
     Route::get('/heroes/roles', [HeroController::class, 'getRoles']);
@@ -173,6 +205,33 @@ Route::prefix('public')->group(function () {
     Route::get('/tournaments/{tournamentId}/swiss-standings', [ComprehensiveBracketController::class, 'getSwissStandings']);
     Route::get('/events/{eventId}/swiss-standings', [ComprehensiveBracketController::class, 'getSwissStandings']);
     Route::get('/live-matches', [ComprehensiveBracketController::class, 'getLiveMatches']);
+
+    // ===================================
+    // COMPREHENSIVE TOURNAMENT SYSTEM API
+    // ===================================
+    
+    // Tournament Public Routes
+    Route::prefix('tournaments')->group(function () {
+        // Public tournament browsing
+        Route::get('/', [\App\Http\Controllers\TournamentController::class, 'index']);
+        Route::get('/{tournament}', [\App\Http\Controllers\TournamentController::class, 'show']);
+        Route::get('/{tournament}/standings', [\App\Http\Controllers\TournamentController::class, 'standings']);
+        Route::get('/{tournament}/bracket', [\App\Http\Controllers\TournamentController::class, 'bracket']);
+        
+        // Tournament Phase Information
+        Route::get('/{tournament}/phases', [\App\Http\Controllers\TournamentPhaseController::class, 'index']);
+        Route::get('/{tournament}/phases/{phase}', [\App\Http\Controllers\TournamentPhaseController::class, 'show']);
+        Route::get('/{tournament}/phases/{phase}/matches', [\App\Http\Controllers\TournamentPhaseController::class, 'getMatches']);
+        
+        // Registration Information (public)
+        Route::get('/{tournament}/registrations', [\App\Http\Controllers\TournamentRegistrationController::class, 'index']);
+        Route::get('/{tournament}/registrations/stats', [\App\Http\Controllers\TournamentRegistrationController::class, 'getStats']);
+        
+        // Swiss System Public Data
+        Route::get('/{tournament}/swiss/standings', [\App\Http\Controllers\SwissController::class, 'getStandings']);
+        Route::get('/{tournament}/swiss/stats', [\App\Http\Controllers\SwissController::class, 'getStats']);
+        Route::get('/{tournament}/swiss/pairings/{round}', [\App\Http\Controllers\SwissController::class, 'getRoundPairings']);
+    });
     
     // Search
     Route::get('/search', [SearchController::class, 'search']);
@@ -246,6 +305,93 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/news/{newsId}/vote', [NewsController::class, 'vote']);
 });
 
+// ===================================
+// STANDARDIZED API ENDPOINTS FOR FRONTEND COMPATIBILITY
+// ===================================
+
+// Brackets - Standardized endpoints
+Route::get('/brackets', function () {
+    $events = \App\Models\Event::whereNotNull('bracket_data')->get();
+    $brackets = [];
+    foreach ($events as $event) {
+        $brackets[] = [
+            'id' => $event->id,
+            'name' => $event->name,
+            'type' => $event->type,
+            'status' => $event->status,
+            'participants' => $event->teams()->count()
+        ];
+    }
+    return response()->json($brackets);
+});
+Route::get('/brackets/{id}', function ($id) {
+    $event = \App\Models\Event::find($id);
+    if (!$event) {
+        return response()->json(['error' => 'Bracket not found'], 404);
+    }
+    return response()->json([
+        'id' => $event->id,
+        'name' => $event->name,
+        'matches' => $event->matches()->with(['team1', 'team2'])->get(),
+        'teams' => $event->teams()->get(),
+        'bracket_data' => $event->bracket_data
+    ]);
+});
+
+// Rankings - Standardized endpoints
+Route::get('/rankings/teams', [App\Http\Controllers\TeamRankingController::class, 'index']);
+Route::get('/rankings/players', [App\Http\Controllers\RankingController::class, 'index']);
+
+// ===================================
+// TOURNAMENT AUTHENTICATED ROUTES
+// ===================================
+
+// Tournament Team Registration and Management (Authenticated Users)
+Route::middleware('auth:api')->prefix('tournaments')->group(function () {
+    // Team registration
+    Route::post('/{tournament}/register', [\App\Http\Controllers\TournamentController::class, 'registerTeam']);
+    Route::post('/{tournament}/check-in', [\App\Http\Controllers\TournamentController::class, 'checkInTeam']);
+    Route::post('/{tournament}/withdraw', [\App\Http\Controllers\TournamentRegistrationController::class, 'withdrawTeam']);
+    
+    // User's tournament registrations
+    Route::get('/my-registrations', [\App\Http\Controllers\TournamentRegistrationController::class, 'getUserRegistrations']);
+    Route::get('/{tournament}/my-registration', [\App\Http\Controllers\TournamentRegistrationController::class, 'getUserRegistration']);
+    
+    // Tournament following/favorites
+    Route::post('/{tournament}/follow', [\App\Http\Controllers\TournamentController::class, 'followTournament']);
+    Route::delete('/{tournament}/unfollow', [\App\Http\Controllers\TournamentController::class, 'unfollowTournament']);
+    Route::get('/following', [\App\Http\Controllers\TournamentController::class, 'getFollowedTournaments']);
+    
+    // Tournament real-time broadcasting
+    Route::get('/{tournament}/broadcast/channels', [\App\Http\Controllers\TournamentBroadcastController::class, 'getChannels']);
+    Route::post('/{tournament}/broadcast/message', [\App\Http\Controllers\TournamentBroadcastController::class, 'sendTournamentMessage']);
+    Route::get('/{tournament}/broadcast/chat', [\App\Http\Controllers\TournamentBroadcastController::class, 'getTournamentChat']);
+});
+
+// Tournament Match Reporting (for participants)
+Route::middleware('auth:api')->prefix('tournaments/{tournament}/matches')->group(function () {
+    Route::post('/{match}/report-score', [\App\Http\Controllers\TournamentMatchController::class, 'reportScore']);
+    Route::post('/{match}/dispute', [\App\Http\Controllers\TournamentMatchController::class, 'disputeResult']);
+    Route::post('/{match}/submit-screenshot', [\App\Http\Controllers\TournamentMatchController::class, 'submitScreenshot']);
+    Route::get('/{match}/chat', [\App\Http\Controllers\TournamentMatchController::class, 'getMatchChat']);
+    Route::post('/{match}/chat', [\App\Http\Controllers\TournamentMatchController::class, 'sendChatMessage']);
+});
+
+// Tournament Broadcasting Routes
+Route::prefix('tournaments/broadcast')->group(function () {
+    Route::get('/channels', [\App\Http\Controllers\TournamentBroadcastController::class, 'getPublicChannels']);
+});
+
+Route::middleware('auth:api')->prefix('matches')->group(function () {
+    Route::post('/{match}/broadcast/message', [\App\Http\Controllers\TournamentBroadcastController::class, 'sendMatchMessage']);
+    Route::get('/{match}/broadcast/chat', [\App\Http\Controllers\TournamentBroadcastController::class, 'getMatchChat']);
+});
+
+// Admin Broadcasting Routes
+Route::middleware(['auth:api', 'admin'])->prefix('tournaments/{tournament}/admin/broadcast')->group(function () {
+    Route::post('/matches/{match}/live-score', [\App\Http\Controllers\TournamentBroadcastController::class, 'triggerLiveScoreUpdate']);
+});
+
 // Heroes routes (for frontend compatibility with direct /api/heroes path)
 Route::get('/heroes', [HeroController::class, 'index']);
 Route::get('/heroes/roles', [HeroController::class, 'getRoles']);
@@ -287,15 +433,20 @@ Route::middleware(['auth:api', 'role:user|moderator|admin'])->prefix('user')->gr
     Route::post('/profile/set-hero-avatar', [UserProfileController::class, 'setHeroAsAvatar']);
     Route::get('/profile/display/{userId}', [UserProfileController::class, 'getUserWithAvatarAndFlairs']);
     Route::get('/profile/activity', [UserProfileController::class, 'getUserActivity']);
-    Route::post('/profile/change-password', [UserProfileController::class, 'changePassword']);
-    Route::post('/profile/change-email', [UserProfileController::class, 'changeEmail']);
-    Route::post('/profile/change-username', [UserProfileController::class, 'changeUsername']);
+    Route::middleware('sensitive.rate:profile_password_change,5,60')->post('/profile/change-password', [UserProfileController::class, 'changePassword']);
+    Route::middleware('sensitive.rate:profile_email_change,3,60')->post('/profile/change-email', [UserProfileController::class, 'changeEmail']);
+    Route::middleware('sensitive.rate:profile_username_change,3,60')->post('/profile/change-username', [UserProfileController::class, 'changeUsername']);
     Route::post('/profile/upload-avatar', [UserProfileController::class, 'uploadAvatar']);
     Route::delete('/profile/delete-avatar', [UserProfileController::class, 'deleteAvatar']);
     
     // User Stats and Activity
     Route::get('/stats', [AuthController::class, 'getUserStats']);
     Route::get('/activity', [AuthController::class, 'getUserProfileActivity']);
+    
+    // Authentication Management (with enhanced rate limiting)
+    Route::middleware('sensitive.rate:password_change,5,60')->post('/change-password', [AuthController::class, 'changePassword']);
+    Route::middleware('sensitive.rate:email_change,3,60')->post('/change-email', [AuthController::class, 'changeEmail']);
+    Route::middleware('sensitive.rate:username_change,3,60')->post('/change-username', [AuthController::class, 'changeUsername']);
     
     // Voting System
     Route::prefix('votes')->group(function () {
@@ -453,14 +604,14 @@ Route::middleware(['auth:api', 'role:moderator|admin'])->prefix('moderator')->gr
 // ===================================
 // ADMIN ROUTES (🔴 Admin Role - Full Access)
 // ===================================
-Route::middleware(['auth:api', 'role:admin,moderator'])->prefix('admin')->group(function () {
+Route::middleware(['auth:api', 'role:admin|moderator'])->prefix('admin')->group(function () {
     
     // Core Admin Endpoints - Available to both admin and moderator
     Route::get('/stats', [AdminStatsController::class, 'index']);
     Route::get('/analytics', [AdminStatsController::class, 'analytics']);
     
-    // Resource Management
-    Route::get('/teams', [TeamController::class, 'index']);
+    // Resource Management - Admin and Moderator access
+    Route::get('/teams', [TeamController::class, 'getAllTeams']);
     Route::get('/players', [PlayerController::class, 'index']);
     Route::get('/matches', [MatchController::class, 'index']);
     Route::get('/events', [EventController::class, 'index']);
@@ -481,20 +632,141 @@ Route::middleware(['auth:api', 'role:admin'])->prefix('admin')->group(function (
         Route::post('/{type}/deactivate', [BulkOperationController::class, 'bulkDeactivate']);
     });
     
-    // User Management - Full CRUD
+    // ===================================
+    // COMPREHENSIVE USER MANAGEMENT SYSTEM
+    // ===================================
     Route::prefix('users')->group(function () {
-        Route::get('/', [AdminUserController::class, 'getAllUsers']);
-        Route::post('/', [AdminUserController::class, 'createUser']);
-        Route::get('/{userId}', [AdminUserController::class, 'getUser']);
-        Route::put('/{userId}', [AdminUserController::class, 'updateUser']);
-        Route::delete('/{userId}', [AdminUserController::class, 'deleteUser']);
-        Route::post('/{userId}/roles', [AuthController::class, 'assignUserRoles']);
-        Route::delete('/{userId}/roles/{roleId}', [AuthController::class, 'removeUserRole']);
-        Route::get('/{userId}/activity', [AdminUserController::class, 'getUserActivity']);
-        Route::post('/{userId}/reset-password', [AdminUserController::class, 'resetUserPassword']);
-        Route::post('/{userId}/toggle-ban', [AdminUserController::class, 'toggleBan']);
+        // Core CRUD Operations
+        Route::get('/', [\App\Http\Controllers\Admin\AdminUsersController::class, 'index']);
+        Route::post('/', [\App\Http\Controllers\Admin\AdminUsersController::class, 'store']);
+        Route::get('/{userId}', [\App\Http\Controllers\Admin\AdminUsersController::class, 'show']);
+        Route::put('/{userId}', [\App\Http\Controllers\Admin\AdminUsersController::class, 'update']);
+        Route::delete('/{userId}', [\App\Http\Controllers\Admin\AdminUsersController::class, 'destroy']);
+        
+        // Advanced Search and Filtering
+        Route::get('/search/advanced', [\App\Http\Controllers\Admin\AdminUsersController::class, 'search']);
+        
+        // User Activity and Monitoring
+        Route::get('/{userId}/activity', [\App\Http\Controllers\Admin\AdminUsersController::class, 'getActivity']);
+        Route::get('/{userId}/login-history', [\App\Http\Controllers\Admin\AdminUsersController::class, 'getLoginHistory']);
+        
+        // Password Management
+        Route::post('/{userId}/reset-password', [\App\Http\Controllers\Admin\AdminUsersController::class, 'resetPassword']);
+        Route::post('/{userId}/force-password-change', [\App\Http\Controllers\Admin\AdminUsersController::class, 'forcePasswordChange']);
+        
+        // Account Status Management
+        Route::post('/{userId}/ban', [\App\Http\Controllers\Admin\AdminUsersController::class, 'manageBan']);
+        Route::post('/{userId}/mute', [\App\Http\Controllers\Admin\AdminUsersController::class, 'manageMute']);
+        Route::post('/{userId}/suspend', [\App\Http\Controllers\Admin\AdminUsersController::class, 'manageSuspension']);
+        
+        // User Warnings System
+        Route::post('/{userId}/warnings', [\App\Http\Controllers\Admin\AdminUsersController::class, 'issueWarning']);
+        Route::get('/{userId}/warnings', [\App\Http\Controllers\Admin\AdminUsersController::class, 'getWarnings']);
+        Route::delete('/warnings/{warningId}', [\App\Http\Controllers\Admin\AdminUsersController::class, 'removeWarning']);
+        
+        // Email Verification Management
+        Route::post('/{userId}/email-verification', [\App\Http\Controllers\Admin\AdminUsersController::class, 'manageEmailVerification']);
+        Route::post('/{userId}/resend-verification', [\App\Http\Controllers\Admin\AdminUsersController::class, 'resendVerification']);
+        
+        // Two-Factor Authentication Management (Placeholder for future implementation)
+        Route::get('/{userId}/2fa-status', [\App\Http\Controllers\Admin\AdminUsersController::class, 'get2FAStatus']);
+        Route::post('/{userId}/2fa/disable', [\App\Http\Controllers\Admin\AdminUsersController::class, 'disable2FA']);
+        Route::post('/{userId}/2fa/reset', [\App\Http\Controllers\Admin\AdminUsersController::class, 'reset2FA']);
+        
+        // Profile Management
         Route::post('/{userId}/upload-avatar', [AdminUserController::class, 'uploadUserAvatar']);
         Route::delete('/{userId}/remove-avatar', [AdminUserController::class, 'removeUserAvatar']);
+        Route::post('/{userId}/moderate-profile', [\App\Http\Controllers\Admin\AdminUsersController::class, 'moderateProfile']);
+        
+        // Session Management
+        Route::post('/{userId}/revoke-sessions', [\App\Http\Controllers\Admin\AdminUsersController::class, 'revokeSessions']);
+        Route::get('/{userId}/active-sessions', [\App\Http\Controllers\Admin\AdminUsersController::class, 'getActiveSessions']);
+        
+        // Bulk Operations
+        Route::post('/bulk-operations', [\App\Http\Controllers\Admin\AdminUsersController::class, 'bulkOperation']);
+        Route::post('/bulk-export', [\App\Http\Controllers\Admin\AdminUsersController::class, 'bulkExport']);
+        
+        // User Statistics and Reports
+        Route::get('/statistics', [\App\Http\Controllers\Admin\AdminUsersController::class, 'getUserStatistics']);
+        Route::get('/analytics', [\App\Http\Controllers\Admin\AdminUsersController::class, 'getUserAnalytics']);
+        Route::post('/generate-report', [\App\Http\Controllers\Admin\AdminUsersController::class, 'generateReport']);
+        
+        // Legacy routes for backward compatibility
+        Route::get('/all', [AdminUserController::class, 'getAllUsers']);
+        Route::post('/create', [AdminUserController::class, 'createUser']);
+        Route::get('/{userId}/profile', [AdminUserController::class, 'getUser']);
+        Route::put('/{userId}/update', [AdminUserController::class, 'updateUser']);
+        Route::delete('/{userId}/delete', [AdminUserController::class, 'deleteUser']);
+        Route::post('/{userId}/toggle-ban', [AdminUserController::class, 'toggleBan']);
+    });
+    
+    // ===================================
+    // TOURNAMENT ADMIN MANAGEMENT
+    // ===================================
+    
+    // Tournament CRUD Operations (Admin Only)
+    Route::prefix('tournaments')->group(function () {
+        Route::get('/', [\App\Http\Controllers\TournamentController::class, 'index']);
+        Route::post('/', [\App\Http\Controllers\TournamentController::class, 'store']);
+        Route::get('/{tournament}', [\App\Http\Controllers\TournamentController::class, 'show']);
+        Route::put('/{tournament}', [\App\Http\Controllers\TournamentController::class, 'update']);
+        Route::delete('/{tournament}', [\App\Http\Controllers\TournamentController::class, 'destroy']);
+        
+        // Tournament Management
+        Route::post('/{tournament}/start', [\App\Http\Controllers\TournamentController::class, 'startTournament']);
+        Route::post('/{tournament}/generate-bracket', [\App\Http\Controllers\TournamentController::class, 'generateBracket']);
+        Route::post('/{tournament}/complete', [\App\Http\Controllers\TournamentProgressionController::class, 'completeTournament']);
+        Route::post('/{tournament}/cancel', [\App\Http\Controllers\TournamentController::class, 'cancelTournament']);
+        
+        // Registration Management
+        Route::get('/{tournament}/registrations', [\App\Http\Controllers\TournamentRegistrationController::class, 'index']);
+        Route::post('/{tournament}/registrations/{registration}/approve', [\App\Http\Controllers\TournamentRegistrationController::class, 'approve']);
+        Route::post('/{tournament}/registrations/{registration}/reject', [\App\Http\Controllers\TournamentRegistrationController::class, 'reject']);
+        Route::delete('/{tournament}/registrations/{registration}', [\App\Http\Controllers\TournamentRegistrationController::class, 'destroy']);
+        
+        // Phase Management
+        Route::get('/{tournament}/phases', [\App\Http\Controllers\TournamentPhaseController::class, 'index']);
+        Route::post('/{tournament}/phases', [\App\Http\Controllers\TournamentPhaseController::class, 'store']);
+        Route::put('/{tournament}/phases/{phase}', [\App\Http\Controllers\TournamentPhaseController::class, 'update']);
+        Route::post('/{tournament}/phases/{phase}/start', [\App\Http\Controllers\TournamentPhaseController::class, 'startPhase']);
+        Route::post('/{tournament}/phases/{phase}/complete', [\App\Http\Controllers\TournamentPhaseController::class, 'completePhase']);
+        Route::delete('/{tournament}/phases/{phase}', [\App\Http\Controllers\TournamentPhaseController::class, 'destroy']);
+        
+        // Bracket Management
+        Route::get('/{tournament}/brackets', [\App\Http\Controllers\TournamentBracketController::class, 'index']);
+        Route::post('/{tournament}/brackets/{bracket}/reset', [\App\Http\Controllers\TournamentBracketController::class, 'resetBracket']);
+        Route::put('/{tournament}/brackets/{bracket}', [\App\Http\Controllers\TournamentBracketController::class, 'update']);
+        
+        // Swiss System Management
+        Route::post('/{tournament}/swiss/generate-round', [\App\Http\Controllers\SwissController::class, 'generateNextRound']);
+        Route::post('/{tournament}/swiss/complete', [\App\Http\Controllers\SwissController::class, 'completeSwiss']);
+        Route::put('/{tournament}/swiss/pairings/{round}', [\App\Http\Controllers\SwissController::class, 'updatePairings']);
+        
+        // Match Management
+        Route::get('/{tournament}/matches', [\App\Http\Controllers\TournamentMatchController::class, 'index']);
+        Route::post('/{tournament}/matches', [\App\Http\Controllers\TournamentMatchController::class, 'store']);
+        Route::put('/{tournament}/matches/{match}', [\App\Http\Controllers\TournamentMatchController::class, 'update']);
+        Route::post('/{tournament}/matches/{match}/complete', [\App\Http\Controllers\TournamentMatchController::class, 'completeMatch']);
+        Route::post('/{tournament}/matches/{match}/walkover', [\App\Http\Controllers\TournamentMatchController::class, 'setWalkover']);
+        Route::post('/{tournament}/matches/{match}/dispute/resolve', [\App\Http\Controllers\TournamentMatchController::class, 'resolveDispute']);
+        
+        // Team Management within Tournament
+        Route::post('/{tournament}/teams/{team}/disqualify', [\App\Http\Controllers\TournamentController::class, 'disqualifyTeam']);
+        Route::post('/{tournament}/teams/{team}/reinstate', [\App\Http\Controllers\TournamentController::class, 'reinstateTeam']);
+        Route::put('/{tournament}/teams/{team}/seed', [\App\Http\Controllers\TournamentController::class, 'updateTeamSeed']);
+        
+        // Tournament Analytics
+        Route::get('/{tournament}/analytics', [\App\Http\Controllers\TournamentAnalyticsController::class, 'index']);
+        Route::get('/{tournament}/reports', [\App\Http\Controllers\TournamentAnalyticsController::class, 'generateReport']);
+    });
+    
+    // Tournament System Settings
+    Route::prefix('tournament-settings')->group(function () {
+        Route::get('/', [\App\Http\Controllers\TournamentSettingsController::class, 'index']);
+        Route::put('/', [\App\Http\Controllers\TournamentSettingsController::class, 'update']);
+        Route::get('/formats', [\App\Http\Controllers\TournamentSettingsController::class, 'getFormats']);
+        Route::get('/templates', [\App\Http\Controllers\TournamentSettingsController::class, 'getTemplates']);
+        Route::post('/templates', [\App\Http\Controllers\TournamentSettingsController::class, 'createTemplate']);
     });
     
     // Team Management - Full CRUD
@@ -510,6 +782,9 @@ Route::middleware(['auth:api', 'role:admin'])->prefix('admin')->group(function (
         Route::delete('/{teamId}/players/{playerId}', [TeamController::class, 'removePlayer']);
         Route::put('/{teamId}/players/{playerId}/role', [TeamController::class, 'updatePlayerRole']);
         Route::post('/{teamId}/transfer-player', [TeamController::class, 'transferPlayer']);
+// Coach image upload
+Route::post('/teams/{teamId}/coach/upload', [TeamController::class, 'uploadCoachImage']);
+
         
         // Team Images
         Route::post('/{teamId}/logo', [ImageUploadController::class, 'uploadTeamLogo']);
@@ -538,45 +813,60 @@ Route::middleware(['auth:api', 'role:admin'])->prefix('admin')->group(function (
         Route::delete('/{playerId}/avatar', [ImageUploadController::class, 'deletePlayerAvatar']);
     });
     
-    // Event Management - Full CRUD
+    // ===================================
+    // COMPREHENSIVE EVENTS MODERATION PANEL
+    // ===================================
     Route::prefix('events')->group(function () {
-        Route::get('/', [EventController::class, 'getAllEvents']);
-        Route::post('/', [EventController::class, 'store']);
-        Route::get('/{eventId}', [EventController::class, 'getEventAdmin']);
-        Route::put('/{eventId}', [EventController::class, 'update']);
-        Route::delete('/{eventId}', [EventController::class, 'destroy']);
-        Route::delete('/{eventId}/force', [EventController::class, 'forceDestroy']);
+        // Core CRUD Operations
+        Route::get('/', [AdminEventsController::class, 'index']);
+        Route::post('/', [AdminEventsController::class, 'store']);
+        Route::get('/{id}', [AdminEventsController::class, 'show']);
+        Route::put('/{id}', [AdminEventsController::class, 'update']);
+        Route::delete('/{id}', [AdminEventsController::class, 'destroy']);
         
-        // Event Team Management
-        Route::get('/{eventId}/teams', [EventController::class, 'getEventTeams']);
-        Route::post('/{eventId}/teams/{teamId}', [EventController::class, 'addTeamToEvent']);
-        Route::delete('/{eventId}/teams/{teamId}', [EventController::class, 'removeTeamFromEvent']);
-        Route::put('/{eventId}/teams/{teamId}/seed', [EventController::class, 'updateTeamSeed']);
+        // Event Status Management
+        Route::post('/{id}/status', [AdminEventsController::class, 'updateStatus']);
         
-        // Admin direct team management (no authorization checks)
-        Route::post('/{eventId}/teams', [EventController::class, 'adminAddTeamToEvent']);
+        // Team Registration Management
+        Route::get('/{eventId}/teams', [AdminEventsController::class, 'getEventTeams']);
+        Route::post('/{eventId}/teams', [AdminEventsController::class, 'addTeamToEvent']);
+        Route::delete('/{eventId}/teams/{teamId}', [AdminEventsController::class, 'removeTeamFromEvent']);
+        Route::put('/{eventId}/teams/{teamId}/seed', [AdminEventsController::class, 'updateTeamSeed']);
+        
+        // Bracket Generation and Management
+        Route::post('/{id}/generate-bracket', [AdminEventsController::class, 'generateBracket']);
+        
+        // Event Statistics and Analytics
+        Route::get('/{id}/statistics', [AdminEventsController::class, 'getEventStatistics']);
+        
+        // Bulk Operations
+        Route::post('/bulk-operation', [AdminEventsController::class, 'bulkOperation']);
+        
+        // Analytics Dashboard
+        Route::get('/dashboard/analytics', [AdminEventsController::class, 'getAnalyticsDashboard']);
+        
+        // Legacy Event Images (keeping for backward compatibility)
+        Route::post('/{eventId}/logo', [ImageUploadController::class, 'uploadEventLogo']);
+        Route::post('/{eventId}/banner', [ImageUploadController::class, 'uploadEventBanner']);
+        Route::delete('/{eventId}/banner', [ImageUploadController::class, 'deleteEventBanner']);
+        
+        // Legacy routes for backward compatibility
+        Route::get('/all', [EventController::class, 'getAllEvents']);
+        Route::get('/{eventId}/admin', [EventController::class, 'getEventAdmin']);
+        Route::post('/{eventId}/force-destroy', [EventController::class, 'forceDestroy']);
+        Route::post('/{eventId}/teams/admin-add', [EventController::class, 'adminAddTeamToEvent']);
         Route::delete('/{eventId}/teams/{teamId}/admin', [EventController::class, 'adminRemoveTeamFromEvent']);
         
-        // Bracket Management - Enhanced
-        Route::post('/{eventId}/generate-bracket', [BracketController::class, 'generate']);
+        // Legacy Bracket Management (keeping for existing integrations)
+        Route::put('/{eventId}/matches/{matchId}/score', [EventController::class, 'updateMatchScore']);
         Route::put('/{eventId}/bracket/matches/{matchId}', [BracketController::class, 'updateMatch']);
-        
-        // Comprehensive Bracket Management
         Route::post('/{eventId}/comprehensive-bracket', [ComprehensiveBracketController::class, 'generate']);
         Route::put('/{eventId}/comprehensive-bracket/matches/{matchId}', [ComprehensiveBracketController::class, 'updateMatch']);
         Route::post('/{eventId}/swiss/next-round', [ComprehensiveBracketController::class, 'generateNextSwissRound']);
-        
-        // Advanced Bracket Management - New System
-        Route::post('/{eventId}/bracket/generate', [ComprehensiveBracketController::class, 'generateBracket']);
         Route::put('/bracket/matches/{matchId}', [ComprehensiveBracketController::class, 'updateMatch']);
         Route::put('/bracket/matches/{matchId}/games/{gameNumber}', [ComprehensiveBracketController::class, 'updateGame']);
         Route::post('/bracket/matches/{matchId}/reset-bracket', [ComprehensiveBracketController::class, 'resetBracket']);
         Route::post('/{eventId}/swiss/generate-round', [ComprehensiveBracketController::class, 'generateSwissRound']);
-        
-        // Event Images
-        Route::post('/{eventId}/logo', [ImageUploadController::class, 'uploadEventLogo']);
-        Route::post('/{eventId}/banner', [ImageUploadController::class, 'uploadEventBanner']);
-        Route::delete('/{eventId}/banner', [ImageUploadController::class, 'deleteEventBanner']);
     });
     
     // Match Management - Full CRUD
@@ -635,17 +925,108 @@ Route::middleware(['auth:api', 'role:admin'])->prefix('admin')->group(function (
         Route::get('/{matchId}/live-scoreboard', [MatchController::class, 'liveScoreboard']);
     });
     
-    // News Management - Full CRUD
-    Route::prefix('news')->group(function () {
-        Route::get('/', [NewsController::class, 'adminIndex']);
-        Route::post('/', [NewsController::class, 'store']);
-        Route::get('/{newsId}', [NewsController::class, 'getNewsAdmin']);
-        Route::put('/{newsId}', [NewsController::class, 'update']);
-        Route::delete('/{newsId}', [NewsController::class, 'destroy']);
+    // ===================================
+    // COMPREHENSIVE MATCHES MODERATION PANEL
+    // ===================================
+    Route::prefix('matches-moderation')->group(function () {
+        // Core CRUD Operations
+        Route::get('/', [\App\Http\Controllers\Admin\AdminMatchesController::class, 'index']);
+        Route::post('/', [\App\Http\Controllers\Admin\AdminMatchesController::class, 'store']);
+        Route::get('/{id}', [\App\Http\Controllers\Admin\AdminMatchesController::class, 'show']);
+        Route::put('/{id}', [\App\Http\Controllers\Admin\AdminMatchesController::class, 'update']);
+        Route::delete('/{id}', [\App\Http\Controllers\Admin\AdminMatchesController::class, 'destroy']);
         
-        // News Images
+        // Match Scheduling and Rescheduling
+        Route::post('/{id}/reschedule', [\App\Http\Controllers\Admin\AdminMatchesController::class, 'reschedule']);
+        
+        // Match Status Control
+        Route::post('/{id}/control', [\App\Http\Controllers\Admin\AdminMatchesController::class, 'controlMatch']);
+        
+        // Live Scoring Management
+        Route::post('/{id}/live-scoring', [\App\Http\Controllers\Admin\AdminMatchesController::class, 'updateLiveScoring']);
+        
+        // Team and Player Management
+        Route::post('/{id}/teams/manage', [\App\Http\Controllers\Admin\AdminMatchesController::class, 'manageTeams']);
+        
+        // Map and Game Mode Management
+        Route::put('/{id}/maps', [\App\Http\Controllers\Admin\AdminMatchesController::class, 'updateMaps']);
+        
+        // Player Statistics Management
+        Route::put('/{id}/player-stats', [\App\Http\Controllers\Admin\AdminMatchesController::class, 'updatePlayerStats']);
+        
+        // Bulk Operations
+        Route::post('/bulk-operation', [\App\Http\Controllers\Admin\AdminMatchesController::class, 'bulkOperation']);
+        
+        // Statistics and Analytics
+        Route::get('/statistics', [\App\Http\Controllers\Admin\AdminMatchesController::class, 'getStatistics']);
+        Route::get('/live-matches', [\App\Http\Controllers\Admin\AdminMatchesController::class, 'getLiveMatches']);
+        
+        // Export and Reporting
+        Route::get('/export', [\App\Http\Controllers\Admin\AdminMatchesController::class, 'exportMatches']);
+    });
+    
+    // News Management - Full CRUD with Admin Features
+    Route::prefix('news')->group(function () {
+        // Core CRUD Operations
+        Route::get('/', [\App\Http\Controllers\Admin\AdminNewsController::class, 'index']);
+        Route::post('/', [\App\Http\Controllers\Admin\AdminNewsController::class, 'store']);
+        Route::get('/{newsId}', [\App\Http\Controllers\Admin\AdminNewsController::class, 'show']);
+        Route::put('/{newsId}', [\App\Http\Controllers\Admin\AdminNewsController::class, 'update']);
+        Route::delete('/{newsId}', [\App\Http\Controllers\Admin\AdminNewsController::class, 'destroy']);
+        
+        // News Statistics and Analytics
+        Route::get('/stats/overview', [\App\Http\Controllers\Admin\AdminNewsController::class, 'getStatistics']);
+        
+        // Bulk Operations
+        Route::post('/bulk', [\App\Http\Controllers\Admin\AdminNewsController::class, 'bulkOperation']);
+        
+        // Content Moderation Features
+        Route::get('/pending/all', [\App\Http\Controllers\Admin\AdminNewsController::class, 'getPendingNews']);
+        Route::post('/{newsId}/approve', [\App\Http\Controllers\Admin\AdminNewsController::class, 'approveNews']);
+        Route::post('/{newsId}/reject', [\App\Http\Controllers\Admin\AdminNewsController::class, 'rejectNews']);
+        Route::post('/{newsId}/flag', [\App\Http\Controllers\Admin\AdminNewsController::class, 'flagNews']);
+        Route::post('/{newsId}/toggle-feature', [\App\Http\Controllers\Admin\AdminNewsController::class, 'toggleFeature']);
+        
+        // Flag Management
+        Route::get('/flags/all', [\App\Http\Controllers\Admin\AdminNewsController::class, 'getFlaggedContent']);
+        Route::post('/flags/{flagId}/resolve', [\App\Http\Controllers\Admin\AdminNewsController::class, 'resolveFlag']);
+        
+        // Moderation History
+        Route::get('/{newsId}/moderation-history', [\App\Http\Controllers\Admin\AdminNewsController::class, 'getModerationHistory']);
+        
+        // Media Management
+        Route::post('/media/featured-image', [\App\Http\Controllers\Admin\AdminNewsMediaController::class, 'uploadFeaturedImage']);
+        Route::post('/media/gallery', [\App\Http\Controllers\Admin\AdminNewsMediaController::class, 'uploadGalleryImages']);
+        Route::post('/media/video-thumbnail', [\App\Http\Controllers\Admin\AdminNewsMediaController::class, 'uploadVideoThumbnail']);
+        Route::delete('/{newsId}/media', [\App\Http\Controllers\Admin\AdminNewsMediaController::class, 'deleteImage']);
+        Route::get('/media/library', [\App\Http\Controllers\Admin\AdminNewsMediaController::class, 'getMediaLibrary']);
+        Route::post('/media/cleanup', [\App\Http\Controllers\Admin\AdminNewsMediaController::class, 'cleanupUnusedMedia']);
+        
+        // Legacy routes for backwards compatibility
+        Route::get('/admin', [NewsController::class, 'adminIndex']);
+        Route::post('/admin', [NewsController::class, 'store']);
+        Route::get('/admin/{newsId}', [NewsController::class, 'getNewsAdmin']);
+        Route::put('/admin/{newsId}', [NewsController::class, 'update']);
+        Route::delete('/admin/{newsId}', [NewsController::class, 'destroy']);
+        
+        // Legacy Images
         Route::post('/{newsId}/featured-image', [ImageUploadController::class, 'uploadNewsFeaturedImage']);
         Route::post('/{newsId}/images', [ImageUploadController::class, 'uploadNewsImages']);
+    });
+    
+    // News Categories Management - Full CRUD
+    Route::prefix('news-categories')->group(function () {
+        // Core CRUD Operations
+        Route::get('/', [\App\Http\Controllers\Admin\AdminNewsCategoryController::class, 'index']);
+        Route::post('/', [\App\Http\Controllers\Admin\AdminNewsCategoryController::class, 'store']);
+        Route::get('/{categoryId}', [\App\Http\Controllers\Admin\AdminNewsCategoryController::class, 'show']);
+        Route::put('/{categoryId}', [\App\Http\Controllers\Admin\AdminNewsCategoryController::class, 'update']);
+        Route::delete('/{categoryId}', [\App\Http\Controllers\Admin\AdminNewsCategoryController::class, 'destroy']);
+        
+        // Category Management Features
+        Route::post('/bulk', [\App\Http\Controllers\Admin\AdminNewsCategoryController::class, 'bulkOperation']);
+        Route::post('/reorder', [\App\Http\Controllers\Admin\AdminNewsCategoryController::class, 'reorder']);
+        Route::get('/stats/overview', [\App\Http\Controllers\Admin\AdminNewsCategoryController::class, 'getStatistics']);
     });
     
     // Forum Management - Full CRUD
@@ -678,6 +1059,63 @@ Route::middleware(['auth:api', 'role:admin'])->prefix('admin')->group(function (
         Route::get('/reports', [ForumController::class, 'getAllForumReports']);
         Route::post('/reports/{id}/resolve', [ForumController::class, 'resolveReport']);
         Route::post('/reports/{id}/dismiss', [ForumController::class, 'dismissReport']);
+    });
+
+    // ===================================
+    // COMPREHENSIVE FORUMS MODERATION PANEL
+    // ===================================
+    Route::prefix('forums-moderation')->group(function () {
+        // Dashboard and Overview
+        Route::get('/dashboard', [AdminForumsController::class, 'dashboard']);
+        Route::get('/statistics', [AdminForumsController::class, 'getStatistics']);
+        
+        // Thread Management - Full CRUD
+        Route::get('/threads', [AdminForumsController::class, 'getThreads']);
+        Route::get('/threads/{id}', [AdminForumsController::class, 'showThread']);
+        Route::post('/threads', [AdminForumsController::class, 'createThread']);
+        Route::put('/threads/{id}', [AdminForumsController::class, 'updateThread']);
+        Route::delete('/threads/{id}', [AdminForumsController::class, 'deleteThread']);
+        
+        // Thread Control Actions
+        Route::post('/threads/{id}/pin', [AdminForumsController::class, 'pinThread']);
+        Route::post('/threads/{id}/unpin', [AdminForumsController::class, 'unpinThread']);
+        Route::post('/threads/{id}/lock', [AdminForumsController::class, 'lockThread']);
+        Route::post('/threads/{id}/unlock', [AdminForumsController::class, 'unlockThread']);
+        Route::post('/threads/{id}/sticky', [AdminForumsController::class, 'stickyThread']);
+        Route::post('/threads/{id}/unsticky', [AdminForumsController::class, 'unstickyThread']);
+        
+        // Category Management - Full CRUD
+        Route::get('/categories', [AdminForumsController::class, 'getCategories']);
+        Route::post('/categories', [AdminForumsController::class, 'createCategory']);
+        Route::put('/categories/{id}', [AdminForumsController::class, 'updateCategory']);
+        Route::delete('/categories/{id}', [AdminForumsController::class, 'deleteCategory']);
+        Route::post('/categories/reorder', [AdminForumsController::class, 'reorderCategories']);
+        
+        // Posts Management
+        Route::get('/posts', [AdminForumsController::class, 'getPosts']);
+        Route::put('/posts/{id}', [AdminForumsController::class, 'updatePost']);
+        Route::delete('/posts/{id}', [AdminForumsController::class, 'deletePost']);
+        
+        // User Moderation
+        Route::get('/users', [AdminForumsController::class, 'getUsers']);
+        Route::post('/users/{userId}/warn', [AdminForumsController::class, 'warnUser']);
+        Route::post('/users/{userId}/timeout', [AdminForumsController::class, 'timeoutUser']);
+        Route::post('/users/{userId}/ban', [AdminForumsController::class, 'banUser']);
+        Route::post('/users/{userId}/unban', [AdminForumsController::class, 'unbanUser']);
+        
+        // Bulk Moderation Actions
+        Route::post('/bulk-actions', [AdminForumsController::class, 'bulkActions']);
+        
+        // Advanced Search and Filtering
+        Route::get('/search', [AdminForumsController::class, 'advancedSearch']);
+        
+        // Report Management System
+        Route::get('/reports', [AdminForumsController::class, 'getReports']);
+        Route::post('/reports/{reportId}/resolve', [AdminForumsController::class, 'resolveReport']);
+        Route::post('/reports/{reportId}/dismiss', [AdminForumsController::class, 'dismissReport']);
+        
+        // Moderation Logs
+        Route::get('/moderation-logs', [AdminForumsController::class, 'getModerationLogs']);
     });
     
     // Hero Management - Full CRUD
@@ -724,6 +1162,65 @@ Route::middleware(['auth:api', 'role:admin'])->prefix('admin')->group(function (
     Route::get('/analytics-dashboard', [AdminController::class, 'analytics']);
     Route::post('/clear-cache', [AdminController::class, 'clearCache']);
     Route::post('/maintenance-mode', [AdminController::class, 'toggleMaintenanceMode']);
+    
+    // ===================================================================
+    // OPTIMIZED ADMIN DASHBOARD ROUTES - High Performance CRUD Operations
+    // ===================================================================
+    Route::prefix('optimized')->group(function () {
+        // Optimized Dashboard
+        Route::get('/dashboard', [OptimizedAdminController::class, 'dashboard']);
+        
+        // Optimized Player Management
+        Route::get('/players', [OptimizedAdminController::class, 'players']);
+        
+        // Optimized Team Management
+        Route::get('/teams', [OptimizedAdminController::class, 'teams']);
+        
+        // Optimized Live Scoring
+        Route::get('/live-scoring', [OptimizedAdminController::class, 'liveScoring']);
+        Route::get('/live-scoring/match/{matchId}', [OptimizedAdminController::class, 'getLiveScoringMatch']);
+        
+        // Bulk Operations with Performance Optimization
+        Route::prefix('bulk')->group(function () {
+            Route::post('/operations', [OptimizedAdminController::class, 'bulkOperations']);
+        });
+        
+        // Advanced Analytics with Caching
+        Route::get('/analytics', [OptimizedAdminController::class, 'analytics']);
+        
+        // Performance Monitoring
+        Route::get('/performance', [OptimizedAdminController::class, 'performanceMetrics']);
+    });
+    
+    // ===================================================================
+    // ADMIN TOURNAMENT MANAGEMENT ROUTES
+    // ===================================================================
+    Route::prefix('tournaments')->group(function () {
+        // Tournament Dashboard and Overview
+        Route::get('/dashboard', [AdminTournamentController::class, 'getDashboard']);
+        Route::get('/{tournament}/overview', [AdminTournamentController::class, 'getManagementOverview']);
+        
+        // Tournament Control
+        Route::post('/{tournament}/force-start', [AdminTournamentController::class, 'forceStartTournament']);
+        Route::post('/{tournament}/force-complete', [AdminTournamentController::class, 'forceCompleteTournament']);
+        
+        // Registration Management
+        Route::get('/{tournament}/registrations', [AdminTournamentController::class, 'manageRegistrations']);
+        Route::post('/{tournament}/registrations/bulk', [AdminTournamentController::class, 'bulkManageRegistrations']);
+        
+        // Phase Management
+        Route::post('/{tournament}/phases', [AdminTournamentController::class, 'managePhases']);
+        
+        // Match Dispute Resolution
+        Route::get('/disputes', [AdminTournamentController::class, 'getDisputedMatches']);
+        Route::post('/matches/{match}/resolve', [AdminTournamentController::class, 'resolveDispute']);
+        
+        // Cache Management
+        Route::post('/cache/clear', [OptimizedAdminController::class, 'clearCache']);
+        
+        // Database Optimization
+        Route::post('/database/optimize', [OptimizedAdminController::class, 'optimizeDatabase']);
+    });
 });
 
 // ===================================
@@ -781,6 +1278,92 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
         ],
         'success' => true
     ]);
+});
+
+// ===================================
+// ACHIEVEMENT SYSTEM ROUTES
+// ===================================
+
+// Public achievement routes (no auth required)
+Route::prefix('achievements')->group(function () {
+    Route::get('/', [AchievementController::class, 'index']);
+    Route::get('/{achievement}', [AchievementController::class, 'show']);
+    Route::get('/categories', [AchievementController::class, 'categories']);
+    Route::get('/rarities', [AchievementController::class, 'rarities']);
+    Route::get('/stats/global', [AchievementController::class, 'globalStats']);
+});
+
+// Public leaderboard routes (no auth required)
+Route::prefix('leaderboards')->group(function () {
+    Route::get('/', [LeaderboardController::class, 'index']);
+    Route::get('/{leaderboard}', [LeaderboardController::class, 'show']);
+    Route::get('/{leaderboard}/leaderboard', [LeaderboardController::class, 'show']);
+    Route::get('/metadata', [LeaderboardController::class, 'metadata']);
+});
+
+// Public challenge routes (no auth required)
+Route::prefix('challenges')->group(function () {
+    Route::get('/', [ChallengeController::class, 'index']);
+    Route::get('/{challenge}', [ChallengeController::class, 'show']);
+    Route::get('/{challenge}/leaderboard', [ChallengeController::class, 'leaderboard']);
+    Route::get('/difficulties', [ChallengeController::class, 'difficulties']);
+});
+
+// Public streak routes (no auth required)
+Route::prefix('streaks')->group(function () {
+    Route::get('/leaderboard', [StreakController::class, 'leaderboard']);
+    Route::get('/at-risk', [StreakController::class, 'atRisk']);
+    Route::get('/types', [StreakController::class, 'types']);
+    Route::get('/statistics', [StreakController::class, 'statistics']);
+});
+
+// Authenticated achievement routes
+Route::middleware('auth:api')->group(function () {
+    // User achievements
+    Route::prefix('achievements')->group(function () {
+        Route::get('/user/{user?}', [AchievementController::class, 'userAchievements']);
+        Route::get('/summary/{user?}', [AchievementController::class, 'userSummary']);
+        Route::post('/track', [AchievementController::class, 'trackActivity']);
+    });
+
+    // User leaderboards
+    Route::prefix('leaderboards')->group(function () {
+        Route::get('/user/{user?}', [LeaderboardController::class, 'userPositions']);
+        Route::get('/{leaderboard}/user/{user?}', [LeaderboardController::class, 'userHistory']);
+        Route::get('/{leaderboard}/nearby', [LeaderboardController::class, 'nearbyRankings']);
+    });
+
+    // User challenges
+    Route::prefix('challenges')->group(function () {
+        Route::post('/{challenge}/join', [ChallengeController::class, 'join']);
+        Route::get('/{challenge}/progress/{user?}', [ChallengeController::class, 'userProgress']);
+        Route::get('/user/{user?}', [ChallengeController::class, 'userChallenges']);
+    });
+
+    // User streaks
+    Route::prefix('streaks')->group(function () {
+        Route::get('/user/{user?}', [StreakController::class, 'index']);
+        Route::get('/{streak}', [StreakController::class, 'show']);
+    });
+
+    // User titles
+    Route::prefix('titles')->group(function () {
+        Route::get('/user/{user?}', [UserTitleController::class, 'index']);
+        Route::get('/active/{user?}', [UserTitleController::class, 'active']);
+        Route::post('/{userTitle}/activate', [UserTitleController::class, 'setActive']);
+        Route::delete('/active', [UserTitleController::class, 'removeActive']);
+    });
+
+    // Achievement notifications
+    Route::prefix('notifications')->group(function () {
+        Route::get('/user/{user?}', [AchievementNotificationController::class, 'index']);
+        Route::get('/unread-count/{user?}', [AchievementNotificationController::class, 'unreadCount']);
+        Route::post('/{notification}/read', [AchievementNotificationController::class, 'markAsRead']);
+        Route::post('/{notification}/unread', [AchievementNotificationController::class, 'markAsUnread']);
+        Route::post('/read-all', [AchievementNotificationController::class, 'markAllAsRead']);
+        Route::delete('/{notification}', [AchievementNotificationController::class, 'destroy']);
+        Route::get('/types', [AchievementNotificationController::class, 'types']);
+    });
 });
 
 // Test Data Routes (Non-production only)
@@ -891,6 +1474,46 @@ Route::prefix('v2/matches')->group(function () {
         Route::post('/{matchId}/scores', [\App\Http\Controllers\OptimizedMatchController::class, 'updateMatchScore']);
         Route::post('/{matchId}/maps/{mapNumber}/scores', [\App\Http\Controllers\OptimizedMatchController::class, 'updateMapScore']);
     });
+});
+
+// ===================================
+// COMPREHENSIVE ANALYTICS ROUTES
+// ===================================
+
+Route::middleware(['auth:api', 'role:admin|moderator'])->prefix('analytics')->group(function () {
+    // Main Analytics Dashboard
+    Route::get('/', [AnalyticsController::class, 'index']);
+    
+    // Real-time Analytics
+    Route::prefix('real-time')->group(function () {
+        Route::get('/', [RealTimeAnalyticsController::class, 'index']);
+        Route::post('/broadcast', [RealTimeAnalyticsController::class, 'broadcastUpdate']);
+        Route::get('/stream', [RealTimeAnalyticsController::class, 'streamData']);
+    });
+    
+    // User Activity Analytics
+    Route::prefix('activity')->group(function () {
+        Route::get('/', [UserActivityController::class, 'index']);
+        Route::post('/track', [UserActivityController::class, 'track']);
+    });
+    
+    // Resource-Specific Analytics
+    Route::prefix('resources')->group(function () {
+        Route::get('/teams/{teamId}', [ResourceAnalyticsController::class, 'team']);
+        Route::get('/players/{playerId}', [ResourceAnalyticsController::class, 'player']);
+        Route::get('/matches/{matchId}', [ResourceAnalyticsController::class, 'match']);
+        Route::get('/events/{eventId}', [ResourceAnalyticsController::class, 'event']);
+        Route::get('/news/{newsId}', [ResourceAnalyticsController::class, 'news']);
+        Route::get('/forum/{threadId}', [ResourceAnalyticsController::class, 'forum']);
+    });
+});
+
+// Public Analytics Endpoints (Limited Access)
+Route::prefix('analytics')->group(function () {
+    // Public analytics data
+    Route::get('/public/overview', [AnalyticsController::class, 'getPublicOverview']);
+    Route::get('/public/trending', [AnalyticsController::class, 'getTrendingContent']);
+    Route::get('/public/live-stats', [RealTimeAnalyticsController::class, 'getPublicLiveStats']);
 });
 
 // ===================================

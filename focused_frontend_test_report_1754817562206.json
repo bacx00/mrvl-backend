@@ -1,0 +1,130 @@
+{
+  "summary": {
+    "total_tests": 15,
+    "successful": 9,
+    "failed": 5,
+    "critical": 1,
+    "high": 2,
+    "medium": 2
+  },
+  "issues": {
+    "critical": [
+      {
+        "type": "ERROR",
+        "message": "Authentication error: HTTP 401: {\"success\":false,\"message\":\"Invalid credentials\"}",
+        "severity": "CRITICAL",
+        "timestamp": "2025-08-10T09:19:21.292Z"
+      }
+    ],
+    "high": [
+      {
+        "type": "ERROR",
+        "message": "Team rankings endpoint returns invalid format",
+        "severity": "HIGH",
+        "timestamp": "2025-08-10T09:19:21.691Z"
+      },
+      {
+        "type": "ERROR",
+        "message": "Player rankings endpoint returns invalid format",
+        "severity": "HIGH",
+        "timestamp": "2025-08-10T09:19:21.778Z"
+      }
+    ],
+    "medium": [
+      {
+        "type": "ERROR",
+        "message": "Team ranking search returns invalid format",
+        "severity": "MEDIUM",
+        "timestamp": "2025-08-10T09:19:21.905Z"
+      },
+      {
+        "type": "ERROR",
+        "message": "Team ranking region filter returns invalid format",
+        "severity": "MEDIUM",
+        "timestamp": "2025-08-10T09:19:22.033Z"
+      }
+    ]
+  },
+  "allResults": [
+    {
+      "type": "SUCCESS",
+      "message": "✅ API connectivity working",
+      "timestamp": "2025-08-10T09:19:20.982Z"
+    },
+    {
+      "type": "SUCCESS",
+      "message": "✅ Found 1 events in system",
+      "timestamp": "2025-08-10T09:19:20.983Z"
+    },
+    {
+      "type": "ERROR",
+      "message": "Authentication error: HTTP 401: {\"success\":false,\"message\":\"Invalid credentials\"}",
+      "severity": "CRITICAL",
+      "timestamp": "2025-08-10T09:19:21.292Z"
+    },
+    {
+      "type": "SUCCESS",
+      "message": "✅ Events listing works - 1 events",
+      "timestamp": "2025-08-10T09:19:21.344Z"
+    },
+    {
+      "type": "SUCCESS",
+      "message": "✅ Event detail page works",
+      "timestamp": "2025-08-10T09:19:21.418Z"
+    },
+    {
+      "type": "SUCCESS",
+      "message": "✅ Brackets API accessible - 0 brackets found",
+      "timestamp": "2025-08-10T09:19:21.464Z"
+    },
+    {
+      "type": "ERROR",
+      "message": "Team rankings endpoint returns invalid format",
+      "severity": "HIGH",
+      "timestamp": "2025-08-10T09:19:21.691Z"
+    },
+    {
+      "type": "ERROR",
+      "message": "Player rankings endpoint returns invalid format",
+      "severity": "HIGH",
+      "timestamp": "2025-08-10T09:19:21.778Z"
+    },
+    {
+      "type": "ERROR",
+      "message": "Team ranking search returns invalid format",
+      "severity": "MEDIUM",
+      "timestamp": "2025-08-10T09:19:21.905Z"
+    },
+    {
+      "type": "ERROR",
+      "message": "Team ranking region filter returns invalid format",
+      "severity": "MEDIUM",
+      "timestamp": "2025-08-10T09:19:22.033Z"
+    },
+    {
+      "type": "SUCCESS",
+      "message": "✅ Fallback image works: /images/team-placeholder.svg",
+      "timestamp": "2025-08-10T09:19:22.037Z"
+    },
+    {
+      "type": "SUCCESS",
+      "message": "✅ Fallback image works: /images/player-placeholder.svg",
+      "timestamp": "2025-08-10T09:19:22.043Z"
+    },
+    {
+      "type": "SUCCESS",
+      "message": "✅ Fallback image works: /images/news-placeholder.svg",
+      "timestamp": "2025-08-10T09:19:22.045Z"
+    },
+    {
+      "type": "SUCCESS",
+      "message": "✅ Fallback image works: /images/default-placeholder.svg",
+      "timestamp": "2025-08-10T09:19:22.047Z"
+    },
+    {
+      "type": "INFO",
+      "message": "ℹ️ No teams with logos found for testing",
+      "timestamp": "2025-08-10T09:19:22.205Z"
+    }
+  ]
+}

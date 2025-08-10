@@ -1,0 +1,20 @@
+{
+    "generated_at": "2025-08-10 08:28:09",
+    "total_teams": 70,
+    "total_players": 358,
+    "teams_by_region": {
+        "North America": 16,
+        "Europe": 14,
+        "Asia": 12,
+        "China": 8,
+        "Korea": 7,
+        "Japan": 5,
+        "South America": 5,
+        "Oceania": 3
+    },
+    "players_by_role": {
+        "Duelist": 116,
+        "Vanguard": 121,
+        "Strategist": 121
+    }
+}

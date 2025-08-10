@@ -1,0 +1,299 @@
+[
+  {
+    "id": 1,
+    "name": "Sentinels",
+    "short_name": "SEN",
+    "logo_url": "https://liquipedia.net/commons/images/thumb/4/49/Sentinels_2020.svg/400px-Sentinels_2020.svg.png",
+    "region": "North America",
+    "country": "United States",
+    "country_code": "US",
+    "platform": "PC",
+    "tier": "S",
+    "rating": 2200,
+    "rank": 1,
+    "total_earnings": 125000.00,
+    "founded": "2020-01-01",
+    "status": "Active",
+    "website": "https://www.sentinels.gg/",
+    "social_media": {
+      "twitter": "https://twitter.com/Sentinels",
+      "instagram": "https://instagram.com/sentinels",
+      "youtube": "https://youtube.com/c/SentinelsGG",
+      "twitch": "https://twitch.tv/sentinels"
+    },
+    "roster": [
+      {"username": "TenZ", "real_name": "Tyson Ngo", "role": "DPS", "country": "Canada", "is_captain": true},
+      {"username": "SicK", "real_name": "Hunter Mims", "role": "Strategist", "country": "United States", "is_captain": false},
+      {"username": "dapr", "real_name": "Michael Gulino", "role": "Vanguard", "country": "United States", "is_captain": false},
+      {"username": "ShahZaM", "real_name": "Shahzeb Khan", "role": "DPS", "country": "Canada", "is_captain": false},
+      {"username": "zombs", "real_name": "Jared Gitlin", "role": "Strategist", "country": "United States", "is_captain": false},
+      {"username": "Kanpeki", "real_name": "Jaccob Carr", "role": "Vanguard", "country": "United States", "is_captain": false}
+    ],
+    "player_count": 6
+  },
+  {
+    "id": 2,
+    "name": "NRG Esports",
+    "short_name": "NRG",
+    "logo_url": "https://liquipedia.net/commons/images/thumb/2/21/NRG_Esports.png/400px-NRG_Esports.png",
+    "region": "North America",
+    "country": "United States",
+    "country_code": "US",
+    "platform": "PC",
+    "tier": "S",
+    "rating": 2150,
+    "rank": 2,
+    "total_earnings": 95000.00,
+    "founded": "2019-05-15",
+    "status": "Active",
+    "website": "https://www.nrg.gg/",
+    "social_media": {
+      "twitter": "https://twitter.com/NRGgg",
+      "instagram": "https://instagram.com/nrggg",
+      "youtube": "https://youtube.com/c/NRGesports"
+    },
+    "roster": [
+      {"username": "s0m", "real_name": "Sam Oh", "role": "DPS", "country": "United States", "is_captain": true},
+      {"username": "FNS", "real_name": "Pujan Mehta", "role": "Strategist", "country": "Canada", "is_captain": false},
+      {"username": "crashies", "real_name": "Austin Roberts", "role": "Vanguard", "country": "United States", "is_captain": false},
+      {"username": "Victor", "real_name": "Victor Wong", "role": "DPS", "country": "United States", "is_captain": false},
+      {"username": "Marved", "real_name": "Jimmy Nguyen", "role": "Strategist", "country": "United States", "is_captain": false},
+      {"username": "Ethan", "real_name": "Ethan Arnold", "role": "Vanguard", "country": "United States", "is_captain": false}
+    ],
+    "player_count": 6
+  },
+  {
+    "id": 3,
+    "name": "Cloud9",
+    "short_name": "C9",
+    "region": "North America",
+    "country": "United States",
+    "country_code": "US",
+    "platform": "PC",
+    "tier": "A",
+    "rating": 2080,
+    "rank": 3,
+    "total_earnings": 78000.00,
+    "founded": "2020-03-10",
+    "status": "Active",
+    "website": "https://cloud9.gg/",
+    "social_media": {
+      "twitter": "https://twitter.com/Cloud9",
+      "instagram": "https://instagram.com/cloud9",
+      "youtube": "https://youtube.com/c/Cloud9"
+    },
+    "roster": [
+      {"username": "leaf", "real_name": "Nathan Orf", "role": "DPS", "country": "United States", "is_captain": true},
+      {"username": "vanity", "real_name": "Anthony Malaspina", "role": "Strategist", "country": "United States", "is_captain": false},
+      {"username": "Xeppaa", "real_name": "Erick Bach", "role": "Vanguard", "country": "United States", "is_captain": false},
+      {"username": "moose", "real_name": "Kaleb Jayne", "role": "DPS", "country": "Canada", "is_captain": false},
+      {"username": "jakee", "real_name": "Jake Anderson", "role": "Strategist", "country": "United States", "is_captain": false},
+      {"username": "OXY", "real_name": "Francis Hoang", "role": "Vanguard", "country": "United States", "is_captain": false}
+    ],
+    "player_count": 6
+  },
+  {
+    "id": 4,
+    "name": "100 Thieves",
+    "short_name": "100T",
+    "region": "North America",
+    "country": "United States",
+    "country_code": "US",
+    "platform": "PC",
+    "tier": "A",
+    "rating": 2020,
+    "rank": 4,
+    "total_earnings": 67000.00,
+    "founded": "2017-04-05",
+    "status": "Active",
+    "website": "https://100thieves.com/",
+    "social_media": {
+      "twitter": "https://twitter.com/100Thieves",
+      "instagram": "https://instagram.com/100thieves",
+      "youtube": "https://youtube.com/c/100Thieves"
+    },
+    "roster": [
+      {"username": "Asuna", "real_name": "Peter Mazuryk", "role": "DPS", "country": "United States", "is_captain": true},
+      {"username": "bang", "real_name": "Sean Bezerra", "role": "DPS", "country": "United States", "is_captain": false},
+      {"username": "stellar", "real_name": "Joshua Roberts", "role": "Strategist", "country": "United States", "is_captain": false},
+      {"username": "derrek", "real_name": "Derrek Ha", "role": "Vanguard", "country": "United States", "is_captain": false},
+      {"username": "Cryo", "real_name": "Cryocells Unknown", "role": "DPS", "country": "United States", "is_captain": false},
+      {"username": "Boostio", "real_name": "Kelden Pupello", "role": "Vanguard", "country": "United States", "is_captain": false}
+    ],
+    "player_count": 6
+  },
+  {
+    "id": 5,
+    "name": "TSM",
+    "short_name": "TSM",
+    "region": "North America",
+    "country": "United States",
+    "country_code": "US",
+    "platform": "PC",
+    "tier": "A",
+    "rating": 1980,
+    "rank": 5,
+    "total_earnings": 54000.00,
+    "founded": "2009-09-08",
+    "status": "Active",
+    "website": "https://tsm.gg/",
+    "social_media": {
+      "twitter": "https://twitter.com/TSM",
+      "instagram": "https://instagram.com/tsm"
+    },
+    "roster": [
+      {"username": "hazed", "real_name": "James Cobb", "role": "Strategist", "country": "United States", "is_captain": true},
+      {"username": "Wardell", "real_name": "Matthew Yu", "role": "DPS", "country": "Canada", "is_captain": false},
+      {"username": "Subroza", "real_name": "Yassine Taoufik", "role": "DPS", "country": "Canada", "is_captain": false},
+      {"username": "reltuC", "real_name": "Cutler Cross", "role": "Vanguard", "country": "United States", "is_captain": false},
+      {"username": "drone", "real_name": "Brandon Winn", "role": "Strategist", "country": "United States", "is_captain": false},
+      {"username": "corey", "real_name": "Corey Nigra", "role": "Vanguard", "country": "United States", "is_captain": false}
+    ],
+    "player_count": 6
+  },
+  {
+    "id": 6,
+    "name": "G2 Esports",
+    "short_name": "G2",
+    "region": "Europe",
+    "country": "Germany",
+    "country_code": "DE",
+    "platform": "PC",
+    "tier": "S",
+    "rating": 2120,
+    "rank": 6,
+    "total_earnings": 89000.00,
+    "founded": "2013-11-26",
+    "status": "Active",
+    "website": "https://g2esports.com/",
+    "social_media": {
+      "twitter": "https://twitter.com/G2esports",
+      "instagram": "https://instagram.com/g2esports"
+    },
+    "roster": [
+      {"username": "mixwell", "real_name": "Óscar Cañellas", "role": "DPS", "country": "Spain", "is_captain": true},
+      {"username": "nukkye", "real_name": "Žygimantas Chmieliauskas", "role": "DPS", "country": "Lithuania", "is_captain": false},
+      {"username": "AvovA", "real_name": "Aleksander Holczak", "role": "Vanguard", "country": "Poland", "is_captain": false},
+      {"username": "hoody", "real_name": "Auni Hoody", "role": "Strategist", "country": "Finland", "is_captain": false},
+      {"username": "meddo", "real_name": "Mehmet Sezer", "role": "Strategist", "country": "Turkey", "is_captain": false},
+      {"username": "pipsoN", "real_name": "Patryk Łyszczarz", "role": "Vanguard", "country": "Poland", "is_captain": false}
+    ],
+    "player_count": 6
+  },
+  {
+    "id": 7,
+    "name": "Team Liquid",
+    "short_name": "TL",
+    "region": "Europe",
+    "country": "Netherlands",
+    "country_code": "NL",
+    "platform": "PC",
+    "tier": "S",
+    "rating": 2100,
+    "rank": 7,
+    "total_earnings": 92000.00,
+    "founded": "2000-01-01",
+    "status": "Active",
+    "website": "https://teamliquid.com/",
+    "social_media": {
+      "twitter": "https://twitter.com/TeamLiquid",
+      "instagram": "https://instagram.com/teamliquid"
+    },
+    "roster": [
+      {"username": "ScreaM", "real_name": "Adil Benrlitom", "role": "DPS", "country": "Belgium", "is_captain": true},
+      {"username": "Nivera", "real_name": "Nabil Benrlitom", "role": "DPS", "country": "Belgium", "is_captain": false},
+      {"username": "soulcas", "real_name": "Dom Sulcas", "role": "Vanguard", "country": "United Kingdom", "is_captain": false},
+      {"username": "Jamppi", "real_name": "Elias Olkkonen", "role": "Vanguard", "country": "Finland", "is_captain": false},
+      {"username": "redgar", "real_name": "Igor Vlasov", "role": "Strategist", "country": "Russia", "is_captain": false},
+      {"username": "dimasick", "real_name": "Dmitriy Matvienko", "role": "Strategist", "country": "Ukraine", "is_captain": false}
+    ],
+    "player_count": 6
+  },
+  {
+    "id": 8,
+    "name": "FNATIC",
+    "short_name": "FNC",
+    "region": "Europe",
+    "country": "United Kingdom",
+    "country_code": "GB",
+    "platform": "PC",
+    "tier": "A",
+    "rating": 2060,
+    "rank": 8,
+    "total_earnings": 75000.00,
+    "founded": "2004-07-23",
+    "status": "Active",
+    "website": "https://fnatic.com/",
+    "social_media": {
+      "twitter": "https://twitter.com/FNATIC",
+      "instagram": "https://instagram.com/fnatic"
+    },
+    "roster": [
+      {"username": "Boaster", "real_name": "Jake Howlett", "role": "Strategist", "country": "United Kingdom", "is_captain": true},
+      {"username": "Derke", "real_name": "Nikita Sirmitev", "role": "DPS", "country": "Finland", "is_captain": false},
+      {"username": "Alfajer", "real_name": "Emir Ali Beder", "role": "Vanguard", "country": "Turkey", "is_captain": false},
+      {"username": "Chronicle", "real_name": "Timofey Khromov", "role": "Vanguard", "country": "Russia", "is_captain": false},
+      {"username": "Leo", "real_name": "Leo Jannesson", "role": "DPS", "country": "Sweden", "is_captain": false},
+      {"username": "hiro", "real_name": "Hiro Yanagimachi", "role": "Strategist", "country": "Japan", "is_captain": false}
+    ],
+    "player_count": 6
+  },
+  {
+    "id": 9,
+    "name": "Paper Rex",
+    "short_name": "PRX",
+    "region": "Asia Pacific",
+    "country": "Singapore",
+    "country_code": "SG",
+    "platform": "PC",
+    "tier": "S",
+    "rating": 2140,
+    "rank": 9,
+    "total_earnings": 88000.00,
+    "founded": "2020-03-15",
+    "status": "Active",
+    "website": "https://www.pprx.team/",
+    "social_media": {
+      "twitter": "https://twitter.com/PaperRex",
+      "instagram": "https://instagram.com/paperrex"
+    },
+    "roster": [
+      {"username": "f0rsakeN", "real_name": "Jason Susanto", "role": "DPS", "country": "Indonesia", "is_captain": true},
+      {"username": "Jinggg", "real_name": "Wang Jing Jie", "role": "DPS", "country": "Singapore", "is_captain": false},
+      {"username": "d4v41", "real_name": "Khalish Rusyaidee", "role": "Vanguard", "country": "Malaysia", "is_captain": false},
+      {"username": "mindfreak", "real_name": "Aaron Leonhart", "role": "Strategist", "country": "Indonesia", "is_captain": false},
+      {"username": "Benkai", "real_name": "Lim Weng Choong", "role": "Vanguard", "country": "Malaysia", "is_captain": false},
+      {"username": "monyet", "real_name": "Cahya Nugraha", "role": "Strategist", "country": "Indonesia", "is_captain": false}
+    ],
+    "player_count": 6
+  },
+  {
+    "id": 10,
+    "name": "DRX",
+    "short_name": "DRX",
+    "region": "Asia Pacific",
+    "country": "South Korea",
+    "country_code": "KR",
+    "platform": "PC",
+    "tier": "A",
+    "rating": 2080,
+    "rank": 10,
+    "total_earnings": 82000.00,
+    "founded": "2012-11-22",
+    "status": "Active",
+    "website": "https://drx.gg/",
+    "social_media": {
+      "twitter": "https://twitter.com/DRX_Official",
+      "instagram": "https://instagram.com/drx_official"
+    },
+    "roster": [
+      {"username": "stax", "real_name": "Kim Gu-taek", "role": "Strategist", "country": "South Korea", "is_captain": true},
+      {"username": "Rb", "real_name": "Goo Sang-min", "role": "DPS", "country": "South Korea", "is_captain": false},
+      {"username": "Zest", "real_name": "Kim Ki-seok", "role": "Vanguard", "country": "South Korea", "is_captain": false},
+      {"username": "MaKo", "real_name": "Kim Myeong-gwan", "role": "Strategist", "country": "South Korea", "is_captain": false},
+      {"username": "BuZz", "real_name": "Yu Byung-chul", "role": "DPS", "country": "South Korea", "is_captain": false},
+      {"username": "foxy9", "real_name": "Jung Jae-sung", "role": "Vanguard", "country": "South Korea", "is_captain": false}
+    ],
+    "player_count": 6
+  }
+]

@@ -67,8 +67,8 @@ return new class extends Migration
                 if (!$this->indexExists('user_activities', 'idx_user_activities_user_created')) {
                     $table->index(['user_id', 'created_at'], 'idx_user_activities_user_created');
                 }
-                if (!$this->indexExists('user_activities', 'idx_user_activities_type_created')) {
-                    $table->index(['activity_type', 'created_at'], 'idx_user_activities_type_created');
+                if (!$this->indexExists('user_activities', 'idx_user_activities_action_created')) {
+                    $table->index(['action', 'created_at'], 'idx_user_activities_action_created');
                 }
             });
         }

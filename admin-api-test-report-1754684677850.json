@@ -1,0 +1,5330 @@
+{
+  "testSuite": "MRVL Direct Admin API Test",
+  "timestamp": "2025-08-08T20:24:37.850Z",
+  "summary": {
+    "totalTests": 44,
+    "passed": 8,
+    "failed": 36,
+    "successRate": 18.2
+  },
+  "categoryResults": {
+    "adminOverview": {
+      "tests": [
+        {
+          "name": "Dashboard Stats",
+          "method": "GET",
+          "endpoint": "/api/admin/dashboard",
+          "status": "failed",
+          "response": "Success",
+          "data": {
+            "success": false,
+            "message": "Unauthenticated. Please provide a valid authentication token.",
+            "error": "Authentication required"
+          },
+          "error": "API returned failure response"
+        },
+        {
+          "name": "System Settings",
+          "method": "GET",
+          "endpoint": "/api/admin/system-settings",
+          "status": "failed",
+          "response": "Success",
+          "data": {
+            "success": false,
+            "message": "Unauthenticated. Please provide a valid authentication token.",
+            "error": "Authentication required"
+          },
+          "error": "API returned failure response"
+        },
+        {
+          "name": "Clear Cache",
+          "method": "POST",
+          "endpoint": "/api/admin/clear-cache",
+          "status": "failed",
+          "response": "Success",
+          "data": {
+            "success": false,
+            "message": "The GET method is not supported for route api/admin/clear-cache. Supported methods: POST.",
+            "error": "MethodNotAllowedHttpException",
+            "file": "/var/www/mrvl-backend/vendor/laravel/framework/src/Illuminate/Routing/AbstractRouteCollection.php",
+            "line": 123
+          },
+          "error": "API returned failure response"
+        }
+      ],
+      "passed": 0,
+      "failed": 3
+    },
+    "userManagement": {
+      "tests": [
+        {
+          "name": "List Users",
+          "method": "GET",
+          "endpoint": "/api/admin/users",
+          "status": "failed",
+          "response": "Success",
+          "data": {
+            "success": false,
+            "message": "Unauthenticated. Please provide a valid authentication token.",
+            "error": "Authentication required"
+          },
+          "error": "API returned failure response"
+        },
+        {
+          "name": "Get Single User",
+          "method": "GET",
+          "endpoint": "/api/admin/users/1",
+          "status": "failed",
+          "response": "Success",
+          "data": {
+            "success": false,
+            "message": "Unauthenticated. Please provide a valid authentication token.",
+            "error": "Authentication required"
+          },
+          "error": "API returned failure response"
+        },
+        {
+          "name": "User Activity",
+          "method": "GET",
+          "endpoint": "/api/admin/users/1/activity",
+          "status": "failed",
+          "response": "Success",
+          "data": {
+            "success": false,
+            "message": "Unauthenticated. Please provide a valid authentication token.",
+            "error": "Authentication required"
+          },
+          "error": "API returned failure response"
+        },
+        {
+          "name": "User Management Dashboard",
+          "method": "GET",
+          "endpoint": "/api/admin/user-management",
+          "status": "failed",
+          "response": "Success",
+          "data": {
+            "success": false,
+            "message": "Unauthenticated. Please provide a valid authentication token.",
+            "error": "Authentication required"
+          },
+          "error": "API returned failure response"
+        }
+      ],
+      "passed": 0,
+      "failed": 4
+    },
+    "teamManagement": {
+      "tests": [
+        {
+          "name": "List Teams",
+          "method": "GET",
+          "endpoint": "/api/teams",
+          "status": "passed",
+          "response": "Success",
+          "data": {
+            "data": [
+              {
+                "id": 57,
+                "name": "FlyQuest",
+                "short_name": "FLY",
+                "logo": "/storage/teams/logos/flyquest-logo.svg",
+                "logo_exists": true,
+                "logo_fallback": {
+                  "text": "FlyQuest",
+                  "color": "#1e40af",
+                  "type": "team-logo"
+                },
+                "region": "Americas",
+                "platform": "PC",
+                "country": "AU",
+                "flag": "🇦🇺",
+                "rating": 1690,
+                "rank": 1,
+                "win_rate": 62,
+                "points": 383,
+                "record": "0-0",
+                "peak": 0,
+                "streak": "N/A",
+                "founded": null,
+                "captain": null,
+                "coach": "TBD",
+                "website": null,
+                "earnings": "50000.00",
+                "social_media": {
+                  "discord": "https://discord.gg/fly",
+                  "twitter": "https://twitter.com/flyquest"
+                },
+                "achievements": [],
+                "game": "Marvel Rivals",
+                "division": "Platinum",
+                "recent_form": [],
+                "player_count": 0
+              },
+              {
+                "id": 64,
+                "name": "Rad EU",
+                "short_name": "RAD",
+                "logo": "/storage/teams/logos/rad-eu-logo.svg",
+                "logo_exists": true,
+                "logo_fallback": {
+                  "text": "Rad EU",
+                  "color": "#1e40af",
+                  "type": "team-logo"
+                },
+                "region": "EMEA",
+                "platform": "PC",
+                "country": "EU",
+                "flag": "🇪🇺",
+                "rating": 1687,
+                "rank": 2,
+                "win_rate": 46,
+                "points": 437,
+                "record": "0-0",
+                "peak": 0,
+                "streak": "N/A",
+                "founded": null,
+                "captain": null,
+                "coach": "TBD",
+                "website": null,
+                "earnings": "60000.00",
+                "social_media": {
+                  "discord": "https://discord.gg/rad",
+                  "twitter": "https://twitter.com/radeu"
+                },
+                "achievements": [],
+                "game": "Marvel Rivals",
+                "division": "Platinum",
+                "recent_form": [],
+                "player_count": 0
+              },
+              {
+                "id": 65,
+                "name": "Gen.G Esports",
+                "short_name": "GEN",
+                "logo": "/storage/teams/logos/geng-logo.png",
+                "logo_exists": true,
+                "logo_fallback": {
+                  "text": "Gen.G Esports",
+                  "color": "#f59e0b",
+                  "type": "team-logo"
+                },
+                "region": "APAC",
+                "platform": "PC",
+                "country": "KR",
+                "flag": "🇰🇷",
+                "rating": 1652,
+                "rank": 3,
+                "win_rate": 55,
+                "points": 358,
+                "record": "0-0",
+                "peak": 0,
+                "streak": "N/A",
+                "founded": null,
+                "captain": null,
+                "coach": "Xoon",
+                "website": null,
+                "earnings": "150000.00",
+                "social_media": {
+                  "discord": "https://discord.gg/gen",
+                  "twitter": "https://twitter.com/gen.gesports"
+                },
+                "achievements": [],
+                "game": "Marvel Rivals",
+                "division": "Platinum",
+                "recent_form": [],
+                "player_count": 0
+              },
+              {
+                "id": 56,
+                "name": "ENVY",
+                "short_name": "ENVY",
+                "logo": "/storage/teams/logos/envy-logo.svg",
+                "logo_exists": true,
+                "logo_fallback": {
+                  "text": "ENVY",
+                  "color": "#3b82f6",
+                  "type": "team-logo"
+                },
+                "region": "Americas",
+                "platform": "PC",
+                "country": "US",
+                "flag": "🇺🇸",
+                "rating": 1624,
+                "rank": 4,
+                "win_rate": 59,
+                "points": 255,
+                "record": "0-0",
+                "peak": 0,
+                "streak": "N/A",
+                "founded": null,
+                "captain": null,
+                "coach": "Gator",
+                "website": null,
+                "earnings": "75000.00",
+                "social_media": {
+                  "discord": "https://discord.gg/envy",
+                  "twitter": "https://twitter.com/envy"
+                },
+                "achievements": [],
+                "game": "Marvel Rivals",
+                "division": "Platinum",
+                "recent_form": [],
+                "player_count": 0
+              },
+              {
+                "id": 59,
+                "name": "Luminosity Gaming",
+                "short_name": "LG",
+                "logo": "/storage/teams/logos/luminosity-logo.svg",
+                "logo_exists": true,
+                "logo_fallback": {
+                  "text": "Luminosity Gaming",
+                  "color": "#16a34a",
+                  "type": "team-logo"
+                },
+                "region": "Americas",
+                "platform": "PC",
+                "country": "CA",
+                "flag": "🇨🇦",
+                "rating": 1619,
+                "rank": 5,
+                "win_rate": 47,
+                "points": 318,
+                "record": "0-0",
+                "peak": 0,
+                "streak": "N/A",
+                "founded": null,
+                "captain": null,
+                "coach": "TBD",
+                "website": null,
+                "earnings": "40000.00",
+                "social_media": {
+                  "discord": "https://discord.gg/lg",
+                  "twitter": "https://twitter.com/luminositygaming"
+                },
+                "achievements": [],
+                "game": "Marvel Rivals",
+                "division": "Platinum",
+                "recent_form": [],
+                "player_count": 0
+              },
+              {
+                "id": 55,
+                "name": "Sentinels",
+                "short_name": "SEN",
+                "logo": "/storage/teams/logos/sentinels-logo.png",
+                "logo_exists": true,
+                "logo_fallback": {
+                  "text": "Sentinels",
+                  "color": "#0d9488",
+                  "type": "team-logo"
+                },
+                "region": "Americas",
+                "platform": "PC",
+                "country": "US",
+                "flag": "🇺🇸",
+                "rating": 1591,
+                "rank": 6,
+                "win_rate": 44,
+                "points": 406,
+                "record": "0-0",
+                "peak": 0,
+                "streak": "N/A",
+                "founded": null,
+                "captain": null,
+                "coach": "William \"Crimzo\" Hernandez",
+                "website": null,
+                "earnings": "200000.00",
+                "social_media": {
+                  "discord": "https://discord.gg/sen",
+                  "twitter": "https://twitter.com/sentinels"
+                },
+                "achievements": [],
+                "game": "Marvel Rivals",
+                "division": "Platinum",
+                "recent_form": [],
+                "player_count": 0
+              },
+              {
+                "id": 69,
+                "name": "Kanga Esports",
+                "short_name": "KNG",
+                "logo": "/images/team-placeholder.svg",
+                "logo_exists": false,
+                "logo_fallback": {
+                  "text": "Kan",
+                  "color": "#be185d",
+                  "type": "team-logo",
+                  "original_path": "kanga-logo.png",
+                  "variations_tried": [
+                    "kanga-logo",
+                    "kangalogo",
+                    "kanga_logo",
+                    "kangaesports-logo",
+                    "kangaesportslogo",
+                    "kangaesports_logo",
+                    "ke-logo",
+                    "kelogo",
+                    "ke_logo"
+                  ]
+                },
+                "region": "Oceania",
+                "platform": "PC",
+                "country": "AU",
+                "flag": "🇦🇺",
+                "rating": 1571,
+                "rank": 7,
+                "win_rate": 50,
+                "points": 437,
+                "record": "0-0",
+                "peak": 0,
+                "streak": "N/A",
+                "founded": null,
+                "captain": null,
+                "coach": "TBD",
+                "website": null,
+                "earnings": "50000.00",
+                "social_media": {
+                  "discord": "https://discord.gg/kng",
+                  "twitter": "https://twitter.com/kangaesports"
+                },
+                "achievements": [],
+                "game": "Marvel Rivals",
+                "division": "Platinum",
+                "recent_form": [],
+                "player_count": 0
+              },
+              {
+                "id": 67,
+                "name": "Crazy Raccoon",
+                "short_name": "CR",
+                "logo": "/images/team-placeholder.svg",
+                "logo_exists": false,
+                "logo_fallback": {
+                  "text": "Cra",
+                  "color": "#be185d",
+                  "type": "team-logo",
+                  "original_path": "crazy-raccoon-logo.png",
+                  "variations_tried": {
+                    "0": "crazy-raccoon-logo",
+                    "1": "crazyraccoonlogo",
+                    "2": "crazy_raccoon_logo",
+                    "3": "crazyraccoon-logo",
+                    "5": "crazyraccoon_logo",
+                    "6": "cr-logo",
+                    "7": "crlogo",
+                    "8": "cr_logo"
+                  }
+                },
+                "region": "APAC",
+                "platform": "PC",
+                "country": "JP",
+                "flag": "🇯🇵",
+                "rating": 1564,
+                "rank": 8,
+                "win_rate": 59,
+                "points": 247,
+                "record": "0-0",
+                "peak": 0,
+                "streak": "N/A",
+                "founded": null,
+                "captain": null,
+                "coach": "TBD",
+                "website": null,
+                "earnings": "45000.00",
+                "social_media": {
+                  "discord": "https://discord.gg/cr",
+                  "twitter": "https://twitter.com/crazyraccoon"
+                },
+                "achievements": [],
+                "game": "Marvel Rivals",
+                "division": "Platinum",
+                "recent_form": [],
+                "player_count": 0
+              },
+              {
+                "id": 72,
+                "name": "Nova Esports",
+                "short_name": "NOVA",
+                "logo": "/images/team-placeholder.svg",
+                "logo_exists": false,
+                "logo_fallback": {
+                  "text": "Nov",
+                  "color": "#dc2626",
+                  "type": "team-logo",
+                  "original_path": "nova-logo.png",
+                  "variations_tried": [
+                    "nova-logo",
+                    "novalogo",
+                    "nova_logo",
+                    "novaesports-logo",
+                    "novaesportslogo",
+                    "novaesports_logo",
+                    "ne-logo",
+                    "nelogo",
+                    "ne_logo"
+                  ]
+                },
+                "region": "China",
+                "platform": "PC",
+                "country": "CN",
+                "flag": "🇨🇳",
+                "rating": 1556,
+                "rank": 9,
+                "win_rate": 56,
+                "points": 263,
+                "record": "0-0",
+                "peak": 0,
+                "streak": "N/A",
+                "founded": null,
+                "captain": null,
+                "coach": "TBD",
+                "website": null,
+                "earnings": "150000.00",
+                "social_media": {
+                  "discord": "https://discord.gg/nova",
+                  "twitter": "https://twitter.com/novaesports"
+                },
+                "achievements": [],
+                "game": "Marvel Rivals",
+                "division": "Platinum",
+                "recent_form": [],
+                "player_count": 0
+              },
+              {
+                "id": 68,
+                "name": "Ground Zero Gaming",
+                "short_name": "GZG",
+                "logo": "/storage/teams/logos/ground-zero-logo.svg",
+                "logo_exists": true,
+                "logo_fallback": {
+                  "text": "Ground Zero Gaming",
+                  "color": "#7c3aed",
+                  "type": "team-logo"
+                },
+                "region": "Oceania",
+                "platform": "PC",
+                "country": "AU",
+                "flag": "🇦🇺",
+                "rating": 1533,
+                "rank": 10,
+                "win_rate": 58,
+                "points": 105,
+                "record": "0-0",
+                "peak": 0,
+                "streak": "N/A",
+                "founded": null,
+                "captain": null,
+                "coach": "TBD",
+                "website": null,
+                "earnings": "90000.00",
+                "social_media": {
+                  "discord": "https://discord.gg/gzg",
+                  "twitter": "https://twitter.com/groundzerogaming"
+                },
+                "achievements": [],
+                "game": "Marvel Rivals",
+                "division": "Platinum",
+                "recent_form": [],
+                "player_count": 0
+              },
+              {
+                "id": 54,
+                "name": "100 Thieves",
+                "short_name": "100T",
+                "logo": "/storage/teams/logos/100t-logo.png",
+                "logo_exists": true,
+                "logo_fallback": {
+                  "text": "100 Thieves",
+                  "color": "#7c3aed",
+                  "type": "team-logo"
+                },
+                "region": "Americas",
+                "platform": "PC",
+                "country": "US",
+                "flag": "🇺🇸",
+                "rating": 1518,
+                "rank": 11,
+                "win_rate": 66,
+                "points": 243,
+                "record": "0-0",
+                "peak": 0,
+                "streak": "N/A",
+                "founded": null,
+                "captain": null,
+                "coach": "Luis \"iRemiix\" Figueroa, Kamry \"Malenia\" Mistry",
+                "website": null,
+                "earnings": "150000.00",
+                "social_media": {
+                  "discord": "https://discord.gg/100t",
+                  "twitter": "https://twitter.com/100thieves"
+                },
+                "achievements": [],
+                "game": "Marvel Rivals",
+                "division": "Platinum",
+                "recent_form": [],
+                "player_count": 0
+              },
+              {
+                "id": 63,
+                "name": "Citadel Gaming",
+                "short_name": "CTD",
+                "logo": "/storage/teams/logos/citadel-logo.svg",
+                "logo_exists": true,
+                "logo_fallback": {
+                  "text": "Citadel Gaming",
+                  "color": "#991b1b",
+                  "type": "team-logo"
+                },
+                "region": "EMEA",
+                "platform": "PC",
+                "country": "EU",
+                "flag": "🇪🇺",
+                "rating": 1499,
+                "rank": 12,
+                "win_rate": 59,
+                "points": 360,
+                "record": "0-0",
+                "peak": 0,
+                "streak": "N/A",
+                "founded": null,
+                "captain": null,
+                "coach": "TBD",
+                "website": null,
+                "earnings": "120000.00",
+                "social_media": {
+                  "discord": "https://discord.gg/ctd",
+                  "twitter": "https://twitter.com/citadelgaming"
+                },
+                "achievements": [],
+                "game": "Marvel Rivals",
+                "division": "Gold",
+                "recent_form": [],
+                "player_count": 0
+              },
+              {
+                "id": 62,
+                "name": "OG",
+                "short_name": "OG",
+                "logo": "/images/team-placeholder.svg",
+                "logo_exists": false,
+                "logo_fallback": {
+                  "text": "OG",
+                  "color": "#be185d",
+                  "type": "team-logo",
+                  "original_path": "og-logo.png",
+                  "variations_tried": [
+                    "og-logo",
+                    "oglogo",
+                    "og_logo"
+                  ]
+                },
+                "region": "EMEA",
+                "platform": "PC",
+                "country": "EU",
+                "flag": "🇪🇺",
+                "rating": 1480,
+                "rank": 13,
+                "win_rate": 41,
+                "points": 120,
+                "record": "0-0",
+                "peak": 0,
+                "streak": "N/A",
+                "founded": null,
+                "captain": null,
+                "coach": "TBD",
+                "website": null,
+                "earnings": "80000.00",
+                "social_media": {
+                  "discord": "https://discord.gg/og",
+                  "twitter": "https://twitter.com/og"
+                },
+                "achievements": [],
+                "game": "Marvel Rivals",
+                "division": "Gold",
+                "recent_form": [],
+                "player_count": 0
+              },
+              {
+                "id": 60,
+                "name": "DarkZero",
+                "short_name": "DZ",
+                "logo": "/storage/teams/logos/darkzero-logo.svg",
+                "logo_exists": true,
+                "logo_fallback": {
+                  "text": "DarkZero",
+                  "color": "#db2777",
+                  "type": "team-logo"
+                },
+                "region": "Americas",
+                "platform": "PC",
+                "country": "US",
+                "flag": "🇺🇸",
+                "rating": 1418,
+                "rank": 15,
+                "win_rate": 49,
+                "points": 480,
+                "record": "0-0",
+                "peak": 0,
+                "streak": "N/A",
+                "founded": null,
+                "captain": null,
+                "coach": "TBD",
+                "website": null,
+                "earnings": "30000.00",
+                "social_media": {
+                  "discord": "https://discord.gg/dz",
+                  "twitter": "https://twitter.com/darkzero"
+                },
+                "achievements": [],
+                "game": "Marvel Rivals",
+                "division": "Gold",
+                "recent_form": [],
+                "player_count": 0
+              },
+              {
+                "id": 58,
+                "name": "SHROUD-X",
+                "short_name": "SHX",
+                "logo": "/storage/teams/logos/shroud-x-logo.svg",
+                "logo_exists": true,
+                "logo_fallback": {
+                  "text": "SHROUD-X",
+                  "color": "#0d9488",
+                  "type": "team-logo"
+                },
+                "region": "Americas",
+                "platform": "PC",
+                "country": "US",
+                "flag": "🇺🇸",
+                "rating": 1385,
+                "rank": 16,
+                "win_rate": 43,
+                "points": 173,
+                "record": "0-0",
+                "peak": 0,
+                "streak": "N/A",
+                "founded": null,
+                "captain": null,
+                "coach": "TBD",
+                "website": null,
+                "earnings": "25000.00",
+                "social_media": {
+                  "discord": "https://discord.gg/shx",
+                  "twitter": "https://twitter.com/shroud-x"
+                },
+                "achievements": [],
+                "game": "Marvel Rivals",
+                "division": "Gold",
+                "recent_form": [],
+                "player_count": 0
+              },
+              {
+                "id": 66,
+                "name": "REJECT",
+                "short_name": "RC",
+                "logo": "/storage/teams/logos/reject-logo.svg",
+                "logo_exists": true,
+                "logo_fallback": {
+                  "text": "REJECT",
+                  "color": "#0d9488",
+                  "type": "team-logo"
+                },
+                "region": "APAC",
+                "platform": "PC",
+                "country": "JP",
+                "flag": "🇯🇵",
+                "rating": 1369,
+                "rank": 17,
+                "win_rate": 70,
+                "points": 454,
+                "record": "0-0",
+                "peak": 0,
+                "streak": "N/A",
+                "founded": null,
+                "captain": null,
+                "coach": "TBD",
+                "website": null,
+                "earnings": "180000.00",
+                "social_media": {
+                  "discord": "https://discord.gg/rc",
+                  "twitter": "https://twitter.com/reject"
+                },
+                "achievements": [],
+                "game": "Marvel Rivals",
+                "division": "Gold",
+                "recent_form": [],
+                "player_count": 0
+              },
+              {
+                "id": 70,
+                "name": "The Vicious",
+                "short_name": "TV",
+                "logo": "/storage/teams/logos/the-vicious-logo.svg",
+                "logo_exists": true,
+                "logo_fallback": {
+                  "text": "The Vicious",
+                  "color": "#dc2626",
+                  "type": "team-logo"
+                },
+                "region": "Oceania",
+                "platform": "PC",
+                "country": "AU",
+                "flag": "🇦🇺",
+                "rating": 1363,
+                "rank": 18,
+                "win_rate": 55,
+                "points": 100,
+                "record": "0-0",
+                "peak": 0,
+                "streak": "N/A",
+                "founded": null,
+                "captain": null,
+                "coach": "TBD",
+                "website": null,
+                "earnings": "40000.00",
+                "social_media": {
+                  "discord": "https://discord.gg/tv",
+                  "twitter": "https://twitter.com/thevicious"
+                },
+                "achievements": [],
+                "game": "Marvel Rivals",
+                "division": "Gold",
+                "recent_form": [],
+                "player_count": 0
+              },
+              {
+                "id": 61,
+                "name": "Virtus.pro",
+                "short_name": "VP",
+                "logo": "/storage/teams/logos/virtuspro-logo.png",
+                "logo_exists": true,
+                "logo_fallback": {
+                  "text": "Virtus.pro",
+                  "color": "#059669",
+                  "type": "team-logo"
+                },
+                "region": "EMEA",
+                "platform": "PC",
+                "country": "AM",
+                "flag": "🌍",
+                "rating": 1341,
+                "rank": 19,
+                "win_rate": 40,
+                "points": 101,
+                "record": "0-0",
+                "peak": 0,
+                "streak": "N/A",
+                "founded": null,
+                "captain": null,
+                "coach": "eqo",
+                "website": null,
+                "earnings": "100000.00",
+                "social_media": {
+                  "discord": "https://discord.gg/vp",
+                  "twitter": "https://twitter.com/virtus.pro"
+                },
+                "achievements": [],
+                "game": "Marvel Rivals",
+                "division": "Gold",
+                "recent_form": [],
+                "player_count": 0
+              }
+            ],
+            "total": 18,
+            "success": true
+          },
+          "error": null
+        },
+        {
+          "name": "Get Team Details",
+          "method": "GET",
+          "endpoint": "/api/teams/1",
+          "status": "failed",
+          "response": "Success",
+          "data": {
+            "success": false,
+            "message": "Team not found"
+          },
+          "error": "API returned failure response"
+        },
+        {
+          "name": "Team Roster",
+          "method": "GET",
+          "endpoint": "/api/teams/1/roster",
+          "status": "failed",
+          "response": "Success",
+          "data": {
+            "success": false,
+            "message": "The route api/teams/1/roster could not be found.",
+            "error": "NotFoundHttpException",
+            "file": "/var/www/mrvl-backend/vendor/laravel/framework/src/Illuminate/Routing/AbstractRouteCollection.php",
+            "line": 45
+          },
+          "error": "API returned failure response"
+        },
+        {
+          "name": "Team Statistics",
+          "method": "GET",
+          "endpoint": "/api/teams/1/stats",
+          "status": "failed",
+          "response": "Success",
+          "data": {
+            "success": false,
+            "message": "The route api/teams/1/stats could not be found.",
+            "error": "NotFoundHttpException",
+            "file": "/var/www/mrvl-backend/vendor/laravel/framework/src/Illuminate/Routing/AbstractRouteCollection.php",
+            "line": 45
+          },
+          "error": "API returned failure response"
+        }
+      ],
+      "passed": 1,
+      "failed": 3
+    },
+    "playerManagement": {
+      "tests": [
+        {
+          "name": "List Players",
+          "method": "GET",
+          "endpoint": "/api/players",
+          "status": "passed",
+          "response": "Success",
+          "data": {
+            "data": [
+              {
+                "id": 768,
+                "username": "GZG_Player6",
+                "real_name": "Player6",
+                "avatar": null,
+                "role": "Support",
+                "main_hero": "Mantis",
+                "rating": 1650,
+                "rank": 435,
+                "division": "Diamond",
+                "country": "NZ",
+                "flag": "🇳🇿",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "Ground Zero Gaming",
+                  "short_name": "GZG",
+                  "logo": "ground-zero-logo.png"
+                }
+              },
+              {
+                "id": 777,
+                "username": "TV_Player3",
+                "real_name": "Player3",
+                "avatar": null,
+                "role": "Tank",
+                "main_hero": "Venom",
+                "rating": 1646,
+                "rank": 241,
+                "division": "Diamond",
+                "country": "AU",
+                "flag": "🇦🇺",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "The Vicious",
+                  "short_name": "TV",
+                  "logo": "the-vicious-logo.png"
+                }
+              },
+              {
+                "id": 685,
+                "username": "Coluge",
+                "real_name": "Colin \"Coluge\" Arai",
+                "avatar": null,
+                "role": "Tank",
+                "main_hero": "Venom",
+                "rating": 1645,
+                "rank": 408,
+                "division": "Diamond",
+                "country": "US",
+                "flag": "🇺🇸",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "Sentinels",
+                  "short_name": "SEN",
+                  "logo": "sentinels-logo.png"
+                }
+              },
+              {
+                "id": 713,
+                "username": "LG_Player5",
+                "real_name": "Player5",
+                "avatar": null,
+                "role": "Support",
+                "main_hero": "Luna Snow",
+                "rating": 1640,
+                "rank": 463,
+                "division": "Diamond",
+                "country": "CA",
+                "flag": "🇨🇦",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "Luminosity Gaming",
+                  "short_name": "LG",
+                  "logo": "luminosity-logo.png"
+                }
+              },
+              {
+                "id": 715,
+                "username": "DZ_Player1",
+                "real_name": "Player1",
+                "avatar": null,
+                "role": "Duelist",
+                "main_hero": "Iron Man",
+                "rating": 1638,
+                "rank": 441,
+                "division": "Diamond",
+                "country": "US",
+                "flag": "🇺🇸",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "DarkZero",
+                  "short_name": "DZ",
+                  "logo": "darkzero-logo.png"
+                }
+              },
+              {
+                "id": 723,
+                "username": "Sypeh",
+                "real_name": "Mikkel \"Sypeh\" Klein",
+                "avatar": null,
+                "role": "Support",
+                "main_hero": "Luna Snow",
+                "rating": 1635,
+                "rank": 458,
+                "division": "Diamond",
+                "country": "DK",
+                "flag": "🇩🇰",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "Virtus.pro",
+                  "short_name": "VP",
+                  "logo": "virtuspro-logo.png"
+                }
+              },
+              {
+                "id": 759,
+                "username": "CR_Player3",
+                "real_name": "Player3",
+                "avatar": null,
+                "role": "Tank",
+                "main_hero": "Venom",
+                "rating": 1628,
+                "rank": 300,
+                "division": "Diamond",
+                "country": "JP",
+                "flag": "🇯🇵",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "Crazy Raccoon",
+                  "short_name": "CR",
+                  "logo": "crazy-raccoon-logo.png"
+                }
+              },
+              {
+                "id": 707,
+                "username": "SHX_Player5",
+                "real_name": "Player5",
+                "avatar": null,
+                "role": "Support",
+                "main_hero": "Luna Snow",
+                "rating": 1627,
+                "rank": 373,
+                "division": "Diamond",
+                "country": "US",
+                "flag": "🇺🇸",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "SHROUD-X",
+                  "short_name": "SHX",
+                  "logo": "shroud-x-logo.png"
+                }
+              },
+              {
+                "id": 692,
+                "username": "Coluge",
+                "real_name": "Coluge",
+                "avatar": null,
+                "role": "Tank",
+                "main_hero": "Venom",
+                "rating": 1624,
+                "rank": 307,
+                "division": "Diamond",
+                "country": "US",
+                "flag": "🇺🇸",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "ENVY",
+                  "short_name": "ENVY",
+                  "logo": "envy-logo.png"
+                }
+              },
+              {
+                "id": 704,
+                "username": "SHX_Player2",
+                "real_name": "Player2",
+                "avatar": null,
+                "role": "Duelist",
+                "main_hero": "Spider-Man",
+                "rating": 1622,
+                "rank": 369,
+                "division": "Diamond",
+                "country": "US",
+                "flag": "🇺🇸",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "SHROUD-X",
+                  "short_name": "SHX",
+                  "logo": "shroud-x-logo.png"
+                }
+              },
+              {
+                "id": 778,
+                "username": "TV_Player4",
+                "real_name": "Player4",
+                "avatar": null,
+                "role": "Tank",
+                "main_hero": "Magneto",
+                "rating": 1620,
+                "rank": 234,
+                "division": "Diamond",
+                "country": "NZ",
+                "flag": "🇳🇿",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "The Vicious",
+                  "short_name": "TV",
+                  "logo": "the-vicious-logo.png"
+                }
+              },
+              {
+                "id": 780,
+                "username": "TV_Player6",
+                "real_name": "Player6",
+                "avatar": null,
+                "role": "Support",
+                "main_hero": "Mantis",
+                "rating": 1613,
+                "rank": 422,
+                "division": "Diamond",
+                "country": "AU",
+                "flag": "🇦🇺",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "The Vicious",
+                  "short_name": "TV",
+                  "logo": "the-vicious-logo.png"
+                }
+              },
+              {
+                "id": 740,
+                "username": "RAD_Player2",
+                "real_name": "Player2",
+                "avatar": null,
+                "role": "Duelist",
+                "main_hero": "Spider-Man",
+                "rating": 1609,
+                "rank": 416,
+                "division": "Diamond",
+                "country": "GB",
+                "flag": "🇬🇧",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "Rad EU",
+                  "short_name": "RAD",
+                  "logo": "rad-eu-logo.png"
+                }
+              },
+              {
+                "id": 746,
+                "username": "Brownie",
+                "real_name": "Choi Mingi",
+                "avatar": null,
+                "role": "Duelist",
+                "main_hero": "Spider-Man",
+                "rating": 1609,
+                "rank": 352,
+                "division": "Diamond",
+                "country": "KR",
+                "flag": "🇰🇷",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "Gen.G Esports",
+                  "short_name": "GEN",
+                  "logo": "geng-logo.png"
+                }
+              },
+              {
+                "id": 766,
+                "username": "GZG_Player4",
+                "real_name": "Player4",
+                "avatar": null,
+                "role": "Tank",
+                "main_hero": "Magneto",
+                "rating": 1608,
+                "rank": 283,
+                "division": "Diamond",
+                "country": "AU",
+                "flag": "🇦🇺",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "Ground Zero Gaming",
+                  "short_name": "GZG",
+                  "logo": "ground-zero-logo.png"
+                }
+              },
+              {
+                "id": 679,
+                "username": "delenna",
+                "real_name": "Anthony \"delenna\" Rosa",
+                "avatar": null,
+                "role": "Duelist",
+                "main_hero": "Iron Man",
+                "rating": 1606,
+                "rank": 305,
+                "division": "Diamond",
+                "country": "US",
+                "flag": "🇺🇸",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "100 Thieves",
+                  "short_name": "100T",
+                  "logo": "100-thieves-logo.png"
+                }
+              },
+              {
+                "id": 724,
+                "username": "dridro",
+                "real_name": "Arthur \"dridro\" Szanto",
+                "avatar": null,
+                "role": "Support",
+                "main_hero": "Mantis",
+                "rating": 1606,
+                "rank": 497,
+                "division": "Diamond",
+                "country": "HU",
+                "flag": "🌍",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "Virtus.pro",
+                  "short_name": "VP",
+                  "logo": "virtuspro-logo.png"
+                }
+              },
+              {
+                "id": 699,
+                "username": "energy",
+                "real_name": "energy",
+                "avatar": null,
+                "role": "Tank",
+                "main_hero": "Venom",
+                "rating": 1599,
+                "rank": 777,
+                "division": "Platinum",
+                "country": "AU",
+                "flag": "🇦🇺",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "FlyQuest",
+                  "short_name": "FLY",
+                  "logo": "flyquest-logo.png"
+                }
+              },
+              {
+                "id": 737,
+                "username": "CTD_Player5",
+                "real_name": "Player5",
+                "avatar": null,
+                "role": "Support",
+                "main_hero": "Luna Snow",
+                "rating": 1599,
+                "rank": 922,
+                "division": "Platinum",
+                "country": "ES",
+                "flag": "🇪🇸",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "Citadel Gaming",
+                  "short_name": "CTD",
+                  "logo": "citadel-logo.png"
+                }
+              },
+              {
+                "id": 769,
+                "username": "KNG_Player1",
+                "real_name": "Player1",
+                "avatar": null,
+                "role": "Duelist",
+                "main_hero": "Iron Man",
+                "rating": 1595,
+                "rank": 791,
+                "division": "Platinum",
+                "country": "AU",
+                "flag": "🇦🇺",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "Kanga Esports",
+                  "short_name": "KNG",
+                  "logo": "kanga-logo.png"
+                }
+              },
+              {
+                "id": 733,
+                "username": "CTD_Player1",
+                "real_name": "Player1",
+                "avatar": null,
+                "role": "Duelist",
+                "main_hero": "Iron Man",
+                "rating": 1591,
+                "rank": 703,
+                "division": "Platinum",
+                "country": "FR",
+                "flag": "🇫🇷",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "Citadel Gaming",
+                  "short_name": "CTD",
+                  "logo": "citadel-logo.png"
+                }
+              },
+              {
+                "id": 773,
+                "username": "KNG_Player5",
+                "real_name": "Player5",
+                "avatar": null,
+                "role": "Support",
+                "main_hero": "Luna Snow",
+                "rating": 1591,
+                "rank": 556,
+                "division": "Platinum",
+                "country": "AU",
+                "flag": "🇦🇺",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "Kanga Esports",
+                  "short_name": "KNG",
+                  "logo": "kanga-logo.png"
+                }
+              },
+              {
+                "id": 747,
+                "username": "KAIDIA",
+                "real_name": "Bae Jung-hyun",
+                "avatar": null,
+                "role": "Tank",
+                "main_hero": "Venom",
+                "rating": 1589,
+                "rank": 988,
+                "division": "Platinum",
+                "country": "KR",
+                "flag": "🇰🇷",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "Gen.G Esports",
+                  "short_name": "GEN",
+                  "logo": "geng-logo.png"
+                }
+              },
+              {
+                "id": 711,
+                "username": "LG_Player3",
+                "real_name": "Player3",
+                "avatar": null,
+                "role": "Tank",
+                "main_hero": "Venom",
+                "rating": 1583,
+                "rank": 1000,
+                "division": "Platinum",
+                "country": "CA",
+                "flag": "🇨🇦",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "Luminosity Gaming",
+                  "short_name": "LG",
+                  "logo": "luminosity-logo.png"
+                }
+              },
+              {
+                "id": 682,
+                "username": "Terra",
+                "real_name": "Marschal \"Terra\" Weaver",
+                "avatar": null,
+                "role": "Tank",
+                "main_hero": "Venom",
+                "rating": 1580,
+                "rank": 527,
+                "division": "Platinum",
+                "country": "US",
+                "flag": "🇺🇸",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "100 Thieves",
+                  "short_name": "100T",
+                  "logo": "100-thieves-logo.png"
+                }
+              },
+              {
+                "id": 705,
+                "username": "SHX_Player3",
+                "real_name": "Player3",
+                "avatar": null,
+                "role": "Tank",
+                "main_hero": "Venom",
+                "rating": 1577,
+                "rank": 622,
+                "division": "Platinum",
+                "country": "US",
+                "flag": "🇺🇸",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "SHROUD-X",
+                  "short_name": "SHX",
+                  "logo": "shroud-x-logo.png"
+                }
+              },
+              {
+                "id": 756,
+                "username": "Hippotamus",
+                "real_name": "Hippotamus",
+                "avatar": null,
+                "role": "Support",
+                "main_hero": "Mantis",
+                "rating": 1577,
+                "rank": 685,
+                "division": "Platinum",
+                "country": "JP",
+                "flag": "🇯🇵",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "REJECT",
+                  "short_name": "RC",
+                  "logo": "reject-logo.png"
+                }
+              },
+              {
+                "id": 762,
+                "username": "CR_Player6",
+                "real_name": "Player6",
+                "avatar": null,
+                "role": "Support",
+                "main_hero": "Mantis",
+                "rating": 1576,
+                "rank": 745,
+                "division": "Platinum",
+                "country": "JP",
+                "flag": "🇯🇵",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "Crazy Raccoon",
+                  "short_name": "CR",
+                  "logo": "crazy-raccoon-logo.png"
+                }
+              },
+              {
+                "id": 770,
+                "username": "KNG_Player2",
+                "real_name": "Player2",
+                "avatar": null,
+                "role": "Duelist",
+                "main_hero": "Spider-Man",
+                "rating": 1574,
+                "rank": 982,
+                "division": "Platinum",
+                "country": "AU",
+                "flag": "🇦🇺",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "Kanga Esports",
+                  "short_name": "KNG",
+                  "logo": "kanga-logo.png"
+                }
+              },
+              {
+                "id": 694,
+                "username": "month",
+                "real_name": "month",
+                "avatar": null,
+                "role": "Support",
+                "main_hero": "Luna Snow",
+                "rating": 1568,
+                "rank": 629,
+                "division": "Platinum",
+                "country": "US",
+                "flag": "🇺🇸",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "ENVY",
+                  "short_name": "ENVY",
+                  "logo": "envy-logo.png"
+                }
+              },
+              {
+                "id": 749,
+                "username": "FUNFUN",
+                "real_name": "Jung SeungHyun",
+                "avatar": null,
+                "role": "Support",
+                "main_hero": "Luna Snow",
+                "rating": 1562,
+                "rank": 686,
+                "division": "Platinum",
+                "country": "KR",
+                "flag": "🇰🇷",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "Gen.G Esports",
+                  "short_name": "GEN",
+                  "logo": "geng-logo.png"
+                }
+              },
+              {
+                "id": 792,
+                "username": "NOVA_Player6",
+                "real_name": "Player6",
+                "avatar": null,
+                "role": "Support",
+                "main_hero": "Mantis",
+                "rating": 1560,
+                "rank": 741,
+                "division": "Platinum",
+                "country": "CN",
+                "flag": "🇨🇳",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "Nova Esports",
+                  "short_name": "NOVA",
+                  "logo": "nova-logo.png"
+                }
+              },
+              {
+                "id": 688,
+                "username": "aramori",
+                "real_name": "Chassidy \"aramori\" Kaye",
+                "avatar": null,
+                "role": "Support",
+                "main_hero": "Luna Snow",
+                "rating": 1559,
+                "rank": 606,
+                "division": "Platinum",
+                "country": "US",
+                "flag": "🇺🇸",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "Sentinels",
+                  "short_name": "SEN",
+                  "logo": "sentinels-logo.png"
+                }
+              },
+              {
+                "id": 690,
+                "username": "teki",
+                "real_name": "teki",
+                "avatar": null,
+                "role": "Tank",
+                "main_hero": "Magneto",
+                "rating": 1554,
+                "rank": 533,
+                "division": "Platinum",
+                "country": "US",
+                "flag": "🇺🇸",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "Sentinels",
+                  "short_name": "SEN",
+                  "logo": "sentinels-logo.png"
+                }
+              },
+              {
+                "id": 743,
+                "username": "RAD_Player5",
+                "real_name": "Player5",
+                "avatar": null,
+                "role": "Support",
+                "main_hero": "Luna Snow",
+                "rating": 1551,
+                "rank": 629,
+                "division": "Platinum",
+                "country": "PL",
+                "flag": "🇵🇱",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "Rad EU",
+                  "short_name": "RAD",
+                  "logo": "rad-eu-logo.png"
+                }
+              },
+              {
+                "id": 706,
+                "username": "SHX_Player4",
+                "real_name": "Player4",
+                "avatar": null,
+                "role": "Tank",
+                "main_hero": "Magneto",
+                "rating": 1545,
+                "rank": 625,
+                "division": "Platinum",
+                "country": "US",
+                "flag": "🇺🇸",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "SHROUD-X",
+                  "short_name": "SHX",
+                  "logo": "shroud-x-logo.png"
+                }
+              },
+              {
+                "id": 686,
+                "username": "Rymazing",
+                "real_name": "Ryan \"Rymazing\" Bishop",
+                "avatar": null,
+                "role": "Duelist",
+                "main_hero": "Spider-Man",
+                "rating": 1544,
+                "rank": 601,
+                "division": "Platinum",
+                "country": "US",
+                "flag": "🇺🇸",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "Sentinels",
+                  "short_name": "SEN",
+                  "logo": "sentinels-logo.png"
+                }
+              },
+              {
+                "id": 787,
+                "username": "NOVA_Player1",
+                "real_name": "Player1",
+                "avatar": null,
+                "role": "Duelist",
+                "main_hero": "Iron Man",
+                "rating": 1543,
+                "rank": 912,
+                "division": "Platinum",
+                "country": "CN",
+                "flag": "🇨🇳",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "Nova Esports",
+                  "short_name": "NOVA",
+                  "logo": "nova-logo.png"
+                }
+              },
+              {
+                "id": 764,
+                "username": "GZG_Player2",
+                "real_name": "Player2",
+                "avatar": null,
+                "role": "Duelist",
+                "main_hero": "Spider-Man",
+                "rating": 1541,
+                "rank": 773,
+                "division": "Platinum",
+                "country": "AU",
+                "flag": "🇦🇺",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "Ground Zero Gaming",
+                  "short_name": "GZG",
+                  "logo": "ground-zero-logo.png"
+                }
+              },
+              {
+                "id": 720,
+                "username": "DZ_Player6",
+                "real_name": "Player6",
+                "avatar": null,
+                "role": "Support",
+                "main_hero": "Mantis",
+                "rating": 1540,
+                "rank": 638,
+                "division": "Platinum",
+                "country": "US",
+                "flag": "🇺🇸",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "DarkZero",
+                  "short_name": "DZ",
+                  "logo": "darkzero-logo.png"
+                }
+              },
+              {
+                "id": 721,
+                "username": "SparkR",
+                "real_name": "William \"SparkR\" Andersson",
+                "avatar": null,
+                "role": "Duelist",
+                "main_hero": "Iron Man",
+                "rating": 1533,
+                "rank": 874,
+                "division": "Platinum",
+                "country": "SE",
+                "flag": "🇸🇪",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "Virtus.pro",
+                  "short_name": "VP",
+                  "logo": "virtuspro-logo.png"
+                }
+              },
+              {
+                "id": 755,
+                "username": "Flo",
+                "real_name": "Flo",
+                "avatar": null,
+                "role": "Support",
+                "main_hero": "Luna Snow",
+                "rating": 1532,
+                "rank": 770,
+                "division": "Platinum",
+                "country": "JP",
+                "flag": "🇯🇵",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "REJECT",
+                  "short_name": "RC",
+                  "logo": "reject-logo.png"
+                }
+              },
+              {
+                "id": 788,
+                "username": "NOVA_Player2",
+                "real_name": "Player2",
+                "avatar": null,
+                "role": "Duelist",
+                "main_hero": "Spider-Man",
+                "rating": 1531,
+                "rank": 993,
+                "division": "Platinum",
+                "country": "CN",
+                "flag": "🇨🇳",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "Nova Esports",
+                  "short_name": "NOVA",
+                  "logo": "nova-logo.png"
+                }
+              },
+              {
+                "id": 731,
+                "username": "Alx",
+                "real_name": "Aleks \"Alx\" Suchev",
+                "avatar": null,
+                "role": "Support",
+                "main_hero": "Luna Snow",
+                "rating": 1522,
+                "rank": 987,
+                "division": "Platinum",
+                "country": "EU",
+                "flag": "🇪🇺",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "OG",
+                  "short_name": "OG",
+                  "logo": "og-logo.png"
+                }
+              },
+              {
+                "id": 698,
+                "username": "lyte",
+                "real_name": "lyte",
+                "avatar": null,
+                "role": "Duelist",
+                "main_hero": "Spider-Man",
+                "rating": 1518,
+                "rank": 535,
+                "division": "Platinum",
+                "country": "AU",
+                "flag": "🇦🇺",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "FlyQuest",
+                  "short_name": "FLY",
+                  "logo": "flyquest-logo.png"
+                }
+              },
+              {
+                "id": 717,
+                "username": "DZ_Player3",
+                "real_name": "Player3",
+                "avatar": null,
+                "role": "Tank",
+                "main_hero": "Venom",
+                "rating": 1518,
+                "rank": 605,
+                "division": "Platinum",
+                "country": "US",
+                "flag": "🇺🇸",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "DarkZero",
+                  "short_name": "DZ",
+                  "logo": "darkzero-logo.png"
+                }
+              },
+              {
+                "id": 753,
+                "username": "Gaez",
+                "real_name": "Gaez",
+                "avatar": null,
+                "role": "Duelist",
+                "main_hero": "Iron Man",
+                "rating": 1514,
+                "rank": 629,
+                "division": "Platinum",
+                "country": "JP",
+                "flag": "🇯🇵",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "REJECT",
+                  "short_name": "RC",
+                  "logo": "reject-logo.png"
+                }
+              },
+              {
+                "id": 736,
+                "username": "CTD_Player4",
+                "real_name": "Player4",
+                "avatar": null,
+                "role": "Tank",
+                "main_hero": "Magneto",
+                "rating": 1513,
+                "rank": 988,
+                "division": "Platinum",
+                "country": "BE",
+                "flag": "🇧🇪",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "Citadel Gaming",
+                  "short_name": "CTD",
+                  "logo": "citadel-logo.png"
+                }
+              },
+              {
+                "id": 693,
+                "username": "nero",
+                "real_name": "nero",
+                "avatar": null,
+                "role": "Duelist",
+                "main_hero": "Spider-Man",
+                "rating": 1505,
+                "rank": 864,
+                "division": "Platinum",
+                "country": "US",
+                "flag": "🇺🇸",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "ENVY",
+                  "short_name": "ENVY",
+                  "logo": "envy-logo.png"
+                }
+              },
+              {
+                "id": 772,
+                "username": "KNG_Player4",
+                "real_name": "Player4",
+                "avatar": null,
+                "role": "Tank",
+                "main_hero": "Magneto",
+                "rating": 1505,
+                "rank": 523,
+                "division": "Platinum",
+                "country": "AU",
+                "flag": "🇦🇺",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "Kanga Esports",
+                  "short_name": "KNG",
+                  "logo": "kanga-logo.png"
+                }
+              },
+              {
+                "id": 708,
+                "username": "SHX_Player6",
+                "real_name": "Player6",
+                "avatar": null,
+                "role": "Support",
+                "main_hero": "Mantis",
+                "rating": 1502,
+                "rank": 770,
+                "division": "Platinum",
+                "country": "US",
+                "flag": "🇺🇸",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "SHROUD-X",
+                  "short_name": "SHX",
+                  "logo": "shroud-x-logo.png"
+                }
+              },
+              {
+                "id": 732,
+                "username": "Ken",
+                "real_name": "Leander \"Ken\" Aspestrand",
+                "avatar": null,
+                "role": "Support",
+                "main_hero": "Mantis",
+                "rating": 1497,
+                "rank": 587,
+                "division": "Platinum",
+                "country": "NO",
+                "flag": "🇳🇴",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "OG",
+                  "short_name": "OG",
+                  "logo": "og-logo.png"
+                }
+              },
+              {
+                "id": 716,
+                "username": "DZ_Player2",
+                "real_name": "Player2",
+                "avatar": null,
+                "role": "Duelist",
+                "main_hero": "Spider-Man",
+                "rating": 1496,
+                "rank": 951,
+                "division": "Platinum",
+                "country": "US",
+                "flag": "🇺🇸",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "DarkZero",
+                  "short_name": "DZ",
+                  "logo": "darkzero-logo.png"
+                }
+              },
+              {
+                "id": 742,
+                "username": "RAD_Player4",
+                "real_name": "Player4",
+                "avatar": null,
+                "role": "Tank",
+                "main_hero": "Magneto",
+                "rating": 1494,
+                "rank": 914,
+                "division": "Platinum",
+                "country": "FI",
+                "flag": "🇫🇮",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "Rad EU",
+                  "short_name": "RAD",
+                  "logo": "rad-eu-logo.png"
+                }
+              },
+              {
+                "id": 695,
+                "username": "cal",
+                "real_name": "cal",
+                "avatar": null,
+                "role": "Support",
+                "main_hero": "Mantis",
+                "rating": 1493,
+                "rank": 833,
+                "division": "Platinum",
+                "country": "US",
+                "flag": "🇺🇸",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "ENVY",
+                  "short_name": "ENVY",
+                  "logo": "envy-logo.png"
+                }
+              },
+              {
+                "id": 791,
+                "username": "NOVA_Player5",
+                "real_name": "Player5",
+                "avatar": null,
+                "role": "Support",
+                "main_hero": "Luna Snow",
+                "rating": 1490,
+                "rank": 763,
+                "division": "Platinum",
+                "country": "CN",
+                "flag": "🇨🇳",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "Nova Esports",
+                  "short_name": "NOVA",
+                  "logo": "nova-logo.png"
+                }
+              },
+              {
+                "id": 729,
+                "username": "Etsu",
+                "real_name": "Théo \"Etsu\" Clement",
+                "avatar": null,
+                "role": "Duelist",
+                "main_hero": "Iron Man",
+                "rating": 1488,
+                "rank": 932,
+                "division": "Platinum",
+                "country": "FR",
+                "flag": "🇫🇷",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "OG",
+                  "short_name": "OG",
+                  "logo": "og-logo.png"
+                }
+              },
+              {
+                "id": 738,
+                "username": "CTD_Player6",
+                "real_name": "Player6",
+                "avatar": null,
+                "role": "Support",
+                "main_hero": "Mantis",
+                "rating": 1488,
+                "rank": 946,
+                "division": "Platinum",
+                "country": "IT",
+                "flag": "🇮🇹",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "Citadel Gaming",
+                  "short_name": "CTD",
+                  "logo": "citadel-logo.png"
+                }
+              },
+              {
+                "id": 754,
+                "username": "November24",
+                "real_name": "November 24",
+                "avatar": null,
+                "role": "Duelist",
+                "main_hero": "Spider-Man",
+                "rating": 1486,
+                "rank": 698,
+                "division": "Platinum",
+                "country": "JP",
+                "flag": "🇯🇵",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "REJECT",
+                  "short_name": "RC",
+                  "logo": "reject-logo.png"
+                }
+              },
+              {
+                "id": 789,
+                "username": "NOVA_Player3",
+                "real_name": "Player3",
+                "avatar": null,
+                "role": "Tank",
+                "main_hero": "Venom",
+                "rating": 1484,
+                "rank": 946,
+                "division": "Platinum",
+                "country": "CN",
+                "flag": "🇨🇳",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "Nova Esports",
+                  "short_name": "NOVA",
+                  "logo": "nova-logo.png"
+                }
+              },
+              {
+                "id": 760,
+                "username": "CR_Player4",
+                "real_name": "Player4",
+                "avatar": null,
+                "role": "Tank",
+                "main_hero": "Magneto",
+                "rating": 1483,
+                "rank": 919,
+                "division": "Platinum",
+                "country": "JP",
+                "flag": "🇯🇵",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "Crazy Raccoon",
+                  "short_name": "CR",
+                  "logo": "crazy-raccoon-logo.png"
+                }
+              },
+              {
+                "id": 735,
+                "username": "CTD_Player3",
+                "real_name": "Player3",
+                "avatar": null,
+                "role": "Tank",
+                "main_hero": "Venom",
+                "rating": 1482,
+                "rank": 612,
+                "division": "Platinum",
+                "country": "NL",
+                "flag": "🇳🇱",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "Citadel Gaming",
+                  "short_name": "CTD",
+                  "logo": "citadel-logo.png"
+                }
+              },
+              {
+                "id": 776,
+                "username": "TV_Player2",
+                "real_name": "Player2",
+                "avatar": null,
+                "role": "Duelist",
+                "main_hero": "Spider-Man",
+                "rating": 1482,
+                "rank": 878,
+                "division": "Platinum",
+                "country": "NZ",
+                "flag": "🇳🇿",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "The Vicious",
+                  "short_name": "TV",
+                  "logo": "the-vicious-logo.png"
+                }
+              },
+              {
+                "id": 774,
+                "username": "KNG_Player6",
+                "real_name": "Player6",
+                "avatar": null,
+                "role": "Support",
+                "main_hero": "Mantis",
+                "rating": 1480,
+                "rank": 687,
+                "division": "Platinum",
+                "country": "AU",
+                "flag": "🇦🇺",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "Kanga Esports",
+                  "short_name": "KNG",
+                  "logo": "kanga-logo.png"
+                }
+              },
+              {
+                "id": 779,
+                "username": "TV_Player5",
+                "real_name": "Player5",
+                "avatar": null,
+                "role": "Support",
+                "main_hero": "Luna Snow",
+                "rating": 1478,
+                "rank": 583,
+                "division": "Platinum",
+                "country": "AU",
+                "flag": "🇦🇺",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "The Vicious",
+                  "short_name": "TV",
+                  "logo": "the-vicious-logo.png"
+                }
+              },
+              {
+                "id": 709,
+                "username": "LG_Player1",
+                "real_name": "Player1",
+                "avatar": null,
+                "role": "Duelist",
+                "main_hero": "Iron Man",
+                "rating": 1476,
+                "rank": 556,
+                "division": "Platinum",
+                "country": "CA",
+                "flag": "🇨🇦",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "Luminosity Gaming",
+                  "short_name": "LG",
+                  "logo": "luminosity-logo.png"
+                }
+              },
+              {
+                "id": 741,
+                "username": "RAD_Player3",
+                "real_name": "Player3",
+                "avatar": null,
+                "role": "Tank",
+                "main_hero": "Venom",
+                "rating": 1470,
+                "rank": 893,
+                "division": "Platinum",
+                "country": "SE",
+                "flag": "🇸🇪",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "Rad EU",
+                  "short_name": "RAD",
+                  "logo": "rad-eu-logo.png"
+                }
+              },
+              {
+                "id": 689,
+                "username": "Karova",
+                "real_name": "Mark \"Karova\" Kvashin",
+                "avatar": null,
+                "role": "Support",
+                "main_hero": "Mantis",
+                "rating": 1469,
+                "rank": 907,
+                "division": "Platinum",
+                "country": "US",
+                "flag": "🇺🇸",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "Sentinels",
+                  "short_name": "SEN",
+                  "logo": "sentinels-logo.png"
+                }
+              },
+              {
+                "id": 763,
+                "username": "naahmie",
+                "real_name": "naahmie",
+                "avatar": null,
+                "role": "Duelist",
+                "main_hero": "Iron Man",
+                "rating": 1468,
+                "rank": 797,
+                "division": "Platinum",
+                "country": "AU",
+                "flag": "🇦🇺",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "Ground Zero Gaming",
+                  "short_name": "GZG",
+                  "logo": "ground-zero-logo.png"
+                }
+              },
+              {
+                "id": 730,
+                "username": "Tanuki",
+                "real_name": "Tanuki",
+                "avatar": null,
+                "role": "Duelist",
+                "main_hero": "Spider-Man",
+                "rating": 1463,
+                "rank": 745,
+                "division": "Platinum",
+                "country": "EU",
+                "flag": "🇪🇺",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "OG",
+                  "short_name": "OG",
+                  "logo": "og-logo.png"
+                }
+              },
+              {
+                "id": 703,
+                "username": "SHX_Player1",
+                "real_name": "Player1",
+                "avatar": null,
+                "role": "Duelist",
+                "main_hero": "Iron Man",
+                "rating": 1460,
+                "rank": 588,
+                "division": "Platinum",
+                "country": "US",
+                "flag": "🇺🇸",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "SHROUD-X",
+                  "short_name": "SHX",
+                  "logo": "shroud-x-logo.png"
+                }
+              },
+              {
+                "id": 718,
+                "username": "DZ_Player4",
+                "real_name": "Player4",
+                "avatar": null,
+                "role": "Tank",
+                "main_hero": "Magneto",
+                "rating": 1460,
+                "rank": 536,
+                "division": "Platinum",
+                "country": "US",
+                "flag": "🇺🇸",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "DarkZero",
+                  "short_name": "DZ",
+                  "logo": "darkzero-logo.png"
+                }
+              },
+              {
+                "id": 745,
+                "username": "Xzi",
+                "real_name": "Xzi",
+                "avatar": null,
+                "role": "Duelist",
+                "main_hero": "Iron Man",
+                "rating": 1451,
+                "rank": 683,
+                "division": "Platinum",
+                "country": "KR",
+                "flag": "🇰🇷",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "Gen.G Esports",
+                  "short_name": "GEN",
+                  "logo": "geng-logo.png"
+                }
+              },
+              {
+                "id": 697,
+                "username": "adios",
+                "real_name": "adios",
+                "avatar": null,
+                "role": "Duelist",
+                "main_hero": "Iron Man",
+                "rating": 1449,
+                "rank": 664,
+                "division": "Platinum",
+                "country": "AU",
+                "flag": "🇦🇺",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "FlyQuest",
+                  "short_name": "FLY",
+                  "logo": "flyquest-logo.png"
+                }
+              },
+              {
+                "id": 696,
+                "username": "nkae",
+                "real_name": "nkae",
+                "avatar": null,
+                "role": "Tank",
+                "main_hero": "Magneto",
+                "rating": 1446,
+                "rank": 660,
+                "division": "Platinum",
+                "country": "US",
+                "flag": "🇺🇸",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "ENVY",
+                  "short_name": "ENVY",
+                  "logo": "envy-logo.png"
+                }
+              },
+              {
+                "id": 691,
+                "username": "Shpeediry",
+                "real_name": "Shpeediry",
+                "avatar": null,
+                "role": "Duelist",
+                "main_hero": "Iron Man",
+                "rating": 1444,
+                "rank": 845,
+                "division": "Platinum",
+                "country": "US",
+                "flag": "🇺🇸",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "ENVY",
+                  "short_name": "ENVY",
+                  "logo": "envy-logo.png"
+                }
+              },
+              {
+                "id": 701,
+                "username": "cooper",
+                "real_name": "cooper",
+                "avatar": null,
+                "role": "Support",
+                "main_hero": "Luna Snow",
+                "rating": 1433,
+                "rank": 963,
+                "division": "Platinum",
+                "country": "AU",
+                "flag": "🇦🇺",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "FlyQuest",
+                  "short_name": "FLY",
+                  "logo": "flyquest-logo.png"
+                }
+              },
+              {
+                "id": 722,
+                "username": "phi",
+                "real_name": "Philip \"phi\" Handke",
+                "avatar": null,
+                "role": "Duelist",
+                "main_hero": "Spider-Man",
+                "rating": 1433,
+                "rank": 574,
+                "division": "Platinum",
+                "country": "DE",
+                "flag": "🇩🇪",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "Virtus.pro",
+                  "short_name": "VP",
+                  "logo": "virtuspro-logo.png"
+                }
+              },
+              {
+                "id": 725,
+                "username": "Nevix",
+                "real_name": "Andreas \"Nevix\" Karlsson",
+                "avatar": null,
+                "role": "Tank",
+                "main_hero": "Venom",
+                "rating": 1433,
+                "rank": 673,
+                "division": "Platinum",
+                "country": "SE",
+                "flag": "🇸🇪",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "Virtus.pro",
+                  "short_name": "VP",
+                  "logo": "virtuspro-logo.png"
+                }
+              },
+              {
+                "id": 751,
+                "username": "RIPASUKO",
+                "real_name": "RIPASUKO",
+                "avatar": null,
+                "role": "Tank",
+                "main_hero": "Venom",
+                "rating": 1430,
+                "rank": 665,
+                "division": "Platinum",
+                "country": "JP",
+                "flag": "🇯🇵",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "REJECT",
+                  "short_name": "RC",
+                  "logo": "reject-logo.png"
+                }
+              },
+              {
+                "id": 727,
+                "username": "Snayz",
+                "real_name": "Snayz",
+                "avatar": null,
+                "role": "Tank",
+                "main_hero": "Venom",
+                "rating": 1426,
+                "rank": 903,
+                "division": "Platinum",
+                "country": "EU",
+                "flag": "🇪🇺",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "OG",
+                  "short_name": "OG",
+                  "logo": "og-logo.png"
+                }
+              },
+              {
+                "id": 761,
+                "username": "CR_Player5",
+                "real_name": "Player5",
+                "avatar": null,
+                "role": "Support",
+                "main_hero": "Luna Snow",
+                "rating": 1425,
+                "rank": 964,
+                "division": "Platinum",
+                "country": "JP",
+                "flag": "🇯🇵",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "Crazy Raccoon",
+                  "short_name": "CR",
+                  "logo": "crazy-raccoon-logo.png"
+                }
+              },
+              {
+                "id": 687,
+                "username": "SuperGomez",
+                "real_name": "Anthony \"SuperGomez\" Gomez",
+                "avatar": null,
+                "role": "Duelist",
+                "main_hero": "Iron Man",
+                "rating": 1421,
+                "rank": 648,
+                "division": "Platinum",
+                "country": "US",
+                "flag": "🇺🇸",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "Sentinels",
+                  "short_name": "SEN",
+                  "logo": "sentinels-logo.png"
+                }
+              },
+              {
+                "id": 765,
+                "username": "GZG_Player3",
+                "real_name": "Player3",
+                "avatar": null,
+                "role": "Tank",
+                "main_hero": "Venom",
+                "rating": 1420,
+                "rank": 886,
+                "division": "Platinum",
+                "country": "AU",
+                "flag": "🇦🇺",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "Ground Zero Gaming",
+                  "short_name": "GZG",
+                  "logo": "ground-zero-logo.png"
+                }
+              },
+              {
+                "id": 712,
+                "username": "LG_Player4",
+                "real_name": "Player4",
+                "avatar": null,
+                "role": "Tank",
+                "main_hero": "Magneto",
+                "rating": 1419,
+                "rank": 811,
+                "division": "Platinum",
+                "country": "US",
+                "flag": "🇺🇸",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "Luminosity Gaming",
+                  "short_name": "LG",
+                  "logo": "luminosity-logo.png"
+                }
+              },
+              {
+                "id": 790,
+                "username": "NOVA_Player4",
+                "real_name": "Player4",
+                "avatar": null,
+                "role": "Tank",
+                "main_hero": "Magneto",
+                "rating": 1416,
+                "rank": 938,
+                "division": "Platinum",
+                "country": "CN",
+                "flag": "🇨🇳",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "Nova Esports",
+                  "short_name": "NOVA",
+                  "logo": "nova-logo.png"
+                }
+              },
+              {
+                "id": 683,
+                "username": "TTK",
+                "real_name": "Eric \"TTK\" Arraiga",
+                "avatar": null,
+                "role": "Tank",
+                "main_hero": "Magneto",
+                "rating": 1414,
+                "rank": 962,
+                "division": "Platinum",
+                "country": "US",
+                "flag": "🇺🇸",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "100 Thieves",
+                  "short_name": "100T",
+                  "logo": "100-thieves-logo.png"
+                }
+              },
+              {
+                "id": 700,
+                "username": "SparkChief",
+                "real_name": "SparkChief",
+                "avatar": null,
+                "role": "Tank",
+                "main_hero": "Magneto",
+                "rating": 1414,
+                "rank": 804,
+                "division": "Platinum",
+                "country": "AU",
+                "flag": "🇦🇺",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "FlyQuest",
+                  "short_name": "FLY",
+                  "logo": "flyquest-logo.png"
+                }
+              },
+              {
+                "id": 748,
+                "username": "CHOPPA",
+                "real_name": "Sin Jae-hyeon",
+                "avatar": null,
+                "role": "Tank",
+                "main_hero": "Magneto",
+                "rating": 1402,
+                "rank": 916,
+                "division": "Platinum",
+                "country": "KR",
+                "flag": "🇰🇷",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "Gen.G Esports",
+                  "short_name": "GEN",
+                  "logo": "geng-logo.png"
+                }
+              },
+              {
+                "id": 758,
+                "username": "CR_Player2",
+                "real_name": "Player2",
+                "avatar": null,
+                "role": "Duelist",
+                "main_hero": "Spider-Man",
+                "rating": 1397,
+                "rank": 851,
+                "division": "Platinum",
+                "country": "JP",
+                "flag": "🇯🇵",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "Crazy Raccoon",
+                  "short_name": "CR",
+                  "logo": "crazy-raccoon-logo.png"
+                }
+              },
+              {
+                "id": 752,
+                "username": "JT3",
+                "real_name": "JT3",
+                "avatar": null,
+                "role": "Tank",
+                "main_hero": "Magneto",
+                "rating": 1396,
+                "rank": 607,
+                "division": "Platinum",
+                "country": "JP",
+                "flag": "🇯🇵",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "REJECT",
+                  "short_name": "RC",
+                  "logo": "reject-logo.png"
+                }
+              },
+              {
+                "id": 710,
+                "username": "LG_Player2",
+                "real_name": "Player2",
+                "avatar": null,
+                "role": "Duelist",
+                "main_hero": "Spider-Man",
+                "rating": 1392,
+                "rank": 841,
+                "division": "Platinum",
+                "country": "CA",
+                "flag": "🇨🇦",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "Luminosity Gaming",
+                  "short_name": "LG",
+                  "logo": "luminosity-logo.png"
+                }
+              },
+              {
+                "id": 757,
+                "username": "CR_Player1",
+                "real_name": "Player1",
+                "avatar": null,
+                "role": "Duelist",
+                "main_hero": "Iron Man",
+                "rating": 1390,
+                "rank": 965,
+                "division": "Platinum",
+                "country": "JP",
+                "flag": "🇯🇵",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "Crazy Raccoon",
+                  "short_name": "CR",
+                  "logo": "crazy-raccoon-logo.png"
+                }
+              },
+              {
+                "id": 771,
+                "username": "KNG_Player3",
+                "real_name": "Player3",
+                "avatar": null,
+                "role": "Tank",
+                "main_hero": "Venom",
+                "rating": 1390,
+                "rank": 933,
+                "division": "Platinum",
+                "country": "AU",
+                "flag": "🇦🇺",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "Kanga Esports",
+                  "short_name": "KNG",
+                  "logo": "kanga-logo.png"
+                }
+              },
+              {
+                "id": 728,
+                "username": "Nzo",
+                "real_name": "Nzo",
+                "avatar": null,
+                "role": "Tank",
+                "main_hero": "Magneto",
+                "rating": 1388,
+                "rank": 827,
+                "division": "Platinum",
+                "country": "EU",
+                "flag": "🇪🇺",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "OG",
+                  "short_name": "OG",
+                  "logo": "og-logo.png"
+                }
+              },
+              {
+                "id": 702,
+                "username": "Zelos",
+                "real_name": "Zelos",
+                "avatar": null,
+                "role": "Support",
+                "main_hero": "Mantis",
+                "rating": 1386,
+                "rank": 912,
+                "division": "Platinum",
+                "country": "AU",
+                "flag": "🇦🇺",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "FlyQuest",
+                  "short_name": "FLY",
+                  "logo": "flyquest-logo.png"
+                }
+              },
+              {
+                "id": 739,
+                "username": "RAD_Player1",
+                "real_name": "Player1",
+                "avatar": null,
+                "role": "Duelist",
+                "main_hero": "Iron Man",
+                "rating": 1386,
+                "rank": 805,
+                "division": "Platinum",
+                "country": "GB",
+                "flag": "🇬🇧",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "Rad EU",
+                  "short_name": "RAD",
+                  "logo": "rad-eu-logo.png"
+                }
+              },
+              {
+                "id": 750,
+                "username": "Dotori",
+                "real_name": "Dotori",
+                "avatar": null,
+                "role": "Support",
+                "main_hero": "Mantis",
+                "rating": 1384,
+                "rank": 589,
+                "division": "Platinum",
+                "country": "KR",
+                "flag": "🇰🇷",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "Gen.G Esports",
+                  "short_name": "GEN",
+                  "logo": "geng-logo.png"
+                }
+              },
+              {
+                "id": 726,
+                "username": "Finnsi",
+                "real_name": "Finnbjörn \"Finnsi\" Jónasson",
+                "avatar": null,
+                "role": "Tank",
+                "main_hero": "Magneto",
+                "rating": 1371,
+                "rank": 664,
+                "division": "Platinum",
+                "country": "IS",
+                "flag": "🌍",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "Virtus.pro",
+                  "short_name": "VP",
+                  "logo": "virtuspro-logo.png"
+                }
+              },
+              {
+                "id": 767,
+                "username": "GZG_Player5",
+                "real_name": "Player5",
+                "avatar": null,
+                "role": "Support",
+                "main_hero": "Luna Snow",
+                "rating": 1367,
+                "rank": 617,
+                "division": "Platinum",
+                "country": "AU",
+                "flag": "🇦🇺",
+                "age": null,
+                "status": "active",
+                "team": {
+                  "name": "Ground Zero Gaming",
+                  "short_name": "GZG",
+                  "logo": "ground-zero-logo.png"
+                }
+              }
+            ],
+            "total": 100,
+            "success": true
+          },
+          "error": null
+        },
+        {
+          "name": "Player Details",
+          "method": "GET",
+          "endpoint": "/api/players/1",
+          "status": "failed",
+          "response": "Success",
+          "data": {
+            "success": false,
+            "message": "Player not found"
+          },
+          "error": "API returned failure response"
+        },
+        {
+          "name": "Player Statistics",
+          "method": "GET",
+          "endpoint": "/api/players/1/stats",
+          "status": "failed",
+          "response": "Success",
+          "data": {
+            "success": false,
+            "message": "The route api/players/1/stats could not be found.",
+            "error": "NotFoundHttpException",
+            "file": "/var/www/mrvl-backend/vendor/laravel/framework/src/Illuminate/Routing/AbstractRouteCollection.php",
+            "line": 45
+          },
+          "error": "API returned failure response"
+        },
+        {
+          "name": "Player History",
+          "method": "GET",
+          "endpoint": "/api/players/1/history",
+          "status": "failed",
+          "response": "Success",
+          "data": {
+            "success": false,
+            "message": "The route api/players/1/history could not be found.",
+            "error": "NotFoundHttpException",
+            "file": "/var/www/mrvl-backend/vendor/laravel/framework/src/Illuminate/Routing/AbstractRouteCollection.php",
+            "line": 45
+          },
+          "error": "API returned failure response"
+        }
+      ],
+      "passed": 1,
+      "failed": 3
+    },
+    "matchManagement": {
+      "tests": [
+        {
+          "name": "List Matches",
+          "method": "GET",
+          "endpoint": "/api/matches",
+          "status": "passed",
+          "response": "Success",
+          "data": {
+            "data": [
+              {
+                "id": 7,
+                "team1": {
+                  "id": 54,
+                  "name": "100 Thieves",
+                  "short_name": "100T",
+                  "logo": "100-thieves-logo.png",
+                  "region": "Americas",
+                  "rating": 1518,
+                  "flag": null,
+                  "players": [
+                    {
+                      "id": 684,
+                      "name": "Vinnie",
+                      "real_name": "Vincent \"Vinnie\" Scaratine",
+                      "role": "Support",
+                      "avatar": null,
+                      "country": "US",
+                      "nationality": "US",
+                      "hero": "Mantis"
+                    },
+                    {
+                      "id": 680,
+                      "name": "hxrvey",
+                      "real_name": "Harvey \"hxrvey\" Scattergood",
+                      "role": "Duelist",
+                      "avatar": null,
+                      "country": "CA",
+                      "nationality": "US",
+                      "hero": "Spider-Man"
+                    },
+                    {
+                      "id": 681,
+                      "name": "SJP",
+                      "real_name": "James \"SJP\" Hudson",
+                      "role": "Support",
+                      "avatar": null,
+                      "country": "US",
+                      "nationality": "US",
+                      "hero": "Luna Snow"
+                    },
+                    {
+                      "id": 683,
+                      "name": "TTK",
+                      "real_name": "Eric \"TTK\" Arraiga",
+                      "role": "Tank",
+                      "avatar": null,
+                      "country": "US",
+                      "nationality": "US",
+                      "hero": "Magneto"
+                    },
+                    {
+                      "id": 682,
+                      "name": "Terra",
+                      "real_name": "Marschal \"Terra\" Weaver",
+                      "role": "Tank",
+                      "avatar": null,
+                      "country": "US",
+                      "nationality": "US",
+                      "hero": "Venom"
+                    },
+                    {
+                      "id": 679,
+                      "name": "delenna",
+                      "real_name": "Anthony \"delenna\" Rosa",
+                      "role": "Duelist",
+                      "avatar": null,
+                      "country": "US",
+                      "nationality": "US",
+                      "hero": "Iron Man"
+                    }
+                  ]
+                },
+                "team2": {
+                  "id": 61,
+                  "name": "Virtus.pro",
+                  "short_name": "VP",
+                  "logo": "virtuspro-logo.png",
+                  "region": "EMEA",
+                  "rating": 1341,
+                  "flag": null,
+                  "players": [
+                    {
+                      "id": 726,
+                      "name": "Finnsi",
+                      "real_name": "Finnbjörn \"Finnsi\" Jónasson",
+                      "role": "Tank",
+                      "avatar": null,
+                      "country": "IS",
+                      "nationality": "US",
+                      "hero": "Magneto"
+                    },
+                    {
+                      "id": 722,
+                      "name": "phi",
+                      "real_name": "Philip \"phi\" Handke",
+                      "role": "Duelist",
+                      "avatar": null,
+                      "country": "DE",
+                      "nationality": "US",
+                      "hero": "Spider-Man"
+                    },
+                    {
+                      "id": 725,
+                      "name": "Nevix",
+                      "real_name": "Andreas \"Nevix\" Karlsson",
+                      "role": "Tank",
+                      "avatar": null,
+                      "country": "SE",
+                      "nationality": "US",
+                      "hero": "Venom"
+                    },
+                    {
+                      "id": 721,
+                      "name": "SparkR",
+                      "real_name": "William \"SparkR\" Andersson",
+                      "role": "Duelist",
+                      "avatar": null,
+                      "country": "SE",
+                      "nationality": "US",
+                      "hero": "Iron Man"
+                    },
+                    {
+                      "id": 724,
+                      "name": "dridro",
+                      "real_name": "Arthur \"dridro\" Szanto",
+                      "role": "Support",
+                      "avatar": null,
+                      "country": "HU",
+                      "nationality": "US",
+                      "hero": "Mantis"
+                    },
+                    {
+                      "id": 723,
+                      "name": "Sypeh",
+                      "real_name": "Mikkel \"Sypeh\" Klein",
+                      "role": "Support",
+                      "avatar": null,
+                      "country": "DK",
+                      "nationality": "US",
+                      "hero": "Luna Snow"
+                    }
+                  ]
+                },
+                "event": {
+                  "id": null,
+                  "name": "Regular Match",
+                  "type": "Tournament",
+                  "logo": null
+                },
+                "match_info": {
+                  "scheduled_at": "2025-08-08 18:17:00",
+                  "status": "upcoming",
+                  "format": "BO3",
+                  "round": "Regular Season",
+                  "current_map": 1,
+                  "viewers": 19
+                },
+                "score": {
+                  "team1": 0,
+                  "team2": 0,
+                  "maps": [
+                    {
+                      "mode": "Domination",
+                      "status": "completed",
+                      "duration": "00:00",
+                      "map_name": "Hellfire Gala: Krakoa",
+                      "overtime": false,
+                      "game_mode": "Domination",
+                      "winner_id": "61",
+                      "map_number": 1,
+                      "started_at": null,
+                      "team1_score": 2,
+                      "team2_score": 0,
+                      "completed_at": null,
+                      "team1_heroes": [],
+                      "team2_heroes": [],
+                      "team1_composition": [
+                        {
+                          "hero": "Spider-Man",
+                          "role": "Duelist",
+                          "damage": 0,
+                          "deaths": 0,
+                          "assists": 0,
+                          "country": "CA",
+                          "healing": 0,
+                          "player_id": 680,
+                          "player_name": "Harvey \"hxrvey\" Scattergood",
+                          "eliminations": 0,
+                          "damage_blocked": 0,
+                          "objective_time": 0,
+                          "ultimate_usage": 0
+                        },
+                        {
+                          "hero": "Iron Man",
+                          "role": "Duelist",
+                          "damage": 0,
+                          "deaths": 0,
+                          "assists": 0,
+                          "country": "US",
+                          "healing": 0,
+                          "player_id": 679,
+                          "player_name": "Anthony \"delenna\" Rosa",
+                          "eliminations": 0,
+                          "damage_blocked": 0,
+                          "objective_time": 0,
+                          "ultimate_usage": 0
+                        },
+                        {
+                          "hero": "Magneto",
+                          "role": "Tank",
+                          "damage": 0,
+                          "deaths": 0,
+                          "assists": 0,
+                          "country": "US",
+                          "healing": 0,
+                          "player_id": 683,
+                          "player_name": "Eric \"TTK\" Arraiga",
+                          "eliminations": 0,
+                          "damage_blocked": 0,
+                          "objective_time": 0,
+                          "ultimate_usage": 0
+                        },
+                        {
+                          "hero": "Venom",
+                          "role": "Tank",
+                          "damage": 0,
+                          "deaths": 0,
+                          "assists": 0,
+                          "country": "US",
+                          "healing": 0,
+                          "player_id": 682,
+                          "player_name": "Marschal \"Terra\" Weaver",
+                          "eliminations": 0,
+                          "damage_blocked": 0,
+                          "objective_time": 0,
+                          "ultimate_usage": 0
+                        },
+                        {
+                          "hero": "Mantis",
+                          "role": "Support",
+                          "damage": 0,
+                          "deaths": 0,
+                          "assists": 0,
+                          "country": "US",
+                          "healing": 0,
+                          "player_id": 684,
+                          "player_name": "Vincent \"Vinnie\" Scaratine",
+                          "eliminations": 0,
+                          "damage_blocked": 0,
+                          "objective_time": 0,
+                          "ultimate_usage": 0
+                        },
+                        {
+                          "hero": "Luna Snow",
+                          "role": "Support",
+                          "damage": 0,
+                          "deaths": 0,
+                          "assists": 0,
+                          "country": "US",
+                          "healing": 0,
+                          "player_id": 681,
+                          "player_name": "James \"SJP\" Hudson",
+                          "eliminations": 0,
+                          "damage_blocked": 0,
+                          "objective_time": 0,
+                          "ultimate_usage": 0
+                        }
+                      ],
+                      "team2_composition": [
+                        {
+                          "hero": "Spider-Man",
+                          "role": "Duelist",
+                          "damage": 0,
+                          "deaths": 0,
+                          "assists": 0,
+                          "country": "DE",
+                          "healing": 0,
+                          "player_id": 722,
+                          "player_name": "Philip \"phi\" Handke",
+                          "eliminations": 0,
+                          "damage_blocked": 0,
+                          "objective_time": 0,
+                          "ultimate_usage": 0
+                        },
+                        {
+                          "hero": "Iron Man",
+                          "role": "Duelist",
+                          "damage": 0,
+                          "deaths": 0,
+                          "assists": 0,
+                          "country": "SE",
+                          "healing": 0,
+                          "player_id": 721,
+                          "player_name": "William \"SparkR\" Andersson",
+                          "eliminations": 0,
+                          "damage_blocked": 0,
+                          "objective_time": 0,
+                          "ultimate_usage": 0
+                        },
+                        {
+                          "hero": "Magneto",
+                          "role": "Tank",
+                          "damage": 0,
+                          "deaths": 0,
+                          "assists": 0,
+                          "country": "IS",
+                          "healing": 0,
+                          "player_id": 726,
+                          "player_name": "Finnbjörn \"Finnsi\" Jónasson",
+                          "eliminations": 0,
+                          "damage_blocked": 0,
+                          "objective_time": 0,
+                          "ultimate_usage": 0
+                        },
+                        {
+                          "hero": "Venom",
+                          "role": "Tank",
+                          "damage": 0,
+                          "deaths": 0,
+                          "assists": 0,
+                          "country": "SE",
+                          "healing": 0,
+                          "player_id": 725,
+                          "player_name": "Andreas \"Nevix\" Karlsson",
+                          "eliminations": 0,
+                          "damage_blocked": 0,
+                          "objective_time": 0,
+                          "ultimate_usage": 0
+                        },
+                        {
+                          "hero": "Mantis",
+                          "role": "Support",
+                          "damage": 0,
+                          "deaths": 0,
+                          "assists": 0,
+                          "country": "HU",
+                          "healing": 0,
+                          "player_id": 724,
+                          "player_name": "Arthur \"dridro\" Szanto",
+                          "eliminations": 0,
+                          "damage_blocked": 0,
+                          "objective_time": 0,
+                          "ultimate_usage": 0
+                        },
+                        {
+                          "hero": "Luna Snow",
+                          "role": "Support",
+                          "damage": 0,
+                          "deaths": 0,
+                          "assists": 0,
+                          "country": "DK",
+                          "healing": 0,
+                          "player_id": 723,
+                          "player_name": "Mikkel \"Sypeh\" Klein",
+                          "eliminations": 0,
+                          "damage_blocked": 0,
+                          "objective_time": 0,
+                          "ultimate_usage": 0
+                        }
+                      ]
+                    },
+                    {
+                      "mode": "Convoy",
+                      "status": "completed",
+                      "duration": "00:00",
+                      "map_name": "Hydra Charteris Base: Hell's Heaven",
+                      "overtime": false,
+                      "game_mode": "Convoy",
+                      "winner_id": "54",
+                      "map_number": 2,
+                      "started_at": null,
+                      "team1_score": 0,
+                      "team2_score": 2,
+                      "completed_at": null,
+                      "team1_heroes": [],
+                      "team2_heroes": [],
+                      "team1_composition": [
+                        {
+                          "hero": "Spider-Man",
+                          "role": "Duelist",
+                          "damage": 0,
+                          "deaths": 0,
+                          "assists": 0,
+                          "country": "CA",
+                          "healing": 0,
+                          "player_id": 680,
+                          "player_name": "Harvey \"hxrvey\" Scattergood",
+                          "eliminations": 0,
+                          "damage_blocked": 0,
+                          "objective_time": 0,
+                          "ultimate_usage": 0
+                        },
+                        {
+                          "hero": "Iron Man",
+                          "role": "Duelist",
+                          "damage": 0,
+                          "deaths": 0,
+                          "assists": 0,
+                          "country": "US",
+                          "healing": 0,
+                          "player_id": 679,
+                          "player_name": "Anthony \"delenna\" Rosa",
+                          "eliminations": 0,
+                          "damage_blocked": 0,
+                          "objective_time": 0,
+                          "ultimate_usage": 0
+                        },
+                        {
+                          "hero": "Magneto",
+                          "role": "Tank",
+                          "damage": 0,
+                          "deaths": 0,
+                          "assists": 0,
+                          "country": "US",
+                          "healing": 0,
+                          "player_id": 683,
+                          "player_name": "Eric \"TTK\" Arraiga",
+                          "eliminations": 0,
+                          "damage_blocked": 0,
+                          "objective_time": 0,
+                          "ultimate_usage": 0
+                        },
+                        {
+                          "hero": "Venom",
+                          "role": "Tank",
+                          "damage": 0,
+                          "deaths": 0,
+                          "assists": 0,
+                          "country": "US",
+                          "healing": 0,
+                          "player_id": 682,
+                          "player_name": "Marschal \"Terra\" Weaver",
+                          "eliminations": 0,
+                          "damage_blocked": 0,
+                          "objective_time": 0,
+                          "ultimate_usage": 0
+                        },
+                        {
+                          "hero": "Mantis",
+                          "role": "Support",
+                          "damage": 0,
+                          "deaths": 0,
+                          "assists": 0,
+                          "country": "US",
+                          "healing": 0,
+                          "player_id": 684,
+                          "player_name": "Vincent \"Vinnie\" Scaratine",
+                          "eliminations": 0,
+                          "damage_blocked": 0,
+                          "objective_time": 0,
+                          "ultimate_usage": 0
+                        },
+                        {
+                          "hero": "Luna Snow",
+                          "role": "Support",
+                          "damage": 0,
+                          "deaths": 0,
+                          "assists": 0,
+                          "country": "US",
+                          "healing": 0,
+                          "player_id": 681,
+                          "player_name": "James \"SJP\" Hudson",
+                          "eliminations": 0,
+                          "damage_blocked": 0,
+                          "objective_time": 0,
+                          "ultimate_usage": 0
+                        }
+                      ],
+                      "team2_composition": [
+                        {
+                          "hero": "Spider-Man",
+                          "role": "Duelist",
+                          "damage": 0,
+                          "deaths": 0,
+                          "assists": 0,
+                          "country": "DE",
+                          "healing": 0,
+                          "player_id": 722,
+                          "player_name": "Philip \"phi\" Handke",
+                          "eliminations": 0,
+                          "damage_blocked": 0,
+                          "objective_time": 0,
+                          "ultimate_usage": 0
+                        },
+                        {
+                          "hero": "Iron Man",
+                          "role": "Duelist",
+                          "damage": 0,
+                          "deaths": 0,
+                          "assists": 0,
+                          "country": "SE",
+                          "healing": 0,
+                          "player_id": 721,
+                          "player_name": "William \"SparkR\" Andersson",
+                          "eliminations": 0,
+                          "damage_blocked": 0,
+                          "objective_time": 0,
+                          "ultimate_usage": 0
+                        },
+                        {
+                          "hero": "Magneto",
+                          "role": "Tank",
+                          "damage": 0,
+                          "deaths": 0,
+                          "assists": 0,
+                          "country": "IS",
+                          "healing": 0,
+                          "player_id": 726,
+                          "player_name": "Finnbjörn \"Finnsi\" Jónasson",
+                          "eliminations": 0,
+                          "damage_blocked": 0,
+                          "objective_time": 0,
+                          "ultimate_usage": 0
+                        },
+                        {
+                          "hero": "Venom",
+                          "role": "Tank",
+                          "damage": 0,
+                          "deaths": 0,
+                          "assists": 0,
+                          "country": "SE",
+                          "healing": 0,
+                          "player_id": 725,
+                          "player_name": "Andreas \"Nevix\" Karlsson",
+                          "eliminations": 0,
+                          "damage_blocked": 0,
+                          "objective_time": 0,
+                          "ultimate_usage": 0
+                        },
+                        {
+                          "hero": "Mantis",
+                          "role": "Support",
+                          "damage": 0,
+                          "deaths": 0,
+                          "assists": 0,
+                          "country": "HU",
+                          "healing": 0,
+                          "player_id": 724,
+                          "player_name": "Arthur \"dridro\" Szanto",
+                          "eliminations": 0,
+                          "damage_blocked": 0,
+                          "objective_time": 0,
+                          "ultimate_usage": 0
+                        },
+                        {
+                          "hero": "Luna Snow",
+                          "role": "Support",
+                          "damage": 0,
+                          "deaths": 0,
+                          "assists": 0,
+                          "country": "DK",
+                          "healing": 0,
+                          "player_id": 723,
+                          "player_name": "Mikkel \"Sypeh\" Klein",
+                          "eliminations": 0,
+                          "damage_blocked": 0,
+                          "objective_time": 0,
+                          "ultimate_usage": 0
+                        }
+                      ]
+                    },
+                    {
+                      "mode": "Domination",
+                      "status": "completed",
+                      "duration": "00:00",
+                      "map_name": "Intergalactic Empire of Wakanda: Birnin T'Challa",
+                      "overtime": false,
+                      "game_mode": "Domination",
+                      "winner_id": "61",
+                      "map_number": 3,
+                      "started_at": null,
+                      "team1_score": 2,
+                      "team2_score": 0,
+                      "completed_at": null,
+                      "team1_heroes": [],
+                      "team2_heroes": [],
+                      "team1_composition": [
+                        {
+                          "hero": "Spider-Man",
+                          "role": "Duelist",
+                          "damage": 0,
+                          "deaths": 0,
+                          "assists": 0,
+                          "country": "CA",
+                          "healing": 0,
+                          "player_id": 680,
+                          "player_name": "Harvey \"hxrvey\" Scattergood",
+                          "eliminations": 0,
+                          "damage_blocked": 0,
+                          "objective_time": 0,
+                          "ultimate_usage": 0
+                        },
+                        {
+                          "hero": "Iron Man",
+                          "role": "Duelist",
+                          "damage": 0,
+                          "deaths": 0,
+                          "assists": 0,
+                          "country": "US",
+                          "healing": 0,
+                          "player_id": 679,
+                          "player_name": "Anthony \"delenna\" Rosa",
+                          "eliminations": 0,
+                          "damage_blocked": 0,
+                          "objective_time": 0,
+                          "ultimate_usage": 0
+                        },
+                        {
+                          "hero": "Magneto",
+                          "role": "Tank",
+                          "damage": 0,
+                          "deaths": 0,
+                          "assists": 0,
+                          "country": "US",
+                          "healing": 0,
+                          "player_id": 683,
+                          "player_name": "Eric \"TTK\" Arraiga",
+                          "eliminations": 0,
+                          "damage_blocked": 0,
+                          "objective_time": 0,
+                          "ultimate_usage": 0
+                        },
+                        {
+                          "hero": "Venom",
+                          "role": "Tank",
+                          "damage": 0,
+                          "deaths": 0,
+                          "assists": 0,
+                          "country": "US",
+                          "healing": 0,
+                          "player_id": 682,
+                          "player_name": "Marschal \"Terra\" Weaver",
+                          "eliminations": 0,
+                          "damage_blocked": 0,
+                          "objective_time": 0,
+                          "ultimate_usage": 0
+                        },
+                        {
+                          "hero": "Mantis",
+                          "role": "Support",
+                          "damage": 0,
+                          "deaths": 0,
+                          "assists": 0,
+                          "country": "US",
+                          "healing": 0,
+                          "player_id": 684,
+                          "player_name": "Vincent \"Vinnie\" Scaratine",
+                          "eliminations": 0,
+                          "damage_blocked": 0,
+                          "objective_time": 0,
+                          "ultimate_usage": 0
+                        },
+                        {
+                          "hero": "Luna Snow",
+                          "role": "Support",
+                          "damage": 0,
+                          "deaths": 0,
+                          "assists": 0,
+                          "country": "US",
+                          "healing": 0,
+                          "player_id": 681,
+                          "player_name": "James \"SJP\" Hudson",
+                          "eliminations": 0,
+                          "damage_blocked": 0,
+                          "objective_time": 0,
+                          "ultimate_usage": 0
+                        }
+                      ],
+                      "team2_composition": [
+                        {
+                          "hero": "Spider-Man",
+                          "role": "Duelist",
+                          "damage": 0,
+                          "deaths": 0,
+                          "assists": 0,
+                          "country": "DE",
+                          "healing": 0,
+                          "player_id": 722,
+                          "player_name": "Philip \"phi\" Handke",
+                          "eliminations": 0,
+                          "damage_blocked": 0,
+                          "objective_time": 0,
+                          "ultimate_usage": 0
+                        },
+                        {
+                          "hero": "Iron Man",
+                          "role": "Duelist",
+                          "damage": 0,
+                          "deaths": 0,
+                          "assists": 0,
+                          "country": "SE",
+                          "healing": 0,
+                          "player_id": 721,
+                          "player_name": "William \"SparkR\" Andersson",
+                          "eliminations": 0,
+                          "damage_blocked": 0,
+                          "objective_time": 0,
+                          "ultimate_usage": 0
+                        },
+                        {
+                          "hero": "Magneto",
+                          "role": "Tank",
+                          "damage": 0,
+                          "deaths": 0,
+                          "assists": 0,
+                          "country": "IS",
+                          "healing": 0,
+                          "player_id": 726,
+                          "player_name": "Finnbjörn \"Finnsi\" Jónasson",
+                          "eliminations": 0,
+                          "damage_blocked": 0,
+                          "objective_time": 0,
+                          "ultimate_usage": 0
+                        },
+                        {
+                          "hero": "Venom",
+                          "role": "Tank",
+                          "damage": 0,
+                          "deaths": 0,
+                          "assists": 0,
+                          "country": "SE",
+                          "healing": 0,
+                          "player_id": 725,
+                          "player_name": "Andreas \"Nevix\" Karlsson",
+                          "eliminations": 0,
+                          "damage_blocked": 0,
+                          "objective_time": 0,
+                          "ultimate_usage": 0
+                        },
+                        {
+                          "hero": "Mantis",
+                          "role": "Support",
+                          "damage": 0,
+                          "deaths": 0,
+                          "assists": 0,
+                          "country": "HU",
+                          "healing": 0,
+                          "player_id": 724,
+                          "player_name": "Arthur \"dridro\" Szanto",
+                          "eliminations": 0,
+                          "damage_blocked": 0,
+                          "objective_time": 0,
+                          "ultimate_usage": 0
+                        },
+                        {
+                          "hero": "Luna Snow",
+                          "role": "Support",
+                          "damage": 0,
+                          "deaths": 0,
+                          "assists": 0,
+                          "country": "DK",
+                          "healing": 0,
+                          "player_id": 723,
+                          "player_name": "Mikkel \"Sypeh\" Klein",
+                          "eliminations": 0,
+                          "damage_blocked": 0,
+                          "objective_time": 0,
+                          "ultimate_usage": 0
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "broadcast": {
+                  "stream": null,
+                  "streams": [
+                    "https://twitch.tv/marvelrivals",
+                    "https://twitch.tv/marvelrivals"
+                  ],
+                  "betting": [
+                    "https://twitch.tv/marvelrivals"
+                  ],
+                  "vods": [
+                    "https://twitch.tv/marvelrivals",
+                    "https://twitch.tv/marvelrivals"
+                  ],
+                  "viewers": 19
+                },
+                "live_data": null,
+                "player_stats": {
+                  "679": {
+                    "flag": "https://flagcdn.com/16x12/us.png",
+                    "name": "delenna",
+                    "role": "Duelist",
+                    "avatar": null,
+                    "country": "US",
+                    "team_id": 54,
+                    "username": "delenna",
+                    "main_hero": "Iron Man",
+                    "map_stats": [],
+                    "player_id": 679,
+                    "real_name": "Anthony \"delenna\" Rosa",
+                    "maps_played": 0,
+                    "nationality": "US",
+                    "total_stats": {
+                      "damage": 0,
+                      "deaths": 0,
+                      "assists": 0,
+                      "healing": 0,
+                      "kd_ratio": 0,
+                      "eliminations": 0,
+                      "damage_blocked": 0,
+                      "objective_time": 0,
+                      "ultimate_usage": 0
+                    }
+                  },
+                  "680": {
+                    "flag": "https://flagcdn.com/16x12/ca.png",
+                    "name": "hxrvey",
+                    "role": "Duelist",
+                    "avatar": null,
+                    "country": "CA",
+                    "team_id": 54,
+                    "username": "hxrvey",
+                    "main_hero": "Spider-Man",
+                    "map_stats": [],
+                    "player_id": 680,
+                    "real_name": "Harvey \"hxrvey\" Scattergood",
+                    "maps_played": 0,
+                    "nationality": "CA",
+                    "total_stats": {
+                      "damage": 0,
+                      "deaths": 0,
+                      "assists": 0,
+                      "healing": 0,
+                      "kd_ratio": 0,
+                      "eliminations": 0,
+                      "damage_blocked": 0,
+                      "objective_time": 0,
+                      "ultimate_usage": 0
+                    }
+                  },
+                  "681": {
+                    "flag": "https://flagcdn.com/16x12/us.png",
+                    "name": "SJP",
+                    "role": "Support",
+                    "avatar": null,
+                    "country": "US",
+                    "team_id": 54,
+                    "username": "SJP",
+                    "main_hero": "Luna Snow",
+                    "map_stats": [],
+                    "player_id": 681,
+                    "real_name": "James \"SJP\" Hudson",
+                    "maps_played": 0,
+                    "nationality": "US",
+                    "total_stats": {
+                      "damage": 0,
+                      "deaths": 0,
+                      "assists": 0,
+                      "healing": 0,
+                      "kd_ratio": 0,
+                      "eliminations": 0,
+                      "damage_blocked": 0,
+                      "objective_time": 0,
+                      "ultimate_usage": 0
+                    }
+                  },
+                  "682": {
+                    "flag": "https://flagcdn.com/16x12/us.png",
+                    "name": "Terra",
+                    "role": "Tank",
+                    "avatar": null,
+                    "country": "US",
+                    "team_id": 54,
+                    "username": "Terra",
+                    "main_hero": "Venom",
+                    "map_stats": [],
+                    "player_id": 682,
+                    "real_name": "Marschal \"Terra\" Weaver",
+                    "maps_played": 0,
+                    "nationality": "US",
+                    "total_stats": {
+                      "damage": 0,
+                      "deaths": 0,
+                      "assists": 0,
+                      "healing": 0,
+                      "kd_ratio": 0,
+                      "eliminations": 0,
+                      "damage_blocked": 0,
+                      "objective_time": 0,
+                      "ultimate_usage": 0
+                    }
+                  },
+                  "683": {
+                    "flag": "https://flagcdn.com/16x12/us.png",
+                    "name": "TTK",
+                    "role": "Tank",
+                    "avatar": null,
+                    "country": "US",
+                    "team_id": 54,
+                    "username": "TTK",
+                    "main_hero": "Magneto",
+                    "map_stats": [],
+                    "player_id": 683,
+                    "real_name": "Eric \"TTK\" Arraiga",
+                    "maps_played": 0,
+                    "nationality": "US",
+                    "total_stats": {
+                      "damage": 0,
+                      "deaths": 0,
+                      "assists": 0,
+                      "healing": 0,
+                      "kd_ratio": 0,
+                      "eliminations": 0,
+                      "damage_blocked": 0,
+                      "objective_time": 0,
+                      "ultimate_usage": 0
+                    }
+                  },
+                  "684": {
+                    "flag": "https://flagcdn.com/16x12/us.png",
+                    "name": "Vinnie",
+                    "role": "Support",
+                    "avatar": null,
+                    "country": "US",
+                    "team_id": 54,
+                    "username": "Vinnie",
+                    "main_hero": "Mantis",
+                    "map_stats": [],
+                    "player_id": 684,
+                    "real_name": "Vincent \"Vinnie\" Scaratine",
+                    "maps_played": 0,
+                    "nationality": "US",
+                    "total_stats": {
+                      "damage": 0,
+                      "deaths": 0,
+                      "assists": 0,
+                      "healing": 0,
+                      "kd_ratio": 0,
+                      "eliminations": 0,
+                      "damage_blocked": 0,
+                      "objective_time": 0,
+                      "ultimate_usage": 0
+                    }
+                  },
+                  "721": {
+                    "flag": "https://flagcdn.com/16x12/se.png",
+                    "name": "SparkR",
+                    "role": "Duelist",
+                    "avatar": null,
+                    "country": "SE",
+                    "team_id": 61,
+                    "username": "SparkR",
+                    "main_hero": "Iron Man",
+                    "map_stats": [],
+                    "player_id": 721,
+                    "real_name": "William \"SparkR\" Andersson",
+                    "maps_played": 0,
+                    "nationality": "SE",
+                    "total_stats": {
+                      "damage": 0,
+                      "deaths": 0,
+                      "assists": 0,
+                      "healing": 0,
+                      "kd_ratio": 0,
+                      "eliminations": 0,
+                      "damage_blocked": 0,
+                      "objective_time": 0,
+                      "ultimate_usage": 0
+                    }
+                  },
+                  "722": {
+                    "flag": "https://flagcdn.com/16x12/de.png",
+                    "name": "phi",
+                    "role": "Duelist",
+                    "avatar": null,
+                    "country": "DE",
+                    "team_id": 61,
+                    "username": "phi",
+                    "main_hero": "Spider-Man",
+                    "map_stats": [],
+                    "player_id": 722,
+                    "real_name": "Philip \"phi\" Handke",
+                    "maps_played": 0,
+                    "nationality": "DE",
+                    "total_stats": {
+                      "damage": 0,
+                      "deaths": 0,
+                      "assists": 0,
+                      "healing": 0,
+                      "kd_ratio": 0,
+                      "eliminations": 0,
+                      "damage_blocked": 0,
+                      "objective_time": 0,
+                      "ultimate_usage": 0
+                    }
+                  },
+                  "723": {
+                    "flag": "https://flagcdn.com/16x12/dk.png",
+                    "name": "Sypeh",
+                    "role": "Support",
+                    "avatar": null,
+                    "country": "DK",
+                    "team_id": 61,
+                    "username": "Sypeh",
+                    "main_hero": "Luna Snow",
+                    "map_stats": [],
+                    "player_id": 723,
+                    "real_name": "Mikkel \"Sypeh\" Klein",
+                    "maps_played": 0,
+                    "nationality": "DK",
+                    "total_stats": {
+                      "damage": 0,
+                      "deaths": 0,
+                      "assists": 0,
+                      "healing": 0,
+                      "kd_ratio": 0,
+                      "eliminations": 0,
+                      "damage_blocked": 0,
+                      "objective_time": 0,
+                      "ultimate_usage": 0
+                    }
+                  },
+                  "724": {
+                    "flag": "https://flagcdn.com/16x12/hu.png",
+                    "name": "dridro",
+                    "role": "Support",
+                    "avatar": null,
+                    "country": "HU",
+                    "team_id": 61,
+                    "username": "dridro",
+                    "main_hero": "Mantis",
+                    "map_stats": [],
+                    "player_id": 724,
+                    "real_name": "Arthur \"dridro\" Szanto",
+                    "maps_played": 0,
+                    "nationality": "HU",
+                    "total_stats": {
+                      "damage": 0,
+                      "deaths": 0,
+                      "assists": 0,
+                      "healing": 0,
+                      "kd_ratio": 0,
+                      "eliminations": 0,
+                      "damage_blocked": 0,
+                      "objective_time": 0,
+                      "ultimate_usage": 0
+                    }
+                  },
+                  "725": {
+                    "flag": "https://flagcdn.com/16x12/se.png",
+                    "name": "Nevix",
+                    "role": "Tank",
+                    "avatar": null,
+                    "country": "SE",
+                    "team_id": 61,
+                    "username": "Nevix",
+                    "main_hero": "Venom",
+                    "map_stats": [],
+                    "player_id": 725,
+                    "real_name": "Andreas \"Nevix\" Karlsson",
+                    "maps_played": 0,
+                    "nationality": "SE",
+                    "total_stats": {
+                      "damage": 0,
+                      "deaths": 0,
+                      "assists": 0,
+                      "healing": 0,
+                      "kd_ratio": 0,
+                      "eliminations": 0,
+                      "damage_blocked": 0,
+                      "objective_time": 0,
+                      "ultimate_usage": 0
+                    }
+                  },
+                  "726": {
+                    "flag": "https://flagcdn.com/16x12/is.png",
+                    "name": "Finnsi",
+                    "role": "Tank",
+                    "avatar": null,
+                    "country": "IS",
+                    "team_id": 61,
+                    "username": "Finnsi",
+                    "main_hero": "Magneto",
+                    "map_stats": [],
+                    "player_id": 726,
+                    "real_name": "Finnbjörn \"Finnsi\" Jónasson",
+                    "maps_played": 0,
+                    "nationality": "IS",
+                    "total_stats": {
+                      "damage": 0,
+                      "deaths": 0,
+                      "assists": 0,
+                      "healing": 0,
+                      "kd_ratio": 0,
+                      "eliminations": 0,
+                      "damage_blocked": 0,
+                      "objective_time": 0,
+                      "ultimate_usage": 0
+                    }
+                  }
+                },
+                "format": "BO3",
+                "status": "upcoming",
+                "current_map": 1,
+                "maps_data": [
+                  {
+                    "mode": "Domination",
+                    "status": "completed",
+                    "duration": "00:00",
+                    "map_name": "Hellfire Gala: Krakoa",
+                    "overtime": false,
+                    "game_mode": "Domination",
+                    "winner_id": "61",
+                    "map_number": 1,
+                    "started_at": null,
+                    "team1_score": 2,
+                    "team2_score": 0,
+                    "completed_at": null,
+                    "team1_heroes": [],
+                    "team2_heroes": [],
+                    "team1_composition": [
+                      {
+                        "hero": "Spider-Man",
+                        "role": "Duelist",
+                        "damage": 0,
+                        "deaths": 0,
+                        "assists": 0,
+                        "country": "CA",
+                        "healing": 0,
+                        "player_id": 680,
+                        "player_name": "Harvey \"hxrvey\" Scattergood",
+                        "eliminations": 0,
+                        "damage_blocked": 0,
+                        "objective_time": 0,
+                        "ultimate_usage": 0
+                      },
+                      {
+                        "hero": "Iron Man",
+                        "role": "Duelist",
+                        "damage": 0,
+                        "deaths": 0,
+                        "assists": 0,
+                        "country": "US",
+                        "healing": 0,
+                        "player_id": 679,
+                        "player_name": "Anthony \"delenna\" Rosa",
+                        "eliminations": 0,
+                        "damage_blocked": 0,
+                        "objective_time": 0,
+                        "ultimate_usage": 0
+                      },
+                      {
+                        "hero": "Magneto",
+                        "role": "Tank",
+                        "damage": 0,
+                        "deaths": 0,
+                        "assists": 0,
+                        "country": "US",
+                        "healing": 0,
+                        "player_id": 683,
+                        "player_name": "Eric \"TTK\" Arraiga",
+                        "eliminations": 0,
+                        "damage_blocked": 0,
+                        "objective_time": 0,
+                        "ultimate_usage": 0
+                      },
+                      {
+                        "hero": "Venom",
+                        "role": "Tank",
+                        "damage": 0,
+                        "deaths": 0,
+                        "assists": 0,
+                        "country": "US",
+                        "healing": 0,
+                        "player_id": 682,
+                        "player_name": "Marschal \"Terra\" Weaver",
+                        "eliminations": 0,
+                        "damage_blocked": 0,
+                        "objective_time": 0,
+                        "ultimate_usage": 0
+                      },
+                      {
+                        "hero": "Mantis",
+                        "role": "Support",
+                        "damage": 0,
+                        "deaths": 0,
+                        "assists": 0,
+                        "country": "US",
+                        "healing": 0,
+                        "player_id": 684,
+                        "player_name": "Vincent \"Vinnie\" Scaratine",
+                        "eliminations": 0,
+                        "damage_blocked": 0,
+                        "objective_time": 0,
+                        "ultimate_usage": 0
+                      },
+                      {
+                        "hero": "Luna Snow",
+                        "role": "Support",
+                        "damage": 0,
+                        "deaths": 0,
+                        "assists": 0,
+                        "country": "US",
+                        "healing": 0,
+                        "player_id": 681,
+                        "player_name": "James \"SJP\" Hudson",
+                        "eliminations": 0,
+                        "damage_blocked": 0,
+                        "objective_time": 0,
+                        "ultimate_usage": 0
+                      }
+                    ],
+                    "team2_composition": [
+                      {
+                        "hero": "Spider-Man",
+                        "role": "Duelist",
+                        "damage": 0,
+                        "deaths": 0,
+                        "assists": 0,
+                        "country": "DE",
+                        "healing": 0,
+                        "player_id": 722,
+                        "player_name": "Philip \"phi\" Handke",
+                        "eliminations": 0,
+                        "damage_blocked": 0,
+                        "objective_time": 0,
+                        "ultimate_usage": 0
+                      },
+                      {
+                        "hero": "Iron Man",
+                        "role": "Duelist",
+                        "damage": 0,
+                        "deaths": 0,
+                        "assists": 0,
+                        "country": "SE",
+                        "healing": 0,
+                        "player_id": 721,
+                        "player_name": "William \"SparkR\" Andersson",
+                        "eliminations": 0,
+                        "damage_blocked": 0,
+                        "objective_time": 0,
+                        "ultimate_usage": 0
+                      },
+                      {
+                        "hero": "Magneto",
+                        "role": "Tank",
+                        "damage": 0,
+                        "deaths": 0,
+                        "assists": 0,
+                        "country": "IS",
+                        "healing": 0,
+                        "player_id": 726,
+                        "player_name": "Finnbjörn \"Finnsi\" Jónasson",
+                        "eliminations": 0,
+                        "damage_blocked": 0,
+                        "objective_time": 0,
+                        "ultimate_usage": 0
+                      },
+                      {
+                        "hero": "Venom",
+                        "role": "Tank",
+                        "damage": 0,
+                        "deaths": 0,
+                        "assists": 0,
+                        "country": "SE",
+                        "healing": 0,
+                        "player_id": 725,
+                        "player_name": "Andreas \"Nevix\" Karlsson",
+                        "eliminations": 0,
+                        "damage_blocked": 0,
+                        "objective_time": 0,
+                        "ultimate_usage": 0
+                      },
+                      {
+                        "hero": "Mantis",
+                        "role": "Support",
+                        "damage": 0,
+                        "deaths": 0,
+                        "assists": 0,
+                        "country": "HU",
+                        "healing": 0,
+                        "player_id": 724,
+                        "player_name": "Arthur \"dridro\" Szanto",
+                        "eliminations": 0,
+                        "damage_blocked": 0,
+                        "objective_time": 0,
+                        "ultimate_usage": 0
+                      },
+                      {
+                        "hero": "Luna Snow",
+                        "role": "Support",
+                        "damage": 0,
+                        "deaths": 0,
+                        "assists": 0,
+                        "country": "DK",
+                        "healing": 0,
+                        "player_id": 723,
+                        "player_name": "Mikkel \"Sypeh\" Klein",
+                        "eliminations": 0,
+                        "damage_blocked": 0,
+                        "objective_time": 0,
+                        "ultimate_usage": 0
+                      }
+                    ]
+                  },
+                  {
+                    "mode": "Convoy",
+                    "status": "completed",
+                    "duration": "00:00",
+                    "map_name": "Hydra Charteris Base: Hell's Heaven",
+                    "overtime": false,
+                    "game_mode": "Convoy",
+                    "winner_id": "54",
+                    "map_number": 2,
+                    "started_at": null,
+                    "team1_score": 0,
+                    "team2_score": 2,
+                    "completed_at": null,
+                    "team1_heroes": [],
+                    "team2_heroes": [],
+                    "team1_composition": [
+                      {
+                        "hero": "Spider-Man",
+                        "role": "Duelist",
+                        "damage": 0,
+                        "deaths": 0,
+                        "assists": 0,
+                        "country": "CA",
+                        "healing": 0,
+                        "player_id": 680,
+                        "player_name": "Harvey \"hxrvey\" Scattergood",
+                        "eliminations": 0,
+                        "damage_blocked": 0,
+                        "objective_time": 0,
+                        "ultimate_usage": 0
+                      },
+                      {
+                        "hero": "Iron Man",
+                        "role": "Duelist",
+                        "damage": 0,
+                        "deaths": 0,
+                        "assists": 0,
+                        "country": "US",
+                        "healing": 0,
+                        "player_id": 679,
+                        "player_name": "Anthony \"delenna\" Rosa",
+                        "eliminations": 0,
+                        "damage_blocked": 0,
+                        "objective_time": 0,
+                        "ultimate_usage": 0
+                      },
+                      {
+                        "hero": "Magneto",
+                        "role": "Tank",
+                        "damage": 0,
+                        "deaths": 0,
+                        "assists": 0,
+                        "country": "US",
+                        "healing": 0,
+                        "player_id": 683,
+                        "player_name": "Eric \"TTK\" Arraiga",
+                        "eliminations": 0,
+                        "damage_blocked": 0,
+                        "objective_time": 0,
+                        "ultimate_usage": 0
+                      },
+                      {
+                        "hero": "Venom",
+                        "role": "Tank",
+                        "damage": 0,
+                        "deaths": 0,
+                        "assists": 0,
+                        "country": "US",
+                        "healing": 0,
+                        "player_id": 682,
+                        "player_name": "Marschal \"Terra\" Weaver",
+                        "eliminations": 0,
+                        "damage_blocked": 0,
+                        "objective_time": 0,
+                        "ultimate_usage": 0
+                      },
+                      {
+                        "hero": "Mantis",
+                        "role": "Support",
+                        "damage": 0,
+                        "deaths": 0,
+                        "assists": 0,
+                        "country": "US",
+                        "healing": 0,
+                        "player_id": 684,
+                        "player_name": "Vincent \"Vinnie\" Scaratine",
+                        "eliminations": 0,
+                        "damage_blocked": 0,
+                        "objective_time": 0,
+                        "ultimate_usage": 0
+                      },
+                      {
+                        "hero": "Luna Snow",
+                        "role": "Support",
+                        "damage": 0,
+                        "deaths": 0,
+                        "assists": 0,
+                        "country": "US",
+                        "healing": 0,
+                        "player_id": 681,
+                        "player_name": "James \"SJP\" Hudson",
+                        "eliminations": 0,
+                        "damage_blocked": 0,
+                        "objective_time": 0,
+                        "ultimate_usage": 0
+                      }
+                    ],
+                    "team2_composition": [
+                      {
+                        "hero": "Spider-Man",
+                        "role": "Duelist",
+                        "damage": 0,
+                        "deaths": 0,
+                        "assists": 0,
+                        "country": "DE",
+                        "healing": 0,
+                        "player_id": 722,
+                        "player_name": "Philip \"phi\" Handke",
+                        "eliminations": 0,
+                        "damage_blocked": 0,
+                        "objective_time": 0,
+                        "ultimate_usage": 0
+                      },
+                      {
+                        "hero": "Iron Man",
+                        "role": "Duelist",
+                        "damage": 0,
+                        "deaths": 0,
+                        "assists": 0,
+                        "country": "SE",
+                        "healing": 0,
+                        "player_id": 721,
+                        "player_name": "William \"SparkR\" Andersson",
+                        "eliminations": 0,
+                        "damage_blocked": 0,
+                        "objective_time": 0,
+                        "ultimate_usage": 0
+                      },
+                      {
+                        "hero": "Magneto",
+                        "role": "Tank",
+                        "damage": 0,
+                        "deaths": 0,
+                        "assists": 0,
+                        "country": "IS",
+                        "healing": 0,
+                        "player_id": 726,
+                        "player_name": "Finnbjörn \"Finnsi\" Jónasson",
+                        "eliminations": 0,
+                        "damage_blocked": 0,
+                        "objective_time": 0,
+                        "ultimate_usage": 0
+                      },
+                      {
+                        "hero": "Venom",
+                        "role": "Tank",
+                        "damage": 0,
+                        "deaths": 0,
+                        "assists": 0,
+                        "country": "SE",
+                        "healing": 0,
+                        "player_id": 725,
+                        "player_name": "Andreas \"Nevix\" Karlsson",
+                        "eliminations": 0,
+                        "damage_blocked": 0,
+                        "objective_time": 0,
+                        "ultimate_usage": 0
+                      },
+                      {
+                        "hero": "Mantis",
+                        "role": "Support",
+                        "damage": 0,
+                        "deaths": 0,
+                        "assists": 0,
+                        "country": "HU",
+                        "healing": 0,
+                        "player_id": 724,
+                        "player_name": "Arthur \"dridro\" Szanto",
+                        "eliminations": 0,
+                        "damage_blocked": 0,
+                        "objective_time": 0,
+                        "ultimate_usage": 0
+                      },
+                      {
+                        "hero": "Luna Snow",
+                        "role": "Support",
+                        "damage": 0,
+                        "deaths": 0,
+                        "assists": 0,
+                        "country": "DK",
+                        "healing": 0,
+                        "player_id": 723,
+                        "player_name": "Mikkel \"Sypeh\" Klein",
+                        "eliminations": 0,
+                        "damage_blocked": 0,
+                        "objective_time": 0,
+                        "ultimate_usage": 0
+                      }
+                    ]
+                  },
+                  {
+                    "mode": "Domination",
+                    "status": "completed",
+                    "duration": "00:00",
+                    "map_name": "Intergalactic Empire of Wakanda: Birnin T'Challa",
+                    "overtime": false,
+                    "game_mode": "Domination",
+                    "winner_id": "61",
+                    "map_number": 3,
+                    "started_at": null,
+                    "team1_score": 2,
+                    "team2_score": 0,
+                    "completed_at": null,
+                    "team1_heroes": [],
+                    "team2_heroes": [],
+                    "team1_composition": [
+                      {
+                        "hero": "Spider-Man",
+                        "role": "Duelist",
+                        "damage": 0,
+                        "deaths": 0,
+                        "assists": 0,
+                        "country": "CA",
+                        "healing": 0,
+                        "player_id": 680,
+                        "player_name": "Harvey \"hxrvey\" Scattergood",
+                        "eliminations": 0,
+                        "damage_blocked": 0,
+                        "objective_time": 0,
+                        "ultimate_usage": 0
+                      },
+                      {
+                        "hero": "Iron Man",
+                        "role": "Duelist",
+                        "damage": 0,
+                        "deaths": 0,
+                        "assists": 0,
+                        "country": "US",
+                        "healing": 0,
+                        "player_id": 679,
+                        "player_name": "Anthony \"delenna\" Rosa",
+                        "eliminations": 0,
+                        "damage_blocked": 0,
+                        "objective_time": 0,
+                        "ultimate_usage": 0
+                      },
+                      {
+                        "hero": "Magneto",
+                        "role": "Tank",
+                        "damage": 0,
+                        "deaths": 0,
+                        "assists": 0,
+                        "country": "US",
+                        "healing": 0,
+                        "player_id": 683,
+                        "player_name": "Eric \"TTK\" Arraiga",
+                        "eliminations": 0,
+                        "damage_blocked": 0,
+                        "objective_time": 0,
+                        "ultimate_usage": 0
+                      },
+                      {
+                        "hero": "Venom",
+                        "role": "Tank",
+                        "damage": 0,
+                        "deaths": 0,
+                        "assists": 0,
+                        "country": "US",
+                        "healing": 0,
+                        "player_id": 682,
+                        "player_name": "Marschal \"Terra\" Weaver",
+                        "eliminations": 0,
+                        "damage_blocked": 0,
+                        "objective_time": 0,
+                        "ultimate_usage": 0
+                      },
+                      {
+                        "hero": "Mantis",
+                        "role": "Support",
+                        "damage": 0,
+                        "deaths": 0,
+                        "assists": 0,
+                        "country": "US",
+                        "healing": 0,
+                        "player_id": 684,
+                        "player_name": "Vincent \"Vinnie\" Scaratine",
+                        "eliminations": 0,
+                        "damage_blocked": 0,
+                        "objective_time": 0,
+                        "ultimate_usage": 0
+                      },
+                      {
+                        "hero": "Luna Snow",
+                        "role": "Support",
+                        "damage": 0,
+                        "deaths": 0,
+                        "assists": 0,
+                        "country": "US",
+                        "healing": 0,
+                        "player_id": 681,
+                        "player_name": "James \"SJP\" Hudson",
+                        "eliminations": 0,
+                        "damage_blocked": 0,
+                        "objective_time": 0,
+                        "ultimate_usage": 0
+                      }
+                    ],
+                    "team2_composition": [
+                      {
+                        "hero": "Spider-Man",
+                        "role": "Duelist",
+                        "damage": 0,
+                        "deaths": 0,
+                        "assists": 0,
+                        "country": "DE",
+                        "healing": 0,
+                        "player_id": 722,
+                        "player_name": "Philip \"phi\" Handke",
+                        "eliminations": 0,
+                        "damage_blocked": 0,
+                        "objective_time": 0,
+                        "ultimate_usage": 0
+                      },
+                      {
+                        "hero": "Iron Man",
+                        "role": "Duelist",
+                        "damage": 0,
+                        "deaths": 0,
+                        "assists": 0,
+                        "country": "SE",
+                        "healing": 0,
+                        "player_id": 721,
+                        "player_name": "William \"SparkR\" Andersson",
+                        "eliminations": 0,
+                        "damage_blocked": 0,
+                        "objective_time": 0,
+                        "ultimate_usage": 0
+                      },
+                      {
+                        "hero": "Magneto",
+                        "role": "Tank",
+                        "damage": 0,
+                        "deaths": 0,
+                        "assists": 0,
+                        "country": "IS",
+                        "healing": 0,
+                        "player_id": 726,
+                        "player_name": "Finnbjörn \"Finnsi\" Jónasson",
+                        "eliminations": 0,
+                        "damage_blocked": 0,
+                        "objective_time": 0,
+                        "ultimate_usage": 0
+                      },
+                      {
+                        "hero": "Venom",
+                        "role": "Tank",
+                        "damage": 0,
+                        "deaths": 0,
+                        "assists": 0,
+                        "country": "SE",
+                        "healing": 0,
+                        "player_id": 725,
+                        "player_name": "Andreas \"Nevix\" Karlsson",
+                        "eliminations": 0,
+                        "damage_blocked": 0,
+                        "objective_time": 0,
+                        "ultimate_usage": 0
+                      },
+                      {
+                        "hero": "Mantis",
+                        "role": "Support",
+                        "damage": 0,
+                        "deaths": 0,
+                        "assists": 0,
+                        "country": "HU",
+                        "healing": 0,
+                        "player_id": 724,
+                        "player_name": "Arthur \"dridro\" Szanto",
+                        "eliminations": 0,
+                        "damage_blocked": 0,
+                        "objective_time": 0,
+                        "ultimate_usage": 0
+                      },
+                      {
+                        "hero": "Luna Snow",
+                        "role": "Support",
+                        "damage": 0,
+                        "deaths": 0,
+                        "assists": 0,
+                        "country": "DK",
+                        "healing": 0,
+                        "player_id": 723,
+                        "player_name": "Mikkel \"Sypeh\" Klein",
+                        "eliminations": 0,
+                        "damage_blocked": 0,
+                        "objective_time": 0,
+                        "ultimate_usage": 0
+                      }
+                    ]
+                  }
+                ],
+                "match_timer": {
+                  "phase": "preparation",
+                  "current_time": 0
+                },
+                "timer": "00:00"
+              }
+            ],
+            "pagination": {
+              "current_page": 1,
+              "last_page": 1,
+              "per_page": 20,
+              "total": 1
+            },
+            "success": true
+          },
+          "error": null
+        },
+        {
+          "name": "Match Details",
+          "method": "GET",
+          "endpoint": "/api/matches/1",
+          "status": "failed",
+          "response": "Success",
+          "data": {
+            "success": false,
+            "message": "Match not found"
+          },
+          "error": "API returned failure response"
+        },
+        {
+          "name": "Match Comments",
+          "method": "GET",
+          "endpoint": "/api/matches/1/comments",
+          "status": "passed",
+          "response": "Success",
+          "data": {
+            "success": true,
+            "data": []
+          },
+          "error": null
+        },
+        {
+          "name": "Live Match Data",
+          "method": "GET",
+          "endpoint": "/api/admin/live-scoring",
+          "status": "failed",
+          "response": "Success",
+          "data": {
+            "success": false,
+            "message": "Unauthenticated. Please provide a valid authentication token.",
+            "error": "Authentication required"
+          },
+          "error": "API returned failure response"
+        }
+      ],
+      "passed": 2,
+      "failed": 2
+    },
+    "eventManagement": {
+      "tests": [
+        {
+          "name": "List Events",
+          "method": "GET",
+          "endpoint": "/api/events",
+          "status": "passed",
+          "response": "Success",
+          "data": {
+            "data": [
+              {
+                "id": 16,
+                "name": "aiojdioasdijaisojdioasjdjoasdas",
+                "slug": "aiojdioasdijaisojdioasjdjoasdas",
+                "description": "dasdasdasdasdasdsadasdasdas",
+                "logo": {
+                  "url": "//storage/events/logos/event_16_1754680737_8AtW6P4uD8.png",
+                  "exists": true,
+                  "fallback": {
+                    "text": "aiojdioasdijaisojdioasjdjoasdas",
+                    "color": "#f59e0b",
+                    "type": "event-logo"
+                  }
+                },
+                "organizer": {
+                  "id": 6,
+                  "name": "Jhonny Arturo A.",
+                  "avatar": "/images/heroes/venom-headbig.webp",
+                  "flairs": {
+                    "hero": {
+                      "type": "hero",
+                      "name": "Venom",
+                      "image": "/images/heroes/venom.png",
+                      "fallback_text": "Venom"
+                    }
+                  }
+                },
+                "details": {
+                  "type": "tournament",
+                  "format": "single_elimination",
+                  "region": "International",
+                  "game_mode": "Convoy",
+                  "prize_pool": "1000000.00",
+                  "currency": "USD"
+                },
+                "schedule": {
+                  "start_date": "2025-08-09 00:00:00",
+                  "end_date": "2025-08-14 00:00:00",
+                  "registration_start": null,
+                  "registration_end": null,
+                  "timezone": "UTC"
+                },
+                "participation": {
+                  "max_teams": 16,
+                  "current_teams": 1,
+                  "registration_open": true,
+                  "teams": [
+                    {
+                      "id": 56,
+                      "name": "ENVY",
+                      "short_name": "ENVY",
+                      "logo": "envy-logo.png",
+                      "region": "Americas",
+                      "seed": 1,
+                      "status": "confirmed"
+                    }
+                  ]
+                },
+                "status": "upcoming",
+                "meta": {
+                  "featured": true,
+                  "public": true,
+                  "created_at": "2025-08-08 10:07:16",
+                  "updated_at": "2025-08-08 19:36:34"
+                },
+                "stats": {
+                  "views": 38,
+                  "matches_count": 0,
+                  "completed_matches": 0
+                }
+              }
+            ],
+            "pagination": {
+              "current_page": 1,
+              "last_page": 1,
+              "per_page": 12,
+              "total": 1
+            },
+            "success": true
+          },
+          "error": null
+        },
+        {
+          "name": "Event Details",
+          "method": "GET",
+          "endpoint": "/api/events/1",
+          "status": "passed",
+          "response": "Success",
+          "data": {
+            "data": {
+              "id": 1,
+              "name": "abc",
+              "slug": "abc",
+              "description": "asdasdasdasdasdasdasdasd",
+              "logo": "/events/championship.jpg",
+              "organizer": {
+                "id": 6,
+                "name": "Jhonny Arturo A.",
+                "avatar": "/images/heroes/venom-headbig.webp",
+                "flairs": {
+                  "hero": {
+                    "type": "hero",
+                    "name": "Venom",
+                    "image": "/images/heroes/venom.png",
+                    "fallback_text": "Venom"
+                  }
+                }
+              },
+              "details": {
+                "type": "tournament",
+                "format": "single_elimination",
+                "region": "International",
+                "game_mode": "Convoy",
+                "prize_pool": "1000000.00",
+                "currency": "USD",
+                "prize_distribution": null,
+                "rules": null
+              },
+              "schedule": {
+                "start_date": "2025-08-08 00:00:00",
+                "end_date": "2025-08-12 00:00:00",
+                "registration_start": null,
+                "registration_end": null,
+                "timezone": "UTC"
+              },
+              "participation": {
+                "max_teams": 16,
+                "current_teams": 0,
+                "registration_open": false,
+                "registration_requirements": null
+              },
+              "status": "upcoming",
+              "meta": {
+                "featured": true,
+                "public": true,
+                "created_at": "2025-08-06 22:35:28",
+                "updated_at": "2025-08-06 22:35:28"
+              },
+              "stats": {
+                "views": 5,
+                "matches_count": 0,
+                "completed_matches": 0
+              },
+              "teams": [],
+              "matches": [],
+              "bracket": [],
+              "standings": [],
+              "streams": [],
+              "social_links": []
+            },
+            "success": true
+          },
+          "error": null
+        },
+        {
+          "name": "Event Bracket",
+          "method": "GET",
+          "endpoint": "/api/events/1/bracket",
+          "status": "failed",
+          "response": "Success",
+          "data": {
+            "success": false,
+            "message": "The route api/events/1/bracket could not be found.",
+            "error": "NotFoundHttpException",
+            "file": "/var/www/mrvl-backend/vendor/laravel/framework/src/Illuminate/Routing/AbstractRouteCollection.php",
+            "line": 45
+          },
+          "error": "API returned failure response"
+        },
+        {
+          "name": "Event Teams",
+          "method": "GET",
+          "endpoint": "/api/events/1/teams",
+          "status": "failed",
+          "response": "Success",
+          "data": {
+            "success": false,
+            "message": "The route api/events/1/teams could not be found.",
+            "error": "NotFoundHttpException",
+            "file": "/var/www/mrvl-backend/vendor/laravel/framework/src/Illuminate/Routing/AbstractRouteCollection.php",
+            "line": 45
+          },
+          "error": "API returned failure response"
+        }
+      ],
+      "passed": 2,
+      "failed": 2
+    },
+    "newsManagement": {
+      "tests": [
+        {
+          "name": "List News",
+          "method": "GET",
+          "endpoint": "/api/news",
+          "status": "passed",
+          "response": "Success",
+          "data": {
+            "data": [
+              {
+                "id": 8,
+                "title": "alsjdoiajsoidsa @vr",
+                "slug": "alsjdoiajsoidsa-at-vr",
+                "excerpt": "ioasjdiojsaodijasd @as",
+                "featured_image": {
+                  "url": "/images/news-placeholder.svg",
+                  "exists": true,
+                  "fallback": {
+                    "text": "alsjdoiajsoidsa @vr",
+                    "color": "#6b7280",
+                    "type": "news-image"
+                  }
+                },
+                "author": {
+                  "id": 6,
+                  "name": "Jhonny Arturo A.",
+                  "avatar": "https://staging.mrvl.net/images/heroes/venom-headbig.webp",
+                  "flairs": {
+                    "hero": {
+                      "type": "hero",
+                      "name": "Venom",
+                      "image": "https://staging.mrvl.net/images/heroes/venom-headbig.webp",
+                      "fallback_text": "Venom"
+                    }
+                  },
+                  "use_hero_as_avatar": true
+                },
+                "category": {
+                  "name": "general",
+                  "slug": "general",
+                  "color": "#6b7280"
+                },
+                "stats": {
+                  "views": 26,
+                  "comments": 2,
+                  "score": 0,
+                  "upvotes": 0,
+                  "downvotes": 0
+                },
+                "meta": {
+                  "featured": true,
+                  "breaking": false,
+                  "published_at": "2025-08-08 00:00:00",
+                  "created_at": "2025-08-08 17:39:34",
+                  "updated_at": "2025-08-08 19:20:24",
+                  "read_time": 1
+                },
+                "mentions": [],
+                "tags": []
+              }
+            ],
+            "pagination": {
+              "current_page": 1,
+              "last_page": 1,
+              "per_page": 15,
+              "total": 1
+            },
+            "success": true
+          },
+          "error": null
+        },
+        {
+          "name": "News Details",
+          "method": "GET",
+          "endpoint": "/api/news/1",
+          "status": "failed",
+          "response": "Success",
+          "data": {
+            "success": false,
+            "message": "Article not found"
+          },
+          "error": "API returned failure response"
+        },
+        {
+          "name": "News Comments",
+          "method": "GET",
+          "endpoint": "/api/news/1/comments",
+          "status": "passed",
+          "response": "Success",
+          "data": [],
+          "error": null
+        },
+        {
+          "name": "News Categories",
+          "method": "GET",
+          "endpoint": "/api/news-categories",
+          "status": "failed",
+          "response": "Success",
+          "data": {
+            "success": false,
+            "message": "The route api/news-categories could not be found.",
+            "error": "NotFoundHttpException",
+            "file": "/var/www/mrvl-backend/vendor/laravel/framework/src/Illuminate/Routing/AbstractRouteCollection.php",
+            "line": 45
+          },
+          "error": "API returned failure response"
+        }
+      ],
+      "passed": 2,
+      "failed": 2
+    },
+    "forumManagement": {
+      "tests": [
+        {
+          "name": "Forum Categories",
+          "method": "GET",
+          "endpoint": "/api/forum-categories",
+          "status": "failed",
+          "response": "Success",
+          "data": {
+            "success": false,
+            "message": "The route api/forum-categories could not be found.",
+            "error": "NotFoundHttpException",
+            "file": "/var/www/mrvl-backend/vendor/laravel/framework/src/Illuminate/Routing/AbstractRouteCollection.php",
+            "line": 45
+          },
+          "error": "API returned failure response"
+        },
+        {
+          "name": "Forum Threads",
+          "method": "GET",
+          "endpoint": "/api/forum/threads",
+          "status": "failed",
+          "response": "Success",
+          "data": {
+            "success": false,
+            "message": "The route api/forum/threads could not be found.",
+            "error": "NotFoundHttpException",
+            "file": "/var/www/mrvl-backend/vendor/laravel/framework/src/Illuminate/Routing/AbstractRouteCollection.php",
+            "line": 45
+          },
+          "error": "API returned failure response"
+        },
+        {
+          "name": "Content Moderation",
+          "method": "GET",
+          "endpoint": "/api/admin/content-moderation",
+          "status": "failed",
+          "response": "Success",
+          "data": {
+            "success": false,
+            "message": "Unauthenticated. Please provide a valid authentication token.",
+            "error": "Authentication required"
+          },
+          "error": "API returned failure response"
+        }
+      ],
+      "passed": 0,
+      "failed": 3
+    },
+    "liveScoring": {
+      "tests": [
+        {
+          "name": "Live Scoring Dashboard",
+          "method": "GET",
+          "endpoint": "/api/admin/live-scoring",
+          "status": "failed",
+          "response": "Success",
+          "data": {
+            "success": false,
+            "message": "Unauthenticated. Please provide a valid authentication token.",
+            "error": "Authentication required"
+          },
+          "error": "API returned failure response"
+        },
+        {
+          "name": "Live Match Control",
+          "method": "GET",
+          "endpoint": "/api/admin/live-scoring/1",
+          "status": "failed",
+          "response": "Success",
+          "data": {
+            "success": false,
+            "message": "The route api/admin/live-scoring/1 could not be found.",
+            "error": "NotFoundHttpException",
+            "file": "/var/www/mrvl-backend/vendor/laravel/framework/src/Illuminate/Routing/AbstractRouteCollection.php",
+            "line": 45
+          },
+          "error": "API returned failure response"
+        },
+        {
+          "name": "Live Updates",
+          "method": "GET",
+          "endpoint": "/api/live-updates",
+          "status": "failed",
+          "response": "Success",
+          "data": {
+            "success": false,
+            "message": "The route api/live-updates could not be found.",
+            "error": "NotFoundHttpException",
+            "file": "/var/www/mrvl-backend/vendor/laravel/framework/src/Illuminate/Routing/AbstractRouteCollection.php",
+            "line": 45
+          },
+          "error": "API returned failure response"
+        }
+      ],
+      "passed": 0,
+      "failed": 3
+    },
+    "bulkOperations": {
+      "tests": [
+        {
+          "name": "System Settings",
+          "method": "GET",
+          "endpoint": "/api/admin/system-settings",
+          "status": "failed",
+          "response": "Success",
+          "data": {
+            "success": false,
+            "message": "Unauthenticated. Please provide a valid authentication token.",
+            "error": "Authentication required"
+          },
+          "error": "API returned failure response"
+        },
+        {
+          "name": "Cache Status",
+          "method": "GET",
+          "endpoint": "/api/admin/dashboard",
+          "status": "failed",
+          "response": "Success",
+          "data": {
+            "success": false,
+            "message": "Unauthenticated. Please provide a valid authentication token.",
+            "error": "Authentication required"
+          },
+          "error": "API returned failure response"
+        },
+        {
+          "name": "Bulk Tools Access",
+          "method": "GET",
+          "endpoint": "/api/admin/user-management",
+          "status": "failed",
+          "response": "Success",
+          "data": {
+            "success": false,
+            "message": "Unauthenticated. Please provide a valid authentication token.",
+            "error": "Authentication required"
+          },
+          "error": "API returned failure response"
+        }
+      ],
+      "passed": 0,
+      "failed": 3
+    },
+    "analytics": {
+      "tests": [
+        {
+          "name": "Analytics Dashboard (7 days)",
+          "method": "GET",
+          "endpoint": "/api/admin/analytics?period=7days",
+          "status": "failed",
+          "response": "Success",
+          "data": {
+            "success": false,
+            "message": "Unauthenticated. Please provide a valid authentication token.",
+            "error": "Authentication required"
+          },
+          "error": "API returned failure response"
+        },
+        {
+          "name": "Analytics Dashboard (30 days)",
+          "method": "GET",
+          "endpoint": "/api/admin/analytics?period=30days",
+          "status": "failed",
+          "response": "Success",
+          "data": {
+            "success": false,
+            "message": "Unauthenticated. Please provide a valid authentication token.",
+            "error": "Authentication required"
+          },
+          "error": "API returned failure response"
+        },
+        {
+          "name": "Analytics Dashboard (90 days)",
+          "method": "GET",
+          "endpoint": "/api/admin/analytics?period=90days",
+          "status": "failed",
+          "response": "Success",
+          "data": {
+            "success": false,
+            "message": "Unauthenticated. Please provide a valid authentication token.",
+            "error": "Authentication required"
+          },
+          "error": "API returned failure response"
+        },
+        {
+          "name": "Analytics Dashboard (1 year)",
+          "method": "GET",
+          "endpoint": "/api/admin/analytics?period=1year",
+          "status": "failed",
+          "response": "Success",
+          "data": {
+            "success": false,
+            "message": "Unauthenticated. Please provide a valid authentication token.",
+            "error": "Authentication required"
+          },
+          "error": "API returned failure response"
+        }
+      ],
+      "passed": 0,
+      "failed": 4
+    },
+    "statistics": {
+      "tests": [
+        {
+          "name": "Platform Stats",
+          "method": "GET",
+          "endpoint": "/api/admin/dashboard",
+          "status": "failed",
+          "response": "Success",
+          "data": {
+            "success": false,
+            "message": "Unauthenticated. Please provide a valid authentication token.",
+            "error": "Authentication required"
+          },
+          "error": "API returned failure response"
+        },
+        {
+          "name": "Match Statistics",
+          "method": "GET",
+          "endpoint": "/api/matches/stats",
+          "status": "failed",
+          "response": "Success",
+          "data": {
+            "success": false,
+            "message": "Match not found"
+          },
+          "error": "API returned failure response"
+        },
+        {
+          "name": "Event Statistics",
+          "method": "GET",
+          "endpoint": "/api/events/stats",
+          "status": "failed",
+          "response": "Success",
+          "data": {
+            "success": false,
+            "message": "Event not found"
+          },
+          "error": "API returned failure response"
+        },
+        {
+          "name": "User Statistics",
+          "method": "GET",
+          "endpoint": "/api/admin/user-management",
+          "status": "failed",
+          "response": "Success",
+          "data": {
+            "success": false,
+            "message": "Unauthenticated. Please provide a valid authentication token.",
+            "error": "Authentication required"
+          },
+          "error": "API returned failure response"
+        }
+      ],
+      "passed": 0,
+      "failed": 4
+    }
+  },
+  "workingEndpoints": [
+    "GET /api/teams",
+    "GET /api/players",
+    "GET /api/matches",
+    "GET /api/matches/1/comments",
+    "GET /api/events",
+    "GET /api/events/1",
+    "GET /api/news",
+    "GET /api/news/1/comments"
+  ],
+  "failedEndpoints": [
+    "GET /api/admin/dashboard - API returned failure response",
+    "GET /api/admin/system-settings - API returned failure response",
+    "POST /api/admin/clear-cache - API returned failure response",
+    "GET /api/admin/users - API returned failure response",
+    "GET /api/admin/users/1 - API returned failure response",
+    "GET /api/admin/users/1/activity - API returned failure response",
+    "GET /api/admin/user-management - API returned failure response",
+    "GET /api/teams/1 - API returned failure response",
+    "GET /api/teams/1/roster - API returned failure response",
+    "GET /api/teams/1/stats - API returned failure response",
+    "GET /api/players/1 - API returned failure response",
+    "GET /api/players/1/stats - API returned failure response",
+    "GET /api/players/1/history - API returned failure response",
+    "GET /api/matches/1 - API returned failure response",
+    "GET /api/admin/live-scoring - API returned failure response",
+    "GET /api/events/1/bracket - API returned failure response",
+    "GET /api/events/1/teams - API returned failure response",
+    "GET /api/news/1 - API returned failure response",
+    "GET /api/news-categories - API returned failure response",
+    "GET /api/forum-categories - API returned failure response",
+    "GET /api/forum/threads - API returned failure response",
+    "GET /api/admin/content-moderation - API returned failure response",
+    "GET /api/admin/live-scoring - API returned failure response",
+    "GET /api/admin/live-scoring/1 - API returned failure response",
+    "GET /api/live-updates - API returned failure response",
+    "GET /api/admin/system-settings - API returned failure response",
+    "GET /api/admin/dashboard - API returned failure response",
+    "GET /api/admin/user-management - API returned failure response",
+    "GET /api/admin/analytics?period=7days - API returned failure response",
+    "GET /api/admin/analytics?period=30days - API returned failure response",
+    "GET /api/admin/analytics?period=90days - API returned failure response",
+    "GET /api/admin/analytics?period=1year - API returned failure response",
+    "GET /api/admin/dashboard - API returned failure response",
+    "GET /api/matches/stats - API returned failure response",
+    "GET /api/events/stats - API returned failure response",
+    "GET /api/admin/user-management - API returned failure response"
+  ]
+}

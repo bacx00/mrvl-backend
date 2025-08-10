@@ -19,5 +19,10 @@ class DatabaseSeeder extends Seeder
             'name' => 'Test User',
             'email' => 'test@example.com',
         ]);
+        
+        // Seed Marvel Rivals comprehensive data
+        $this->call([
+            MarvelRivalsComprehensiveDataSeeder::class,
+        ]);
     }
 }

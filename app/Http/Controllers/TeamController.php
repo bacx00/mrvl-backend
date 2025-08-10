@@ -20,7 +20,8 @@ class TeamController extends Controller
                     't.id', 't.name', 't.short_name', 't.logo', 't.region', 't.platform', 
                     't.game', 't.division', 't.country', 't.rating', 't.rank', 't.win_rate', 
                     't.points', 't.record', 't.peak', 't.streak', 't.founded', 't.captain', 
-                    't.coach', 't.website', 't.earnings', 't.social_media', 't.achievements',
+                    't.coach', 't.coach_name', 't.coach_nationality', 't.coach_social_media', 
+                    't.website', 't.earnings', 't.social_media', 't.achievements',
                     't.recent_form', 't.player_count'
                 ]);
 
@@ -67,6 +68,9 @@ class TeamController extends Controller
                     'founded' => $team->founded,
                     'captain' => $team->captain,
                     'coach' => $team->coach,
+                    'coach_name' => $team->coach_name,
+                    'coach_nationality' => $team->coach_nationality,
+                    'coach_social_media' => $team->coach_social_media ? json_decode($team->coach_social_media, true) : [],
                     'website' => $team->website,
                     'earnings' => $team->earnings ?? '$0',
                     'social_media' => $team->social_media ? json_decode($team->social_media, true) : [],
@@ -196,12 +200,36 @@ class TeamController extends Controller
             // Rating history (simulated for now)
             $ratingHistory = $this->generateRatingHistory($team->rating ?? 1000);
 
+            // Get logo info using ImageHelper
+            $logoInfo = ImageHelper::getTeamLogo($team->logo, $team->name);
+            
+            // Format roster data with proper image URLs using ImageHelper
+            $formattedCurrentRoster = collect($currentRoster)->map(function($player) {
+                $avatarInfo = ImageHelper::getPlayerAvatar($player->avatar, $player->name);
+                return (object) array_merge((array) $player, [
+                    'avatar' => $avatarInfo['url'],
+                    'avatar_exists' => $avatarInfo['exists'],
+                    'avatar_fallback' => $avatarInfo['fallback']
+                ]);
+            });
+            
+            $formattedFormerPlayers = collect($formerPlayers)->map(function($player) {
+                $avatarInfo = ImageHelper::getPlayerAvatar($player->avatar, $player->name);
+                return (object) array_merge((array) $player, [
+                    'avatar' => $avatarInfo['url'],
+                    'avatar_exists' => $avatarInfo['exists'],
+                    'avatar_fallback' => $avatarInfo['fallback']
+                ]);
+            });
+            
             $formattedTeam = [
                 // Basic team info
                 'id' => $team->id,
                 'name' => $team->name,
                 'short_name' => $team->short_name,
-                'logo' => $team->logo,
+                'logo' => $logoInfo['url'],
+                'logo_exists' => $logoInfo['exists'],
+                'logo_fallback' => $logoInfo['fallback'],
                 'region' => $team->region,
                 'country' => $team->country,
                 'flag' => $team->flag ?: $this->getCountryFlag($team->country),
@@ -223,8 +251,8 @@ class TeamController extends Controller
                 'rating_history' => $ratingHistory,
                 
                 // Roster information
-                'current_roster' => $currentRoster,
-                'former_players' => $formerPlayers,
+                'current_roster' => $formattedCurrentRoster,
+                'former_players' => $formattedFormerPlayers,
                 'roster_changes' => $this->getRecentRosterChanges($teamId),
                 
                 // Match data
@@ -236,8 +264,8 @@ class TeamController extends Controller
                 'achievements' => $team->achievements ? json_decode($team->achievements, true) : [],
                 
                 // Meta information
-                'team_composition' => $this->analyzeTeamComposition($currentRoster),
-                'hero_pool' => $this->getTeamHeroPool($currentRoster),
+                'team_composition' => $this->analyzeTeamComposition($formattedCurrentRoster),
+                'hero_pool' => $this->getTeamHeroPool($formattedCurrentRoster),
                 'form' => $this->calculateCurrentForm($recentMatches, $teamId),
                 
                 // Marvel Rivals specific
@@ -246,7 +274,7 @@ class TeamController extends Controller
             ];
 
             // COMPATIBILITY FIX: Ensure both 'players' and 'current_roster' are available for frontend compatibility
-            $formattedTeam['players'] = $currentRoster; // Add players field for frontend compatibility
+            $formattedTeam['players'] = $formattedCurrentRoster; // Add players field for frontend compatibility
 
             return response()->json([
                 'data' => $formattedTeam,
@@ -583,7 +611,7 @@ class TeamController extends Controller
     // Admin CRUD Methods
     public function getAllTeams(Request $request)
     {
-        $this->authorize('manage-teams');
+        // Authorization is handled by middleware in routes/api.php
         
         try {
             $query = DB::table('teams as t')
@@ -635,7 +663,7 @@ class TeamController extends Controller
 
     public function getTeamAdmin($teamId)
     {
-        $this->authorize('manage-teams');
+        // Authorization is handled by middleware in routes/api.php
         
         try {
             $team = DB::table('teams')->where('id', $teamId)->first();
@@ -662,7 +690,7 @@ class TeamController extends Controller
 
     public function store(Request $request)
     {
-        $this->authorize('manage-teams');
+        // Authorization is handled by middleware in routes/api.php
         
         $request->validate([
             'name' => 'required|string|max:255|unique:teams',
@@ -671,7 +699,10 @@ class TeamController extends Controller
             'country' => 'nullable|string|max:100',
             'rating' => 'nullable|integer|min:0|max:5000',
             'description' => 'nullable|string',
-            'social_links' => 'nullable|array'
+            'social_links' => 'nullable|array',
+            'coach_name' => 'nullable|string|max:255',
+            'coach_nationality' => 'nullable|string|max:255',
+            'coach_social_media' => 'nullable|array'
         ]);
         
         try {
@@ -687,6 +718,9 @@ class TeamController extends Controller
                 'record' => '0-0',
                 'peak' => $request->rating ?? 1000,
                 'social_media' => json_encode($request->social_links ?? []),
+                'coach_name' => $request->coach_name,
+                'coach_nationality' => $request->coach_nationality,
+                'coach_social_media' => json_encode($request->coach_social_media ?? []),
                 'created_at' => now(),
                 'updated_at' => now()
             ]);
@@ -748,6 +782,9 @@ class TeamController extends Controller
                 'twitch' => 'nullable|string',
                 'twitch_url' => 'nullable|string|url',
                 'tiktok' => 'nullable|string',
+                'coach_name' => 'nullable|string|max:255',
+                'coach_nationality' => 'nullable|string|max:255',
+                'coach_social_media' => 'nullable|array',
                 'discord' => 'nullable|string',
                 'discord_url' => 'nullable|string',
                 'facebook' => 'nullable|string|url',
@@ -1145,7 +1182,7 @@ class TeamController extends Controller
 
     public function destroy($teamId)
     {
-        $this->authorize('manage-teams');
+        // Authorization is handled by middleware in routes/api.php
         
         try {
             $team = DB::table('teams')->where('id', $teamId)->first();
@@ -2739,4 +2776,54 @@ class TeamController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Upload coach image for a team
+     */
+    public function uploadCoachImage(Request $request, $teamId)
+    {
+        try {
+            $team = DB::table('teams')->where('id', $teamId)->first();
+            
+            if (!$team) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Team not found'
+                ], 404);
+            }
+
+            $request->validate([
+                'coach_image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048'
+            ]);
+
+            $image = $request->file('coach_image');
+            $imageName = 'coach_' . time() . '.' . $image->extension();
+            
+            // Store in public/teams/coaches directory
+            $image->move(public_path('teams/coaches'), $imageName);
+            
+            $imagePath = '/teams/coaches/' . $imageName;
+            
+            // Update team with coach image path
+            DB::table('teams')->where('id', $teamId)->update([
+                'coach_image' => $imagePath,
+                'updated_at' => now()
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Coach image uploaded successfully',
+                'data' => [
+                    'coach_image_url' => $imagePath
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error uploading coach image: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
 }

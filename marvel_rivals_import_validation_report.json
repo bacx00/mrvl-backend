@@ -1,0 +1,71 @@
+{
+    "validation_date": "2025-08-10 08:29:28",
+    "database_counts": {
+        "teams": 61,
+        "players": 357,
+        "player_team_history": 358
+    },
+    "statistics": {
+        "teams_by_region": {
+            "ASIA": 10,
+            "CN": 7,
+            "EU": 12,
+            "JP": 5,
+            "KR": 7,
+            "NA": 12,
+            "OCE": 3,
+            "SA": 5
+        },
+        "players_by_role": {
+            "Vanguard": 120,
+            "Duelist": 116,
+            "Strategist": 121
+        },
+        "players_by_country": {
+            "China": 40,
+            "South Korea": 35,
+            "United States": 31,
+            "Canada": 28,
+            "Mexico": 28,
+            "Japan": 25,
+            "India": 12,
+            "Singapore": 11,
+            "Russia": 10,
+            "Germany": 10,
+            "Indonesia": 10,
+            "Poland": 9,
+            "Australia": 8,
+            "Philippines": 8,
+            "Netherlands": 7,
+            "Malaysia": 7,
+            "Denmark": 7,
+            "Chile": 7,
+            "Argentina": 7,
+            "New Zealand": 7,
+            "Turkey": 7,
+            "Thailand": 6,
+            "Vietnam": 6,
+            "United Kingdom": 6,
+            "Spain": 6,
+            "Colombia": 6,
+            "France": 5,
+            "Brazil": 5,
+            "Sweden": 3
+        },
+        "average_ratings": {
+            "teams": 1792.740000000000009094947017729282379150390625,
+            "players": 1767.75
+        },
+        "total_earnings": {
+            "teams": "6898673.00",
+            "players": "18442636.00"
+        }
+    },
+    "validation_results": {
+        "orphaned_players": 0,
+        "players_with_teams": 357,
+        "players_without_teams": 0,
+        "duplicate_team_names": 0,
+        "duplicate_player_usernames": 0
+    }
+}

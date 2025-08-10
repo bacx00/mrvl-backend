@@ -654,6 +654,10 @@ class EnhancedBracketController extends Controller
      */
     private function updateSwissStandings($match, $team1Score, $team2Score)
     {
+        // Ensure scores are integers to prevent SQL injection
+        $team1Score = (int) $team1Score;
+        $team2Score = (int) $team2Score;
+        
         $winner = $team1Score > $team2Score ? $match->team1_id : $match->team2_id;
         $loser = $team1Score > $team2Score ? $match->team2_id : $match->team1_id;
         
@@ -942,6 +946,9 @@ class EnhancedBracketController extends Controller
      */
     private function updateBracketProgression($match, $winnerId, $loserId)
     {
+        // Ensure match scores are integers to prevent SQL injection
+        $team1Score = (int) $match->team1_score;
+        $team2Score = (int) $match->team2_score;
         // Update winner progression
         $winnerProgression = DB::table('bracket_progression')
             ->where('event_id', $match->event_id)
@@ -955,8 +962,8 @@ class EnhancedBracketController extends Controller
             $updates = [
                 'matches_played' => DB::raw('matches_played + 1'),
                 'matches_won' => DB::raw('matches_won + 1'),
-                'maps_played' => DB::raw("maps_played + {$match->team1_score} + {$match->team2_score}"),
-                'maps_won' => DB::raw("maps_won + " . ($winnerId === $match->team1_id ? $match->team1_score : $match->team2_score)),
+                'maps_played' => DB::raw("maps_played + {$team1Score} + {$team2Score}"),
+                'maps_won' => DB::raw("maps_won + " . ($winnerId === $match->team1_id ? $team1Score : $team2Score)),
                 'path_history' => json_encode($pathHistory),
                 'current_position' => $match->winner_advances_to,
                 'updated_at' => now()
@@ -985,8 +992,8 @@ class EnhancedBracketController extends Controller
             
             $updates = [
                 'matches_played' => DB::raw('matches_played + 1'),
-                'maps_played' => DB::raw("maps_played + {$match->team1_score} + {$match->team2_score}"),
-                'maps_won' => DB::raw("maps_won + " . ($loserId === $match->team1_id ? $match->team1_score : $match->team2_score)),
+                'maps_played' => DB::raw("maps_played + {$team1Score} + {$team2Score}"),
+                'maps_won' => DB::raw("maps_won + " . ($loserId === $match->team1_id ? $team1Score : $team2Score)),
                 'path_history' => json_encode($pathHistory),
                 'updated_at' => now()
             ];

@@ -372,7 +372,7 @@ class UserProfileController extends Controller
                 'hero_name' => 'required|string|exists:marvel_rivals_heroes,name'
             ]);
 
-            $user = Auth::user();
+            $user = auth('api')->user();
             $heroImagePath = $this->getHeroImagePath($request->hero_name);
             
             if (!$heroImagePath || !file_exists(public_path($heroImagePath))) {
@@ -462,7 +462,7 @@ class UserProfileController extends Controller
     public function getUserActivity(Request $request)
     {
         try {
-            $userId = Auth::id();
+            $userId = auth('api')->id();
             $limit = $request->get('limit', 50);
             $offset = $request->get('offset', 0);
             
@@ -493,26 +493,65 @@ class UserProfileController extends Controller
     {
         try {
             $request->validate([
-                'current_password' => 'required|string',
-                'new_password' => 'required|string|min:8|confirmed|different:current_password',
+                'current_password' => 'required|string|min:1',
+                'new_password' => 'required|string|min:8|max:255|confirmed|different:current_password|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/',
+                'new_password_confirmation' => 'required|string'
+            ], [
+                'new_password.regex' => 'New password must contain at least one lowercase letter, one uppercase letter, one digit, and one special character.'
             ]);
 
-            $user = Auth::user();
+            $user = auth('api')->user();
+
+            // Rate limiting: 5 attempts per minute per user
+            $key = 'password_change_profile_' . $user->id;
+            if (\Illuminate\Support\Facades\RateLimiter::tooManyAttempts($key, 5)) {
+                $seconds = \Illuminate\Support\Facades\RateLimiter::availableIn($key);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Too many password change attempts. Please try again in ' . $seconds . ' seconds.'
+                ], 429);
+            }
 
             if (!Hash::check($request->current_password, $user->password)) {
+                \Illuminate\Support\Facades\RateLimiter::hit($key, 60); // 1 minute decay
+                
+                // Log failed password change attempt
+                Log::warning('Failed password change attempt via profile', [
+                    'user_id' => $user->id,
+                    'user_email' => $user->email,
+                    'ip' => $request->ip(),
+                    'user_agent' => $request->header('User-Agent')
+                ]);
+                
                 return response()->json([
                     'success' => false,
                     'message' => 'Current password is incorrect'
                 ], 400);
             }
 
+            // Clear rate limit on successful current password verification
+            \Illuminate\Support\Facades\RateLimiter::clear($key);
+
+            // Update password
             $user->update([
                 'password' => Hash::make($request->new_password)
             ]);
 
+            // Log successful password change
+            Log::info('Password changed successfully via profile', [
+                'user_id' => $user->id,
+                'user_email' => $user->email,
+                'ip' => $request->ip(),
+                'user_agent' => $request->header('User-Agent')
+            ]);
+
+            // Revoke all existing tokens to force re-login
+            $user->tokens()->delete();
+
             return response()->json([
                 'success' => true,
-                'message' => 'Password changed successfully'
+                'message' => 'Password changed successfully. Please log in again with your new password.',
+                'requires_reauth' => true
             ]);
         } catch (Exception $e) {
             Log::error('Error changing password: ' . $e->getMessage());
@@ -531,10 +570,10 @@ class UserProfileController extends Controller
         try {
             $request->validate([
                 'password' => 'required|string',
-                'new_email' => 'required|email|unique:users,email,' . Auth::id(),
+                'new_email' => 'required|email|unique:users,email,' . auth('api')->id(),
             ]);
 
-            $user = Auth::user();
+            $user = auth('api')->user();
 
             if (!Hash::check($request->password, $user->password)) {
                 return response()->json([
@@ -584,7 +623,7 @@ class UserProfileController extends Controller
                 'new_name' => 'required|string|min:3|max:255|unique:users,name,' . Auth::id() . '|regex:/^[a-zA-Z0-9_-]+$/',
             ]);
 
-            $user = Auth::user();
+            $user = auth('api')->user();
 
             if (!Hash::check($request->password, $user->password)) {
                 return response()->json([
@@ -631,7 +670,7 @@ class UserProfileController extends Controller
                 'avatar' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:2048|dimensions:min_width=100,min_height=100'
             ]);
 
-            $user = Auth::user();
+            $user = auth('api')->user();
 
             // Delete old avatar if it exists and is custom
             if ($user->avatar && !$user->use_hero_as_avatar) {
@@ -671,7 +710,7 @@ class UserProfileController extends Controller
     public function deleteAvatar()
     {
         try {
-            $user = Auth::user();
+            $user = auth('api')->user();
 
             // Only delete if it's a custom avatar
             if ($user->avatar && !$user->use_hero_as_avatar) {
@@ -981,9 +1020,9 @@ class UserProfileController extends Controller
             "user_activity_{$userId}_{$limit}_{$offset}",
             900, // 15 minutes
             function () use ($userId, $limit, $offset) {
-                // Use optimized single query approach with UNION ALL
+                // Highly optimized single query using UNION ALL with indexed columns
                 $activities = DB::select("
-                    (
+                    SELECT * FROM (
                         SELECT 
                             nc.id,
                             nc.news_id as item_id,
@@ -995,57 +1034,68 @@ class UserProfileController extends Controller
                             'Commented on news' as action,
                             JSON_OBJECT('news_title', n.title, 'news_slug', n.slug) as metadata
                         FROM news_comments nc
+                        FORCE INDEX (idx_news_comments_user_created)
                         INNER JOIN news n ON nc.news_id = n.id
                         WHERE nc.user_id = ?
-                        ORDER BY nc.created_at DESC
-                        LIMIT ?
-                    )
-                    UNION ALL
-                    (
+                        
+                        UNION ALL
+                        
                         SELECT 
                             mc.id,
                             mc.match_id as item_id,
                             LEFT(mc.content, 200) as content,
                             mc.created_at,
-                            CONCAT(COALESCE(t1.name, 'Team 1'), ' vs ', COALESCE(t2.name, 'Team 2')) as item_title,
+                            CONCAT(COALESCE(t1.short_name, t1.name, 'T1'), ' vs ', COALESCE(t2.short_name, t2.name, 'T2')) as item_title,
                             'match_comment' as type,
                             'match_comment' as resource_type,
                             'Commented on match' as action,
                             JSON_OBJECT('team1', t1.name, 'team2', t2.name) as metadata
                         FROM match_comments mc
+                        FORCE INDEX (idx_match_comments_user_created)
                         INNER JOIN matches m ON mc.match_id = m.id
                         LEFT JOIN teams t1 ON m.team1_id = t1.id
                         LEFT JOIN teams t2 ON m.team2_id = t2.id
                         WHERE mc.user_id = ?
-                        ORDER BY mc.created_at DESC
-                        LIMIT ?
-                    )
-                    UNION ALL
-                    (
+                        
+                        UNION ALL
+                        
                         SELECT 
                             ft.id,
                             ft.id as item_id,
-                            ft.title as content,
+                            LEFT(ft.title, 200) as content,
                             ft.created_at,
                             ft.title as item_title,
                             'forum_thread' as type,
                             'forum_thread' as resource_type,
                             'Created thread' as action,
-                            JSON_OBJECT('category', fc.name, 'views', ft.views) as metadata
+                            JSON_OBJECT('category', COALESCE(fc.name, 'General'), 'views', COALESCE(ft.views, 0)) as metadata
                         FROM forum_threads ft
+                        FORCE INDEX (idx_forum_threads_user_created)
                         LEFT JOIN forum_categories fc ON ft.category_id = fc.id
                         WHERE ft.user_id = ?
-                        ORDER BY ft.created_at DESC
-                        LIMIT ?
-                    )
+                        
+                        UNION ALL
+                        
+                        SELECT 
+                            fp.id,
+                            fp.thread_id as item_id,
+                            LEFT(fp.content, 200) as content,
+                            fp.created_at,
+                            ft.title as item_title,
+                            'forum_post' as type,
+                            'forum_post' as resource_type,
+                            'Posted in thread' as action,
+                            JSON_OBJECT('thread_title', ft.title, 'category', COALESCE(fc.name, 'General')) as metadata
+                        FROM forum_posts fp
+                        FORCE INDEX (idx_forum_posts_user_created)
+                        INNER JOIN forum_threads ft ON fp.thread_id = ft.id
+                        LEFT JOIN forum_categories fc ON ft.category_id = fc.id
+                        WHERE fp.user_id = ?
+                        
+                    ) combined_activities
                     ORDER BY created_at DESC
-                    LIMIT ?
-                ", [
-                    $userId, $limit,
-                    $userId, $limit, 
-                    $userId, $limit,
-                    $limit
-                ]);
+                    LIMIT ? OFFSET ?
+                ", [$userId, $userId, $userId, $userId, $limit, $offset]);
                 
                 return collect($activities)->map(function($activity) {
                     $activity->time_ago = $this->getTimeAgo($activity->created_at);

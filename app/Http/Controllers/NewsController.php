@@ -13,9 +13,16 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use App\Helpers\ImageHelper;
+use App\Services\MentionService;
 
-class NewsController extends Controller
+class NewsController extends ApiResponseController
 {
+    private $mentionService;
+
+    public function __construct(MentionService $mentionService)
+    {
+        $this->mentionService = $mentionService;
+    }
     public function index(Request $request)
     {
         try {
@@ -99,9 +106,9 @@ class NewsController extends Controller
                         'read_time' => $this->calculateReadTime($article->content)
                     ],
                     'mentions' => array_merge(
-                        $this->extractMentions($article->title),
-                        $this->extractMentions($article->excerpt ?: ''),
-                        $this->extractMentions($article->content)
+                        $this->mentionService->extractMentions($article->title),
+                        $this->mentionService->extractMentions($article->excerpt ?: ''),
+                        $this->mentionService->extractMentions($article->content)
                     ),
                     'tags' => $article->tags ? json_decode($article->tags, true) : []
                 ];
@@ -165,10 +172,10 @@ class NewsController extends Controller
 
             // Get user's vote on article (if authenticated)
             $userVote = null;
-            if (Auth::check()) {
+            if (auth('api')->check()) {
                 $userVote = DB::table('news_votes')
                     ->where('news_id', $article->id)
-                    ->where('user_id', Auth::id())
+                    ->where('user_id', auth('api')->id())
                     ->where('comment_id', null)
                     ->value('vote_type');
             }
@@ -205,9 +212,9 @@ class NewsController extends Controller
                     'read_time' => $this->calculateReadTime($article->content)
                 ],
                 'mentions' => array_merge(
-                    $this->extractMentions($article->title),
-                    $this->extractMentions($article->excerpt ?: ''),
-                    $this->extractMentions($article->content)
+                    $this->mentionService->extractMentions($article->title),
+                    $this->mentionService->extractMentions($article->excerpt ?: ''),
+                    $this->mentionService->extractMentions($article->content)
                 ),
                 'tags' => $article->tags ? json_decode($article->tags, true) : [],
                 'videos' => $this->getArticleVideos($article),
@@ -272,7 +279,7 @@ class NewsController extends Controller
     public function store(Request $request)
     {
         // Check if user is authenticated and has admin role
-        if (!Auth::check() || !Auth::user()->hasAnyRole(['admin', 'moderator'])) {
+        if (!auth('api')->check() || !auth('api')->user()->hasAnyRole(['admin', 'moderator'])) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized - Admin or Moderator access required'
@@ -319,7 +326,7 @@ class NewsController extends Controller
                 'content' => $request->content,
                 'excerpt' => $request->excerpt,
                 'category_id' => $request->category_id,
-                'author_id' => Auth::id(),
+                'author_id' => auth('api')->id(),
                 'featured_image' => $request->featured_image,
                 'tags' => $request->tags ? json_encode($request->tags) : null,
                 'videos' => $request->videos ? json_encode($request->videos) : null,
@@ -332,11 +339,11 @@ class NewsController extends Controller
             ]);
 
             // Process mentions in title, excerpt, and content
-            $this->processMentions($request->title, $newsId);
+            $this->mentionService->storeMentions($request->title, 'news', $newsId);
             if ($request->excerpt) {
-                $this->processMentions($request->excerpt, $newsId);
+                $this->mentionService->storeMentions($request->excerpt, 'news', $newsId);
             }
-            $this->processMentions($request->content, $newsId);
+            $this->mentionService->storeMentions($request->content, 'news', $newsId);
 
             // Process video embeds if provided
             if ($request->videos && !empty($request->videos)) {
@@ -360,7 +367,7 @@ class NewsController extends Controller
     public function comment(Request $request, $newsId)
     {
         // Check if user is authenticated
-        if (!Auth::check()) {
+        if (!auth('api')->check()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized'
@@ -381,7 +388,7 @@ class NewsController extends Controller
 
             $commentId = DB::table('news_comments')->insertGetId([
                 'news_id' => $newsId,
-                'user_id' => Auth::id(),
+                'user_id' => auth('api')->id(),
                 'content' => $request->content,
                 'parent_id' => $request->parent_id,
                 'created_at' => now(),
@@ -394,7 +401,7 @@ class NewsController extends Controller
                 ->increment('comments_count');
 
             // Process mentions in comment
-            $this->processMentions($request->content, $newsId, $commentId);
+            $this->mentionService->storeMentions($request->content, 'news_comment', $commentId);
 
             // Get the complete comment data with author info
             $newComment = DB::table('news_comments as nc')
@@ -430,37 +437,25 @@ class NewsController extends Controller
                         'updated_at' => $newComment->updated_at,
                         'edited' => false
                     ],
-                    'mentions' => $this->extractMentions($newComment->content),
+                    'mentions' => $this->mentionService->extractMentions($newComment->content),
                     'user_vote' => null,
                     'replies' => []
                 ];
 
-                return response()->json([
-                    'success' => true,
-                    'comment' => $commentData,
-                    'data' => $commentData,
-                    'message' => 'Comment posted successfully'
-                ], 201);
+                return $this->createdResponse($commentData, 'Comment posted successfully');
             } else {
-                return response()->json([
-                    'success' => true,
-                    'data' => ['id' => $commentId],
-                    'message' => 'Comment posted successfully'
-                ], 201);
+                return $this->createdResponse(['id' => $commentId], 'Comment posted successfully');
             }
 
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error posting comment: ' . $e->getMessage()
-            ], 500);
+            return $this->errorResponse('Error posting comment: ' . $e->getMessage());
         }
     }
 
     public function vote(Request $request, $newsId)
     {
         // Check if user is authenticated
-        if (!Auth::check()) {
+        if (!auth('api')->check()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized'
@@ -473,7 +468,7 @@ class NewsController extends Controller
         ]);
 
         try {
-            $userId = Auth::id();
+            $userId = auth('api')->id();
             $voteType = $request->vote_type;
             $commentId = $request->comment_id;
 
@@ -576,7 +571,7 @@ class NewsController extends Controller
     public function updateComment(Request $request, $commentId)
     {
         // Check if user is authenticated
-        if (!Auth::check()) {
+        if (!auth('api')->check()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized'
@@ -591,7 +586,7 @@ class NewsController extends Controller
             // Check if comment exists and user owns it
             $comment = DB::table('news_comments')
                 ->where('id', $commentId)
-                ->where('user_id', Auth::id())
+                ->where('user_id', auth('api')->id())
                 ->first();
 
             if (!$comment) {
@@ -626,7 +621,7 @@ class NewsController extends Controller
     public function destroyComment($commentId)
     {
         // Check if user is authenticated
-        if (!Auth::check()) {
+        if (!auth('api')->check()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized'
@@ -644,7 +639,7 @@ class NewsController extends Controller
                 ], 404);
             }
 
-            $user = Auth::user();
+            $user = auth('api')->user();
             if ($comment->user_id !== $user->id && !in_array($user->role, ['admin', 'moderator'])) {
                 return response()->json([
                     'success' => false,
@@ -681,7 +676,7 @@ class NewsController extends Controller
     public function voteComment(Request $request, $commentId)
     {
         // Check if user is authenticated
-        if (!Auth::check()) {
+        if (!auth('api')->check()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized'
@@ -706,7 +701,7 @@ class NewsController extends Controller
                 ], 404);
             }
 
-            $userId = Auth::id();
+            $userId = auth('api')->id();
             $voteType = $request->vote_type;
 
             // Check for existing vote with proper constraint handling
@@ -823,7 +818,7 @@ class NewsController extends Controller
                     'updated_at' => $comment->updated_at,
                     'edited' => $comment->created_at !== $comment->updated_at
                 ],
-                'mentions' => $this->extractMentions($comment->content),
+                'mentions' => $this->mentionService->extractMentions($comment->content),
                 'user_vote' => $this->getUserCommentVote($comment->id),
                 'replies' => []
             ];
@@ -846,13 +841,13 @@ class NewsController extends Controller
 
     private function getUserCommentVote($commentId)
     {
-        if (!Auth::check()) {
+        if (!auth('api')->check()) {
             return null;
         }
 
         return DB::table('news_votes')
             ->where('comment_id', $commentId)
-            ->where('user_id', Auth::id())
+            ->where('user_id', auth('api')->id())
             ->value('vote_type');
     }
 
@@ -919,75 +914,6 @@ class NewsController extends Controller
         }
     }
 
-    private function extractMentions($content)
-    {
-        $mentions = [];
-        
-        // Extract @username mentions (users)
-        preg_match_all('/@([a-zA-Z0-9_]+)/', $content, $userMatches, PREG_OFFSET_CAPTURE);
-        foreach ($userMatches[1] as $match) {
-            $username = $match[0];
-            $position = $userMatches[0][array_search($match, $userMatches[1])][1];
-            
-            $user = DB::table('users')->where('name', $username)->first();
-            if ($user) {
-                $mentionText = "@{$username}";
-                $mentions[] = [
-                    'type' => 'user',
-                    'id' => $user->id,
-                    'name' => $user->name,
-                    'display_name' => $user->name,
-                    'mention_text' => $mentionText,
-                    'position_start' => $position,
-                    'position_end' => $position + strlen($mentionText)
-                ];
-            }
-        }
-
-        // Extract @team:teamname mentions
-        preg_match_all('/@team:([a-zA-Z0-9_]+)/', $content, $teamMatches, PREG_OFFSET_CAPTURE);
-        foreach ($teamMatches[1] as $match) {
-            $teamName = $match[0];
-            $position = $teamMatches[0][array_search($match, $teamMatches[1])][1];
-            
-            $team = DB::table('teams')->where('short_name', $teamName)->first();
-            if ($team) {
-                $mentionText = "@team:{$teamName}";
-                $mentions[] = [
-                    'type' => 'team',
-                    'id' => $team->id,
-                    'name' => $team->short_name,
-                    'display_name' => $team->name,
-                    'mention_text' => $mentionText,
-                    'position_start' => $position,
-                    'position_end' => $position + strlen($mentionText)
-                ];
-            }
-        }
-
-        // Extract @player:playername mentions
-        preg_match_all('/@player:([a-zA-Z0-9_]+)/', $content, $playerMatches, PREG_OFFSET_CAPTURE);
-        foreach ($playerMatches[1] as $match) {
-            $playerName = $match[0];
-            $position = $playerMatches[0][array_search($match, $playerMatches[1])][1];
-            
-            $player = DB::table('players')->where('username', $playerName)->first();
-            if ($player) {
-                $mentionText = "@player:{$playerName}";
-                $mentions[] = [
-                    'type' => 'player',
-                    'id' => $player->id,
-                    'name' => $player->username,
-                    'display_name' => $player->real_name ?? $player->username,
-                    'mention_text' => $mentionText,
-                    'position_start' => $position,
-                    'position_end' => $position + strlen($mentionText)
-                ];
-            }
-        }
-
-        return $mentions;
-    }
 
     private function extractVideoEmbeds($content)
     {
@@ -1056,55 +982,6 @@ class NewsController extends Controller
         return $videos;
     }
 
-    private function processMentions($content, $newsId, $commentId = null)
-    {
-        $mentions = $this->extractMentions($content);
-        
-        foreach ($mentions as $mention) {
-            try {
-                // Extract context for the mention
-                $context = $this->extractMentionContext($content, $mention['mention_text']);
-                
-                // Store mention in database
-                DB::table('mentions')->insert([
-                    'mentionable_type' => $commentId ? 'news_comment' : 'news',
-                    'mentionable_id' => $commentId ?: $newsId,
-                    'mentioned_type' => $mention['type'],
-                    'mentioned_id' => $mention['id'],
-                    'mention_text' => $mention['mention_text'],
-                    'position_start' => $mention['position_start'] ?? null,
-                    'position_end' => $mention['position_end'] ?? null,
-                    'context' => $context,
-                    'mentioned_by' => Auth::id(),
-                    'mentioned_at' => now(),
-                    'created_at' => now(),
-                    'updated_at' => now()
-                ]);
-            } catch (\Exception $e) {
-                \Log::error('Error processing mention: ' . $e->getMessage());
-            }
-        }
-    }
-
-    private function extractMentionContext($content, $mentionText)
-    {
-        $position = strpos($content, $mentionText);
-        if ($position === false) {
-            return null;
-        }
-
-        // Extract 50 characters before and after the mention for context
-        $contextLength = 50;
-        $start = max(0, $position - $contextLength);
-        $end = min(strlen($content), $position + strlen($mentionText) + $contextLength);
-        
-        $context = substr($content, $start, $end - $start);
-        
-        // Clean up context (remove excessive whitespace, etc.)
-        $context = preg_replace('/\s+/', ' ', trim($context));
-        
-        return $context;
-    }
 
     private function calculateReadTime($content)
     {
@@ -1568,7 +1445,7 @@ class NewsController extends Controller
     public function featureNews($newsId)
     {
         // Check if user is authenticated and has admin/moderator role
-        if (!Auth::check() || !Auth::user()->hasAnyRole(['admin', 'moderator'])) {
+        if (!auth('api')->check() || !auth('api')->user()->hasAnyRole(['admin', 'moderator'])) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized - Admin or Moderator access required'
@@ -1606,7 +1483,7 @@ class NewsController extends Controller
     public function unfeatureNews($newsId)
     {
         // Check if user is authenticated and has admin/moderator role
-        if (!Auth::check() || !Auth::user()->hasAnyRole(['admin', 'moderator'])) {
+        if (!auth('api')->check() || !auth('api')->user()->hasAnyRole(['admin', 'moderator'])) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized - Admin or Moderator access required'
@@ -1645,7 +1522,7 @@ class NewsController extends Controller
     public function reportComment(Request $request, $commentId)
     {
         // Check if user is authenticated
-        if (!Auth::check()) {
+        if (!auth('api')->check()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized'
@@ -1670,7 +1547,7 @@ class NewsController extends Controller
             DB::table('reports')->insert([
                 'reportable_type' => 'news_comment',
                 'reportable_id' => $commentId,
-                'reporter_id' => Auth::id(),
+                'reporter_id' => auth('api')->id(),
                 'reason' => $request->reason,
                 'status' => 'pending',
                 'created_at' => now(),
@@ -1693,7 +1570,7 @@ class NewsController extends Controller
     public function getReportedComments(Request $request)
     {
         // Check if user is authenticated and has admin/moderator role
-        if (!Auth::check() || !Auth::user()->hasAnyRole(['admin', 'moderator'])) {
+        if (!auth('api')->check() || !auth('api')->user()->hasAnyRole(['admin', 'moderator'])) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized - Admin or Moderator access required'
@@ -1738,7 +1615,7 @@ class NewsController extends Controller
     public function moderateComment(Request $request, $commentId)
     {
         // Check if user is authenticated and has admin/moderator role
-        if (!Auth::check() || !Auth::user()->hasAnyRole(['admin', 'moderator'])) {
+        if (!auth('api')->check() || !auth('api')->user()->hasAnyRole(['admin', 'moderator'])) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized - Admin or Moderator access required'
@@ -1811,7 +1688,7 @@ class NewsController extends Controller
 
             // Log moderation action
             DB::table('moderation_logs')->insert([
-                'moderator_id' => Auth::id(),
+                'moderator_id' => auth('api')->id(),
                 'action' => $request->action,
                 'target_type' => 'news_comment',
                 'target_id' => $commentId,
@@ -1835,7 +1712,7 @@ class NewsController extends Controller
     public function forceDeleteComment($commentId)
     {
         // Check if user is authenticated and has admin role
-        if (!Auth::check() || !Auth::user()->hasRole('admin')) {
+        if (!auth('api')->check() || !auth('api')->user()->hasRole('admin')) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized - Admin access required'
@@ -1876,7 +1753,7 @@ class NewsController extends Controller
     public function getPendingNews(Request $request)
     {
         // Check if user is authenticated and has admin/moderator role
-        if (!Auth::check() || !Auth::user()->hasAnyRole(['admin', 'moderator'])) {
+        if (!auth('api')->check() || !auth('api')->user()->hasAnyRole(['admin', 'moderator'])) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized - Admin or Moderator access required'
@@ -1910,7 +1787,7 @@ class NewsController extends Controller
     public function approveNews($newsId)
     {
         // Check if user is authenticated and has admin/moderator role
-        if (!Auth::check() || !Auth::user()->hasAnyRole(['admin', 'moderator'])) {
+        if (!auth('api')->check() || !auth('api')->user()->hasAnyRole(['admin', 'moderator'])) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized - Admin or Moderator access required'
@@ -1948,7 +1825,7 @@ class NewsController extends Controller
     public function rejectNews(Request $request, $newsId)
     {
         // Check if user is authenticated and has admin/moderator role
-        if (!Auth::check() || !Auth::user()->hasAnyRole(['admin', 'moderator'])) {
+        if (!auth('api')->check() || !auth('api')->user()->hasAnyRole(['admin', 'moderator'])) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized - Admin or Moderator access required'
@@ -1971,7 +1848,7 @@ class NewsController extends Controller
                 // Log rejection reason if provided
                 if ($request->reason) {
                     DB::table('moderation_logs')->insert([
-                        'moderator_id' => Auth::id(),
+                        'moderator_id' => auth('api')->id(),
                         'action' => 'reject_news',
                         'target_type' => 'news',
                         'target_id' => $newsId,
@@ -2001,7 +1878,7 @@ class NewsController extends Controller
     public function forceDeleteNews($newsId)
     {
         // Check if user is authenticated and has admin role
-        if (!Auth::check() || !Auth::user()->hasRole('admin')) {
+        if (!auth('api')->check() || !auth('api')->user()->hasRole('admin')) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized - Admin access required'

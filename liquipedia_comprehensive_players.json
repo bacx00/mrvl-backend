@@ -1,0 +1,321 @@
+[
+  {
+    "id": 1,
+    "username": "TenZ",
+    "real_name": "Tyson Ngo",
+    "birth_date": "2001-05-05",
+    "age": 23,
+    "nationality": "Canadian",
+    "country": "Canada",
+    "country_code": "CA",
+    "flag_url": "https://liquipedia.net/commons/images/thumb/d/d9/Canada.svg/20px-Canada.svg.png",
+    "current_team": {
+      "name": "Sentinels",
+      "short_name": "SEN",
+      "join_date": "2024-12-01",
+      "role": "DPS",
+      "is_captain": true,
+      "is_active": true
+    },
+    "roles": ["DPS"],
+    "main_role": "DPS",
+    "main_heroes": ["Spider-Man", "Iron Man", "Hawkeye"],
+    "secondary_heroes": ["Black Panther", "Winter Soldier", "Star-Lord"],
+    "signature_hero": "Spider-Man",
+    "total_earnings": 85000.00,
+    "current_rating": 2400,
+    "peak_rating": 2450,
+    "rank": 1,
+    "kda_ratio": 2.8,
+    "win_rate": 0.87,
+    "games_played": 150,
+    "games_won": 130,
+    "hours_played": 1200,
+    "social_media": {
+      "twitter": "https://twitter.com/TenZOfficial",
+      "instagram": "https://instagram.com/tenzofficial",
+      "youtube": "https://youtube.com/c/TenZ",
+      "twitch": "https://twitch.tv/tenz",
+      "tiktok": "https://tiktok.com/@tenzofficial"
+    },
+    "streaming": {
+      "primary_platform": "Twitch",
+      "followers": 2500000,
+      "average_viewers": 45000,
+      "is_active_streamer": true
+    },
+    "biography": "One of the most skilled DPS players in Marvel Rivals, known for incredible mechanical skill and game sense. Former professional Valorant player who transitioned to Marvel Rivals.",
+    "career_highlights": [
+      "Marvel Rivals World Champion 2024",
+      "MVP of Marvel Rivals Winter Invitational",
+      "First player to reach 2400+ rating in competitive"
+    ],
+    "past_teams": [
+      {
+        "name": "Cloud9",
+        "short_name": "C9",
+        "join_date": "2020-01-15",
+        "leave_date": "2024-11-30",
+        "role": "DPS",
+        "notable_achievements": ["Valorant Champions 2021"]
+      }
+    ],
+    "achievements": [
+      {
+        "tournament": "Marvel Rivals World Championship 2024",
+        "placement": "1st",
+        "award": "Tournament MVP",
+        "prize_money": 25000.00,
+        "date": "2024-12-15"
+      },
+      {
+        "tournament": "Marvel Rivals Winter Invitational",
+        "placement": "1st",
+        "award": "Tournament MVP",
+        "prize_money": 15000.00,
+        "date": "2024-11-30"
+      },
+      {
+        "tournament": "Marvel Rivals NA Championship",
+        "placement": "1st",
+        "award": null,
+        "prize_money": 10000.00,
+        "date": "2024-11-15"
+      }
+    ],
+    "statistics": {
+      "eliminations_per_game": 28.5,
+      "deaths_per_game": 10.2,
+      "assists_per_game": 15.8,
+      "damage_per_game": 18500,
+      "healing_per_game": 0,
+      "objective_time_percentage": 25.0,
+      "accuracy_percentage": 78.5,
+      "critical_hit_percentage": 15.2
+    },
+    "equipment": {
+      "mouse": "Logitech G Pro X Superlight",
+      "keyboard": "HyperX Alloy Origins 65",
+      "headset": "HyperX Cloud Alpha S",
+      "monitor": "ASUS ROG Swift PG259QN",
+      "mousepad": "Artisan Hien XL"
+    },
+    "settings": {
+      "sensitivity": 0.35,
+      "dpi": 800,
+      "fov": 100,
+      "crosshair_color": "cyan"
+    },
+    "languages": ["English", "Chinese (Cantonese)"],
+    "status": "Active",
+    "last_updated": "2024-12-21T00:00:00Z"
+  },
+  {
+    "id": 2,
+    "username": "s0m",
+    "real_name": "Sam Oh",
+    "birth_date": "2001-09-16",
+    "age": 23,
+    "nationality": "American",
+    "country": "United States",
+    "country_code": "US",
+    "flag_url": "https://liquipedia.net/commons/images/thumb/a/a4/United_States.svg/20px-United_States.svg.png",
+    "current_team": {
+      "name": "NRG Esports",
+      "short_name": "NRG",
+      "join_date": "2024-12-01",
+      "role": "DPS",
+      "is_captain": true,
+      "is_active": true
+    },
+    "roles": ["DPS"],
+    "main_role": "DPS",
+    "main_heroes": ["Iron Man", "Hawkeye", "Winter Soldier"],
+    "secondary_heroes": ["Spider-Man", "Black Panther", "Punisher"],
+    "signature_hero": "Iron Man",
+    "total_earnings": 72000.00,
+    "current_rating": 2350,
+    "peak_rating": 2380,
+    "rank": 3,
+    "kda_ratio": 2.6,
+    "win_rate": 0.81,
+    "games_played": 135,
+    "games_won": 109,
+    "hours_played": 1100,
+    "social_media": {
+      "twitter": "https://twitter.com/s0mcs",
+      "instagram": "https://instagram.com/s0mcs",
+      "youtube": "https://youtube.com/c/s0m",
+      "twitch": "https://twitch.tv/s0m",
+      "tiktok": "https://tiktok.com/@s0mcs"
+    },
+    "streaming": {
+      "primary_platform": "Twitch",
+      "followers": 1800000,
+      "average_viewers": 35000,
+      "is_active_streamer": true
+    },
+    "biography": "Elite DPS player known for his precision aim and strategic thinking. Former Valorant professional with extensive FPS experience.",
+    "career_highlights": [
+      "Marvel Rivals World Championship Runner-up 2024",
+      "Marvel Rivals Spring Major Champion",
+      "Consistent top 3 finisher in major tournaments"
+    ],
+    "past_teams": [
+      {
+        "name": "NRG Esports",
+        "short_name": "NRG",
+        "join_date": "2022-08-15",
+        "leave_date": "2024-11-30",
+        "role": "DPS",
+        "notable_achievements": ["Valorant Champions 2022 - Top 4"]
+      }
+    ],
+    "achievements": [
+      {
+        "tournament": "Marvel Rivals World Championship 2024",
+        "placement": "2nd",
+        "award": null,
+        "prize_money": 18000.00,
+        "date": "2024-12-15"
+      },
+      {
+        "tournament": "Marvel Rivals Spring Major",
+        "placement": "1st",
+        "award": "Tournament MVP",
+        "prize_money": 20000.00,
+        "date": "2024-10-20"
+      }
+    ],
+    "statistics": {
+      "eliminations_per_game": 26.8,
+      "deaths_per_game": 10.5,
+      "assists_per_game": 14.2,
+      "damage_per_game": 17800,
+      "healing_per_game": 0,
+      "objective_time_percentage": 22.0,
+      "accuracy_percentage": 76.2,
+      "critical_hit_percentage": 14.8
+    },
+    "equipment": {
+      "mouse": "Logitech G Pro X Superlight",
+      "keyboard": "Wooting 60HE",
+      "headset": "Audio-Technica ATH-ADG1X",
+      "monitor": "BenQ ZOWIE XL2546K",
+      "mousepad": "SteelSeries QcK Heavy"
+    },
+    "settings": {
+      "sensitivity": 0.28,
+      "dpi": 800,
+      "fov": 103,
+      "crosshair_color": "green"
+    },
+    "languages": ["English", "Korean"],
+    "status": "Active",
+    "last_updated": "2024-12-21T00:00:00Z"
+  },
+  {
+    "id": 3,
+    "username": "leaf",
+    "real_name": "Nathan Orf",
+    "birth_date": "2003-03-12",
+    "age": 21,
+    "nationality": "American",
+    "country": "United States",
+    "country_code": "US",
+    "flag_url": "https://liquipedia.net/commons/images/thumb/a/a4/United_States.svg/20px-United_States.svg.png",
+    "current_team": {
+      "name": "Cloud9",
+      "short_name": "C9",
+      "join_date": "2024-12-01",
+      "role": "DPS",
+      "is_captain": true,
+      "is_active": true
+    },
+    "roles": ["DPS"],
+    "main_role": "DPS",
+    "main_heroes": ["Spider-Man", "Iron Man", "Black Panther"],
+    "secondary_heroes": ["Hawkeye", "Winter Soldier", "Psylocke"],
+    "signature_hero": "Spider-Man",
+    "total_earnings": 58000.00,
+    "current_rating": 2320,
+    "peak_rating": 2360,
+    "rank": 5,
+    "kda_ratio": 2.4,
+    "win_rate": 0.79,
+    "games_played": 128,
+    "games_won": 101,
+    "hours_played": 980,
+    "social_media": {
+      "twitter": "https://twitter.com/leaf_cs",
+      "instagram": "https://instagram.com/leaf_cs",
+      "youtube": "https://youtube.com/c/leafcs",
+      "twitch": "https://twitch.tv/leaf",
+      "tiktok": null
+    },
+    "streaming": {
+      "primary_platform": "Twitch",
+      "followers": 850000,
+      "average_viewers": 15000,
+      "is_active_streamer": true
+    },
+    "biography": "Young prodigy DPS player with incredible mechanical skill. Known for his aggressive playstyle and clutch performances in high-pressure situations.",
+    "career_highlights": [
+      "Marvel Rivals Summer Championship Winner 2024",
+      "Marvel Rivals World Championship Bronze Medal",
+      "Youngest player to reach top 10 global ranking"
+    ],
+    "past_teams": [
+      {
+        "name": "Cloud9 Blue",
+        "short_name": "C9B",
+        "join_date": "2021-06-01",
+        "leave_date": "2024-11-30",
+        "role": "DPS",
+        "notable_achievements": ["Valorant Champions Tour - Multiple Stage victories"]
+      }
+    ],
+    "achievements": [
+      {
+        "tournament": "Marvel Rivals Summer Championship",
+        "placement": "1st",
+        "award": "Rising Star Award",
+        "prize_money": 22000.00,
+        "date": "2024-08-15"
+      },
+      {
+        "tournament": "Marvel Rivals World Championship 2024",
+        "placement": "3rd",
+        "award": null,
+        "prize_money": 12000.00,
+        "date": "2024-12-15"
+      }
+    ],
+    "statistics": {
+      "eliminations_per_game": 25.2,
+      "deaths_per_game": 10.8,
+      "assists_per_game": 16.5,
+      "damage_per_game": 16900,
+      "healing_per_game": 0,
+      "objective_time_percentage": 28.0,
+      "accuracy_percentage": 74.8,
+      "critical_hit_percentage": 13.5
+    },
+    "equipment": {
+      "mouse": "Razer DeathAdder V3",
+      "keyboard": "Ducky One 2 Mini",
+      "headset": "SteelSeries Arctis Pro",
+      "monitor": "Alienware AW2521H",
+      "mousepad": "Razer Gigantus V2"
+    },
+    "settings": {
+      "sensitivity": 0.42,
+      "dpi": 800,
+      "fov": 105,
+      "crosshair_color": "white"
+    },
+    "languages": ["English"],
+    "status": "Active",
+    "last_updated": "2024-12-21T00:00:00Z"
+  }
+]

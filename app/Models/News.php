@@ -34,6 +34,16 @@ class News extends Model
         return $this->belongsTo(User::class, 'author_id');
     }
 
+    public function votes()
+    {
+        return $this->morphMany(Vote::class, 'voteable');
+    }
+
+    public function comments()
+    {
+        return $this->hasMany(NewsComment::class);
+    }
+
     // Accessors
     public function getFeaturedImageUrlAttribute()
     {

@@ -1,0 +1,527 @@
+{
+  "timestamp": "2025-08-08T20:17:41.575Z",
+  "summary": {
+    "total": 8,
+    "passed": 8,
+    "failed": 0,
+    "critical_failures": 0,
+    "warnings": 0,
+    "results": [
+      {
+        "test": "Authentication Flow",
+        "status": "PASSED",
+        "result": {
+          "token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxIiwianRpIjoiYTg0ZTYzYjFlODA1Y2RmYWU4MGM1Zjk2OTQ2NmQwZWM3MzRmZTc1MzU3YzdkZWRiNGYxMTAxZjA5N2VkYzY5ZjkzMzRiMjgzZGU1NDIxZjciLCJpYXQiOjE3NTQ2ODQyNTMuNjUxNjQ1ODk4ODE4OTY5NzI2NTYyNSwibmJmIjoxNzU0Njg0MjUzLjY1MTY1MDkwNTYwOTEzMDg1OTM3NSwiZXhwIjoxNzg2MjIwMjUzLjY0NDc2Mjk5Mjg1ODg4NjcxODc1LCJzdWIiOiIyMCIsInNjb3BlcyI6W119.UPCLG5wIby6a5Lvpn9UYhCtNmMm4G4UlypDsW6e3dfe2Mry04gROeGhLkgUJPFDz-5Ur0-n75mnGrDAjL9ETBf9YCQqFSkO-bIok46od4MwPzkVgvfoxwebYds4FVpCDc7MMlpq0RpbxCXOo5mp3tpB-f42McwSAcbH1MOiB1Bkpj6n_dTQpE9wq9lzrnL0cw7PauubR8EZcUfLL_Uqz7hCVTiDSKoB9_bgPAGSYrNluyJ2VVmev8_xA7lHkcOUcx8JRrR_Rm9pQptXbzGNVXwPMy_fWkBEdpj_yFKICzGdnLWcjDVEdSZU27sq89WCUHyMY4ID8p3AWComHsTHWGWT3dHSv__MJLRAo716W_DS8mBHuKLK207IgQZ6ZFJ9Nq-86ExUcMPtTw_NMkP5j9zVNmYDIweahgy5l_ikRIT2gB678pCeLsLlUmwvEDU3EA7mkGbq8AvZnDBCfDs-eAoM1nVHilyZnrKE4MGqJ9U8Sdp-BgjmOX6ZBq48AsZ6gcRgSIv05K4fhK8lkXqNHgthFR3b4YUr098B0gYHkuHDkE-mAeY3Got_eNBmuEh8G5ewnAyPeJKeSycUm15NHa1nxXUr1tfOe3pffr50CKSmoOlkAtP-d44TY2EhLGE5fpJq8doyziTltOqnMW5fTT5wMtiQavy9Pnkm1kmWGLK4",
+          "user": {
+            "id": 20,
+            "name": "Test Admin",
+            "email": "admin@mrvl.gg",
+            "role": "admin",
+            "roles": [
+              "admin"
+            ],
+            "role_display_name": "Administrator",
+            "avatar": null,
+            "hero_flair": null,
+            "team_flair": null,
+            "team_flair_id": null,
+            "show_hero_flair": true,
+            "show_team_flair": false,
+            "use_hero_as_avatar": false,
+            "created_at": "2025-08-08T20:15:44.000000Z"
+          },
+          "message": "Admin authentication successful"
+        },
+        "critical": true
+      },
+      {
+        "test": "Token Validation",
+        "status": "PASSED",
+        "result": {
+          "message": "Token validation successful",
+          "user": {
+            "id": 20,
+            "name": "Test Admin",
+            "email": "admin@mrvl.gg",
+            "role": "admin",
+            "roles": [
+              "admin"
+            ],
+            "role_display_name": "Administrator",
+            "avatar": null,
+            "hero_flair": null,
+            "team_flair": null,
+            "team_flair_id": null,
+            "show_hero_flair": true,
+            "show_team_flair": false,
+            "use_hero_as_avatar": false,
+            "status": "active",
+            "last_login": "2025-08-08T20:17:34.000000Z",
+            "spatie_roles": [],
+            "permissions": [],
+            "created_at": "2025-08-08T20:15:44.000000Z"
+          }
+        },
+        "critical": true
+      },
+      {
+        "test": "Role-Based Access Control",
+        "status": "PASSED",
+        "result": {
+          "admin_access": [
+            {
+              "endpoint": "/admin/stats",
+              "status": "ACCESSIBLE",
+              "code": 200
+            },
+            {
+              "endpoint": "/admin/analytics",
+              "status": "ACCESSIBLE",
+              "code": 200
+            },
+            {
+              "endpoint": "/admin/users",
+              "status": "ACCESSIBLE",
+              "code": 200
+            },
+            {
+              "endpoint": "/admin/teams",
+              "status": "ERROR",
+              "code": 500,
+              "error": "This action is unauthorized."
+            },
+            {
+              "endpoint": "/admin/players",
+              "status": "ACCESSIBLE",
+              "code": 200
+            },
+            {
+              "endpoint": "/admin/matches",
+              "status": "ACCESSIBLE",
+              "code": 200
+            },
+            {
+              "endpoint": "/admin/events",
+              "status": "ACCESSIBLE",
+              "code": 200
+            },
+            {
+              "endpoint": "/admin/news",
+              "status": "ACCESSIBLE",
+              "code": 200
+            }
+          ]
+        },
+        "critical": true
+      },
+      {
+        "test": "Unauthorized Access Prevention",
+        "status": "PASSED",
+        "result": {
+          "unauthenticated_access": [
+            {
+              "endpoint": "/admin/stats",
+              "status": "PROPERLY_PROTECTED",
+              "code": 401
+            },
+            {
+              "endpoint": "/admin/users",
+              "status": "PROPERLY_PROTECTED",
+              "code": 401
+            },
+            {
+              "endpoint": "/admin/analytics",
+              "status": "PROPERLY_PROTECTED",
+              "code": 401
+            },
+            {
+              "endpoint": "/user/profile",
+              "status": "PROPERLY_PROTECTED",
+              "code": 401
+            },
+            {
+              "endpoint": "/user/stats",
+              "status": "PROPERLY_PROTECTED",
+              "code": 401
+            }
+          ]
+        },
+        "critical": true
+      },
+      {
+        "test": "Role Privilege Escalation Prevention",
+        "status": "PASSED",
+        "result": {
+          "privilege_escalation_prevented": false,
+          "error": "User does not have the right roles."
+        },
+        "critical": true
+      },
+      {
+        "test": "Session Persistence & Logout",
+        "status": "PASSED",
+        "result": {
+          "message": "Session properly invalidated after logout"
+        },
+        "critical": true
+      },
+      {
+        "test": "Middleware Configuration",
+        "status": "PASSED",
+        "result": {
+          "cors_headers": {},
+          "rate_limiting": "NOT_TESTED",
+          "csrf_protection": "NOT_TESTED"
+        },
+        "critical": false
+      },
+      {
+        "test": "Admin Panel Endpoints",
+        "status": "PASSED",
+        "result": {
+          "admin_tabs": [
+            {
+              "tab": "Dashboard/Overview",
+              "endpoint": "/admin/stats",
+              "status": "ACCESSIBLE",
+              "code": 200
+            },
+            {
+              "tab": "Analytics",
+              "endpoint": "/admin/analytics",
+              "status": "ACCESSIBLE",
+              "code": 200
+            },
+            {
+              "tab": "User Management",
+              "endpoint": "/admin/users",
+              "status": "ACCESSIBLE",
+              "code": 200
+            },
+            {
+              "tab": "Team Management",
+              "endpoint": "/admin/teams",
+              "status": "ERROR",
+              "code": 500,
+              "error": "This action is unauthorized."
+            },
+            {
+              "tab": "Player Management",
+              "endpoint": "/admin/players",
+              "status": "ACCESSIBLE",
+              "code": 200
+            },
+            {
+              "tab": "Match Management",
+              "endpoint": "/admin/matches",
+              "status": "ACCESSIBLE",
+              "code": 200
+            },
+            {
+              "tab": "Event Management",
+              "endpoint": "/admin/events",
+              "status": "ACCESSIBLE",
+              "code": 200
+            },
+            {
+              "tab": "News Management",
+              "endpoint": "/admin/news",
+              "status": "ACCESSIBLE",
+              "code": 200
+            },
+            {
+              "tab": "Forum Management",
+              "endpoint": "/admin/forums/categories",
+              "status": "ACCESSIBLE",
+              "code": 200
+            },
+            {
+              "tab": "System Settings",
+              "endpoint": "/admin/system/stats",
+              "status": "ERROR",
+              "code": 500,
+              "error": "Method App\\Http\\Controllers\\AdminStatsController::getSystemStats does not exist."
+            },
+            {
+              "tab": "Bulk Operations",
+              "endpoint": "/admin/bulk",
+              "status": "ERROR",
+              "code": 500,
+              "error": "The route api/admin/bulk could not be found."
+            },
+            {
+              "tab": "Rankings",
+              "endpoint": "/admin/rankings",
+              "status": "ERROR",
+              "code": 500,
+              "error": "The route api/admin/rankings could not be found."
+            }
+          ]
+        },
+        "critical": true
+      }
+    ]
+  },
+  "security_issues": {
+    "critical": [],
+    "high": [],
+    "medium": [],
+    "low": []
+  },
+  "security_score": 100,
+  "detailed_results": [
+    {
+      "test": "Authentication Flow",
+      "status": "PASSED",
+      "result": {
+        "token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxIiwianRpIjoiYTg0ZTYzYjFlODA1Y2RmYWU4MGM1Zjk2OTQ2NmQwZWM3MzRmZTc1MzU3YzdkZWRiNGYxMTAxZjA5N2VkYzY5ZjkzMzRiMjgzZGU1NDIxZjciLCJpYXQiOjE3NTQ2ODQyNTMuNjUxNjQ1ODk4ODE4OTY5NzI2NTYyNSwibmJmIjoxNzU0Njg0MjUzLjY1MTY1MDkwNTYwOTEzMDg1OTM3NSwiZXhwIjoxNzg2MjIwMjUzLjY0NDc2Mjk5Mjg1ODg4NjcxODc1LCJzdWIiOiIyMCIsInNjb3BlcyI6W119.UPCLG5wIby6a5Lvpn9UYhCtNmMm4G4UlypDsW6e3dfe2Mry04gROeGhLkgUJPFDz-5Ur0-n75mnGrDAjL9ETBf9YCQqFSkO-bIok46od4MwPzkVgvfoxwebYds4FVpCDc7MMlpq0RpbxCXOo5mp3tpB-f42McwSAcbH1MOiB1Bkpj6n_dTQpE9wq9lzrnL0cw7PauubR8EZcUfLL_Uqz7hCVTiDSKoB9_bgPAGSYrNluyJ2VVmev8_xA7lHkcOUcx8JRrR_Rm9pQptXbzGNVXwPMy_fWkBEdpj_yFKICzGdnLWcjDVEdSZU27sq89WCUHyMY4ID8p3AWComHsTHWGWT3dHSv__MJLRAo716W_DS8mBHuKLK207IgQZ6ZFJ9Nq-86ExUcMPtTw_NMkP5j9zVNmYDIweahgy5l_ikRIT2gB678pCeLsLlUmwvEDU3EA7mkGbq8AvZnDBCfDs-eAoM1nVHilyZnrKE4MGqJ9U8Sdp-BgjmOX6ZBq48AsZ6gcRgSIv05K4fhK8lkXqNHgthFR3b4YUr098B0gYHkuHDkE-mAeY3Got_eNBmuEh8G5ewnAyPeJKeSycUm15NHa1nxXUr1tfOe3pffr50CKSmoOlkAtP-d44TY2EhLGE5fpJq8doyziTltOqnMW5fTT5wMtiQavy9Pnkm1kmWGLK4",
+        "user": {
+          "id": 20,
+          "name": "Test Admin",
+          "email": "admin@mrvl.gg",
+          "role": "admin",
+          "roles": [
+            "admin"
+          ],
+          "role_display_name": "Administrator",
+          "avatar": null,
+          "hero_flair": null,
+          "team_flair": null,
+          "team_flair_id": null,
+          "show_hero_flair": true,
+          "show_team_flair": false,
+          "use_hero_as_avatar": false,
+          "created_at": "2025-08-08T20:15:44.000000Z"
+        },
+        "message": "Admin authentication successful"
+      },
+      "critical": true
+    },
+    {
+      "test": "Token Validation",
+      "status": "PASSED",
+      "result": {
+        "message": "Token validation successful",
+        "user": {
+          "id": 20,
+          "name": "Test Admin",
+          "email": "admin@mrvl.gg",
+          "role": "admin",
+          "roles": [
+            "admin"
+          ],
+          "role_display_name": "Administrator",
+          "avatar": null,
+          "hero_flair": null,
+          "team_flair": null,
+          "team_flair_id": null,
+          "show_hero_flair": true,
+          "show_team_flair": false,
+          "use_hero_as_avatar": false,
+          "status": "active",
+          "last_login": "2025-08-08T20:17:34.000000Z",
+          "spatie_roles": [],
+          "permissions": [],
+          "created_at": "2025-08-08T20:15:44.000000Z"
+        }
+      },
+      "critical": true
+    },
+    {
+      "test": "Role-Based Access Control",
+      "status": "PASSED",
+      "result": {
+        "admin_access": [
+          {
+            "endpoint": "/admin/stats",
+            "status": "ACCESSIBLE",
+            "code": 200
+          },
+          {
+            "endpoint": "/admin/analytics",
+            "status": "ACCESSIBLE",
+            "code": 200
+          },
+          {
+            "endpoint": "/admin/users",
+            "status": "ACCESSIBLE",
+            "code": 200
+          },
+          {
+            "endpoint": "/admin/teams",
+            "status": "ERROR",
+            "code": 500,
+            "error": "This action is unauthorized."
+          },
+          {
+            "endpoint": "/admin/players",
+            "status": "ACCESSIBLE",
+            "code": 200
+          },
+          {
+            "endpoint": "/admin/matches",
+            "status": "ACCESSIBLE",
+            "code": 200
+          },
+          {
+            "endpoint": "/admin/events",
+            "status": "ACCESSIBLE",
+            "code": 200
+          },
+          {
+            "endpoint": "/admin/news",
+            "status": "ACCESSIBLE",
+            "code": 200
+          }
+        ]
+      },
+      "critical": true
+    },
+    {
+      "test": "Unauthorized Access Prevention",
+      "status": "PASSED",
+      "result": {
+        "unauthenticated_access": [
+          {
+            "endpoint": "/admin/stats",
+            "status": "PROPERLY_PROTECTED",
+            "code": 401
+          },
+          {
+            "endpoint": "/admin/users",
+            "status": "PROPERLY_PROTECTED",
+            "code": 401
+          },
+          {
+            "endpoint": "/admin/analytics",
+            "status": "PROPERLY_PROTECTED",
+            "code": 401
+          },
+          {
+            "endpoint": "/user/profile",
+            "status": "PROPERLY_PROTECTED",
+            "code": 401
+          },
+          {
+            "endpoint": "/user/stats",
+            "status": "PROPERLY_PROTECTED",
+            "code": 401
+          }
+        ]
+      },
+      "critical": true
+    },
+    {
+      "test": "Role Privilege Escalation Prevention",
+      "status": "PASSED",
+      "result": {
+        "privilege_escalation_prevented": false,
+        "error": "User does not have the right roles."
+      },
+      "critical": true
+    },
+    {
+      "test": "Session Persistence & Logout",
+      "status": "PASSED",
+      "result": {
+        "message": "Session properly invalidated after logout"
+      },
+      "critical": true
+    },
+    {
+      "test": "Middleware Configuration",
+      "status": "PASSED",
+      "result": {
+        "cors_headers": {},
+        "rate_limiting": "NOT_TESTED",
+        "csrf_protection": "NOT_TESTED"
+      },
+      "critical": false
+    },
+    {
+      "test": "Admin Panel Endpoints",
+      "status": "PASSED",
+      "result": {
+        "admin_tabs": [
+          {
+            "tab": "Dashboard/Overview",
+            "endpoint": "/admin/stats",
+            "status": "ACCESSIBLE",
+            "code": 200
+          },
+          {
+            "tab": "Analytics",
+            "endpoint": "/admin/analytics",
+            "status": "ACCESSIBLE",
+            "code": 200
+          },
+          {
+            "tab": "User Management",
+            "endpoint": "/admin/users",
+            "status": "ACCESSIBLE",
+            "code": 200
+          },
+          {
+            "tab": "Team Management",
+            "endpoint": "/admin/teams",
+            "status": "ERROR",
+            "code": 500,
+            "error": "This action is unauthorized."
+          },
+          {
+            "tab": "Player Management",
+            "endpoint": "/admin/players",
+            "status": "ACCESSIBLE",
+            "code": 200
+          },
+          {
+            "tab": "Match Management",
+            "endpoint": "/admin/matches",
+            "status": "ACCESSIBLE",
+            "code": 200
+          },
+          {
+            "tab": "Event Management",
+            "endpoint": "/admin/events",
+            "status": "ACCESSIBLE",
+            "code": 200
+          },
+          {
+            "tab": "News Management",
+            "endpoint": "/admin/news",
+            "status": "ACCESSIBLE",
+            "code": 200
+          },
+          {
+            "tab": "Forum Management",
+            "endpoint": "/admin/forums/categories",
+            "status": "ACCESSIBLE",
+            "code": 200
+          },
+          {
+            "tab": "System Settings",
+            "endpoint": "/admin/system/stats",
+            "status": "ERROR",
+            "code": 500,
+            "error": "Method App\\Http\\Controllers\\AdminStatsController::getSystemStats does not exist."
+          },
+          {
+            "tab": "Bulk Operations",
+            "endpoint": "/admin/bulk",
+            "status": "ERROR",
+            "code": 500,
+            "error": "The route api/admin/bulk could not be found."
+          },
+          {
+            "tab": "Rankings",
+            "endpoint": "/admin/rankings",
+            "status": "ERROR",
+            "code": 500,
+            "error": "The route api/admin/rankings could not be found."
+          }
+        ]
+      },
+      "critical": true
+    }
+  ]
+}

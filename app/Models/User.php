@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use App\Notifications\ResetPasswordNotification;
+use App\Services\OptimizedUserProfileService;
 
 class User extends Authenticatable
 {
@@ -29,7 +30,8 @@ class User extends Authenticatable
     protected $fillable = [
         'name', 'email', 'password', 'avatar', 'last_login', 'status', 'role',
         'hero_flair', 'team_flair_id', 'show_hero_flair', 'show_team_flair',
-        'profile_picture_type', 'use_hero_as_avatar'
+        'profile_picture_type', 'use_hero_as_avatar', 'banned_at', 'ban_reason',
+        'ban_expires_at', 'muted_until', 'last_activity', 'warning_count'
     ];
 
     protected $hidden = [
@@ -45,6 +47,11 @@ class User extends Authenticatable
             'show_hero_flair' => 'boolean',
             'show_team_flair' => 'boolean',
             'use_hero_as_avatar' => 'boolean',
+            'banned_at' => 'datetime',
+            'ban_expires_at' => 'datetime',
+            'muted_until' => 'datetime',
+            'last_activity' => 'datetime',
+            'warning_count' => 'integer'
         ];
     }
 
@@ -58,6 +65,36 @@ class User extends Authenticatable
         return $this->hasMany(ForumThread::class);
     }
 
+    public function forumPosts()
+    {
+        return $this->hasMany(Post::class);
+    }
+
+    public function reports()
+    {
+        return $this->hasMany(Report::class, 'reporter_id');
+    }
+
+    public function moderatedReports()
+    {
+        return $this->hasMany(Report::class, 'moderator_id');
+    }
+
+    public function warnings()
+    {
+        return $this->hasMany(UserWarning::class);
+    }
+
+    public function issuedWarnings()
+    {
+        return $this->hasMany(UserWarning::class, 'moderator_id');
+    }
+
+    public function reportsAgainst()
+    {
+        return $this->morphMany(Report::class, 'reportable');
+    }
+
     /**
      * Team flair relationship with eager loading optimization
      */
@@ -65,6 +102,25 @@ class User extends Authenticatable
     {
         return $this->belongsTo(Team::class, 'team_flair_id')
             ->select(['id', 'name', 'short_name', 'logo', 'region']); // Only load needed columns
+    }
+
+    /**
+     * Teams relationship - teams this user is part of
+     */
+    public function teams()
+    {
+        return $this->belongsToMany(Team::class, 'team_players', 'user_id', 'team_id')
+                    ->withTimestamps()
+                    ->withPivot('position', 'status', 'joined_at');
+    }
+
+    /**
+     * Followed tournaments relationship
+     */
+    public function followedTournaments()
+    {
+        return $this->belongsToMany(Tournament::class, 'tournament_followers')
+                    ->withTimestamps();
     }
     
     /**
@@ -222,103 +278,88 @@ class User extends Authenticatable
     }
     
     /**
-     * Get user statistics with caching
+     * Get user statistics with caching (using optimized service)
      */
     public function getStatsWithCache()
     {
-        return Cache::remember(
-            self::CACHE_PREFIX . "stats_{$this->id}",
-            self::CACHE_DURATION / 2, // Cache stats for 30 minutes
-            function () {
-                return $this->calculateUserStats();
-            }
-        );
+        $service = app(OptimizedUserProfileService::class);
+        return $service->getUserStatisticsOptimized($this->id);
     }
     
     /**
-     * Calculate user statistics (optimized with single query approach)
+     * Calculate user statistics (highly optimized single query approach)
      */
     private function calculateUserStats()
     {
-        // Single optimized query to get all comment counts
-        $commentStats = DB::select("
+        // Ultra-optimized single query to get all user statistics at once
+        $allStats = DB::selectOne("
             SELECT 
-                'news_comments' as type,
-                COUNT(*) as count
-            FROM news_comments 
-            WHERE user_id = ?
-            UNION ALL
-            SELECT 
-                'match_comments' as type,
-                COUNT(*) as count
-            FROM match_comments 
-            WHERE user_id = ?
-        ", [$this->id, $this->id]);
+                -- Comment counts using conditional aggregation
+                COUNT(CASE WHEN nc.id IS NOT NULL THEN 1 END) as news_comments,
+                COUNT(CASE WHEN mc.id IS NOT NULL THEN 1 END) as match_comments,
+                
+                -- Forum counts using conditional aggregation  
+                COUNT(CASE WHEN ft.id IS NOT NULL THEN 1 END) as forum_threads,
+                COUNT(CASE WHEN fp.id IS NOT NULL THEN 1 END) as forum_posts,
+                
+                -- Vote counts using conditional aggregation
+                COUNT(CASE WHEN v.vote = 1 THEN 1 END) as upvotes_given,
+                COUNT(CASE WHEN v.vote = -1 THEN 1 END) as downvotes_given
+                
+            FROM users u
+            LEFT JOIN news_comments nc ON nc.user_id = u.id
+            LEFT JOIN match_comments mc ON mc.user_id = u.id  
+            LEFT JOIN forum_threads ft ON ft.user_id = u.id
+            LEFT JOIN forum_posts fp ON fp.user_id = u.id
+            LEFT JOIN votes v ON v.user_id = u.id
+            WHERE u.id = ?
+        ", [$this->id]);
         
-        $newsComments = 0;
-        $matchComments = 0;
-        foreach ($commentStats as $stat) {
-            if ($stat->type === 'news_comments') {
-                $newsComments = $stat->count;
-            } elseif ($stat->type === 'match_comments') {
-                $matchComments = $stat->count;
-            }
+        if (!$allStats) {
+            // Fallback if user doesn't exist
+            $allStats = (object)[
+                'news_comments' => 0,
+                'match_comments' => 0, 
+                'forum_threads' => 0,
+                'forum_posts' => 0,
+                'upvotes_given' => 0,
+                'downvotes_given' => 0
+            ];
         }
-        
-        // Single optimized query to get forum stats
-        $forumStats = DB::selectOne("
-            SELECT 
-                COALESCE(t.thread_count, 0) as threads,
-                COALESCE(p.post_count, 0) as posts
-            FROM (
-                SELECT COUNT(*) as thread_count
-                FROM forum_threads 
-                WHERE user_id = ?
-            ) t
-            CROSS JOIN (
-                SELECT COUNT(*) as post_count
-                FROM forum_posts 
-                WHERE user_id = ?
-            ) p
-        ", [$this->id, $this->id]) ?? (object)['threads' => 0, 'posts' => 0];
-        
-        // Single optimized query to get vote stats
-        $voteStats = DB::selectOne("
-            SELECT 
-                SUM(CASE WHEN vote = 1 THEN 1 ELSE 0 END) as upvotes_given,
-                SUM(CASE WHEN vote = -1 THEN 1 ELSE 0 END) as downvotes_given
-            FROM votes 
-            WHERE user_id = ?
-        ", [$this->id]) ?? (object)['upvotes_given' => 0, 'downvotes_given' => 0];
         
         return [
             'comments' => [
-                'news' => $newsComments,
-                'matches' => $matchComments,
-                'total' => $newsComments + $matchComments
+                'news' => $allStats->news_comments,
+                'matches' => $allStats->match_comments,
+                'total' => $allStats->news_comments + $allStats->match_comments
             ],
             'forum' => [
-                'threads' => $forumStats->threads,
-                'posts' => $forumStats->posts,
-                'total' => $forumStats->threads + $forumStats->posts
+                'threads' => $allStats->forum_threads,
+                'posts' => $allStats->forum_posts,
+                'total' => $allStats->forum_threads + $allStats->forum_posts
             ],
             'votes' => [
-                'upvotes_given' => $voteStats->upvotes_given,
-                'downvotes_given' => $voteStats->downvotes_given
+                'upvotes_given' => $allStats->upvotes_given,
+                'downvotes_given' => $allStats->downvotes_given
             ]
         ];
     }
     
     /**
-     * Clear all cache entries related to this user
+     * Clear all cache entries related to this user (using optimized service)
      */
     public function clearUserCache()
     {
+        // Clear traditional cache entries
         Cache::forget(self::CACHE_PREFIX . "full_{$this->id}");
         Cache::forget(self::CACHE_PREFIX . "stats_{$this->id}");
         Cache::forget("hero_flair_{$this->hero_flair}");
         Cache::forget("team_exists_{$this->team_flair_id}");
         Cache::forget("hero_exists_{$this->hero_flair}");
+        
+        // Clear optimized service cache entries
+        $service = app(OptimizedUserProfileService::class);
+        $service->clearUserCaches($this->id);
     }
     
     /**
@@ -405,5 +446,321 @@ class User extends Authenticatable
             'user' => 'User',
             default => ucfirst($this->role)
         };
+    }
+
+    /**
+     * Achievement system relationships
+     */
+
+    /**
+     * Get user achievements
+     */
+    public function userAchievements()
+    {
+        return $this->hasMany(UserAchievement::class);
+    }
+
+    /**
+     * Get user's earned achievements
+     */
+    public function achievements()
+    {
+        return $this->belongsToMany(Achievement::class, 'user_achievements')
+            ->withPivot(['progress', 'current_count', 'required_count', 'is_completed', 'completed_at', 'completion_count'])
+            ->withTimestamps();
+    }
+
+    /**
+     * Get user streaks
+     */
+    public function streaks()
+    {
+        return $this->hasMany(UserStreak::class);
+    }
+
+    /**
+     * Get user challenges
+     */
+    public function userChallenges()
+    {
+        return $this->hasMany(UserChallenge::class);
+    }
+
+    /**
+     * Get user's participated challenges
+     */
+    public function challenges()
+    {
+        return $this->belongsToMany(Challenge::class, 'user_challenges')
+            ->withPivot(['progress', 'current_score', 'is_completed', 'started_at', 'completed_at'])
+            ->withTimestamps();
+    }
+
+    /**
+     * Get user titles
+     */
+    public function titles()
+    {
+        return $this->hasMany(UserTitle::class);
+    }
+
+    /**
+     * Get user's active title
+     */
+    public function activeTitle()
+    {
+        return $this->hasOne(UserTitle::class)->where('is_active', true);
+    }
+
+    /**
+     * Get user achievement notifications
+     */
+    public function achievementNotifications()
+    {
+        return $this->hasMany(AchievementNotification::class);
+    }
+
+    /**
+     * Get leaderboard entries
+     */
+    public function leaderboardEntries()
+    {
+        return $this->hasMany(LeaderboardEntry::class);
+    }
+
+    /**
+     * Get user's achievement summary with caching
+     */
+    public function getAchievementSummaryAttribute(): array
+    {
+        return Cache::remember(
+            "user_achievement_summary_{$this->id}",
+            300,
+            function () {
+                $service = app(\App\Services\AchievementService::class);
+                return $service->getUserAchievementSummary($this->id);
+            }
+        );
+    }
+
+    // ===================================
+    // FORUM MODERATION METHODS
+    // ===================================
+
+    /**
+     * Check if the user is banned
+     */
+    public function isBanned(): bool
+    {
+        if (!$this->banned_at) {
+            return false;
+        }
+
+        // If ban has expiration date, check if it's still active
+        if ($this->ban_expires_at && $this->ban_expires_at->isPast()) {
+            // Auto-unban expired bans
+            $this->update([
+                'banned_at' => null,
+                'ban_reason' => null,
+                'ban_expires_at' => null
+            ]);
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Check if the user is muted
+     */
+    public function isMuted(): bool
+    {
+        return $this->muted_until && $this->muted_until->isFuture();
+    }
+
+    /**
+     * Check if the user has active warnings
+     */
+    public function hasActiveWarnings(): bool
+    {
+        return $this->warnings()
+                    ->where(function ($q) {
+                        $q->where('expires_at', '>', now())
+                          ->orWhereNull('expires_at');
+                    })
+                    ->exists();
+    }
+
+    /**
+     * Get active warnings
+     */
+    public function getActiveWarnings()
+    {
+        return $this->warnings()
+                    ->where(function ($q) {
+                        $q->where('expires_at', '>', now())
+                          ->orWhereNull('expires_at');
+                    })
+                    ->orderBy('created_at', 'desc')
+                    ->get();
+    }
+
+    /**
+     * Ban the user
+     */
+    public function ban(string $reason, ?\DateTime $expiresAt = null): void
+    {
+        $this->update([
+            'banned_at' => now(),
+            'ban_reason' => $reason,
+            'ban_expires_at' => $expiresAt
+        ]);
+    }
+
+    /**
+     * Unban the user
+     */
+    public function unban(): void
+    {
+        $this->update([
+            'banned_at' => null,
+            'ban_reason' => null,
+            'ban_expires_at' => null
+        ]);
+    }
+
+    /**
+     * Mute the user
+     */
+    public function mute(\DateTime $until): void
+    {
+        $this->update(['muted_until' => $until]);
+    }
+
+    /**
+     * Unmute the user
+     */
+    public function unmute(): void
+    {
+        $this->update(['muted_until' => null]);
+    }
+
+    /**
+     * Add a warning to the user
+     */
+    public function warn(int $moderatorId, string $reason, string $severity = 'medium', ?\DateTime $expiresAt = null): UserWarning
+    {
+        $warning = $this->warnings()->create([
+            'moderator_id' => $moderatorId,
+            'reason' => $reason,
+            'severity' => $severity,
+            'expires_at' => $expiresAt
+        ]);
+
+        $this->increment('warning_count');
+
+        return $warning;
+    }
+
+    /**
+     * Update last activity timestamp
+     */
+    public function updateLastActivity(): void
+    {
+        $this->update(['last_activity' => now()]);
+    }
+
+    /**
+     * Get user's moderation status
+     */
+    public function getModerationStatusAttribute(): array
+    {
+        return [
+            'is_banned' => $this->isBanned(),
+            'is_muted' => $this->isMuted(),
+            'has_warnings' => $this->hasActiveWarnings(),
+            'warning_count' => $this->warning_count,
+            'ban_reason' => $this->ban_reason,
+            'ban_expires_at' => $this->ban_expires_at,
+            'muted_until' => $this->muted_until
+        ];
+    }
+
+    /**
+     * Check if user can perform forum actions
+     */
+    public function canPostInForum(): bool
+    {
+        return !$this->isBanned() && !$this->isMuted();
+    }
+
+    /**
+     * Check if user is a moderator or admin
+     */
+    public function canModerate(): bool
+    {
+        return in_array($this->role, ['admin', 'moderator']);
+    }
+
+    /**
+     * Get forum engagement stats
+     */
+    public function getForumEngagementStatsAttribute(): array
+    {
+        return Cache::remember(
+            "user_forum_stats_{$this->id}",
+            300,
+            function () {
+                return [
+                    'threads_created' => $this->forumThreads()->count(),
+                    'posts_created' => $this->forumPosts()->count(),
+                    'reports_filed' => $this->reports()->count(),
+                    'reports_received' => $this->reportsAgainst()->count(),
+                    'warnings_received' => $this->warnings()->count(),
+                    'total_thread_views' => $this->forumThreads()->sum('views'),
+                    'total_thread_replies' => $this->forumThreads()->sum('replies')
+                ];
+            }
+        );
+    }
+
+    /**
+     * Scope for active users (not banned)
+     */
+    public function scopeActive($query)
+    {
+        return $query->whereNull('banned_at')
+                    ->orWhere(function ($q) {
+                        $q->whereNotNull('ban_expires_at')
+                          ->where('ban_expires_at', '<=', now());
+                    });
+    }
+
+    /**
+     * Scope for banned users
+     */
+    public function scopeBanned($query)
+    {
+        return $query->whereNotNull('banned_at')
+                    ->where(function ($q) {
+                        $q->whereNull('ban_expires_at')
+                          ->orWhere('ban_expires_at', '>', now());
+                    });
+    }
+
+    /**
+     * Scope for muted users
+     */
+    public function scopeMuted($query)
+    {
+        return $query->where('muted_until', '>', now());
+    }
+
+    /**
+     * Scope for users with warnings
+     */
+    public function scopeWithWarnings($query)
+    {
+        return $query->where('warning_count', '>', 0);
     }
 }

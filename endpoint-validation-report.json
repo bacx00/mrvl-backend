@@ -1,0 +1,139 @@
+{
+  "timestamp": "2025-08-08T23:00:26.674Z",
+  "backend_url": "http://localhost:8000",
+  "summary": {
+    "total": 14,
+    "passed": 12,
+    "failed": 2,
+    "success_rate": "85.7%"
+  },
+  "endpoints": [
+    {
+      "method": "GET",
+      "path": "/teams",
+      "description": "(Teams list)",
+      "status": 200,
+      "expected": 200,
+      "passed": true,
+      "response": "{\"data\":[{\"id\":57,\"name\":\"FlyQuest\",\"short_name\":\"FLY\",\"logo\":\"\\/storage\\/teams\\/logos\\/flyquest-log..."
+    },
+    {
+      "method": "GET",
+      "path": "/events",
+      "description": "(Events list)",
+      "status": 200,
+      "expected": 200,
+      "passed": true,
+      "response": "{\"data\":[{\"id\":16,\"name\":\"aiojdioasdijaisojdioasjdjoasdas\",\"slug\":\"aiojdioasdijaisojdioasjdjoasdas\",..."
+    },
+    {
+      "method": "GET",
+      "path": "/matches",
+      "description": "(Matches list)",
+      "status": 200,
+      "expected": 200,
+      "passed": true,
+      "response": "{\"data\":[{\"id\":7,\"team1\":{\"id\":54,\"name\":\"100 Thieves\",\"short_name\":\"100T\",\"logo\":\"100-thieves-logo...."
+    },
+    {
+      "method": "GET",
+      "path": "/heroes",
+      "description": "(Heroes list)",
+      "status": 200,
+      "expected": 200,
+      "passed": true,
+      "response": "{\"data\":[{\"id\":24,\"name\":\"Bruce Banner\",\"slug\":\"bruce-banner\",\"role\":\"Vanguard\",\"description\":null,\"..."
+    },
+    {
+      "method": "GET",
+      "path": "/heroes/roles",
+      "description": "(Hero roles)",
+      "status": 200,
+      "expected": 200,
+      "passed": true,
+      "response": "{\"data\":[{\"name\":\"Vanguard\",\"description\":\"Tank heroes who protect the team and control space\",\"colo..."
+    },
+    {
+      "method": "GET",
+      "path": "/news",
+      "description": "(News list)",
+      "status": 200,
+      "expected": 200,
+      "passed": true,
+      "response": "{\"data\":[],\"pagination\":{\"current_page\":1,\"last_page\":1,\"per_page\":15,\"total\":0},\"success\":true}"
+    },
+    {
+      "method": "GET",
+      "path": "/rankings",
+      "description": "(Rankings)",
+      "status": 500,
+      "expected": 200,
+      "passed": false,
+      "response": "{\"success\":false,\"message\":\"The route api\\/rankings could not be found.\",\"error\":\"NotFoundHttpExcept..."
+    },
+    {
+      "method": "GET",
+      "path": "/public/teams",
+      "description": "(Public teams)",
+      "status": 200,
+      "expected": 200,
+      "passed": true,
+      "response": "{\"data\":[{\"id\":57,\"name\":\"FlyQuest\",\"short_name\":\"FLY\",\"logo\":\"\\/storage\\/teams\\/logos\\/flyquest-log..."
+    },
+    {
+      "method": "GET",
+      "path": "/public/events",
+      "description": "(Public events)",
+      "status": 200,
+      "expected": 200,
+      "passed": true,
+      "response": "{\"data\":[{\"id\":16,\"name\":\"aiojdioasdijaisojdioasjdjoasdas\",\"slug\":\"aiojdioasdijaisojdioasjdjoasdas\",..."
+    },
+    {
+      "method": "GET",
+      "path": "/public/matches",
+      "description": "(Public matches)",
+      "status": 200,
+      "expected": 200,
+      "passed": true,
+      "response": "{\"data\":[{\"id\":7,\"team1\":{\"id\":54,\"name\":\"100 Thieves\",\"short_name\":\"100T\",\"logo\":\"100-thieves-logo...."
+    },
+    {
+      "method": "POST",
+      "path": "/auth/login",
+      "description": "(Login - expect validation error)",
+      "status": 500,
+      "expected": 422,
+      "passed": false,
+      "response": "{\"success\":false,\"message\":\"Login failed\",\"error\":\"The email field is required. (and 1 more error)\"}"
+    },
+    {
+      "method": "GET",
+      "path": "/login",
+      "description": "(Auth required endpoint)",
+      "status": 401,
+      "expected": 401,
+      "passed": true,
+      "response": "{\"success\":false,\"message\":\"Authentication required. Please provide a valid Bearer token.\",\"error\":\"..."
+    },
+    {
+      "method": "GET",
+      "path": "/admin/matches",
+      "description": "(Admin matches - should be protected)",
+      "status": 401,
+      "expected": 401,
+      "passed": true,
+      "response": "{\"success\":false,\"message\":\"Unauthenticated. Please provide a valid authentication token.\",\"error\":\"..."
+    },
+    {
+      "method": "POST",
+      "path": "/admin/matches",
+      "description": "(Create match - should be protected)",
+      "status": 401,
+      "expected": 401,
+      "passed": true,
+      "response": "{\"success\":false,\"message\":\"Unauthenticated. Please provide a valid authentication token.\",\"error\":\"..."
+    }
+  ],
+  "status": "SOME_ENDPOINTS_FAILED"
+}

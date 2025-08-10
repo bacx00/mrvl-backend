@@ -1,0 +1,23 @@
+{
+  "timestamp": "2025-08-09T00:18:08.506Z",
+  "tests": {
+    "admin_authentication": {
+      "passed": false,
+      "message": "Authentication failed: connect ECONNREFUSED 127.0.0.1:8000",
+      "data": null,
+      "timestamp": "2025-08-09T00:18:08.546Z"
+    }
+  },
+  "summary": {
+    "passed": 0,
+    "failed": 1,
+    "total": 1
+  },
+  "errors": [
+    {
+      "test": "admin_authentication",
+      "message": "Authentication failed: connect ECONNREFUSED 127.0.0.1:8000",
+      "data": null
+    }
+  ]
+}

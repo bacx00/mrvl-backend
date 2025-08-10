@@ -1,0 +1,777 @@
+{
+  "summary": {
+    "testDuration": "177ms",
+    "totalTests": 47,
+    "successfulTests": 5,
+    "failedTests": 40,
+    "criticalBugs": 3,
+    "highSeverityIssues": 21,
+    "mediumSeverityIssues": 16,
+    "lowSeverityIssues": 0
+  },
+  "criticalBugs": [
+    {
+      "type": "ERROR",
+      "code": "API_CONNECTIVITY_FAILURE",
+      "message": "Cannot connect to backend API",
+      "severity": "CRITICAL",
+      "timestamp": "2025-08-10T09:15:43.054Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "FRONTEND_ACCESS_FAILURE",
+      "message": "Cannot access frontend",
+      "severity": "CRITICAL",
+      "timestamp": "2025-08-10T09:15:43.055Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "AUTHENTICATION_ERROR",
+      "message": {
+        "code": "ECONNRESET",
+        "path": null,
+        "host": "127.0.0.1",
+        "port": 8000
+      },
+      "severity": "CRITICAL",
+      "timestamp": "2025-08-10T09:15:43.061Z"
+    }
+  ],
+  "highSeverityIssues": [
+    {
+      "type": "ERROR",
+      "code": "EVENTS_EVENTS_LISTING_PAGE",
+      "message": {
+        "code": "ECONNRESET",
+        "path": null,
+        "host": "127.0.0.1",
+        "port": 8000
+      },
+      "severity": "HIGH",
+      "timestamp": "2025-08-10T09:15:43.064Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "EVENTS_EVENT_CREATION_WITH_LOGO_UPLOAD",
+      "message": {
+        "code": "ECONNRESET",
+        "path": null,
+        "host": "127.0.0.1",
+        "port": 8000
+      },
+      "severity": "HIGH",
+      "timestamp": "2025-08-10T09:15:43.068Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "EVENTS_EVENT_EDITING/UPDATING",
+      "message": {},
+      "severity": "HIGH",
+      "timestamp": "2025-08-10T09:15:43.068Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "EVENTS_EVENT_DELETION",
+      "message": {},
+      "severity": "HIGH",
+      "timestamp": "2025-08-10T09:15:43.068Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "EVENTS_TEAM_ADDITION/REMOVAL_FROM_EVENTS",
+      "message": {
+        "code": "ECONNRESET",
+        "path": null,
+        "host": "127.0.0.1",
+        "port": 8000
+      },
+      "severity": "HIGH",
+      "timestamp": "2025-08-10T09:15:43.073Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "EVENTS_EVENT_DETAIL_PAGE_DISPLAY",
+      "message": {
+        "code": "ECONNRESET",
+        "path": null,
+        "host": "127.0.0.1",
+        "port": 8000
+      },
+      "severity": "HIGH",
+      "timestamp": "2025-08-10T09:15:43.080Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "BRACKETS_GENERATE_BRACKET_BUTTON_(ADMIN_ONLY)",
+      "message": {
+        "code": "ECONNRESET",
+        "path": null,
+        "host": "127.0.0.1",
+        "port": 8000
+      },
+      "severity": "HIGH",
+      "timestamp": "2025-08-10T09:15:43.084Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "BRACKETS_BRACKET_GENERATION_WITH_2+_TEAMS",
+      "message": {
+        "code": "ECONNRESET",
+        "path": null,
+        "host": "127.0.0.1",
+        "port": 8000
+      },
+      "severity": "HIGH",
+      "timestamp": "2025-08-10T09:15:43.088Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "BRACKETS_BRACKET_VISUAL_DISPLAY",
+      "message": {},
+      "severity": "HIGH",
+      "timestamp": "2025-08-10T09:15:43.088Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "BRACKETS_SCORE_UPDATES_IN_BRACKETS",
+      "message": {},
+      "severity": "HIGH",
+      "timestamp": "2025-08-10T09:15:43.088Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "BRACKETS_WINNER_PROGRESSION_LOGIC",
+      "message": {},
+      "severity": "HIGH",
+      "timestamp": "2025-08-10T09:15:43.089Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "BRACKETS_BRACKET_PERSISTENCE_AFTER_RELOAD",
+      "message": {},
+      "severity": "HIGH",
+      "timestamp": "2025-08-10T09:15:43.089Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "FALLBACK_IMAGE_MISSING",
+      "message": "Fallback image not accessible: /images/team-placeholder.svg",
+      "severity": "HIGH",
+      "timestamp": "2025-08-10T09:15:43.151Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "FALLBACK_IMAGE_MISSING",
+      "message": "Fallback image not accessible: /images/player-placeholder.svg",
+      "severity": "HIGH",
+      "timestamp": "2025-08-10T09:15:43.151Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "FALLBACK_IMAGE_MISSING",
+      "message": "Fallback image not accessible: /images/news-placeholder.svg",
+      "severity": "HIGH",
+      "timestamp": "2025-08-10T09:15:43.151Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "FALLBACK_IMAGE_MISSING",
+      "message": "Fallback image not accessible: /images/default-placeholder.svg",
+      "severity": "HIGH",
+      "timestamp": "2025-08-10T09:15:43.151Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "ADMIN_CRUD_CREATE_OPERATIONS_(EVENTS,_TEAMS,_PLAYERS,_NEWS)",
+      "message": {
+        "code": "ECONNRESET",
+        "path": null,
+        "host": "127.0.0.1",
+        "port": 8000
+      },
+      "severity": "HIGH",
+      "timestamp": "2025-08-10T09:15:43.158Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "ADMIN_CRUD_READ/VIEW_OPERATIONS",
+      "message": {
+        "code": "ECONNRESET",
+        "path": null,
+        "host": "127.0.0.1",
+        "port": 8000
+      },
+      "severity": "HIGH",
+      "timestamp": "2025-08-10T09:15:43.161Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "ADMIN_CRUD_UPDATE/EDIT_OPERATIONS",
+      "message": {},
+      "severity": "HIGH",
+      "timestamp": "2025-08-10T09:15:43.162Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "ADMIN_CRUD_DELETE_OPERATIONS",
+      "message": {},
+      "severity": "HIGH",
+      "timestamp": "2025-08-10T09:15:43.162Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "ADMIN_CRUD_ADMIN-ONLY_PERMISSION_VERIFICATION",
+      "message": {
+        "code": "ECONNRESET",
+        "path": null,
+        "host": "127.0.0.1",
+        "port": 8000
+      },
+      "severity": "HIGH",
+      "timestamp": "2025-08-10T09:15:43.166Z"
+    }
+  ],
+  "mediumSeverityIssues": [
+    {
+      "type": "ERROR",
+      "code": "RANKINGS_TEAM_RANKINGS_PAGE_NAVIGATION",
+      "message": {
+        "code": "ECONNRESET",
+        "path": null,
+        "host": "127.0.0.1",
+        "port": 8000
+      },
+      "severity": "MEDIUM",
+      "timestamp": "2025-08-10T09:15:43.096Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "RANKINGS_PLAYER_RANKINGS_PAGE_NAVIGATION",
+      "message": {
+        "code": "ECONNRESET",
+        "path": null,
+        "host": "127.0.0.1",
+        "port": 8000
+      },
+      "severity": "MEDIUM",
+      "timestamp": "2025-08-10T09:15:43.102Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "REGIONAL_FILTER_FAILURE",
+      "message": "Region filter failed for NA: Client network socket disconnected before secure TLS connection was established",
+      "severity": "MEDIUM",
+      "timestamp": "2025-08-10T09:15:43.107Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "REGIONAL_FILTER_FAILURE",
+      "message": "Region filter failed for EU: Client network socket disconnected before secure TLS connection was established",
+      "severity": "MEDIUM",
+      "timestamp": "2025-08-10T09:15:43.110Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "REGIONAL_FILTER_FAILURE",
+      "message": "Region filter failed for APAC: Client network socket disconnected before secure TLS connection was established",
+      "severity": "MEDIUM",
+      "timestamp": "2025-08-10T09:15:43.112Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "REGIONAL_FILTER_FAILURE",
+      "message": "Region filter failed for CN: Client network socket disconnected before secure TLS connection was established",
+      "severity": "MEDIUM",
+      "timestamp": "2025-08-10T09:15:43.115Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "REGIONAL_FILTER_FAILURE",
+      "message": "Region filter failed for LATAM: Client network socket disconnected before secure TLS connection was established",
+      "severity": "MEDIUM",
+      "timestamp": "2025-08-10T09:15:43.119Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "RANKINGS_SEARCH_FUNCTIONALITY",
+      "message": {
+        "code": "ECONNRESET",
+        "path": null,
+        "host": "127.0.0.1",
+        "port": 8000
+      },
+      "severity": "MEDIUM",
+      "timestamp": "2025-08-10T09:15:43.125Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "SORTING_ERROR",
+      "message": "Sort by points failed: Client network socket disconnected before secure TLS connection was established",
+      "severity": "MEDIUM",
+      "timestamp": "2025-08-10T09:15:43.130Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "SORTING_ERROR",
+      "message": "Sort by name failed: Client network socket disconnected before secure TLS connection was established",
+      "severity": "MEDIUM",
+      "timestamp": "2025-08-10T09:15:43.133Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "SORTING_ERROR",
+      "message": "Sort by region failed: Client network socket disconnected before secure TLS connection was established",
+      "severity": "MEDIUM",
+      "timestamp": "2025-08-10T09:15:43.136Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "SORTING_ERROR",
+      "message": "Sort by wins failed: Client network socket disconnected before secure TLS connection was established",
+      "severity": "MEDIUM",
+      "timestamp": "2025-08-10T09:15:43.139Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "SORTING_ERROR",
+      "message": "Sort by losses failed: Client network socket disconnected before secure TLS connection was established",
+      "severity": "MEDIUM",
+      "timestamp": "2025-08-10T09:15:43.142Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "RANKINGS_PAGINATION",
+      "message": {
+        "code": "ECONNRESET",
+        "path": null,
+        "host": "127.0.0.1",
+        "port": 8000
+      },
+      "severity": "MEDIUM",
+      "timestamp": "2025-08-10T09:15:43.144Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "IMAGES_EVENT_LOGO_DISPLAY_AFTER_UPLOAD",
+      "message": {
+        "code": "ECONNRESET",
+        "path": null,
+        "host": "127.0.0.1",
+        "port": 8000
+      },
+      "severity": "MEDIUM",
+      "timestamp": "2025-08-10T09:15:43.148Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "IMAGES_TEAM_LOGO_DISPLAY",
+      "message": {
+        "code": "ECONNRESET",
+        "path": null,
+        "host": "127.0.0.1",
+        "port": 8000
+      },
+      "severity": "MEDIUM",
+      "timestamp": "2025-08-10T09:15:43.151Z"
+    }
+  ],
+  "lowSeverityIssues": [],
+  "allResults": [
+    {
+      "type": "ERROR",
+      "code": "API_CONNECTIVITY_FAILURE",
+      "message": "Cannot connect to backend API",
+      "severity": "CRITICAL",
+      "timestamp": "2025-08-10T09:15:43.054Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "FRONTEND_ACCESS_FAILURE",
+      "message": "Cannot access frontend",
+      "severity": "CRITICAL",
+      "timestamp": "2025-08-10T09:15:43.055Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "AUTHENTICATION_ERROR",
+      "message": {
+        "code": "ECONNRESET",
+        "path": null,
+        "host": "127.0.0.1",
+        "port": 8000
+      },
+      "severity": "CRITICAL",
+      "timestamp": "2025-08-10T09:15:43.061Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "EVENTS_EVENTS_LISTING_PAGE",
+      "message": {
+        "code": "ECONNRESET",
+        "path": null,
+        "host": "127.0.0.1",
+        "port": 8000
+      },
+      "severity": "HIGH",
+      "timestamp": "2025-08-10T09:15:43.064Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "EVENTS_EVENT_CREATION_WITH_LOGO_UPLOAD",
+      "message": {
+        "code": "ECONNRESET",
+        "path": null,
+        "host": "127.0.0.1",
+        "port": 8000
+      },
+      "severity": "HIGH",
+      "timestamp": "2025-08-10T09:15:43.068Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "EVENTS_EVENT_EDITING/UPDATING",
+      "message": {},
+      "severity": "HIGH",
+      "timestamp": "2025-08-10T09:15:43.068Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "EVENTS_EVENT_DELETION",
+      "message": {},
+      "severity": "HIGH",
+      "timestamp": "2025-08-10T09:15:43.068Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "EVENTS_TEAM_ADDITION/REMOVAL_FROM_EVENTS",
+      "message": {
+        "code": "ECONNRESET",
+        "path": null,
+        "host": "127.0.0.1",
+        "port": 8000
+      },
+      "severity": "HIGH",
+      "timestamp": "2025-08-10T09:15:43.073Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "EVENTS_EVENT_DETAIL_PAGE_DISPLAY",
+      "message": {
+        "code": "ECONNRESET",
+        "path": null,
+        "host": "127.0.0.1",
+        "port": 8000
+      },
+      "severity": "HIGH",
+      "timestamp": "2025-08-10T09:15:43.080Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "BRACKETS_GENERATE_BRACKET_BUTTON_(ADMIN_ONLY)",
+      "message": {
+        "code": "ECONNRESET",
+        "path": null,
+        "host": "127.0.0.1",
+        "port": 8000
+      },
+      "severity": "HIGH",
+      "timestamp": "2025-08-10T09:15:43.084Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "BRACKETS_BRACKET_GENERATION_WITH_2+_TEAMS",
+      "message": {
+        "code": "ECONNRESET",
+        "path": null,
+        "host": "127.0.0.1",
+        "port": 8000
+      },
+      "severity": "HIGH",
+      "timestamp": "2025-08-10T09:15:43.088Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "BRACKETS_BRACKET_VISUAL_DISPLAY",
+      "message": {},
+      "severity": "HIGH",
+      "timestamp": "2025-08-10T09:15:43.088Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "BRACKETS_SCORE_UPDATES_IN_BRACKETS",
+      "message": {},
+      "severity": "HIGH",
+      "timestamp": "2025-08-10T09:15:43.088Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "BRACKETS_WINNER_PROGRESSION_LOGIC",
+      "message": {},
+      "severity": "HIGH",
+      "timestamp": "2025-08-10T09:15:43.089Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "BRACKETS_BRACKET_PERSISTENCE_AFTER_RELOAD",
+      "message": {},
+      "severity": "HIGH",
+      "timestamp": "2025-08-10T09:15:43.089Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "RANKINGS_TEAM_RANKINGS_PAGE_NAVIGATION",
+      "message": {
+        "code": "ECONNRESET",
+        "path": null,
+        "host": "127.0.0.1",
+        "port": 8000
+      },
+      "severity": "MEDIUM",
+      "timestamp": "2025-08-10T09:15:43.096Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "RANKINGS_PLAYER_RANKINGS_PAGE_NAVIGATION",
+      "message": {
+        "code": "ECONNRESET",
+        "path": null,
+        "host": "127.0.0.1",
+        "port": 8000
+      },
+      "severity": "MEDIUM",
+      "timestamp": "2025-08-10T09:15:43.102Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "REGIONAL_FILTER_FAILURE",
+      "message": "Region filter failed for NA: Client network socket disconnected before secure TLS connection was established",
+      "severity": "MEDIUM",
+      "timestamp": "2025-08-10T09:15:43.107Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "REGIONAL_FILTER_FAILURE",
+      "message": "Region filter failed for EU: Client network socket disconnected before secure TLS connection was established",
+      "severity": "MEDIUM",
+      "timestamp": "2025-08-10T09:15:43.110Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "REGIONAL_FILTER_FAILURE",
+      "message": "Region filter failed for APAC: Client network socket disconnected before secure TLS connection was established",
+      "severity": "MEDIUM",
+      "timestamp": "2025-08-10T09:15:43.112Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "REGIONAL_FILTER_FAILURE",
+      "message": "Region filter failed for CN: Client network socket disconnected before secure TLS connection was established",
+      "severity": "MEDIUM",
+      "timestamp": "2025-08-10T09:15:43.115Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "REGIONAL_FILTER_FAILURE",
+      "message": "Region filter failed for LATAM: Client network socket disconnected before secure TLS connection was established",
+      "severity": "MEDIUM",
+      "timestamp": "2025-08-10T09:15:43.119Z"
+    },
+    {
+      "type": "SUCCESS",
+      "message": "✅ Rankings: Regional Filters",
+      "timestamp": "2025-08-10T09:15:43.120Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "RANKINGS_SEARCH_FUNCTIONALITY",
+      "message": {
+        "code": "ECONNRESET",
+        "path": null,
+        "host": "127.0.0.1",
+        "port": 8000
+      },
+      "severity": "MEDIUM",
+      "timestamp": "2025-08-10T09:15:43.125Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "SORTING_ERROR",
+      "message": "Sort by points failed: Client network socket disconnected before secure TLS connection was established",
+      "severity": "MEDIUM",
+      "timestamp": "2025-08-10T09:15:43.130Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "SORTING_ERROR",
+      "message": "Sort by name failed: Client network socket disconnected before secure TLS connection was established",
+      "severity": "MEDIUM",
+      "timestamp": "2025-08-10T09:15:43.133Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "SORTING_ERROR",
+      "message": "Sort by region failed: Client network socket disconnected before secure TLS connection was established",
+      "severity": "MEDIUM",
+      "timestamp": "2025-08-10T09:15:43.136Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "SORTING_ERROR",
+      "message": "Sort by wins failed: Client network socket disconnected before secure TLS connection was established",
+      "severity": "MEDIUM",
+      "timestamp": "2025-08-10T09:15:43.139Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "SORTING_ERROR",
+      "message": "Sort by losses failed: Client network socket disconnected before secure TLS connection was established",
+      "severity": "MEDIUM",
+      "timestamp": "2025-08-10T09:15:43.142Z"
+    },
+    {
+      "type": "SUCCESS",
+      "message": "✅ Rankings: Sorting Options",
+      "timestamp": "2025-08-10T09:15:43.142Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "RANKINGS_PAGINATION",
+      "message": {
+        "code": "ECONNRESET",
+        "path": null,
+        "host": "127.0.0.1",
+        "port": 8000
+      },
+      "severity": "MEDIUM",
+      "timestamp": "2025-08-10T09:15:43.144Z"
+    },
+    {
+      "type": "INFO",
+      "message": "No mobile-specific ranking endpoint found - check responsive design manually",
+      "timestamp": "2025-08-10T09:15:43.146Z"
+    },
+    {
+      "type": "SUCCESS",
+      "message": "✅ Rankings: Mobile Responsiveness",
+      "timestamp": "2025-08-10T09:15:43.146Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "IMAGES_EVENT_LOGO_DISPLAY_AFTER_UPLOAD",
+      "message": {
+        "code": "ECONNRESET",
+        "path": null,
+        "host": "127.0.0.1",
+        "port": 8000
+      },
+      "severity": "MEDIUM",
+      "timestamp": "2025-08-10T09:15:43.148Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "IMAGES_TEAM_LOGO_DISPLAY",
+      "message": {
+        "code": "ECONNRESET",
+        "path": null,
+        "host": "127.0.0.1",
+        "port": 8000
+      },
+      "severity": "MEDIUM",
+      "timestamp": "2025-08-10T09:15:43.151Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "FALLBACK_IMAGE_MISSING",
+      "message": "Fallback image not accessible: /images/team-placeholder.svg",
+      "severity": "HIGH",
+      "timestamp": "2025-08-10T09:15:43.151Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "FALLBACK_IMAGE_MISSING",
+      "message": "Fallback image not accessible: /images/player-placeholder.svg",
+      "severity": "HIGH",
+      "timestamp": "2025-08-10T09:15:43.151Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "FALLBACK_IMAGE_MISSING",
+      "message": "Fallback image not accessible: /images/news-placeholder.svg",
+      "severity": "HIGH",
+      "timestamp": "2025-08-10T09:15:43.151Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "FALLBACK_IMAGE_MISSING",
+      "message": "Fallback image not accessible: /images/default-placeholder.svg",
+      "severity": "HIGH",
+      "timestamp": "2025-08-10T09:15:43.151Z"
+    },
+    {
+      "type": "SUCCESS",
+      "message": "✅ Images: Fallback Images When Missing",
+      "timestamp": "2025-08-10T09:15:43.151Z"
+    },
+    {
+      "type": "INFO",
+      "message": "Storage test endpoint not available - manual verification needed",
+      "timestamp": "2025-08-10T09:15:43.155Z"
+    },
+    {
+      "type": "SUCCESS",
+      "message": "✅ Images: Storage Paths Correctness",
+      "timestamp": "2025-08-10T09:15:43.155Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "ADMIN_CRUD_CREATE_OPERATIONS_(EVENTS,_TEAMS,_PLAYERS,_NEWS)",
+      "message": {
+        "code": "ECONNRESET",
+        "path": null,
+        "host": "127.0.0.1",
+        "port": 8000
+      },
+      "severity": "HIGH",
+      "timestamp": "2025-08-10T09:15:43.158Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "ADMIN_CRUD_READ/VIEW_OPERATIONS",
+      "message": {
+        "code": "ECONNRESET",
+        "path": null,
+        "host": "127.0.0.1",
+        "port": 8000
+      },
+      "severity": "HIGH",
+      "timestamp": "2025-08-10T09:15:43.161Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "ADMIN_CRUD_UPDATE/EDIT_OPERATIONS",
+      "message": {},
+      "severity": "HIGH",
+      "timestamp": "2025-08-10T09:15:43.162Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "ADMIN_CRUD_DELETE_OPERATIONS",
+      "message": {},
+      "severity": "HIGH",
+      "timestamp": "2025-08-10T09:15:43.162Z"
+    },
+    {
+      "type": "ERROR",
+      "code": "ADMIN_CRUD_ADMIN-ONLY_PERMISSION_VERIFICATION",
+      "message": {
+        "code": "ECONNRESET",
+        "path": null,
+        "host": "127.0.0.1",
+        "port": 8000
+      },
+      "severity": "HIGH",
+      "timestamp": "2025-08-10T09:15:43.166Z"
+    }
+  ],
+  "timestamp": "2025-08-10T09:15:43.166Z"
+}

@@ -1,0 +1,186 @@
+{
+    "testSuite": "MRVL Admin Functionality Manual Test",
+    "timestamp": "2025-08-08 20:27:32",
+    "summary": {
+        "totalTests": 27,
+        "passed": 27,
+        "failed": 0,
+        "successRate": 100
+    },
+    "categoryResults": {
+        "database_connectivity": [
+            {
+                "test": "DB Connection",
+                "status": "passed",
+                "details": "Database connection successful",
+                "timestamp": "2025-08-08 20:27:31"
+            },
+            {
+                "test": "Users Table",
+                "status": "passed",
+                "details": "Found 12 users",
+                "timestamp": "2025-08-08 20:27:31"
+            },
+            {
+                "test": "Admin Users",
+                "status": "passed",
+                "details": "Found 3 admin users",
+                "timestamp": "2025-08-08 20:27:31"
+            },
+            {
+                "test": "Teams Table",
+                "status": "passed",
+                "details": "Found 18 records",
+                "timestamp": "2025-08-08 20:27:31"
+            },
+            {
+                "test": "Players Table",
+                "status": "passed",
+                "details": "Found 108 records",
+                "timestamp": "2025-08-08 20:27:31"
+            },
+            {
+                "test": "Matches Table",
+                "status": "passed",
+                "details": "Found 1 records",
+                "timestamp": "2025-08-08 20:27:31"
+            },
+            {
+                "test": "Events Table",
+                "status": "passed",
+                "details": "Found 2 records",
+                "timestamp": "2025-08-08 20:27:31"
+            },
+            {
+                "test": "News Table",
+                "status": "passed",
+                "details": "Found 1 records",
+                "timestamp": "2025-08-08 20:27:31"
+            }
+        ],
+        "admin_controllers": [
+            {
+                "test": "AdminController Dashboard Method",
+                "status": "passed",
+                "details": "Method exists",
+                "timestamp": "2025-08-08 20:27:31"
+            },
+            {
+                "test": "AdminUserController index",
+                "status": "passed",
+                "details": "Method exists",
+                "timestamp": "2025-08-08 20:27:31"
+            },
+            {
+                "test": "AdminUserController store",
+                "status": "passed",
+                "details": "Method exists",
+                "timestamp": "2025-08-08 20:27:31"
+            },
+            {
+                "test": "AdminUserController update",
+                "status": "passed",
+                "details": "Method exists",
+                "timestamp": "2025-08-08 20:27:31"
+            },
+            {
+                "test": "AdminUserController destroy",
+                "status": "passed",
+                "details": "Method exists",
+                "timestamp": "2025-08-08 20:27:31"
+            },
+            {
+                "test": "AdminStatsController",
+                "status": "passed",
+                "details": "Controller exists",
+                "timestamp": "2025-08-08 20:27:31"
+            }
+        ],
+        "user_management": [
+            {
+                "test": "User Creation",
+                "status": "passed",
+                "details": "Test user created successfully",
+                "timestamp": "2025-08-08 20:27:31"
+            },
+            {
+                "test": "User Update",
+                "status": "passed",
+                "details": "User updated successfully",
+                "timestamp": "2025-08-08 20:27:31"
+            },
+            {
+                "test": "User Deletion",
+                "status": "passed",
+                "details": "User deleted successfully",
+                "timestamp": "2025-08-08 20:27:32"
+            },
+            {
+                "test": "Role Assignment",
+                "status": "passed",
+                "details": "Role methods available",
+                "timestamp": "2025-08-08 20:27:32"
+            }
+        ],
+        "data_integrity": [
+            {
+                "test": "Team-Player Relationships",
+                "status": "passed",
+                "details": "Teams: 18, Players with teams: 108",
+                "timestamp": "2025-08-08 20:27:32"
+            },
+            {
+                "test": "Match Data Consistency",
+                "status": "passed",
+                "details": "Matches: 1, With teams: 1 (100%)",
+                "timestamp": "2025-08-08 20:27:32"
+            },
+            {
+                "test": "Event Structure",
+                "status": "passed",
+                "details": "Events: 2, Events with matches: 0",
+                "timestamp": "2025-08-08 20:27:32"
+            }
+        ],
+        "analytics_functionality": [
+            {
+                "test": "Basic Statistics",
+                "status": "passed",
+                "details": "Generated basic platform statistics",
+                "timestamp": "2025-08-08 20:27:32"
+            },
+            {
+                "test": "Time-based Analytics",
+                "status": "passed",
+                "details": "Recent users: 13, Recent matches: 1",
+                "timestamp": "2025-08-08 20:27:32"
+            },
+            {
+                "test": "Aggregation Queries",
+                "status": "passed",
+                "details": "Successfully generated aggregated data",
+                "timestamp": "2025-08-08 20:27:32"
+            }
+        ],
+        "live_scoring": [
+            {
+                "test": "Live Match Detection",
+                "status": "passed",
+                "details": "Found 1 live\/upcoming matches",
+                "timestamp": "2025-08-08 20:27:32"
+            },
+            {
+                "test": "Score Update",
+                "status": "passed",
+                "details": "Successfully updated match scores",
+                "timestamp": "2025-08-08 20:27:32"
+            },
+            {
+                "test": "Live Data Structure",
+                "status": "passed",
+                "details": "Live data JSON structure is valid",
+                "timestamp": "2025-08-08 20:27:32"
+            }
+        ]
+    }
+}

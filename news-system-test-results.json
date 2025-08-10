@@ -1,0 +1,200 @@
+{
+  "timestamp": "2025-08-08T20:20:04.530Z",
+  "summary": {
+    "total": 19,
+    "passed": 17,
+    "failed": 1,
+    "warnings": 0,
+    "warning": null
+  },
+  "tests": {
+    "newsDisplay": [
+      {
+        "test": "News List API Response",
+        "status": "passed",
+        "message": "Successfully loaded 1 news articles",
+        "details": null,
+        "timestamp": "2025-08-08T20:20:04.708Z"
+      },
+      {
+        "test": "Article Data Structure",
+        "status": "failed",
+        "message": "Missing required fields: content",
+        "details": null,
+        "timestamp": "2025-08-08T20:20:04.709Z"
+      },
+      {
+        "test": "Featured Images",
+        "status": "passed",
+        "message": "1 articles have featured images",
+        "details": null,
+        "timestamp": "2025-08-08T20:20:04.709Z"
+      },
+      {
+        "test": "News Detail API Response",
+        "status": "passed",
+        "message": "Successfully loaded article: \"alsjdoiajsoidsa @vr\"",
+        "details": null,
+        "timestamp": "2025-08-08T20:20:04.798Z"
+      },
+      {
+        "test": "Comments in Article",
+        "status": "passed",
+        "message": "Article has 2 comments",
+        "details": null,
+        "timestamp": "2025-08-08T20:20:04.798Z"
+      },
+      {
+        "test": "Comment Content Quality",
+        "status": "passed",
+        "message": "Comments display properly without [object Object] issues",
+        "details": null,
+        "timestamp": "2025-08-08T20:20:04.798Z"
+      },
+      {
+        "test": "Mentions in Article",
+        "status": "passed",
+        "message": "Article has 0 mentions",
+        "details": null,
+        "timestamp": "2025-08-08T20:20:04.799Z"
+      },
+      {
+        "test": "Video Embeds in Article",
+        "status": "passed",
+        "message": "Article has 0 video embeds",
+        "details": null,
+        "timestamp": "2025-08-08T20:20:04.799Z"
+      },
+      {
+        "test": "News Categories API",
+        "status": "passed",
+        "message": "Found 6 news categories",
+        "details": null,
+        "timestamp": "2025-08-08T20:20:04.842Z"
+      },
+      {
+        "test": "Category Data Structure",
+        "status": "passed",
+        "message": "Categories have required name and slug fields",
+        "details": null,
+        "timestamp": "2025-08-08T20:20:04.842Z"
+      }
+    ],
+    "comments": [
+      {
+        "test": "Comment Posting Authentication",
+        "status": "passed",
+        "message": "Comment posting correctly requires authentication",
+        "details": null,
+        "timestamp": "2025-08-08T20:20:04.885Z"
+      },
+      {
+        "test": "Comment Editing Endpoint",
+        "status": "passed",
+        "message": "Comment editing endpoint exists and has proper error handling",
+        "details": null,
+        "timestamp": "2025-08-08T20:20:04.920Z"
+      },
+      {
+        "test": "Comment Deletion Endpoint",
+        "status": "passed",
+        "message": "Comment deletion endpoint exists and has proper error handling",
+        "details": null,
+        "timestamp": "2025-08-08T20:20:04.954Z"
+      },
+      {
+        "test": "Comment Voting Endpoint",
+        "status": "passed",
+        "message": "Comment voting endpoint exists",
+        "details": null,
+        "timestamp": "2025-08-08T20:20:04.992Z"
+      }
+    ],
+    "mentions": [
+      {
+        "test": "User Search for Mentions",
+        "status": "warning",
+        "message": "User search endpoint not available - mentions autocomplete may not work",
+        "details": null,
+        "timestamp": "2025-08-08T20:20:05.034Z"
+      },
+      {
+        "test": "Team Data for Mentions",
+        "status": "passed",
+        "message": "Found 18 teams available for @team: mentions",
+        "details": null,
+        "timestamp": "2025-08-08T20:20:05.174Z"
+      },
+      {
+        "test": "Player Data for Mentions",
+        "status": "passed",
+        "message": "Found 100 players available for @player: mentions",
+        "details": null,
+        "timestamp": "2025-08-08T20:20:05.228Z"
+      }
+    ],
+    "admin": [
+      {
+        "test": "News Creation Authentication",
+        "status": "passed",
+        "message": "News creation correctly requires admin authentication",
+        "details": null,
+        "timestamp": "2025-08-08T20:20:05.269Z"
+      },
+      {
+        "test": "Admin News List Authentication",
+        "status": "passed",
+        "message": "Admin news list correctly requires authentication",
+        "details": null,
+        "timestamp": "2025-08-08T20:20:05.335Z"
+      }
+    ],
+    "mobile": []
+  },
+  "recommendations": [
+    {
+      "priority": "critical",
+      "category": "Bug Fixes",
+      "items": [
+        "Fix Article Data Structure: Missing required fields: content"
+      ]
+    },
+    {
+      "priority": "medium",
+      "category": "Manual Testing Required",
+      "items": [
+        "Test comment posting with authenticated user - check for [object Object] errors",
+        "Test mention autocomplete while typing in comment box",
+        "Test image uploads in admin panel",
+        "Test video embed display and playback",
+        "Test mobile responsive design on actual devices",
+        "Verify mention links are clickable and navigate correctly",
+        "Test admin moderation features (feature/unfeature, delete)",
+        "Test comment editing and deletion with proper user permissions",
+        "Test comment voting functionality",
+        "Test news creation with rich content (images, videos, mentions)"
+      ]
+    },
+    {
+      "priority": "low",
+      "category": "Performance & Monitoring",
+      "items": [
+        "Monitor API response times for news and comments",
+        "Test with large datasets (many comments per article)",
+        "Verify image loading performance and fallbacks",
+        "Test concurrent user comment posting",
+        "Monitor memory usage during video embed loading",
+        "Test pagination for long comment threads",
+        "Verify search performance for mention autocomplete"
+      ]
+    }
+  ],
+  "criticalIssues": [
+    {
+      "category": "newsDisplay",
+      "test": "Article Data Structure",
+      "message": "Missing required fields: content",
+      "details": null
+    }
+  ]
+}

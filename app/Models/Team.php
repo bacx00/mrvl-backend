@@ -15,7 +15,8 @@ class Team extends Model
         'current_streak_type', 'points', 'record', 'wins', 'losses', 'matches_played',
         'maps_won', 'maps_lost', 'tournaments_won', 'peak', 'streak', 'last_match', 
         'founded', 'founded_date', 'captain', 'coach', 'manager', 'coach_picture', 
-        'coach_image', 'description', 'website', 'liquipedia_url', 'twitter', 'instagram',
+        'coach_image', 'coach_name', 'coach_nationality', 'coach_social_media',
+        'description', 'website', 'liquipedia_url', 'twitter', 'instagram',
         'youtube', 'twitch', 'tiktok', 'discord', 'facebook', 'social_media', 
         'social_links', 'achievements', 'recent_form', 'player_count', 'status',
         'earnings', 'owner', 'elo_rating', 'peak_elo', 'elo_changes', 'last_elo_update',
@@ -30,6 +31,7 @@ class Team extends Model
         'peak' => 'integer',
         'player_count' => 'integer',
         'social_media' => 'array',
+        'coach_social_media' => 'array',
         'achievements' => 'array',
         'recent_form' => 'array'
     ];

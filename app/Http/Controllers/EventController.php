@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use App\Helpers\ImageHelper;
 
@@ -281,7 +282,7 @@ class EventController extends Controller
             'prize_pool' => 'nullable|numeric|min:0',
             'currency' => 'nullable|string|max:3',
             'prize_distribution' => 'nullable|array',
-            'logo' => 'nullable|string',
+            'logo' => 'nullable|image|mimes:jpeg,jpg,png,webp|max:5120',
             'rules' => 'nullable|string',
             'registration_requirements' => 'nullable|array',
             'streams' => 'nullable|array',
@@ -302,6 +303,12 @@ class EventController extends Controller
                 $counter++;
             }
 
+            // Handle logo upload if provided
+            $logoPath = null;
+            if ($request->hasFile('logo')) {
+                $logoPath = $this->handleEventLogoUpload($request->file('logo'), null);
+            }
+
             $event = Event::create([
                 'name' => $request->name,
                 'slug' => $slug,
@@ -319,7 +326,7 @@ class EventController extends Controller
                 'prize_pool' => $request->prize_pool,
                 'currency' => $request->currency ?? 'USD',
                 'prize_distribution' => $request->prize_distribution,
-                'logo' => $request->logo,
+                'logo' => $logoPath,
                 'rules' => $request->rules,
                 'registration_requirements' => $request->registration_requirements,
                 'streams' => $request->streams,
@@ -336,7 +343,8 @@ class EventController extends Controller
                     'id' => $event->id,
                     'slug' => $event->slug,
                     'name' => $event->name,
-                    'status' => $event->status
+                    'status' => $event->status,
+                    'logo' => $event->logo
                 ],
                 'success' => true,
                 'message' => 'Event created successfully'
@@ -483,31 +491,124 @@ class EventController extends Controller
     {
         $matches = $this->getEventMatches($eventId);
         
-        // Group matches by rounds for bracket visualization
-        $bracket = [];
+        if (empty($matches)) {
+            return [];
+        }
+
+        // Get event details for bracket type determination
+        $event = DB::table('events')->where('id', $eventId)->first();
+        if (!$event) {
+            return [];
+        }
+
+        // Group matches by rounds for bracket visualization with Liquipedia structure
+        $roundsData = [];
+        $teamCount = $this->getEventTeamsPrivate($eventId)->count();
+
         foreach ($matches as $match) {
-            $bracket[$match->round][] = [
+            $roundName = $this->getRoundName($match->round, $teamCount);
+            
+            if (!isset($roundsData[$match->round])) {
+                $roundsData[$match->round] = [
+                    'name' => $roundName,
+                    'matches' => []
+                ];
+            }
+
+            $roundsData[$match->round]['matches'][] = [
                 'id' => $match->id,
                 'position' => $match->bracket_position,
                 'team1' => [
-                    'name' => isset($match->team1_name) ? $match->team1_name : null,
-                    'short_name' => isset($match->team1_short) ? $match->team1_short : null,
-                    'logo' => isset($match->team1_logo) ? $match->team1_logo : null,
-                    'score' => isset($match->team1_score) ? $match->team1_score : null
+                    'id' => $match->team1_id,
+                    'name' => $match->team1_name ?? null,
+                    'short_name' => $match->team1_short ?? null,
+                    'logo' => $match->team1_logo ?? null,
+                    'score' => $match->team1_score ?? null,
+                    'seed' => $this->getTeamSeed($eventId, $match->team1_id)
                 ],
                 'team2' => [
-                    'name' => isset($match->team2_name) ? $match->team2_name : null,
-                    'short_name' => isset($match->team2_short) ? $match->team2_short : null,
-                    'logo' => isset($match->team2_logo) ? $match->team2_logo : null,
-                    'score' => isset($match->team2_score) ? $match->team2_score : null
+                    'id' => $match->team2_id,
+                    'name' => $match->team2_name ?? null,
+                    'short_name' => $match->team2_short ?? null,
+                    'logo' => $match->team2_logo ?? null,
+                    'score' => $match->team2_score ?? null,
+                    'seed' => $this->getTeamSeed($eventId, $match->team2_id)
                 ],
-                'status' => isset($match->status) ? $match->status : 'pending',
-                'scheduled_at' => isset($match->scheduled_at) ? $match->scheduled_at : null,
-                'stream_url' => isset($match->stream_url) ? $match->stream_url : null
+                'status' => $match->status ?? 'pending',
+                'scheduled_at' => $match->scheduled_at ?? null,
+                'stream_url' => $match->stream_url ?? null,
+                'format' => $match->format ?? 'bo3',
+                'winner_id' => $this->getMatchWinner($match),
+                'finished' => ($match->status ?? 'pending') === 'completed'
             ];
         }
+
+        // Sort rounds and convert to indexed array format expected by LiquipediaBracket
+        ksort($roundsData);
+        $rounds = array_values($roundsData);
+
+        return [
+            'type' => $event->format ?? 'single_elimination',
+            'rounds' => $rounds,
+            'metadata' => [
+                'total_rounds' => count($rounds),
+                'teams_count' => $teamCount,
+                'completed_matches' => collect($matches)->where('status', 'completed')->count()
+            ]
+        ];
+    }
+
+    private function getRoundName($round, $teamCount)
+    {
+        if ($teamCount <= 1) {
+            return "Round $round";
+        }
+
+        $totalRounds = ceil(log($teamCount, 2));
+        $roundsFromEnd = $totalRounds - $round + 1;
         
-        return $bracket;
+        switch ($roundsFromEnd) {
+            case 1:
+                return 'Final';
+            case 2:
+                return 'Semifinals';
+            case 3:
+                return 'Quarterfinals';
+            case 4:
+                return 'Round of 16';
+            case 5:
+                return 'Round of 32';
+            default:
+                return "Round $round";
+        }
+    }
+
+    private function getTeamSeed($eventId, $teamId)
+    {
+        if (!$teamId) return null;
+        
+        return DB::table('event_teams')
+            ->where('event_id', $eventId)
+            ->where('team_id', $teamId)
+            ->value('seed');
+    }
+
+    private function getMatchWinner($match)
+    {
+        if (($match->status ?? 'pending') !== 'completed') {
+            return null;
+        }
+        
+        $score1 = $match->team1_score ?? 0;
+        $score2 = $match->team2_score ?? 0;
+        
+        if ($score1 > $score2) {
+            return $match->team1_id;
+        } elseif ($score2 > $score1) {
+            return $match->team2_id;
+        }
+        
+        return null; // Draw
     }
 
     public function updateBySlug(Request $request, $slug)
@@ -1094,6 +1195,41 @@ class EventController extends Controller
         ]);
     }
 
+    /**
+     * Handle event logo upload
+     */
+    private function handleEventLogoUpload($file, $eventId)
+    {
+        try {
+            // Simple file storage without complex processing
+            $extension = $file->getClientOriginalExtension();
+            $filename = 'event_' . ($eventId ?? 'new') . '_' . time() . '_' . Str::random(10) . '.' . $extension;
+            $directory = 'events/logos';
+            
+            // Ensure directory exists
+            $fullDirectory = storage_path('app/public/' . $directory);
+            if (!is_dir($fullDirectory)) {
+                mkdir($fullDirectory, 0775, true);
+            }
+            
+            $finalPath = $directory . '/' . $filename;
+            $destinationPath = storage_path('app/public/' . $finalPath);
+            
+            // Move uploaded file
+            if (!move_uploaded_file($file->path(), $destinationPath)) {
+                throw new \Exception('Failed to move uploaded file');
+            }
+            
+            // Set proper permissions
+            chmod($destinationPath, 0644);
+            
+            // Return storage path
+            return '/storage/' . $finalPath;
+        } catch (\Exception $e) {
+            throw new \Exception('Failed to upload logo: ' . $e->getMessage());
+        }
+    }
+
     // Admin Routes
     public function getAllEvents(Request $request)
     {
@@ -1181,7 +1317,7 @@ class EventController extends Controller
     public function getEventAdmin($eventId)
     {
         // Check if user is admin or moderator
-        $user = Auth::user();
+        $user = auth('api')->user();
         if (!$user || !in_array($user->role, ['admin', 'moderator'])) {
             return response()->json([
                 'success' => false,
@@ -1274,7 +1410,7 @@ class EventController extends Controller
             'prize_pool' => 'nullable|numeric|min:0',
             'currency' => 'nullable|string|max:3',
             'prize_distribution' => 'nullable|array',
-            'logo' => 'nullable|url',
+            'logo' => 'nullable|image|mimes:jpeg,jpg,png,webp|max:5120',
             'rules' => 'nullable|string',
             'registration_requirements' => 'nullable|array',
             'streams' => 'nullable|array',
@@ -1288,11 +1424,17 @@ class EventController extends Controller
         try {
             $updateData = [];
             
+            // Handle logo upload if provided
+            if ($request->hasFile('logo')) {
+                $logoPath = $this->handleEventLogoUpload($request->file('logo'), $eventId);
+                $updateData['logo'] = $logoPath;
+            }
+            
             // Only update fields that are present in the request
             $fields = [
                 'name', 'description', 'type', 'format', 'region', 'game_mode',
                 'start_date', 'end_date', 'registration_start', 'registration_end',
-                'max_teams', 'prize_pool', 'currency', 'logo', 'rules',
+                'max_teams', 'prize_pool', 'currency', 'rules',
                 'timezone', 'status', 'featured', 'public'
             ];
             
@@ -1350,10 +1492,47 @@ class EventController extends Controller
 
     public function destroy($eventId)
     {
-        $this->authorize('manage-events');
+        // Check if user is admin or moderator
+        $user = auth('api')->user();
+        if (!$user || !in_array($user->role, ['admin', 'moderator'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized'
+            ], 401);
+        }
         
         try {
-            // Check if event has matches
+            // Check if force delete is requested via query parameter
+            $forceDelete = request()->query('force', false);
+            
+            if ($forceDelete) {
+                // Force delete - delete all related data first
+                DB::table('event_teams')->where('event_id', $eventId)->delete();
+                DB::table('matches')->where('event_id', $eventId)->delete();
+                
+                // Delete bracket-related data (check if tables exist)
+                $tableNames = ['bracket_games', 'bracket_matches', 'bracket_positions', 'bracket_seedings', 'bracket_stages', 'bracket_standings', 'tournament_brackets'];
+                foreach ($tableNames as $tableName) {
+                    try {
+                        if (Schema::hasTable($tableName)) {
+                            DB::table($tableName)->where('event_id', $eventId)->delete();
+                        }
+                    } catch (\Exception $e) {
+                        // Table might not have event_id column, skip
+                        continue;
+                    }
+                }
+                
+                // Delete event
+                DB::table('events')->where('id', $eventId)->delete();
+                
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Event force deleted successfully'
+                ]);
+            }
+            
+            // Check if event has matches (for regular delete)
             $hasMatches = DB::table('matches')->where('event_id', $eventId)->exists();
             
             if ($hasMatches) {
@@ -1384,13 +1563,32 @@ class EventController extends Controller
 
     public function forceDestroy($eventId)
     {
-        $this->authorize('manage-events');
+        // Check if user is admin or moderator
+        $user = auth('api')->user();
+        if (!$user || !in_array($user->role, ['admin', 'moderator'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized'
+            ], 401);
+        }
         
         try {
             // Delete all related data
             DB::table('event_teams')->where('event_id', $eventId)->delete();
             DB::table('matches')->where('event_id', $eventId)->delete();
-            DB::table('brackets')->where('event_id', $eventId)->delete();
+            
+            // Delete bracket-related data (check if tables exist)
+            $tableNames = ['bracket_games', 'bracket_matches', 'bracket_positions', 'bracket_seedings', 'bracket_stages', 'bracket_standings', 'tournament_brackets'];
+            foreach ($tableNames as $tableName) {
+                try {
+                    if (Schema::hasTable($tableName)) {
+                        DB::table($tableName)->where('event_id', $eventId)->delete();
+                    }
+                } catch (\Exception $e) {
+                    // Table might not have event_id column, skip
+                    continue;
+                }
+            }
             
             // Delete event
             DB::table('events')->where('id', $eventId)->delete();
@@ -1410,7 +1608,14 @@ class EventController extends Controller
 
     public function updateEventStatus(Request $request, $eventId)
     {
-        $this->authorize('manage-events');
+        // Check if user is admin or moderator
+        $user = auth('api')->user();
+        if (!$user || !in_array($user->role, ['admin', 'moderator'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized'
+            ], 401);
+        }
         
         $request->validate([
             'status' => 'required|in:upcoming,ongoing,completed,cancelled'
@@ -1468,7 +1673,14 @@ class EventController extends Controller
 
     public function getEventTeamsAdmin($eventId)
     {
-        $this->authorize('manage-events');
+        // Check if user is admin or moderator
+        $user = auth('api')->user();
+        if (!$user || !in_array($user->role, ['admin', 'moderator'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized'
+            ], 401);
+        }
         
         try {
             $teams = DB::table('event_teams as et')
@@ -1498,7 +1710,14 @@ class EventController extends Controller
 
     public function addTeamToEvent($eventId, $teamId)
     {
-        $this->authorize('manage-events');
+        // Check if user is admin or moderator
+        $user = auth('api')->user();
+        if (!$user || !in_array($user->role, ['admin', 'moderator'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized'
+            ], 401);
+        }
         
         try {
             // Check if team already registered
@@ -1544,7 +1763,14 @@ class EventController extends Controller
 
     public function removeTeamFromEvent($eventId, $teamId)
     {
-        $this->authorize('manage-events');
+        // Check if user is admin or moderator
+        $user = auth('api')->user();
+        if (!$user || !in_array($user->role, ['admin', 'moderator'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized'
+            ], 401);
+        }
         
         try {
             DB::table('event_teams')
@@ -1567,7 +1793,14 @@ class EventController extends Controller
 
     public function updateTeamSeed(Request $request, $eventId, $teamId)
     {
-        $this->authorize('manage-events');
+        // Check if user is admin or moderator
+        $user = auth('api')->user();
+        if (!$user || !in_array($user->role, ['admin', 'moderator'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized'
+            ], 401);
+        }
         
         $request->validate([
             'seed' => 'required|integer|min:1'
@@ -1644,6 +1877,434 @@ class EventController extends Controller
                 'success' => false,
                 'message' => 'Error rejecting team registration: ' . $e->getMessage()
             ], 500);
+        }
+    }
+
+    public function generateBracket(Request $request, $eventId)
+    {
+        try {
+            // Get event
+            $event = DB::table('events')->where('id', $eventId)->first();
+            if (!$event) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Event not found'
+                ], 404);
+            }
+
+            // Get participating teams
+            $teams = DB::table('event_teams as et')
+                ->join('teams as t', 'et.team_id', '=', 't.id')
+                ->where('et.event_id', $eventId)
+                ->select([
+                    't.id', 't.name', 't.short_name', 't.logo', 
+                    't.rating', 'et.seed'
+                ])
+                ->orderBy('et.seed')
+                ->get()
+                ->toArray();
+
+            if (count($teams) < 2) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Need at least 2 teams to generate bracket'
+                ], 400);
+            }
+
+            // Clear existing matches for this event
+            DB::table('matches')->where('event_id', $eventId)->delete();
+
+            // Generate bracket based on event format
+            $format = $event->format ?? 'single_elimination';
+            $matches = $this->createBracketMatches($eventId, $teams, $format);
+
+            // Insert matches
+            if (!empty($matches)) {
+                DB::table('matches')->insert($matches);
+            }
+
+            // Update event status
+            DB::table('events')->where('id', $eventId)->update([
+                'status' => 'ongoing',
+                'current_round' => 1,
+                'total_rounds' => $this->calculateTotalRounds(count($teams), $format),
+                'updated_at' => now()
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Bracket generated successfully',
+                'data' => [
+                    'matches_created' => count($matches),
+                    'format' => $format,
+                    'teams_count' => count($teams),
+                    'total_rounds' => $this->calculateTotalRounds(count($teams), $format)
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error generating bracket: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    private function createBracketMatches($eventId, $teams, $format)
+    {
+        switch ($format) {
+            case 'single_elimination':
+                return $this->createSingleEliminationMatches($eventId, $teams);
+            case 'double_elimination':
+                return $this->createDoubleEliminationMatches($eventId, $teams);
+            case 'round_robin':
+                return $this->createRoundRobinMatches($eventId, $teams);
+            case 'swiss':
+                return $this->createSwissMatches($eventId, $teams);
+            default:
+                return $this->createSingleEliminationMatches($eventId, $teams);
+        }
+    }
+
+    private function createSingleEliminationMatches($eventId, $teams)
+    {
+        $matches = [];
+        $teamCount = count($teams);
+        $totalRounds = $this->calculateTotalRounds($teamCount, 'single_elimination');
+        
+        // Seed teams properly
+        $seededTeams = $this->seedTeamsForElimination($teams);
+        
+        // First round matches
+        $round = 1;
+        $position = 1;
+        
+        for ($i = 0; $i < $teamCount; $i += 2) {
+            if (isset($seededTeams[$i + 1])) {
+                $matches[] = [
+                    'event_id' => $eventId,
+                    'round' => $round,
+                    'bracket_position' => $position,
+                    'bracket_type' => 'main',
+                    'team1_id' => $seededTeams[$i]->id,
+                    'team2_id' => $seededTeams[$i + 1]->id,
+                    'status' => 'scheduled',
+                    'format' => 'bo3',
+                    'team1_score' => 0,
+                    'team2_score' => 0,
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ];
+                $position++;
+            } else {
+                // Odd team gets a bye
+                $matches[] = [
+                    'event_id' => $eventId,
+                    'round' => $round,
+                    'bracket_position' => $position,
+                    'bracket_type' => 'main',
+                    'team1_id' => $seededTeams[$i]->id,
+                    'team2_id' => null,
+                    'status' => 'completed',
+                    'format' => 'bo3',
+                    'team1_score' => 1,
+                    'team2_score' => 0,
+                    'completed_at' => now(),
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ];
+                $position++;
+            }
+        }
+        
+        // Create placeholder matches for subsequent rounds
+        $currentMatches = ceil($teamCount / 2);
+        for ($r = 2; $r <= $totalRounds; $r++) {
+            $matchesInRound = ceil($currentMatches / 2);
+            for ($m = 1; $m <= $matchesInRound; $m++) {
+                $matches[] = [
+                    'event_id' => $eventId,
+                    'round' => $r,
+                    'bracket_position' => $m,
+                    'bracket_type' => 'main',
+                    'team1_id' => null,
+                    'team2_id' => null,
+                    'status' => 'pending',
+                    'format' => 'bo3',
+                    'team1_score' => 0,
+                    'team2_score' => 0,
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ];
+            }
+            $currentMatches = $matchesInRound;
+        }
+        
+        return $matches;
+    }
+
+    private function seedTeamsForElimination($teams)
+    {
+        // If teams already have seeds, sort by seed
+        if (!empty($teams) && isset($teams[0]->seed) && $teams[0]->seed) {
+            usort($teams, function($a, $b) {
+                return ($a->seed ?? 999) <=> ($b->seed ?? 999);
+            });
+            return $teams;
+        }
+        
+        // Otherwise, use standard tournament seeding based on rating
+        usort($teams, function($a, $b) {
+            return ($b->rating ?? 1000) <=> ($a->rating ?? 1000);
+        });
+        
+        // Apply tournament seeding (1 vs lowest, 2 vs second-lowest, etc.)
+        $seeded = [];
+        $count = count($teams);
+        
+        // Standard tournament bracket seeding
+        for ($i = 0; $i < $count; $i++) {
+            if ($i % 2 === 0) {
+                $seeded[] = $teams[$i / 2];
+            } else {
+                $seeded[] = $teams[$count - 1 - floor($i / 2)];
+            }
+        }
+        
+        return $seeded;
+    }
+
+    private function calculateTotalRounds($teamCount, $format)
+    {
+        if ($teamCount <= 1) {
+            return 0;
+        }
+        
+        switch ($format) {
+            case 'single_elimination':
+                return ceil(log($teamCount, 2));
+            case 'double_elimination':
+                return ceil(log($teamCount, 2)) * 2 - 1;
+            case 'round_robin':
+                return max(0, $teamCount - 1);
+            case 'swiss':
+                return ceil(log($teamCount, 2));
+            default:
+                return ceil(log($teamCount, 2));
+        }
+    }
+
+    // Placeholder methods for other formats - can be expanded later
+    private function createDoubleEliminationMatches($eventId, $teams)
+    {
+        // For now, fall back to single elimination
+        return $this->createSingleEliminationMatches($eventId, $teams);
+    }
+
+    private function createRoundRobinMatches($eventId, $teams)
+    {
+        $matches = [];
+        $teamCount = count($teams);
+        $round = 1;
+        $position = 1;
+        
+        // Every team plays every other team once
+        for ($i = 0; $i < $teamCount; $i++) {
+            for ($j = $i + 1; $j < $teamCount; $j++) {
+                $matches[] = [
+                    'event_id' => $eventId,
+                    'round' => $round,
+                    'bracket_position' => $position,
+                    'bracket_type' => 'round_robin',
+                    'team1_id' => $teams[$i]->id,
+                    'team2_id' => $teams[$j]->id,
+                    'status' => 'scheduled',
+                    'format' => 'bo3',
+                    'team1_score' => 0,
+                    'team2_score' => 0,
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ];
+                $position++;
+                
+                // Distribute matches across rounds (simple distribution)
+                if ($position > ceil($teamCount / 2)) {
+                    $round++;
+                    $position = 1;
+                }
+            }
+        }
+        
+        return $matches;
+    }
+
+    private function createSwissMatches($eventId, $teams)
+    {
+        // For now, create first round only
+        $matches = [];
+        $teamCount = count($teams);
+        $seededTeams = $this->seedTeamsForElimination($teams);
+        
+        // First round: pair top half vs bottom half
+        $round = 1;
+        $position = 1;
+        
+        for ($i = 0; $i < $teamCount; $i += 2) {
+            if (isset($seededTeams[$i + 1])) {
+                $matches[] = [
+                    'event_id' => $eventId,
+                    'round' => $round,
+                    'bracket_position' => $position,
+                    'bracket_type' => 'swiss',
+                    'team1_id' => $seededTeams[$i]->id,
+                    'team2_id' => $seededTeams[$i + 1]->id,
+                    'status' => 'scheduled',
+                    'format' => 'bo3',
+                    'team1_score' => 0,
+                    'team2_score' => 0,
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ];
+                $position++;
+            }
+        }
+        
+        return $matches;
+    }
+
+    public function updateMatchScore(Request $request, $eventId, $matchId)
+    {
+        $request->validate([
+            'team1_score' => 'required|integer|min:0',
+            'team2_score' => 'required|integer|min:0',
+            'status' => 'sometimes|in:scheduled,in_progress,completed,cancelled'
+        ]);
+
+        try {
+            // Check if match belongs to the event
+            $match = DB::table('matches')
+                ->where('id', $matchId)
+                ->where('event_id', $eventId)
+                ->first();
+
+            if (!$match) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Match not found'
+                ], 404);
+            }
+
+            // Update match scores and status
+            $updateData = [
+                'team1_score' => $request->team1_score,
+                'team2_score' => $request->team2_score,
+                'updated_at' => now()
+            ];
+
+            // Auto-set status to completed if scores are provided
+            if ($request->team1_score > 0 || $request->team2_score > 0) {
+                $updateData['status'] = 'completed';
+                $updateData['completed_at'] = now();
+                
+                // Process match completion and advance winners
+                $this->processMatchCompletion($matchId, $request->team1_score, $request->team2_score);
+            }
+
+            if ($request->has('status')) {
+                $updateData['status'] = $request->status;
+            }
+
+            DB::table('matches')->where('id', $matchId)->update($updateData);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Match score updated successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating match score: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    private function processMatchCompletion($matchId, $team1Score, $team2Score)
+    {
+        try {
+            $match = DB::table('matches')->where('id', $matchId)->first();
+            if (!$match) return;
+
+            $winnerId = $team1Score > $team2Score ? $match->team1_id : 
+                       ($team2Score > $team1Score ? $match->team2_id : null);
+            
+            if (!$winnerId) return; // Draw case
+
+            // Advance winner to next round for elimination formats
+            if (in_array($match->bracket_type, ['main', 'upper', 'lower'])) {
+                $this->advanceWinnerToNextRound($match, $winnerId);
+            }
+
+            // Update event standings
+            $this->updateEventStandings($match->event_id);
+
+        } catch (\Exception $e) {
+            // Log error but don't fail the main operation
+            error_log("Error processing match completion: " . $e->getMessage());
+        }
+    }
+
+    private function advanceWinnerToNextRound($match, $winnerId)
+    {
+        try {
+            // Find next match in bracket
+            $nextRound = $match->round + 1;
+            $nextPosition = ceil($match->bracket_position / 2);
+            
+            $nextMatch = DB::table('matches')
+                ->where('event_id', $match->event_id)
+                ->where('round', $nextRound)
+                ->where('bracket_position', $nextPosition)
+                ->where('bracket_type', $match->bracket_type)
+                ->first();
+                
+            if ($nextMatch) {
+                // Determine if winner goes to team1 or team2 slot
+                $teamSlot = ($match->bracket_position % 2 === 1) ? 'team1_id' : 'team2_id';
+                
+                $updateData = [
+                    $teamSlot => $winnerId,
+                    'updated_at' => now()
+                ];
+
+                // If both teams are now assigned, mark as scheduled
+                if ($teamSlot === 'team1_id' && $nextMatch->team2_id) {
+                    $updateData['status'] = 'scheduled';
+                } elseif ($teamSlot === 'team2_id' && $nextMatch->team1_id) {
+                    $updateData['status'] = 'scheduled';
+                }
+                
+                DB::table('matches')->where('id', $nextMatch->id)->update($updateData);
+            }
+        } catch (\Exception $e) {
+            // Log error but don't fail the main operation
+            error_log("Error advancing winner: " . $e->getMessage());
+        }
+    }
+
+    private function updateEventStandings($eventId)
+    {
+        try {
+            // Basic standings update - can be enhanced later
+            $event = DB::table('events')->where('id', $eventId)->first();
+            if (!$event) return;
+
+            // For now, just update the event's updated_at timestamp
+            DB::table('events')->where('id', $eventId)->update(['updated_at' => now()]);
+
+        } catch (\Exception $e) {
+            // Log error but don't fail the main operation
+            error_log("Error updating event standings: " . $e->getMessage());
         }
     }
 }

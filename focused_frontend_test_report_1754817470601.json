@@ -1,0 +1,100 @@
+{
+  "summary": {
+    "total_tests": 12,
+    "successful": 8,
+    "failed": 3,
+    "critical": 1,
+    "high": 2,
+    "medium": 0
+  },
+  "issues": {
+    "critical": [
+      {
+        "type": "ERROR",
+        "message": "Authentication error: HTTP 401: {\"success\":false,\"message\":\"Invalid credentials\"}",
+        "severity": "CRITICAL",
+        "timestamp": "2025-08-10T09:17:50.029Z"
+      }
+    ],
+    "high": [
+      {
+        "type": "ERROR",
+        "message": "Bracket system error: HTTP 500: {\"success\":false,\"message\":\"The route api\\/brackets could not be found.\",\"error\":\"NotFoundHttpException\",\"file\":\"\\/var\\/www\\/mrvl-backend\\/vendor\\/laravel\\/framework\\/src\\/Illuminate\\/Routing\\/AbstractRouteCollection.php\",\"line\":45}",
+        "severity": "HIGH",
+        "timestamp": "2025-08-10T09:17:50.319Z"
+      },
+      {
+        "type": "ERROR",
+        "message": "Rankings system error: HTTP 500: {\"success\":false,\"message\":\"The route api\\/rankings\\/teams could not be found.\",\"error\":\"NotFoundHttpException\",\"file\":\"\\/var\\/www\\/mrvl-backend\\/vendor\\/laravel\\/framework\\/src\\/Illuminate\\/Routing\\/AbstractRouteCollection.php\",\"line\":45}",
+        "severity": "HIGH",
+        "timestamp": "2025-08-10T09:17:50.370Z"
+      }
+    ],
+    "medium": []
+  },
+  "allResults": [
+    {
+      "type": "SUCCESS",
+      "message": "✅ API connectivity working",
+      "timestamp": "2025-08-10T09:17:49.633Z"
+    },
+    {
+      "type": "SUCCESS",
+      "message": "✅ Found 1 events in system",
+      "timestamp": "2025-08-10T09:17:49.633Z"
+    },
+    {
+      "type": "ERROR",
+      "message": "Authentication error: HTTP 401: {\"success\":false,\"message\":\"Invalid credentials\"}",
+      "severity": "CRITICAL",
+      "timestamp": "2025-08-10T09:17:50.029Z"
+    },
+    {
+      "type": "SUCCESS",
+      "message": "✅ Events listing works - 1 events",
+      "timestamp": "2025-08-10T09:17:50.111Z"
+    },
+    {
+      "type": "SUCCESS",
+      "message": "✅ Event detail page works",
+      "timestamp": "2025-08-10T09:17:50.243Z"
+    },
+    {
+      "type": "ERROR",
+      "message": "Bracket system error: HTTP 500: {\"success\":false,\"message\":\"The route api\\/brackets could not be found.\",\"error\":\"NotFoundHttpException\",\"file\":\"\\/var\\/www\\/mrvl-backend\\/vendor\\/laravel\\/framework\\/src\\/Illuminate\\/Routing\\/AbstractRouteCollection.php\",\"line\":45}",
+      "severity": "HIGH",
+      "timestamp": "2025-08-10T09:17:50.319Z"
+    },
+    {
+      "type": "ERROR",
+      "message": "Rankings system error: HTTP 500: {\"success\":false,\"message\":\"The route api\\/rankings\\/teams could not be found.\",\"error\":\"NotFoundHttpException\",\"file\":\"\\/var\\/www\\/mrvl-backend\\/vendor\\/laravel\\/framework\\/src\\/Illuminate\\/Routing\\/AbstractRouteCollection.php\",\"line\":45}",
+      "severity": "HIGH",
+      "timestamp": "2025-08-10T09:17:50.370Z"
+    },
+    {
+      "type": "SUCCESS",
+      "message": "✅ Fallback image works: /images/team-placeholder.svg",
+      "timestamp": "2025-08-10T09:17:50.378Z"
+    },
+    {
+      "type": "SUCCESS",
+      "message": "✅ Fallback image works: /images/player-placeholder.svg",
+      "timestamp": "2025-08-10T09:17:50.382Z"
+    },
+    {
+      "type": "SUCCESS",
+      "message": "✅ Fallback image works: /images/news-placeholder.svg",
+      "timestamp": "2025-08-10T09:17:50.388Z"
+    },
+    {
+      "type": "SUCCESS",
+      "message": "✅ Fallback image works: /images/default-placeholder.svg",
+      "timestamp": "2025-08-10T09:17:50.391Z"
+    },
+    {
+      "type": "INFO",
+      "message": "ℹ️ No teams with logos found for testing",
+      "timestamp": "2025-08-10T09:17:50.600Z"
+    }
+  ]
+}

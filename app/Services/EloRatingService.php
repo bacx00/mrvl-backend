@@ -11,7 +11,20 @@ use Illuminate\Support\Facades\Log;
 class EloRatingService
 {
     private $kFactor = 32; // K-factor for ELO calculation
-    private $initialRating = 1500; // Starting ELO rating
+    private $initialRating = 1000; // Starting ELO rating (Marvel Rivals default)
+    
+    // Marvel Rivals rank thresholds
+    const RANK_THRESHOLDS = [
+        'one_above_all' => 5000,
+        'eternity' => 4600,
+        'celestial' => 3700,
+        'grandmaster' => 2800,
+        'diamond' => 1900,
+        'platinum' => 1000,
+        'gold' => 700,
+        'silver' => 400,
+        'bronze' => 0
+    ];
     
     public function calculateMatchElo(GameMatch $match)
     {
@@ -204,5 +217,195 @@ class EloRatingService
             'favorite' => $probability1 > $probability2 ? $team1->name : $team2->name,
             'underdog' => $probability1 > $probability2 ? $team2->name : $team1->name
         ];
+    }
+    
+    /**
+     * Get Marvel Rivals rank based on rating
+     */
+    public function getRankByRating($rating)
+    {
+        foreach (self::RANK_THRESHOLDS as $rank => $threshold) {
+            if ($rating >= $threshold) {
+                return $rank;
+            }
+        }
+        return 'bronze';
+    }
+    
+    /**
+     * Get rank division (I, II, III) based on rating within rank
+     */
+    public function getDivisionByRating($rating)
+    {
+        $rank = $this->getRankByRating($rating);
+        
+        // Special ranks with no divisions
+        if (in_array($rank, ['one_above_all', 'eternity'])) {
+            return null;
+        }
+        
+        $rankData = $this->getRankData($rank);
+        if (!$rankData) {
+            return 'III';
+        }
+        
+        $min = $rankData['min'];
+        $max = $rankData['max'];
+        $range = $max - $min;
+        $divisionSize = $range / 3;
+        
+        $position = $rating - $min;
+        
+        if ($position < $divisionSize) return 'III';
+        if ($position < $divisionSize * 2) return 'II';
+        return 'I';
+    }
+    
+    /**
+     * Apply Marvel Rivals season reset (9 divisions down)
+     */
+    public function applySeasonReset($currentRating)
+    {
+        return max(0, $currentRating - 900); // 9 divisions = 900 points
+    }
+    
+    /**
+     * Get rank distribution for Marvel Rivals
+     */
+    public function getRankDistribution()
+    {
+        $distribution = [];
+        
+        foreach (array_reverse(self::RANK_THRESHOLDS, true) as $rank => $threshold) {
+            $nextThreshold = $this->getNextRankThreshold($rank);
+            
+            if ($nextThreshold) {
+                $count = DB::table('players')
+                    ->whereBetween('elo_rating', [$threshold, $nextThreshold - 1])
+                    ->count();
+            } else {
+                $count = DB::table('players')
+                    ->where('elo_rating', '>=', $threshold)
+                    ->count();
+            }
+            
+            $distribution[] = [
+                'rank' => $rank,
+                'name' => ucfirst(str_replace('_', ' ', $rank)),
+                'count' => $count,
+                'threshold' => $threshold
+            ];
+        }
+        
+        return $distribution;
+    }
+    
+    /**
+     * Get Marvel Rivals specific features based on rank
+     */
+    public function getMarvelRivalsFeatures($rating)
+    {
+        return [
+            'hero_bans_unlocked' => $rating >= 700, // Gold III+
+            'chrono_shield_available' => $rating <= 1000, // Gold rank and below
+            'rank_decay_eligible' => $rating >= 4600, // Eternity/One Above All
+            'team_restrictions' => $this->getTeamRestrictions($rating)
+        ];
+    }
+    
+    /**
+     * Get team restrictions based on rating
+     */
+    public function getTeamRestrictions($rating)
+    {
+        if ($rating <= 1000) { // Gold and below
+            return 'Can team with anyone';
+        }
+        
+        if ($rating >= 1000 && $rating < 4600) { // Gold I to Celestial
+            return 'Within 3 divisions';
+        }
+        
+        if ($rating >= 4600) { // Eternity/One Above All
+            return 'Solo/Duo only, Celestial II+ within 200 points';
+        }
+        
+        return 'Standard restrictions';
+    }
+    
+    /**
+     * Bulk season reset for all players
+     */
+    public function performBulkSeasonReset()
+    {
+        $updated = 0;
+        
+        DB::table('players')
+            ->where('elo_rating', '>', 0)
+            ->chunkById(100, function ($players) use (&$updated) {
+                foreach ($players as $player) {
+                    $newRating = $this->applySeasonReset($player->elo_rating);
+                    if ($newRating !== $player->elo_rating) {
+                        DB::table('players')
+                            ->where('id', $player->id)
+                            ->update([
+                                'elo_rating' => $newRating,
+                                'peak_rating' => max($player->peak_rating ?? 0, $player->elo_rating),
+                                'updated_at' => now()
+                            ]);
+                        $updated++;
+                    }
+                }
+            });
+        
+        return $updated;
+    }
+    
+    /**
+     * Get comprehensive ranking statistics
+     */
+    public function getComprehensiveStats()
+    {
+        return [
+            'total_players' => DB::table('players')->count(),
+            'total_teams' => DB::table('teams')->count(),
+            'average_rating' => round(DB::table('players')->avg('elo_rating') ?? $this->initialRating),
+            'highest_rating' => DB::table('players')->max('elo_rating') ?? $this->initialRating,
+            'one_above_all_count' => DB::table('players')->where('elo_rating', '>=', 5000)->count(),
+            'eternity_count' => DB::table('players')->whereBetween('elo_rating', [4600, 4999])->count(),
+            'celestial_plus_count' => DB::table('players')->where('elo_rating', '>=', 3700)->count(),
+            'hero_bans_unlocked' => DB::table('players')->where('elo_rating', '>=', 700)->count(),
+            'chrono_shield_eligible' => DB::table('players')->where('elo_rating', '<=', 1000)->count(),
+            'rank_distribution' => $this->getRankDistribution()
+        ];
+    }
+    
+    // Private helper methods
+    
+    private function getRankData($rank)
+    {
+        $ranks = [
+            'celestial' => ['min' => 3700, 'max' => 4600],
+            'grandmaster' => ['min' => 2800, 'max' => 3700],
+            'diamond' => ['min' => 1900, 'max' => 2800],
+            'platinum' => ['min' => 1000, 'max' => 1900],
+            'gold' => ['min' => 700, 'max' => 1000],
+            'silver' => ['min' => 400, 'max' => 700],
+            'bronze' => ['min' => 0, 'max' => 400]
+        ];
+        
+        return $ranks[$rank] ?? null;
+    }
+    
+    private function getNextRankThreshold($rank)
+    {
+        $ranks = array_keys(self::RANK_THRESHOLDS);
+        $currentIndex = array_search($rank, $ranks);
+        
+        if ($currentIndex !== false && isset($ranks[$currentIndex + 1])) {
+            return self::RANK_THRESHOLDS[$ranks[$currentIndex + 1]];
+        }
+        
+        return null;
     }
 }

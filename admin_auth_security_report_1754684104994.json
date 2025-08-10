@@ -1,0 +1,187 @@
+{
+  "timestamp": "2025-08-08T20:15:04.994Z",
+  "summary": {
+    "total": 8,
+    "passed": 3,
+    "failed": 5,
+    "critical_failures": 5,
+    "warnings": 0,
+    "results": [
+      {
+        "test": "Authentication Flow",
+        "status": "FAILED",
+        "error": "Invalid credentials",
+        "critical": true
+      },
+      {
+        "test": "Token Validation",
+        "status": "FAILED",
+        "error": "Invalid credentials",
+        "critical": true
+      },
+      {
+        "test": "Role-Based Access Control",
+        "status": "FAILED",
+        "error": "Invalid credentials",
+        "critical": true
+      },
+      {
+        "test": "Unauthorized Access Prevention",
+        "status": "PASSED",
+        "result": {
+          "unauthenticated_access": [
+            {
+              "endpoint": "/admin/stats",
+              "status": "PROPERLY_PROTECTED",
+              "code": 401
+            },
+            {
+              "endpoint": "/admin/users",
+              "status": "PROPERLY_PROTECTED",
+              "code": 401
+            },
+            {
+              "endpoint": "/admin/analytics",
+              "status": "PROPERLY_PROTECTED",
+              "code": 401
+            },
+            {
+              "endpoint": "/user/profile",
+              "status": "PROPERLY_PROTECTED",
+              "code": 401
+            },
+            {
+              "endpoint": "/user/stats",
+              "status": "PROPERLY_PROTECTED",
+              "code": 401
+            }
+          ]
+        },
+        "critical": true
+      },
+      {
+        "test": "Role Privilege Escalation Prevention",
+        "status": "PASSED",
+        "result": {
+          "user_login_failed": true,
+          "message": "Could not test privilege escalation - user login failed"
+        },
+        "critical": true
+      },
+      {
+        "test": "Session Persistence & Logout",
+        "status": "FAILED",
+        "error": "Invalid credentials",
+        "critical": true
+      },
+      {
+        "test": "Middleware Configuration",
+        "status": "PASSED",
+        "result": {
+          "cors_headers": {},
+          "rate_limiting": "NOT_TESTED",
+          "csrf_protection": "NOT_TESTED"
+        },
+        "critical": false
+      },
+      {
+        "test": "Admin Panel Endpoints",
+        "status": "FAILED",
+        "error": "Invalid credentials",
+        "critical": true
+      }
+    ]
+  },
+  "security_issues": {
+    "critical": [],
+    "high": [],
+    "medium": [],
+    "low": []
+  },
+  "security_score": 0,
+  "detailed_results": [
+    {
+      "test": "Authentication Flow",
+      "status": "FAILED",
+      "error": "Invalid credentials",
+      "critical": true
+    },
+    {
+      "test": "Token Validation",
+      "status": "FAILED",
+      "error": "Invalid credentials",
+      "critical": true
+    },
+    {
+      "test": "Role-Based Access Control",
+      "status": "FAILED",
+      "error": "Invalid credentials",
+      "critical": true
+    },
+    {
+      "test": "Unauthorized Access Prevention",
+      "status": "PASSED",
+      "result": {
+        "unauthenticated_access": [
+          {
+            "endpoint": "/admin/stats",
+            "status": "PROPERLY_PROTECTED",
+            "code": 401
+          },
+          {
+            "endpoint": "/admin/users",
+            "status": "PROPERLY_PROTECTED",
+            "code": 401
+          },
+          {
+            "endpoint": "/admin/analytics",
+            "status": "PROPERLY_PROTECTED",
+            "code": 401
+          },
+          {
+            "endpoint": "/user/profile",
+            "status": "PROPERLY_PROTECTED",
+            "code": 401
+          },
+          {
+            "endpoint": "/user/stats",
+            "status": "PROPERLY_PROTECTED",
+            "code": 401
+          }
+        ]
+      },
+      "critical": true
+    },
+    {
+      "test": "Role Privilege Escalation Prevention",
+      "status": "PASSED",
+      "result": {
+        "user_login_failed": true,
+        "message": "Could not test privilege escalation - user login failed"
+      },
+      "critical": true
+    },
+    {
+      "test": "Session Persistence & Logout",
+      "status": "FAILED",
+      "error": "Invalid credentials",
+      "critical": true
+    },
+    {
+      "test": "Middleware Configuration",
+      "status": "PASSED",
+      "result": {
+        "cors_headers": {},
+        "rate_limiting": "NOT_TESTED",
+        "csrf_protection": "NOT_TESTED"
+      },
+      "critical": false
+    },
+    {
+      "test": "Admin Panel Endpoints",
+      "status": "FAILED",
+      "error": "Invalid credentials",
+      "critical": true
+    }
+  ]
+}

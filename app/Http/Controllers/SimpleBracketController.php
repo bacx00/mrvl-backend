@@ -76,7 +76,8 @@ class SimpleBracketController extends Controller
     public function generate(Request $request, $eventId)
     {
         // Check if user is admin or moderator
-        if (!Auth::user() || !Auth::user()->hasAnyRole(['admin', 'moderator'])) {
+        $user = auth('api')->user();
+        if (!$user || !$user->hasAnyRole(['admin', 'moderator'])) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized. Admin or moderator access required.'
@@ -189,7 +190,8 @@ class SimpleBracketController extends Controller
     public function updateMatch(Request $request, $matchId)
     {
         // Check if user is admin or moderator
-        if (!Auth::user() || !Auth::user()->hasAnyRole(['admin', 'moderator'])) {
+        $user = auth('api')->user();
+        if (!$user || !$user->hasAnyRole(['admin', 'moderator'])) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized. Admin or moderator access required.'
@@ -248,7 +250,8 @@ class SimpleBracketController extends Controller
     public function delete($eventId)
     {
         // Check if user is admin or moderator
-        if (!Auth::user() || !Auth::user()->hasAnyRole(['admin', 'moderator'])) {
+        $user = auth('api')->user();
+        if (!$user || !$user->hasAnyRole(['admin', 'moderator'])) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized. Admin or moderator access required.'
