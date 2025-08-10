@@ -1,0 +1,27 @@
+{
+  "timestamp": "2025-08-10T18:06:01.589Z",
+  "testResults": {
+    "sseConnection": {
+      "status": "failed",
+      "details": "Exception: EventSource is not a constructor"
+    },
+    "createMatch": {
+      "status": "partial",
+      "details": "Unexpected response format, Status: 401"
+    },
+    "liveControl": {
+      "status": "partial",
+      "details": "Unexpected response, Status: 401"
+    },
+    "updateStats": {
+      "status": "partial",
+      "details": "Unexpected response, Status: 401"
+    }
+  },
+  "summary": {
+    "totalTests": 4,
+    "successful": 0,
+    "partialSuccess": 3,
+    "issues": 1
+  }
+}

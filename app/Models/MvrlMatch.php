@@ -68,6 +68,14 @@ class MvrlMatch extends Model
         return $this->belongsTo(Team::class, 'team2_id');
     }
 
+    /**
+     * The event this match belongs to
+     */
+    public function event()
+    {
+        return $this->belongsTo(Event::class, 'event_id');
+    }
+
     /**  
      *  Players that actually played in the match  
      *  match_player pivot has KDA columns.  
@@ -77,5 +85,21 @@ class MvrlMatch extends Model
         return $this->belongsToMany(Player::class, 'match_player')
                     ->withPivot(['kills', 'deaths', 'assists'])
                     ->withTimestamps();
+    }
+
+    /**
+     * Winner team relationship
+     */
+    public function winner()
+    {
+        return $this->belongsTo(Team::class, 'winner_id');
+    }
+
+    /**
+     * Creator of the match
+     */
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
     }
 }

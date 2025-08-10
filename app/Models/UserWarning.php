@@ -15,13 +15,13 @@ class UserWarning extends Model
         'moderator_id',
         'reason',
         'severity',
-        'expires_at',
+        'duration_days',  // Changed from expires_at
         'acknowledged',
         'acknowledged_at'
     ];
 
     protected $casts = [
-        'expires_at' => 'datetime',
+        'duration_days' => 'integer',  // Changed from expires_at
         'acknowledged' => 'boolean',
         'acknowledged_at' => 'datetime'
     ];
@@ -38,15 +38,25 @@ class UserWarning extends Model
 
     public function scopeActive($query)
     {
-        return $query->where(function ($q) {
-            $q->where('expires_at', '>', now())
-              ->orWhereNull('expires_at');
-        });
+        // Check if expires_at column exists
+        if (\Schema::hasColumn('user_warnings', 'expires_at')) {
+            return $query->where(function ($q) {
+                $q->where('expires_at', '>', now())
+                  ->orWhereNull('expires_at');
+            });
+        }
+        // If expires_at doesn't exist, return all warnings as active
+        return $query;
     }
 
     public function scopeExpired($query)
     {
-        return $query->where('expires_at', '<=', now());
+        // Check if expires_at column exists
+        if (\Schema::hasColumn('user_warnings', 'expires_at')) {
+            return $query->where('expires_at', '<=', now());
+        }
+        // If expires_at doesn't exist, return empty query
+        return $query->whereRaw('1 = 0');
     }
 
     public function scopeUnacknowledged($query)

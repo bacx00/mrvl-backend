@@ -100,9 +100,9 @@ class NewsController extends ApiResponseController
                     'meta' => [
                         'featured' => (bool)$article->featured,
                         'breaking' => (bool)$article->breaking,
-                        'published_at' => $article->published_at,
-                        'created_at' => $article->created_at,
-                        'updated_at' => $article->updated_at,
+                        'published_at' => $article->published_at ? date('c', strtotime($article->published_at)) : null,
+                        'created_at' => $article->created_at ? date('c', strtotime($article->created_at)) : null,
+                        'updated_at' => $article->updated_at ? date('c', strtotime($article->updated_at)) : null,
                         'read_time' => $this->calculateReadTime($article->content)
                     ],
                     'mentions' => array_merge(
@@ -206,9 +206,9 @@ class NewsController extends ApiResponseController
                 'meta' => [
                     'featured' => (bool)$article->featured,
                     'breaking' => (bool)$article->breaking,
-                    'published_at' => $article->published_at,
-                    'created_at' => $article->created_at,
-                    'updated_at' => $article->updated_at,
+                    'published_at' => $article->published_at ? date('c', strtotime($article->published_at)) : null,
+                    'created_at' => $article->created_at ? date('c', strtotime($article->created_at)) : null,
+                    'updated_at' => $article->updated_at ? date('c', strtotime($article->updated_at)) : null,
                     'read_time' => $this->calculateReadTime($article->content)
                 ],
                 'mentions' => array_merge(
@@ -433,8 +433,8 @@ class NewsController extends ApiResponseController
                         'score' => $newComment->score ?? 0
                     ],
                     'meta' => [
-                        'created_at' => $newComment->created_at,
-                        'updated_at' => $newComment->updated_at,
+                        'created_at' => $newComment->created_at ? date('c', strtotime($newComment->created_at)) : null,
+                        'updated_at' => $newComment->updated_at ? date('c', strtotime($newComment->updated_at)) : null,
                         'edited' => false
                     ],
                     'mentions' => $this->mentionService->extractMentions($newComment->content),
@@ -814,8 +814,8 @@ class NewsController extends ApiResponseController
                     'downvotes' => $comment->downvotes ?? 0
                 ],
                 'meta' => [
-                    'created_at' => $comment->created_at,
-                    'updated_at' => $comment->updated_at,
+                    'created_at' => $comment->created_at ? date('c', strtotime($comment->created_at)) : null,
+                    'updated_at' => $comment->updated_at ? date('c', strtotime($comment->updated_at)) : null,
                     'edited' => $comment->created_at !== $comment->updated_at
                 ],
                 'mentions' => $this->mentionService->extractMentions($comment->content),
@@ -1364,8 +1364,8 @@ class NewsController extends ApiResponseController
                 return [
                     'id' => $comment->id,
                     'content' => $comment->content,
-                    'created_at' => $comment->created_at,
-                    'updated_at' => $comment->updated_at,
+                    'created_at' => $comment->created_at ? date('c', strtotime($comment->created_at)) : null,
+                    'updated_at' => $comment->updated_at ? date('c', strtotime($comment->updated_at)) : null,
                     'parent_id' => $comment->parent_id,
                     'upvotes' => $votes->upvotes ?? 0,
                     'downvotes' => $votes->downvotes ?? 0,

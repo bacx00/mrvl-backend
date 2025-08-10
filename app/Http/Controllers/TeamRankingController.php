@@ -89,7 +89,9 @@ class TeamRankingController extends Controller
                     $query->orderBy('rating', 'desc');
             }
 
-            $teams = $query->paginate(20);
+            // Handle pagination - allow limit parameter or use default of 20
+            $perPage = min($request->get('limit', 20), 100); // Max 100 per page
+            $teams = $query->paginate($perPage);
 
             // Add ranking position and additional stats
             $teamsData = collect($teams->items())->map(function($team, $index) use ($teams) {
@@ -100,8 +102,11 @@ class TeamRankingController extends Controller
                     ->where('position', '<=', 3)
                     ->count();
                 
-                $totalMatches = $team->wins + $team->losses;
-                $winRate = $totalMatches > 0 ? round(($team->wins / $totalMatches) * 100, 1) : 0;
+                // Handle null values properly
+                $wins = $team->wins ?? 0;
+                $losses = $team->losses ?? 0;
+                $totalMatches = $wins + $losses;
+                $winRate = $totalMatches > 0 ? round(($wins / $totalMatches) * 100, 1) : 0;
                 
                 return [
                     'rank' => $globalRank,
@@ -111,10 +116,10 @@ class TeamRankingController extends Controller
                     'logo' => $team->logo,
                     'region' => $team->region,
                     'country' => $team->country,
-                    'rating' => $team->rating,
-                    'earnings' => $team->earnings,
-                    'wins' => $team->wins,
-                    'losses' => $team->losses,
+                    'rating' => $team->rating ?? 1000,
+                    'earnings' => $team->earnings ?? 0,
+                    'wins' => $wins,
+                    'losses' => $losses,
                     'win_rate' => $winRate,
                     'founded' => $team->founded,
                     'active_roster' => $team->players->count(),
@@ -186,8 +191,11 @@ class TeamRankingController extends Controller
                     ];
                 });
 
-            $totalMatches = $team->wins + $team->losses;
-            $winRate = $totalMatches > 0 ? round(($team->wins / $totalMatches) * 100, 1) : 0;
+            // Handle null values properly
+            $wins = $team->wins ?? 0;
+            $losses = $team->losses ?? 0;
+            $totalMatches = $wins + $losses;
+            $winRate = $totalMatches > 0 ? round(($wins / $totalMatches) * 100, 1) : 0;
 
             $teamData = [
                 'id' => $team->id,
@@ -205,9 +213,9 @@ class TeamRankingController extends Controller
                     'total_teams_region' => Team::where('region', $team->region)->count()
                 ],
                 'stats' => [
-                    'earnings' => $team->earnings,
-                    'wins' => $team->wins,
-                    'losses' => $team->losses,
+                    'earnings' => $team->earnings ?? 0,
+                    'wins' => $wins,
+                    'losses' => $losses,
                     'win_rate' => $winRate,
                     'matches_played' => $totalMatches
                 ],

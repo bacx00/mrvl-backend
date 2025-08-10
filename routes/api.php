@@ -12,6 +12,9 @@ use App\Http\Controllers\{
     ForumController,
     AdminStatsController,
     AnalyticsController,
+    PlayerAnalyticsController,
+    TeamAnalyticsController,
+    HeroAnalyticsController,
     RealTimeAnalyticsController,
     UserActivityController,
     ResourceAnalyticsController,
@@ -51,6 +54,7 @@ use App\Http\Controllers\{
     SwissController,
     TournamentBroadcastController
 };
+use App\Services\MatchAnalyticsService;
 
 use App\Http\Controllers\Admin\AdminTournamentController;
 use App\Http\Controllers\Admin\AdminForumsController;
@@ -161,14 +165,14 @@ Route::prefix('public')->group(function () {
     
     // Rankings
     Route::get('/rankings', [RankingController::class, 'index']);
-    Route::get('/rankings/{id}', [RankingController::class, 'show']);
     Route::get('/rankings/distribution', [RankingController::class, 'getRankDistribution']);
     Route::get('/rankings/marvel-rivals-info', [RankingController::class, 'getMarvelRivalsInfo']);
+    Route::get('/rankings/{id}', [RankingController::class, 'show']);
     
     // Team Rankings
     Route::get('/team-rankings', [TeamRankingController::class, 'index']);
-    Route::get('/team-rankings/{id}', [TeamRankingController::class, 'show']);
     Route::get('/team-rankings/top-earners', [TeamRankingController::class, 'getTopEarners']);
+    Route::get('/team-rankings/{id}', [TeamRankingController::class, 'show']);
     
     // Heroes
     Route::get('/heroes', [HeroController::class, 'index']);
@@ -277,6 +281,15 @@ Route::get('/players/{player}/performance-stats', [PlayerController::class, 'get
 Route::get('/players/{player}/hero-performance', [PlayerController::class, 'getHeroPerformance']);
 Route::get('/players/{player}/map-stats', [PlayerController::class, 'getMapStats']);
 Route::get('/players/{player}/event-stats', [PlayerController::class, 'getEventStats']);
+
+// User Profile Routes (Public viewing)
+Route::get('/users/{userId}', [UserProfileController::class, 'getUserWithDetails']);
+Route::get('/users/{userId}/stats', [UserProfileController::class, 'getUserStatsPublic']);
+Route::get('/users/{userId}/activities', [UserProfileController::class, 'getUserActivities']);
+Route::get('/users/{userId}/achievements', [UserProfileController::class, 'getUserAchievements']);
+Route::get('/users/{userId}/forum-stats', [UserProfileController::class, 'getUserForumStats']);
+Route::get('/users/{userId}/matches', [UserProfileController::class, 'getUserMatches']);
+
 Route::get('/events', [EventController::class, 'index']);
 Route::get('/events/{event}', [EventController::class, 'show']);
 Route::get('/matches', [MatchController::class, 'index']);
@@ -338,9 +351,17 @@ Route::get('/brackets/{id}', function ($id) {
     ]);
 });
 
-// Rankings - Standardized endpoints
+// Rankings - Standardized endpoints with backward compatibility
+Route::get('/rankings', function() {
+    return app(App\Http\Controllers\RankingController::class)->index(request());
+});
 Route::get('/rankings/teams', [App\Http\Controllers\TeamRankingController::class, 'index']);
 Route::get('/rankings/players', [App\Http\Controllers\RankingController::class, 'index']);
+
+// Brackets - Direct access (outside public prefix for backward compatibility)
+Route::get('/events/{eventId}/bracket', [BracketController::class, 'show']);
+Route::get('/events/{eventId}/comprehensive-bracket', [ComprehensiveBracketController::class, 'getBracket']);
+Route::get('/live-matches', [ComprehensiveBracketController::class, 'getLiveMatches']);
 
 // ===================================
 // TOURNAMENT AUTHENTICATED ROUTES
@@ -604,11 +625,177 @@ Route::middleware(['auth:api', 'role:moderator|admin'])->prefix('moderator')->gr
 // ===================================
 // ADMIN ROUTES (🔴 Admin Role - Full Access)
 // ===================================
+
+// Fix for frontend double /api/api/ routing issue - Add aliases for admin routes
+Route::middleware(['auth:api', 'role:admin|moderator'])->prefix('api/admin')->group(function () {
+    // Core Admin Stats Endpoints - Available to both admin and moderator
+    Route::get('/stats', [AdminStatsController::class, 'index']);
+    Route::get('/analytics', [AdminStatsController::class, 'analytics']);
+    Route::get('/performance-metrics', [AdminStatsController::class, 'getPerformanceMetrics']);
+    
+    // Admin matches moderation routes (handling double /api/ path)
+    Route::prefix('matches-moderation')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\AdminMatchesController::class, 'index']);
+        Route::post('/', [\App\Http\Controllers\Admin\AdminMatchesController::class, 'store']);
+        Route::get('/{id}', [\App\Http\Controllers\Admin\AdminMatchesController::class, 'show']);
+        Route::put('/{id}', [\App\Http\Controllers\Admin\AdminMatchesController::class, 'update']);
+        Route::delete('/{id}', [\App\Http\Controllers\Admin\AdminMatchesController::class, 'destroy']);
+        
+        // Match control actions
+        Route::post('/{id}/reschedule', [\App\Http\Controllers\Admin\AdminMatchesController::class, 'reschedule']);
+        Route::post('/{id}/control', [\App\Http\Controllers\Admin\AdminMatchesController::class, 'controlMatch']);
+        Route::post('/{id}/live-scoring', [\App\Http\Controllers\Admin\AdminMatchesController::class, 'updateLiveScoring']);
+        Route::post('/{id}/teams/manage', [\App\Http\Controllers\Admin\AdminMatchesController::class, 'manageTeams']);
+        Route::put('/{id}/maps', [\App\Http\Controllers\Admin\AdminMatchesController::class, 'updateMaps']);
+        Route::put('/{id}/player-stats', [\App\Http\Controllers\Admin\AdminMatchesController::class, 'updatePlayerStats']);
+        Route::post('/bulk-operation', [\App\Http\Controllers\Admin\AdminMatchesController::class, 'bulkOperation']);
+        Route::get('/statistics', [\App\Http\Controllers\Admin\AdminMatchesController::class, 'getStatistics']);
+        Route::get('/live-matches', [\App\Http\Controllers\Admin\AdminMatchesController::class, 'getLiveMatches']);
+        Route::get('/export', [\App\Http\Controllers\Admin\AdminMatchesController::class, 'exportMatches']);
+    });
+    
+    // Forums moderation routes (handling double /api/ path)
+    Route::prefix('forums-moderation')->group(function () {
+        // Dashboard and Overview
+        Route::get('/dashboard', [AdminForumsController::class, 'dashboard']);
+        Route::get('/statistics', [AdminForumsController::class, 'getStatistics']);
+        
+        // Thread Management - Full CRUD
+        Route::get('/threads', [AdminForumsController::class, 'getThreads']);
+        Route::get('/threads/{id}', [AdminForumsController::class, 'showThread']);
+        Route::post('/threads', [AdminForumsController::class, 'createThread']);
+        Route::put('/threads/{id}', [AdminForumsController::class, 'updateThread']);
+        Route::delete('/threads/{id}', [AdminForumsController::class, 'deleteThread']);
+        
+        // Thread Control Actions
+        Route::post('/threads/{id}/pin', [AdminForumsController::class, 'pinThread']);
+        Route::post('/threads/{id}/unpin', [AdminForumsController::class, 'unpinThread']);
+        Route::post('/threads/{id}/lock', [AdminForumsController::class, 'lockThread']);
+        Route::post('/threads/{id}/unlock', [AdminForumsController::class, 'unlockThread']);
+        
+        // Category Management - Full CRUD
+        Route::get('/categories', [AdminForumsController::class, 'getCategories']);
+        Route::post('/categories', [AdminForumsController::class, 'createCategory']);
+        Route::put('/categories/{id}', [AdminForumsController::class, 'updateCategory']);
+        Route::delete('/categories/{id}', [AdminForumsController::class, 'deleteCategory']);
+        Route::post('/categories/reorder', [AdminForumsController::class, 'reorderCategories']);
+        
+        // Posts Management
+        Route::get('/posts', [AdminForumsController::class, 'getPosts']);
+        Route::put('/posts/{id}', [AdminForumsController::class, 'updatePost']);
+        Route::delete('/posts/{id}', [AdminForumsController::class, 'deletePost']);
+        
+        // User Moderation
+        Route::get('/users', [AdminForumsController::class, 'getUsers']);
+        Route::post('/users/{userId}/warn', [AdminForumsController::class, 'warnUser']);
+        Route::post('/users/{userId}/ban', [AdminForumsController::class, 'banUser']);
+        Route::post('/users/{userId}/unban', [AdminForumsController::class, 'unbanUser']);
+        
+        // Reports Management
+        Route::get('/reports', [AdminForumsController::class, 'getReports']);
+        Route::post('/reports/{reportId}/resolve', [AdminForumsController::class, 'resolveReport']);
+        Route::post('/reports/{reportId}/dismiss', [AdminForumsController::class, 'dismissReport']);
+        
+        // Bulk Actions
+        Route::post('/bulk-actions', [AdminForumsController::class, 'bulkActions']);
+        
+        // Search and Logs
+        Route::get('/search', [AdminForumsController::class, 'adminSearch']);
+        Route::get('/moderation-logs', [AdminForumsController::class, 'getModerationLogs']);
+    });
+    
+    // News moderation routes (handling double /api/ path)
+    Route::prefix('news-moderation')->group(function () {
+        // Categories endpoint that frontend expects - MUST come before {newsId} routes
+        Route::get('/categories', [\App\Http\Controllers\Admin\AdminNewsCategoryController::class, 'index']);
+        Route::post('/categories', [\App\Http\Controllers\Admin\AdminNewsCategoryController::class, 'store']);
+        Route::put('/categories/{id}', [\App\Http\Controllers\Admin\AdminNewsCategoryController::class, 'update']);
+        Route::delete('/categories/{id}', [\App\Http\Controllers\Admin\AdminNewsCategoryController::class, 'destroy']);
+        
+        // News Statistics and Analytics - also before {newsId}
+        Route::get('/stats/overview', [\App\Http\Controllers\Admin\AdminNewsController::class, 'getStatistics']);
+        
+        // Bulk Operations - before {newsId}
+        Route::post('/bulk', [\App\Http\Controllers\Admin\AdminNewsController::class, 'bulkOperation']);
+        
+        // Content Moderation Features - specific routes before {newsId}
+        Route::get('/pending/all', [\App\Http\Controllers\Admin\AdminNewsController::class, 'getPendingNews']);
+        Route::get('/flags/all', [\App\Http\Controllers\Admin\AdminNewsController::class, 'getFlaggedContent']);
+        Route::post('/flags/{flagId}/resolve', [\App\Http\Controllers\Admin\AdminNewsController::class, 'resolveFlag']);
+        
+        // Comments moderation routes
+        Route::get('/comments', [\App\Http\Controllers\Admin\AdminNewsController::class, 'getNewsComments']);
+        Route::get('/comments/reported', [\App\Http\Controllers\Admin\AdminNewsController::class, 'getReportedComments']);
+        Route::put('/comments/{commentId}/moderate', [\App\Http\Controllers\Admin\AdminNewsController::class, 'moderateComment']);
+        Route::delete('/comments/{commentId}', [\App\Http\Controllers\Admin\AdminNewsController::class, 'deleteComment']);
+        Route::post('/comments/bulk', [\App\Http\Controllers\Admin\AdminNewsController::class, 'bulkModerateComments']);
+        
+        // Search functionality
+        Route::get('/search', [\App\Http\Controllers\Admin\AdminNewsController::class, 'search']);
+        
+        // Media Management - specific routes before {newsId}
+        Route::post('/media/featured-image', [\App\Http\Controllers\Admin\AdminNewsMediaController::class, 'uploadFeaturedImage']);
+        Route::post('/media/gallery', [\App\Http\Controllers\Admin\AdminNewsMediaController::class, 'uploadGalleryImages']);
+        Route::post('/media/video-thumbnail', [\App\Http\Controllers\Admin\AdminNewsMediaController::class, 'uploadVideoThumbnail']);
+        Route::get('/media/library', [\App\Http\Controllers\Admin\AdminNewsMediaController::class, 'getMediaLibrary']);
+        Route::post('/media/cleanup', [\App\Http\Controllers\Admin\AdminNewsMediaController::class, 'cleanupUnusedMedia']);
+        
+        // Core CRUD Operations - {newsId} routes MUST come last
+        Route::get('/', [\App\Http\Controllers\Admin\AdminNewsController::class, 'index']);
+        Route::post('/', [\App\Http\Controllers\Admin\AdminNewsController::class, 'store']);
+        Route::get('/{newsId}', [\App\Http\Controllers\Admin\AdminNewsController::class, 'show']);
+        Route::put('/{newsId}', [\App\Http\Controllers\Admin\AdminNewsController::class, 'update']);
+        Route::delete('/{newsId}', [\App\Http\Controllers\Admin\AdminNewsController::class, 'destroy']);
+        
+        // Specific newsId operations
+        Route::post('/{newsId}/approve', [\App\Http\Controllers\Admin\AdminNewsController::class, 'approveNews']);
+        Route::post('/{newsId}/reject', [\App\Http\Controllers\Admin\AdminNewsController::class, 'rejectNews']);
+        Route::post('/{newsId}/flag', [\App\Http\Controllers\Admin\AdminNewsController::class, 'flagNews']);
+        Route::post('/{newsId}/toggle-feature', [\App\Http\Controllers\Admin\AdminNewsController::class, 'toggleFeature']);
+        Route::post('/{newsId}/toggle-publish', [\App\Http\Controllers\Admin\AdminNewsController::class, 'togglePublish']);
+        Route::get('/{newsId}/moderation-history', [\App\Http\Controllers\Admin\AdminNewsController::class, 'getModerationHistory']);
+        Route::delete('/{newsId}/media', [\App\Http\Controllers\Admin\AdminNewsMediaController::class, 'deleteImage']);
+    });
+    
+    // Users management routes (handling double /api/ path)
+    Route::prefix('users')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\AdminUsersController::class, 'index']);
+        Route::post('/', [\App\Http\Controllers\Admin\AdminUsersController::class, 'store']);
+        Route::get('/{userId}', [\App\Http\Controllers\Admin\AdminUsersController::class, 'show']);
+        Route::put('/{userId}', [\App\Http\Controllers\Admin\AdminUsersController::class, 'update']);
+        Route::delete('/{userId}', [\App\Http\Controllers\Admin\AdminUsersController::class, 'destroy']);
+        Route::get('/search/advanced', [\App\Http\Controllers\Admin\AdminUsersController::class, 'search']);
+        Route::get('/{userId}/activity', [\App\Http\Controllers\Admin\AdminUsersController::class, 'getActivity']);
+        Route::post('/{userId}/ban', [\App\Http\Controllers\Admin\AdminUsersController::class, 'manageBan']);
+        Route::post('/{userId}/mute', [\App\Http\Controllers\Admin\AdminUsersController::class, 'manageMute']);
+        Route::post('/{userId}/reset-password', [\App\Http\Controllers\Admin\AdminUsersController::class, 'resetPassword']);
+        Route::get('/statistics', [\App\Http\Controllers\Admin\AdminUsersController::class, 'getUserStatistics']);
+    });
+    
+    // Events management routes (handling double /api/ path)  
+    Route::prefix('events')->group(function () {
+        Route::get('/', [AdminEventsController::class, 'index']);
+        Route::post('/', [AdminEventsController::class, 'store']);
+        Route::get('/{id}', [AdminEventsController::class, 'show']);
+        Route::put('/{id}', [AdminEventsController::class, 'update']);
+        Route::delete('/{id}', [AdminEventsController::class, 'destroy']);
+        Route::post('/{id}/status', [AdminEventsController::class, 'updateStatus']);
+        Route::get('/{eventId}/teams', [AdminEventsController::class, 'getEventTeams']);
+        Route::post('/{eventId}/teams', [AdminEventsController::class, 'addTeamToEvent']);
+        Route::delete('/{eventId}/teams/{teamId}', [AdminEventsController::class, 'removeTeamFromEvent']);
+        Route::post('/{id}/generate-bracket', [AdminEventsController::class, 'generateBracket']);
+        Route::get('/{id}/statistics', [AdminEventsController::class, 'getEventStatistics']);
+        Route::post('/bulk-operation', [AdminEventsController::class, 'bulkOperation']);
+        Route::get('/dashboard/analytics', [AdminEventsController::class, 'getAnalyticsDashboard']);
+    });
+});
+
 Route::middleware(['auth:api', 'role:admin|moderator'])->prefix('admin')->group(function () {
     
     // Core Admin Endpoints - Available to both admin and moderator
     Route::get('/stats', [AdminStatsController::class, 'index']);
     Route::get('/analytics', [AdminStatsController::class, 'analytics']);
+    Route::get('/performance-metrics', [AdminStatsController::class, 'getPerformanceMetrics']);
     
     // Resource Management - Admin and Moderator access
     Route::get('/teams', [TeamController::class, 'getAllTeams']);
@@ -616,6 +803,74 @@ Route::middleware(['auth:api', 'role:admin|moderator'])->prefix('admin')->group(
     Route::get('/matches', [MatchController::class, 'index']);
     Route::get('/events', [EventController::class, 'index']);
     Route::get('/news', [NewsController::class, 'index']);
+    
+    // News moderation routes for frontend compatibility (handling double /api/api/ path)
+    Route::prefix('news-moderation')->group(function () {
+        // Categories endpoint that frontend expects - MUST come before {newsId} routes
+        Route::get('/categories', [\App\Http\Controllers\Admin\AdminNewsCategoryController::class, 'index']);
+        Route::post('/categories', [\App\Http\Controllers\Admin\AdminNewsCategoryController::class, 'store']);
+        Route::put('/categories/{id}', [\App\Http\Controllers\Admin\AdminNewsCategoryController::class, 'update']);
+        Route::delete('/categories/{id}', [\App\Http\Controllers\Admin\AdminNewsCategoryController::class, 'destroy']);
+        
+        // News Statistics and Analytics - also before {newsId}
+        Route::get('/stats/overview', [\App\Http\Controllers\Admin\AdminNewsController::class, 'getStatistics']);
+        
+        // Bulk Operations - before {newsId}
+        Route::post('/bulk', [\App\Http\Controllers\Admin\AdminNewsController::class, 'bulkOperation']);
+        
+        // Content Moderation Features - specific routes before {newsId}
+        Route::get('/pending/all', [\App\Http\Controllers\Admin\AdminNewsController::class, 'getPendingNews']);
+        Route::get('/flags/all', [\App\Http\Controllers\Admin\AdminNewsController::class, 'getFlaggedContent']);
+        Route::post('/flags/{flagId}/resolve', [\App\Http\Controllers\Admin\AdminNewsController::class, 'resolveFlag']);
+        
+        // Comments moderation routes
+        Route::get('/comments', [\App\Http\Controllers\Admin\AdminNewsController::class, 'getNewsComments']);
+        Route::get('/comments/reported', [\App\Http\Controllers\Admin\AdminNewsController::class, 'getReportedComments']);
+        Route::put('/comments/{commentId}/moderate', [\App\Http\Controllers\Admin\AdminNewsController::class, 'moderateComment']);
+        Route::delete('/comments/{commentId}', [\App\Http\Controllers\Admin\AdminNewsController::class, 'deleteComment']);
+        Route::post('/comments/bulk', [\App\Http\Controllers\Admin\AdminNewsController::class, 'bulkModerateComments']);
+        
+        // Search functionality
+        Route::get('/search', [\App\Http\Controllers\Admin\AdminNewsController::class, 'search']);
+        
+        // Core CRUD Operations - {newsId} routes MUST come last
+        Route::get('/', [\App\Http\Controllers\Admin\AdminNewsController::class, 'index']);
+        Route::post('/', [\App\Http\Controllers\Admin\AdminNewsController::class, 'store']);
+        Route::get('/{newsId}', [\App\Http\Controllers\Admin\AdminNewsController::class, 'show']);
+        Route::put('/{newsId}', [\App\Http\Controllers\Admin\AdminNewsController::class, 'update']);
+        Route::delete('/{newsId}', [\App\Http\Controllers\Admin\AdminNewsController::class, 'destroy']);
+        
+        // Specific newsId operations
+        Route::post('/{newsId}/approve', [\App\Http\Controllers\Admin\AdminNewsController::class, 'approveNews']);
+        Route::post('/{newsId}/reject', [\App\Http\Controllers\Admin\AdminNewsController::class, 'rejectNews']);
+        Route::post('/{newsId}/flag', [\App\Http\Controllers\Admin\AdminNewsController::class, 'flagNews']);
+        Route::post('/{newsId}/toggle-feature', [\App\Http\Controllers\Admin\AdminNewsController::class, 'toggleFeature']);
+        Route::post('/{newsId}/toggle-publish', [\App\Http\Controllers\Admin\AdminNewsController::class, 'togglePublish']);
+        Route::get('/{newsId}/moderation-history', [\App\Http\Controllers\Admin\AdminNewsController::class, 'getModerationHistory']);
+    });
+    
+    // ===================================
+    // ADMIN MATCHES LIVE SCORING ROUTES
+    // ===================================
+    Route::prefix('matches')->group(function () {
+        // Basic CRUD operations
+        Route::get('/', [MatchController::class, 'index']);
+        Route::post('/', [MatchController::class, 'store']);
+        Route::get('/{matchId}', [MatchController::class, 'show']);
+        Route::put('/{matchId}', [MatchController::class, 'update']);
+        Route::delete('/{matchId}', [MatchController::class, 'destroy']);
+        
+        // Live scoring control endpoints (frontend expected routes)
+        Route::put('/{matchId}/live-control', [MatchController::class, 'liveControl']);
+        Route::post('/{matchId}/live-control', [MatchController::class, 'liveControl']); // Support both PUT and POST
+        Route::post('/{matchId}/update-live-stats', [MatchController::class, 'updateLiveStatsComprehensive']);
+        Route::put('/{matchId}/update-live-stats', [MatchController::class, 'updateLiveStatsComprehensive']); // Support both PUT and POST
+        
+        // Additional live scoring endpoints
+        Route::post('/{matchId}/start', [MatchController::class, 'startMatch']);
+        Route::post('/{matchId}/complete', [MatchController::class, 'completeMatch']);
+        Route::post('/{matchId}/reset', [MatchController::class, 'resetMatch']);
+    });
     
     // Admin-only routes (checked internally)
     Route::get('/users', [AdminUserController::class, 'getAllUsers']);
@@ -1484,6 +1739,70 @@ Route::middleware(['auth:api', 'role:admin|moderator'])->prefix('analytics')->gr
     // Main Analytics Dashboard
     Route::get('/', [AnalyticsController::class, 'index']);
     
+    // Advanced Player Analytics (Admin/Moderator)
+    Route::prefix('players')->group(function () {
+        Route::get('/advanced/{playerId}', [PlayerAnalyticsController::class, 'getPlayerAnalytics']);
+        Route::get('/leaderboards', [PlayerAnalyticsController::class, 'getPlayerLeaderboard']);
+        Route::get('/compare', function(Request $request, MatchAnalyticsService $service) {
+            $playerIds = $request->get('players', []);
+            $timeframe = $request->get('timeframe', '30d');
+            return $service->comparePlayerPerformances($playerIds, $timeframe);
+        });
+        Route::get('/{playerId}/detailed-trends', [PlayerAnalyticsController::class, 'getPlayerAnalytics']);
+        Route::get('/{playerId}/career-progression', [PlayerAnalyticsController::class, 'getPlayerAnalytics']);
+    });
+    
+    // Advanced Team Analytics (Admin/Moderator)
+    Route::prefix('teams')->group(function () {
+        Route::get('/advanced/{teamId}', [TeamAnalyticsController::class, 'getTeamAnalytics']);
+        Route::get('/compare', function(Request $request, MatchAnalyticsService $service) {
+            $teamIds = $request->get('teams', []);
+            $timeframe = $request->get('timeframe', '90d');
+            return $service->compareTeamPerformances($teamIds, $timeframe);
+        });
+        Route::get('/{teamId}/performance-breakdown', [TeamAnalyticsController::class, 'getTeamAnalytics']);
+        Route::get('/{teamId}/vs/{opponentId}/detailed', [TeamAnalyticsController::class, 'getTeamComparison']);
+    });
+    
+    // Advanced Hero Meta Analytics (Admin/Moderator)
+    Route::prefix('heroes')->group(function () {
+        Route::get('/meta/detailed', [HeroAnalyticsController::class, 'getHeroMetaAnalysis']);
+        Route::get('/meta/generate-report', function(Request $request, MatchAnalyticsService $service) {
+            $timeframe = $request->get('timeframe', '30d');
+            $region = $request->get('region');
+            $tier = $request->get('tier');
+            return $service->generateMetaAnalysis($timeframe, $region, $tier);
+        });
+        Route::get('/{heroName}/detailed', [HeroAnalyticsController::class, 'getHeroAnalytics']);
+        Route::get('/trends/analysis', [HeroAnalyticsController::class, 'getHeroMetaAnalysis']);
+    });
+    
+    // Advanced Match Analytics (Admin/Moderator)
+    Route::prefix('matches')->group(function () {
+        Route::get('/{matchId}/comprehensive', function($matchId, MatchAnalyticsService $service) {
+            return $service->aggregateMatchStatistics($matchId, true);
+        });
+        Route::get('/batch-analyze', function(Request $request, MatchAnalyticsService $service) {
+            $matchIds = $request->get('match_ids', []);
+            return $service->batchProcessMatches($matchIds);
+        });
+        Route::get('/{matchId}/live', function($matchId, MatchAnalyticsService $service) {
+            return $service->getLiveMatchAnalytics($matchId);
+        });
+    });
+    
+    // Advanced Tournament Analytics (Admin/Moderator)
+    Route::prefix('tournaments')->group(function () {
+        Route::get('/{eventId}/comprehensive', function($eventId, MatchAnalyticsService $service) {
+            return $service->aggregateTournamentStatistics($eventId, true);
+        });
+        Route::get('/leaderboards/generate', function(Request $request, MatchAnalyticsService $service) {
+            $timeframe = $request->get('timeframe', '30d');
+            $region = $request->get('region');
+            return $service->generateLeaderboards($timeframe, $region, true);
+        });
+    });
+    
     // Real-time Analytics
     Route::prefix('real-time')->group(function () {
         Route::get('/', [RealTimeAnalyticsController::class, 'index']);
@@ -1508,12 +1827,54 @@ Route::middleware(['auth:api', 'role:admin|moderator'])->prefix('analytics')->gr
     });
 });
 
-// Public Analytics Endpoints (Limited Access)
+// ===================================
+// COMPREHENSIVE ANALYTICS SYSTEM
+// ===================================
+
+// Public Analytics Endpoints (No Authentication Required)
 Route::prefix('analytics')->group(function () {
-    // Public analytics data
+    // Basic public analytics data
     Route::get('/public/overview', [AnalyticsController::class, 'getPublicOverview']);
     Route::get('/public/trending', [AnalyticsController::class, 'getTrendingContent']);
     Route::get('/public/live-stats', [RealTimeAnalyticsController::class, 'getPublicLiveStats']);
+    
+    // Player Analytics (Public)
+    Route::prefix('players')->group(function () {
+        Route::get('/leaderboard', [PlayerAnalyticsController::class, 'getPlayerLeaderboard']);
+        Route::get('/{playerId}', [PlayerAnalyticsController::class, 'getPlayerAnalytics']);
+    });
+    
+    // Team Analytics (Public)
+    Route::prefix('teams')->group(function () {
+        Route::get('/{teamId}', [TeamAnalyticsController::class, 'getTeamAnalytics']);
+        Route::get('/{teamId}/vs/{opponentId}', [TeamAnalyticsController::class, 'getTeamComparison']);
+    });
+    
+    // Hero Meta Analytics (Public)
+    Route::prefix('heroes')->group(function () {
+        Route::get('/meta', [HeroAnalyticsController::class, 'getHeroMetaAnalysis']);
+        Route::get('/{heroName}', [HeroAnalyticsController::class, 'getHeroAnalytics']);
+    });
+    
+    // Match Analytics (Public)
+    Route::prefix('matches')->group(function () {
+        Route::get('/{matchId}/analytics', function($matchId, MatchAnalyticsService $service) {
+            return $service->aggregateMatchStatistics($matchId);
+        });
+        Route::get('/{matchId}/detailed', function($matchId, MatchAnalyticsService $service) {
+            return $service->aggregateMatchStatistics($matchId);
+        });
+    });
+    
+    // Tournament Analytics (Public)
+    Route::prefix('tournaments')->group(function () {
+        Route::get('/{eventId}/analytics', function($eventId, MatchAnalyticsService $service) {
+            return $service->aggregateTournamentStatistics($eventId);
+        });
+        Route::get('/{eventId}/leaderboards', function($eventId, MatchAnalyticsService $service) {
+            return $service->generateLeaderboards('tournament', null, false);
+        });
+    });
 });
 
 // ===================================

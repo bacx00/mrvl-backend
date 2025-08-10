@@ -302,6 +302,52 @@ class ComprehensiveBracketController extends Controller
     /**
      * Get detailed bracket analysis
      */
+    public function getBracket($eventId)
+    {
+        return $this->show($eventId);
+    }
+    
+    public function getLiveMatches()
+    {
+        try {
+            $liveMatches = DB::table('matches as m')
+                ->join('events as e', 'm.event_id', '=', 'e.id')
+                ->leftJoin('teams as t1', 'm.team1_id', '=', 't1.id')
+                ->leftJoin('teams as t2', 'm.team2_id', '=', 't2.id')
+                ->where('m.status', 'ongoing')
+                ->select([
+                    'm.id',
+                    'm.event_id',
+                    'e.name as event_name',
+                    'm.team1_id',
+                    't1.name as team1_name',
+                    't1.logo as team1_logo',
+                    'm.team1_score',
+                    'm.team2_id',
+                    't2.name as team2_name',
+                    't2.logo as team2_logo',
+                    'm.team2_score',
+                    'm.status',
+                    'm.round',
+                    'm.scheduled_at',
+                    'm.stream_url'
+                ])
+                ->orderBy('m.scheduled_at', 'asc')
+                ->get();
+                
+            return response()->json([
+                'success' => true,
+                'data' => $liveMatches
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching live matches',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+    
     public function getBracketAnalysis($eventId)
     {
         try {
@@ -373,7 +419,7 @@ class ComprehensiveBracketController extends Controller
         }
 
         // Create round structure with proper naming
-        $totalRounds = max(array_keys($roundMatches));
+        $totalRounds = empty($roundMatches) ? 0 : max(array_keys($roundMatches));
         for ($roundNum = 1; $roundNum <= $totalRounds; $roundNum++) {
             $rounds[] = [
                 'round_number' => $roundNum,
@@ -957,5 +1003,358 @@ class ComprehensiveBracketController extends Controller
     private function calculatePerformanceMetrics($event) 
     { 
         return ['metrics' => []]; 
+    }
+
+    private function getEventTeamsWithDetails($eventId)
+    {
+        return DB::table('event_teams as et')
+            ->join('teams as t', 'et.team_id', '=', 't.id')
+            ->where('et.event_id', $eventId)
+            ->select([
+                't.*',
+                'et.seed',
+                'et.status as registration_status',
+                'et.registered_at'
+            ])
+            ->orderBy('et.seed')
+            ->get();
+    }
+
+    private function calculateEventStandings($event)
+    {
+        // Get existing standings or calculate based on matches
+        $standings = DB::table('event_standings as es')
+            ->join('teams as t', 'es.team_id', '=', 't.id')
+            ->where('es.event_id', $event->id)
+            ->select([
+                't.*',
+                'es.position',
+                'es.points',
+                'es.matches_played',
+                'es.matches_won',
+                'es.matches_lost'
+            ])
+            ->orderBy('es.position')
+            ->get();
+
+        if ($standings->isEmpty()) {
+            // Calculate standings from matches if no standings exist
+            $teams = $this->getEventTeamsWithDetails($event->id);
+            $standings = $teams->map(function($team, $index) {
+                return [
+                    'team_id' => $team->id,
+                    'team_name' => $team->name,
+                    'position' => $index + 1,
+                    'points' => 0,
+                    'matches_played' => 0,
+                    'matches_won' => 0,
+                    'matches_lost' => 0
+                ];
+            });
+        }
+
+        return $standings;
+    }
+
+    private function estimateRoundStartDate($event, $roundNumber)
+    {
+        $baseDate = $event->start_date ?? now();
+        $hoursPerRound = 2; // Estimate 2 hours between rounds
+        
+        return $baseDate->copy()->addHours(($roundNumber - 1) * $hoursPerRound);
+    }
+
+    private function getRoundStatus($matches)
+    {
+        if (empty($matches)) {
+            return 'pending';
+        }
+
+        $completed = collect($matches)->where('status', 'completed')->count();
+        $total = count($matches);
+
+        if ($completed === $total) {
+            return 'completed';
+        } elseif ($completed > 0) {
+            return 'in_progress';
+        } else {
+            return 'pending';
+        }
+    }
+
+    private function countTeamsRemaining($matches)
+    {
+        // Count teams still in the tournament (not eliminated)
+        $teamIds = collect($matches)
+            ->where('status', '!=', 'completed')
+            ->flatMap(function($match) {
+                return [$match->team1_id, $match->team2_id];
+            })
+            ->filter()
+            ->unique()
+            ->count();
+
+        return max(0, $teamIds);
+    }
+
+    private function analyzeBracketStructure($teamCount, $type)
+    {
+        $powerOfTwo = pow(2, ceil(log($teamCount, 2)));
+        $byes = $powerOfTwo - $teamCount;
+
+        return [
+            'bracket_size' => $powerOfTwo,
+            'teams_with_byes' => $byes,
+            'first_round_matches' => ($teamCount - $byes) / 2,
+            'total_rounds' => ceil(log($powerOfTwo, 2)),
+            'type' => $type
+        ];
+    }
+
+    private function estimateTournamentCompletion($event, $matches)
+    {
+        $totalMatches = count($matches);
+        $completedMatches = collect($matches)->where('status', 'completed')->count();
+        
+        if ($totalMatches === 0) {
+            return $event->end_date ?? now()->addDays(3);
+        }
+
+        $progress = $completedMatches / $totalMatches;
+        $daysRemaining = (1 - $progress) * 3; // Estimate based on remaining matches
+        
+        return now()->addDays(max(1, ceil($daysRemaining)));
+    }
+
+    private function calculateEliminationData($matches)
+    {
+        return [
+            'eliminated_teams' => collect($matches)
+                ->where('status', 'completed')
+                ->pluck('loser_id')
+                ->filter()
+                ->unique()
+                ->count(),
+            'teams_remaining' => $this->countTeamsRemaining($matches)
+        ];
+    }
+
+    private function mapAdvancementPaths($matches)
+    {
+        // Map how teams advance through the bracket
+        return collect($matches)
+            ->where('status', 'completed')
+            ->mapWithKeys(function($match) {
+                return [
+                    $match->id => [
+                        'winner_advances_to' => $match->winner_advances_to ?? null,
+                        'loser_drops_to' => $match->loser_advances_to ?? null
+                    ]
+                ];
+            })
+            ->toArray();
+    }
+
+    private function calculateOptimalSwissRounds($teamCount)
+    {
+        return max(3, ceil(log($teamCount, 2)));
+    }
+
+    private function getCurrentSwissRound($matches)
+    {
+        if (empty($matches)) return 1;
+        
+        return collect($matches)->max('round') ?? 1;
+    }
+
+    private function calculateAdvancedSwissStandings($eventId)
+    {
+        return $this->calculateEventStandings(\App\Models\Event::find($eventId));
+    }
+
+    private function getSwissTiebreakers()
+    {
+        return [
+            'primary' => 'points',
+            'secondary' => 'buchholz_score',
+            'tertiary' => 'head_to_head'
+        ];
+    }
+
+    private function calculateQualificationSpots($teamCount)
+    {
+        return max(1, floor($teamCount / 2));
+    }
+
+    private function calculateEliminationThreshold($teamCount, $totalRounds)
+    {
+        return max(1, floor($totalRounds / 2));
+    }
+
+    private function buildPairingHistory($matches)
+    {
+        return collect($matches)
+            ->where('status', '!=', 'pending')
+            ->groupBy('round')
+            ->map(function($roundMatches) {
+                return $roundMatches->map(function($match) {
+                    return [
+                        'team1_id' => $match->team1_id,
+                        'team2_id' => $match->team2_id,
+                        'result' => $match->status
+                    ];
+                });
+            })
+            ->toArray();
+    }
+
+    private function getSwissPairingMethod($roundNumber)
+    {
+        if ($roundNumber === 1) {
+            return 'random';
+        } elseif ($roundNumber <= 3) {
+            return 'swiss_sorted';
+        } else {
+            return 'swiss_advanced';
+        }
+    }
+
+    private function buildRoundRobinGrid($matches, $teamCount)
+    {
+        // Build a grid showing all possible matchups
+        $grid = [];
+        $teams = range(1, $teamCount);
+        
+        foreach ($teams as $team1) {
+            $grid[$team1] = [];
+            foreach ($teams as $team2) {
+                if ($team1 === $team2) {
+                    $grid[$team1][$team2] = null; // Can't play themselves
+                } else {
+                    $match = collect($matches)->first(function($match) use ($team1, $team2) {
+                        return ($match->team1_id === $team1 && $match->team2_id === $team2) ||
+                               ($match->team1_id === $team2 && $match->team2_id === $team1);
+                    });
+                    $grid[$team1][$team2] = $match ? $this->formatMatchData($match, $match->event_id) : null;
+                }
+            }
+        }
+        
+        return $grid;
+    }
+
+    private function groupRoundRobinByRounds($matches)
+    {
+        return collect($matches)
+            ->groupBy('round')
+            ->map(function($roundMatches, $round) {
+                return [
+                    'round_number' => $round,
+                    'round_name' => "Round {$round}",
+                    'matches' => $roundMatches->toArray()
+                ];
+            })
+            ->values()
+            ->toArray();
+    }
+
+    private function calculateAdvancedRoundRobinStandings($eventId)
+    {
+        return $this->calculateEventStandings(\App\Models\Event::find($eventId));
+    }
+
+    private function buildHeadToHeadMatrix($matches)
+    {
+        $matrix = [];
+        
+        foreach ($matches as $match) {
+            if ($match->status === 'completed' && $match->team1_id && $match->team2_id) {
+                $key = min($match->team1_id, $match->team2_id) . '-' . max($match->team1_id, $match->team2_id);
+                $matrix[$key] = [
+                    'team1_id' => $match->team1_id,
+                    'team2_id' => $match->team2_id,
+                    'team1_score' => $match->team1_score,
+                    'team2_score' => $match->team2_score,
+                    'winner_id' => $match->team1_score > $match->team2_score ? $match->team1_id : $match->team2_id
+                ];
+            }
+        }
+        
+        return $matrix;
+    }
+
+    private function getRemainingMatches($matches)
+    {
+        return collect($matches)->whereIn('status', ['pending', 'scheduled'])->values()->toArray();
+    }
+
+    private function analyzeTiebreakerScenarios($eventId)
+    {
+        // Analyze potential tiebreaker scenarios
+        return [
+            'potential_ties' => 0,
+            'tiebreaker_rules' => ['head_to_head', 'map_difference', 'rounds_difference']
+        ];
+    }
+
+    private function calculateGroupStandings($eventId, $groupId)
+    {
+        return $this->calculateEventStandings(\App\Models\Event::find($eventId));
+    }
+
+    private function isGroupComplete($matches)
+    {
+        return collect($matches)->every(function($match) {
+            return $match->status === 'completed';
+        });
+    }
+
+    private function calculateAdvancementSummary($groups)
+    {
+        return [
+            'total_groups' => count($groups),
+            'teams_advancing' => collect($groups)->sum(function($group) {
+                return $group['advancement_spots'] ?? 2;
+            }),
+            'completion_status' => collect($groups)->every(function($group) {
+                return $group['is_complete'] ?? false;
+            }) ? 'complete' : 'in_progress'
+        ];
+    }
+
+    private function getPlayoffBracket($eventId)
+    {
+        // Get playoff bracket if it exists
+        return null; // Placeholder
+    }
+
+    private function getGroupTiebreakerRules()
+    {
+        return [
+            'primary' => 'points',
+            'secondary' => 'head_to_head',
+            'tertiary' => 'map_difference'
+        ];
+    }
+
+    private function getTeamSeed($eventId, $teamId)
+    {
+        return DB::table('event_teams')
+            ->where('event_id', $eventId)
+            ->where('team_id', $teamId)
+            ->value('seed') ?? 0;
+    }
+
+    private function getMatchWinner($match)
+    {
+        if ($match->status !== 'completed') return null;
+        
+        if ($match->team1_score > $match->team2_score) {
+            return $match->team1_id;
+        } elseif ($match->team2_score > $match->team1_score) {
+            return $match->team2_id;
+        }
+        
+        return null;
     }
 }

@@ -1,0 +1,35 @@
+{
+    "test_suite": "Match Moderation Backend API Test",
+    "timestamp": "2025-08-10T18:35:03+00:00",
+    "duration_ms": 407.18000000000000682121026329696178436279296875,
+    "summary": {
+        "total_tests": 1,
+        "passed": 0,
+        "failed": 1,
+        "success_rate": "0%"
+    },
+    "test_results": {
+        "Admin Authentication": {
+            "status": "failed",
+            "error": "Authentication failed: {\"success\":false,\"message\":\"Invalid credentials\"}"
+        }
+    },
+    "errors": [
+        {
+            "test": "Admin Authentication",
+            "error": "Authentication failed: {\"success\":false,\"message\":\"Invalid credentials\"}"
+        }
+    ],
+    "test_data": {
+        "adminEmail": "admin@mrvl.net",
+        "adminPassword": "admin123",
+        "testMatchId": null,
+        "testTeamIds": [],
+        "testPlayerIds": []
+    },
+    "environment": {
+        "backend_url": "https:\/\/staging.mrvl.net\/api",
+        "php_version": "8.2.28",
+        "curl_version": "7.81.0"
+    }
+}

@@ -61,13 +61,18 @@ class RankingController extends Controller
             // Sort by rating (highest first)
             $query->orderBy('p.rating', 'desc');
 
-            $players = $query->paginate(50);
+            // Handle pagination - allow limit parameter or use default of 50
+            $perPage = min($request->get('limit', 50), 100); // Max 100 per page
+            $players = $query->paginate($perPage);
 
             // Add ranking position and format data
             $playersData = collect($players->items())->map(function($player, $index) use ($players) {
                 $globalRank = ($players->currentPage() - 1) * $players->perPage() + $index + 1;
                 $rank = $this->getRankByRating($player->rating);
                 $division = $this->getDivisionByRating($player->rating);
+                
+                // Ensure peak rating is at least current rating
+                $actualPeakRating = max($player->peak_rating ?? 0, $player->rating ?? 0);
                 
                 return [
                     'id' => $player->id,
@@ -86,7 +91,7 @@ class RankingController extends Controller
                     'ranking' => [
                         'global_rank' => $globalRank,
                         'rating' => $player->rating,
-                        'peak_rating' => $player->peak_rating,
+                        'peak_rating' => $actualPeakRating,
                         'rank' => $rank,
                         'division' => $division,
                         'full_rank' => $this->getFullRankName($rank, $division),
@@ -159,6 +164,9 @@ class RankingController extends Controller
             // Get competitive stats
             $competitiveStats = $this->getPlayerCompetitiveStats($playerId);
 
+            // Ensure peak rating is at least current rating
+            $actualPeakRating = max($player->peak_rating ?? 0, $player->rating ?? 0);
+
             $playerData = [
                 'id' => $player->id,
                 'username' => $player->username,
@@ -178,7 +186,7 @@ class RankingController extends Controller
                     'global_rank' => $globalRank,
                     'region_rank' => $regionRank,
                     'rating' => $player->rating,
-                    'peak_rating' => $player->peak_rating,
+                    'peak_rating' => $actualPeakRating,
                     'rank' => $rank,
                     'division' => $division,
                     'full_rank' => $this->getFullRankName($rank, $division),
@@ -191,7 +199,7 @@ class RankingController extends Controller
                 ],
                 'competitive_stats' => $competitiveStats,
                 'ranking_history' => $rankingHistory,
-                'achievements' => $this->getPlayerAchievements($playerId, $rank, $player->peak_rating),
+                'achievements' => $this->getPlayerAchievements($playerId, $rank, $actualPeakRating),
                 'marvel_rivals_features' => [
                     'hero_bans_unlocked' => $this->hasHeroBansUnlocked($player->rating),
                     'chrono_shield_available' => $this->hasChronoShield($player->rating),
@@ -534,7 +542,40 @@ class RankingController extends Controller
 
     private function getPlayerCompetitiveStats($playerId)
     {
-        // This would come from match data
+        // Get match statistics from player_match_stats table if available
+        try {
+            $stats = DB::table('player_match_stats as pms')
+                ->join('matches as m', 'pms.match_id', '=', 'm.id')
+                ->where('pms.player_id', $playerId)
+                ->where('m.status', 'completed')
+                ->selectRaw('
+                    COUNT(*) as matches_played,
+                    SUM(CASE WHEN pms.won = 1 THEN 1 ELSE 0 END) as wins,
+                    SUM(CASE WHEN pms.won = 0 THEN 1 ELSE 0 END) as losses
+                ')
+                ->first();
+
+            if ($stats && $stats->matches_played > 0) {
+                $winRate = round(($stats->wins / $stats->matches_played) * 100, 1);
+                
+                // Calculate current win streak
+                $currentStreak = $this->calculateCurrentWinStreak($playerId);
+                
+                return [
+                    'matches_played' => $stats->matches_played,
+                    'wins' => $stats->wins,
+                    'losses' => $stats->losses,
+                    'win_rate' => $winRate,
+                    'current_win_streak' => $currentStreak,
+                    'best_win_streak' => $currentStreak, // Simplified for now
+                    'season_high' => 0, // Would need rating history
+                    'season_low' => 0   // Would need rating history
+                ];
+            }
+        } catch (\Exception $e) {
+            // Fall back to basic data if match stats not available
+        }
+
         return [
             'matches_played' => 0,
             'wins' => 0,
@@ -978,5 +1019,33 @@ class RankingController extends Controller
             ->where('team_id', $opponentTeamId)
             ->where('status', 'active')
             ->avg('rating') ?? 1000;
+    }
+    
+    private function calculateCurrentWinStreak($playerId)
+    {
+        try {
+            // Get recent match results for this player in chronological order
+            $recentMatches = DB::table('player_match_stats as pms')
+                ->join('matches as m', 'pms.match_id', '=', 'm.id')
+                ->where('pms.player_id', $playerId)
+                ->where('m.status', 'completed')
+                ->orderBy('m.created_at', 'desc')
+                ->limit(10)
+                ->pluck('pms.won')
+                ->toArray();
+            
+            $streak = 0;
+            foreach ($recentMatches as $won) {
+                if ($won == 1) {
+                    $streak++;
+                } else {
+                    break; // Streak broken by a loss
+                }
+            }
+            
+            return $streak;
+        } catch (\Exception $e) {
+            return 0;
+        }
     }
 }

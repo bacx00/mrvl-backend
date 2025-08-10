@@ -1,0 +1,32 @@
+{
+  "timestamp": "2025-08-10T18:07:10.109Z",
+  "tests": {
+    "sse_connection": {
+      "status": "failed",
+      "response_code": 0,
+      "details": "Connection timeout or error"
+    },
+    "create_match": {
+      "status": "partial",
+      "response_code": 302,
+      "details": "Unexpected response code"
+    },
+    "live_control": {
+      "status": "partial",
+      "response_code": 302,
+      "details": "Unexpected response code"
+    },
+    "update_stats": {
+      "status": "partial",
+      "response_code": 302,
+      "details": "Unexpected response code"
+    }
+  },
+  "summary": {
+    "total_tests": 4,
+    "successful": 0,
+    "auth_required": 0,
+    "failed": 1,
+    "partial": 3
+  }
+}

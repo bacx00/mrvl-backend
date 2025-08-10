@@ -77,7 +77,7 @@ class EventController extends Controller
             // Add additional data for each event with VLR.gg-style formatting
             $eventsData = collect($events->items())->map(function($event) {
                 $organizer = $this->getUserWithFlairs($event->organizer_id);
-                $teams = $this->getEventTeamsPrivate($event->id);
+                $teams = $this->getEventTeamsPrivate($event->id)->toArray();
                 
                 return [
                     'id' => $event->id,
@@ -426,8 +426,7 @@ class EventController extends Controller
             ->where('et.event_id', $eventId)
             ->select(['t.id', 't.name', 't.short_name', 't.logo', 't.region', 'et.seed', 'et.status'])
             ->orderBy('et.seed')
-            ->get()
-            ->toArray();
+            ->get();
     }
 
     private function getEventTeamsDetailed($eventId)
@@ -476,7 +475,8 @@ class EventController extends Controller
             ->where('m.event_id', $eventId)
             ->select([
                 'm.id', 'm.round', 'm.bracket_position', 'm.status', 'm.format',
-                'm.team1_score', 'm.team2_score', 'm.scheduled_at', 'm.completed_at',
+                'm.team1_id', 'm.team2_id', 'm.team1_score', 'm.team2_score', 
+                'm.scheduled_at', 'm.completed_at',
                 't1.name as team1_name', 't1.short_name as team1_short', 't1.logo as team1_logo',
                 't2.name as team2_name', 't2.short_name as team2_short', 't2.logo as team2_logo',
                 'm.maps_data', 'm.stream_url'

@@ -32,17 +32,72 @@ class AdminForumsController extends Controller
     {
         try {
             $stats = Cache::remember('admin_forum_dashboard', 300, function () {
-                return [
-                    'total_threads' => ForumThread::count(),
-                    'total_posts' => Post::count(),
-                    'total_categories' => ForumCategory::count(),
-                    'active_users' => User::where('last_activity', '>=', Carbon::now()->subDays(7))->count(),
-                    'pending_reports' => $this->getPendingReportsCount(),
-                    'flagged_content' => $this->getFlaggedContentCount(),
-                    'recent_activity' => $this->getRecentModerationActivity(),
-                    'top_categories' => $this->getTopCategories(),
-                    'moderator_actions_today' => $this->getTodayModeratorActions(),
-                ];
+                $stats = [];
+                
+                try {
+                    $stats['total_threads'] = ForumThread::count();
+                } catch (\Exception $e) {
+                    Log::warning('Failed to count forum threads: ' . $e->getMessage());
+                    $stats['total_threads'] = 0;
+                }
+                
+                try {
+                    $stats['total_posts'] = Post::count();
+                } catch (\Exception $e) {
+                    Log::warning('Failed to count posts: ' . $e->getMessage());
+                    $stats['total_posts'] = 0;
+                }
+                
+                try {
+                    $stats['total_categories'] = ForumCategory::count();
+                } catch (\Exception $e) {
+                    Log::warning('Failed to count categories: ' . $e->getMessage());
+                    $stats['total_categories'] = 0;
+                }
+                
+                try {
+                    $stats['active_users'] = User::where('last_activity', '>=', Carbon::now()->subDays(7))->count();
+                } catch (\Exception $e) {
+                    Log::warning('Failed to count active users: ' . $e->getMessage());
+                    $stats['active_users'] = 0;
+                }
+                
+                try {
+                    $stats['pending_reports'] = $this->getPendingReportsCount();
+                } catch (\Exception $e) {
+                    Log::warning('Failed to get pending reports: ' . $e->getMessage());
+                    $stats['pending_reports'] = 0;
+                }
+                
+                try {
+                    $stats['flagged_content'] = $this->getFlaggedContentCount();
+                } catch (\Exception $e) {
+                    Log::warning('Failed to get flagged content: ' . $e->getMessage());
+                    $stats['flagged_content'] = 0;
+                }
+                
+                try {
+                    $stats['recent_activity'] = $this->getRecentModerationActivity();
+                } catch (\Exception $e) {
+                    Log::warning('Failed to get recent activity: ' . $e->getMessage());
+                    $stats['recent_activity'] = [];
+                }
+                
+                try {
+                    $stats['top_categories'] = $this->getTopCategories();
+                } catch (\Exception $e) {
+                    Log::warning('Failed to get top categories: ' . $e->getMessage());
+                    $stats['top_categories'] = [];
+                }
+                
+                try {
+                    $stats['moderator_actions_today'] = $this->getTodayModeratorActions();
+                } catch (\Exception $e) {
+                    Log::warning('Failed to get moderator actions: ' . $e->getMessage());
+                    $stats['moderator_actions_today'] = 0;
+                }
+                
+                return $stats;
             });
 
             return response()->json([
@@ -53,7 +108,8 @@ class AdminForumsController extends Controller
             Log::error('Admin forum dashboard error', ['error' => $e->getMessage()]);
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to load dashboard data'
+                'message' => 'Failed to load dashboard data',
+                'error' => config('app.debug') ? $e->getMessage() : 'Internal server error'
             ], 500);
         }
     }
@@ -867,7 +923,7 @@ class AdminForumsController extends Controller
 
             DB::beginTransaction();
 
-            // Create warning record
+            // Create warning record (user_warnings table may have different structure)
             $warning = DB::table('user_warnings')->insert([
                 'user_id' => $userId,
                 'moderator_id' => Auth::id(),
@@ -1405,7 +1461,7 @@ class AdminForumsController extends Controller
                     'moderator.name as moderator_name'
                 ])
                 ->leftJoin('users as reporter', 'reports.reporter_id', '=', 'reporter.id')
-                ->leftJoin('users as moderator', 'reports.moderator_id', '=', 'moderator.id');
+                ->leftJoin('users as moderator', 'reports.resolved_by', '=', 'moderator.id');
 
             if ($request->filled('status') && $request->status !== 'all') {
                 $query->where('reports.status', $request->status);
@@ -1466,9 +1522,8 @@ class AdminForumsController extends Controller
                 ->where('id', $reportId)
                 ->update([
                     'status' => 'resolved',
-                    'moderator_id' => Auth::id(),
-                    'resolution' => $request->action,
-                    'resolution_reason' => $request->reason,
+                    'resolved_by' => Auth::id(),
+                    'resolution_notes' => $request->reason,
                     'resolved_at' => now(),
                     'updated_at' => now()
                 ]);
@@ -1514,9 +1569,8 @@ class AdminForumsController extends Controller
                 ->where('id', $reportId)
                 ->update([
                     'status' => 'dismissed',
-                    'moderator_id' => Auth::id(),
-                    'resolution' => 'dismissed',
-                    'resolution_reason' => $request->reason,
+                    'resolved_by' => Auth::id(),
+                    'resolution_notes' => $request->reason,
                     'resolved_at' => now(),
                     'updated_at' => now()
                 ]);
@@ -1700,37 +1754,134 @@ class AdminForumsController extends Controller
             $startDate = Carbon::now()->subDays($period);
 
             $stats = Cache::remember("forum_admin_stats_{$period}", 600, function () use ($startDate) {
-                return [
-                    'overview' => [
-                        'total_threads' => ForumThread::count(),
-                        'total_posts' => Post::count(),
-                        'total_categories' => ForumCategory::count(),
-                        'active_users' => User::where('last_activity', '>=', $startDate)->count(),
-                    ],
-                    'recent_activity' => [
-                        'new_threads' => ForumThread::where('created_at', '>=', $startDate)->count(),
-                        'new_posts' => Post::where('created_at', '>=', $startDate)->count(),
-                        'moderation_actions' => UserActivity::where('activity_type', 'like', 'moderation.%')
-                                                           ->where('created_at', '>=', $startDate)
-                                                           ->count(),
-                        'reports_filed' => DB::table('reports')->where('created_at', '>=', $startDate)->count(),
-                    ],
-                    'moderation' => [
-                        'pending_reports' => DB::table('reports')->where('status', 'pending')->count(),
-                        'flagged_threads' => ForumThread::where('is_flagged', true)->count(),
-                        'flagged_posts' => Post::where('is_flagged', true)->count(),
-                        'banned_users' => User::whereNotNull('banned_at')->count(),
-                        'locked_threads' => ForumThread::where('locked', true)->count(),
-                    ],
-                    'top_categories' => ForumCategory::withCount('threads')
-                                                   ->orderBy('threads_count', 'desc')
-                                                   ->limit(10)
-                                                   ->get(),
-                    'most_active_users' => User::withCount(['forumThreads', 'forumPosts'])
-                                              ->orderByRaw('forum_threads_count + forum_posts_count DESC')
-                                              ->limit(10)
-                                              ->get(),
-                ];
+                $stats = [];
+                
+                // Overview stats with error handling
+                $stats['overview'] = [];
+                try {
+                    $stats['overview']['total_threads'] = ForumThread::count();
+                } catch (\Exception $e) {
+                    Log::warning('Failed to count forum threads in stats: ' . $e->getMessage());
+                    $stats['overview']['total_threads'] = 0;
+                }
+                
+                try {
+                    $stats['overview']['total_posts'] = Post::count();
+                } catch (\Exception $e) {
+                    Log::warning('Failed to count posts in stats: ' . $e->getMessage());
+                    $stats['overview']['total_posts'] = 0;
+                }
+                
+                try {
+                    $stats['overview']['total_categories'] = ForumCategory::count();
+                } catch (\Exception $e) {
+                    Log::warning('Failed to count categories in stats: ' . $e->getMessage());
+                    $stats['overview']['total_categories'] = 0;
+                }
+                
+                try {
+                    $stats['overview']['active_users'] = User::where('last_activity', '>=', $startDate)->count();
+                } catch (\Exception $e) {
+                    Log::warning('Failed to count active users in stats: ' . $e->getMessage());
+                    $stats['overview']['active_users'] = 0;
+                }
+
+                // Recent activity stats with error handling
+                $stats['recent_activity'] = [];
+                try {
+                    $stats['recent_activity']['new_threads'] = ForumThread::where('created_at', '>=', $startDate)->count();
+                } catch (\Exception $e) {
+                    Log::warning('Failed to count new threads: ' . $e->getMessage());
+                    $stats['recent_activity']['new_threads'] = 0;
+                }
+                
+                try {
+                    $stats['recent_activity']['new_posts'] = Post::where('created_at', '>=', $startDate)->count();
+                } catch (\Exception $e) {
+                    Log::warning('Failed to count new posts: ' . $e->getMessage());
+                    $stats['recent_activity']['new_posts'] = 0;
+                }
+                
+                try {
+                    if (class_exists('\\App\\Models\\UserActivity')) {
+                        $stats['recent_activity']['moderation_actions'] = UserActivity::where('activity_type', 'like', 'moderation.%')
+                                                               ->where('created_at', '>=', $startDate)
+                                                               ->count();
+                    } else {
+                        $stats['recent_activity']['moderation_actions'] = 0;
+                    }
+                } catch (\Exception $e) {
+                    Log::warning('Failed to count moderation actions: ' . $e->getMessage());
+                    $stats['recent_activity']['moderation_actions'] = 0;
+                }
+                
+                try {
+                    $stats['recent_activity']['reports_filed'] = DB::table('reports')->where('created_at', '>=', $startDate)->count();
+                } catch (\Exception $e) {
+                    Log::warning('Failed to count reports: ' . $e->getMessage());
+                    $stats['recent_activity']['reports_filed'] = 0;
+                }
+
+                // Moderation stats with error handling
+                $stats['moderation'] = [];
+                try {
+                    $stats['moderation']['pending_reports'] = DB::table('reports')->where('status', 'pending')->count();
+                } catch (\Exception $e) {
+                    Log::warning('Failed to count pending reports: ' . $e->getMessage());
+                    $stats['moderation']['pending_reports'] = 0;
+                }
+                
+                try {
+                    $stats['moderation']['flagged_threads'] = ForumThread::where('is_flagged', true)->count();
+                } catch (\Exception $e) {
+                    Log::warning('Failed to count flagged threads: ' . $e->getMessage());
+                    $stats['moderation']['flagged_threads'] = 0;
+                }
+                
+                try {
+                    $stats['moderation']['flagged_posts'] = Post::where('is_flagged', true)->count();
+                } catch (\Exception $e) {
+                    Log::warning('Failed to count flagged posts: ' . $e->getMessage());
+                    $stats['moderation']['flagged_posts'] = 0;
+                }
+                
+                try {
+                    $stats['moderation']['banned_users'] = User::whereNotNull('banned_at')->count();
+                } catch (\Exception $e) {
+                    Log::warning('Failed to count banned users: ' . $e->getMessage());
+                    $stats['moderation']['banned_users'] = 0;
+                }
+                
+                try {
+                    $stats['moderation']['locked_threads'] = ForumThread::where('locked', true)->count();
+                } catch (\Exception $e) {
+                    Log::warning('Failed to count locked threads: ' . $e->getMessage());
+                    $stats['moderation']['locked_threads'] = 0;
+                }
+
+                // Top categories with error handling
+                try {
+                    $stats['top_categories'] = ForumCategory::withCount('threads')
+                                                       ->orderBy('threads_count', 'desc')
+                                                       ->limit(10)
+                                                       ->get();
+                } catch (\Exception $e) {
+                    Log::warning('Failed to get top categories: ' . $e->getMessage());
+                    $stats['top_categories'] = [];
+                }
+
+                // Most active users with error handling
+                try {
+                    $stats['most_active_users'] = User::withCount(['forumThreads', 'forumPosts'])
+                                                  ->orderByRaw('forum_threads_count + forum_posts_count DESC')
+                                                  ->limit(10)
+                                                  ->get();
+                } catch (\Exception $e) {
+                    Log::warning('Failed to get most active users: ' . $e->getMessage());
+                    $stats['most_active_users'] = [];
+                }
+                
+                return $stats;
             });
 
             return response()->json([
@@ -1742,7 +1893,8 @@ class AdminForumsController extends Controller
             Log::error('Get statistics error', ['error' => $e->getMessage()]);
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to fetch statistics'
+                'message' => 'Failed to fetch statistics',
+                'error' => config('app.debug') ? $e->getMessage() : 'Internal server error'
             ], 500);
         }
     }

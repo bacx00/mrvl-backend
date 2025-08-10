@@ -1,0 +1,16 @@
+{
+    "timestamp": "2025-08-10 18:26:00",
+    "players_flags_fixed": 0,
+    "teams_flags_fixed": 0,
+    "team_logos_fixed": 0,
+    "team_countries_fixed": 0,
+    "indexes_added": 0,
+    "final_statistics": {
+        "total_players": 366,
+        "total_teams": 82,
+        "players_with_flags": 366,
+        "teams_with_flags": 82,
+        "teams_with_logos": 82,
+        "teams_with_countries": 82
+    }
+}

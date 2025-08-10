@@ -130,6 +130,715 @@ class Player extends Model
         return 'Unknown';
     }
 
+    /**
+     * Get performance trends over time period
+     */
+    public function getPerformanceTrends($days = 30)
+    {
+        $startDate = now()->subDays($days);
+        
+        $dailyStats = $this->matchStats()
+            ->whereHas('match', function($query) use ($startDate) {
+                $query->where('created_at', '>=', $startDate)
+                      ->where('status', 'completed');
+            })
+            ->join('matches', 'player_match_stats.match_id', '=', 'matches.id')
+            ->selectRaw('
+                DATE(matches.created_at) as date,
+                AVG(performance_rating) as avg_rating,
+                AVG(combat_score) as avg_acs,
+                AVG(kda) as avg_kda,
+                AVG(kast_percentage) as avg_kast,
+                COUNT(*) as maps_played
+            ')
+            ->groupBy(DB::raw('DATE(matches.created_at)'))
+            ->orderBy('date')
+            ->get();
+
+        if ($dailyStats->isEmpty()) {
+            return [
+                'trend_direction' => 'stable',
+                'rating_change' => 0,
+                'consistency_score' => 0,
+                'momentum' => 'neutral',
+                'daily_data' => []
+            ];
+        }
+
+        // Calculate moving averages
+        $trendData = [];
+        $window = 5; // 5-day moving average
+        
+        foreach ($dailyStats as $index => $stat) {
+            $windowStart = max(0, $index - $window + 1);
+            $windowData = $dailyStats->slice($windowStart, $window);
+            
+            $trendData[] = [
+                'date' => $stat->date,
+                'rating' => round($stat->avg_rating, 2),
+                'acs' => round($stat->avg_acs, 1),
+                'kda' => round($stat->avg_kda, 2),
+                'kast' => round($stat->avg_kast, 1),
+                'maps_played' => (int) $stat->maps_played,
+                'moving_avg_rating' => round($windowData->avg('avg_rating'), 2),
+                'moving_avg_acs' => round($windowData->avg('avg_acs'), 1)
+            ];
+        }
+
+        return [
+            'daily_data' => $trendData,
+            'trend_direction' => $this->calculateTrendDirection($trendData),
+            'rating_change' => $this->calculateRatingChange($trendData),
+            'consistency_score' => $this->calculateConsistency($dailyStats->pluck('avg_rating')),
+            'momentum' => $this->calculatePlayerMomentum($trendData)
+        ];
+    }
+
+    /**
+     * Get current form analysis
+     */
+    public function getCurrentForm($matchLimit = 10)
+    {
+        $recentMatches = $this->matchStats()
+            ->whereHas('match', function($query) {
+                $query->where('status', 'completed');
+            })
+            ->with(['match.team1', 'match.team2'])
+            ->orderBy('created_at', 'desc')
+            ->limit($matchLimit)
+            ->get();
+
+        if ($recentMatches->isEmpty()) {
+            return [
+                'form_rating' => 'unknown',
+                'streak' => null,
+                'recent_performance' => [],
+                'consistency' => 0,
+                'improvement_trend' => 'stable'
+            ];
+        }
+
+        // Calculate match results
+        $results = $recentMatches->map(function($stat) {
+            $match = $stat->match;
+            $won = ($match->team1_id == $this->team_id && $match->team1_score > $match->team2_score) ||
+                   ($match->team2_id == $this->team_id && $match->team2_score > $match->team1_score);
+            
+            return [
+                'result' => $won ? 'W' : 'L',
+                'rating' => round($stat->performance_rating, 2),
+                'acs' => round($stat->combat_score, 1),
+                'kda' => round($stat->kda, 2),
+                'date' => $match->created_at->format('Y-m-d'),
+                'opponent' => $match->team1_id == $this->team_id 
+                    ? $match->team2?->name 
+                    : $match->team1?->name
+            ];
+        });
+
+        return [
+            'form_rating' => $this->determineFormRating($results->pluck('rating')),
+            'streak' => $this->calculatePlayerStreak($results),
+            'recent_performance' => $results->values(),
+            'consistency' => $this->calculateConsistency($results->pluck('rating')),
+            'improvement_trend' => $this->calculateImprovementTrend($results),
+            'avg_recent_rating' => round($results->avg('rating'), 2),
+            'best_recent_performance' => $results->sortByDesc('rating')->first(),
+            'worst_recent_performance' => $results->sortBy('rating')->first()
+        ];
+    }
+
+    /**
+     * Get head-to-head performance against specific teams
+     */
+    public function getHeadToHeadPerformance($opponentTeamId = null, $startDate = null)
+    {
+        $query = $this->matchStats()
+            ->whereHas('match', function($matchQuery) use ($opponentTeamId, $startDate) {
+                $matchQuery->where('status', 'completed');
+                
+                if ($opponentTeamId) {
+                    $matchQuery->where(function($q) use ($opponentTeamId) {
+                        $q->where(function($subQ) use ($opponentTeamId) {
+                            $subQ->where('team1_id', $this->team_id)
+                                 ->where('team2_id', $opponentTeamId);
+                        })->orWhere(function($subQ) use ($opponentTeamId) {
+                            $subQ->where('team2_id', $this->team_id)
+                                 ->where('team1_id', $opponentTeamId);
+                        });
+                    });
+                }
+                
+                if ($startDate) {
+                    $matchQuery->where('created_at', '>=', $startDate);
+                }
+            })
+            ->with(['match.team1', 'match.team2']);
+
+        if ($opponentTeamId) {
+            $stats = $query->get();
+            
+            if ($stats->isEmpty()) {
+                return [
+                    'total_matches' => 0,
+                    'wins' => 0,
+                    'losses' => 0,
+                    'avg_performance' => [],
+                    'best_performance' => null,
+                    'head_to_head_record' => []
+                ];
+            }
+
+            $wins = $stats->filter(function($stat) {
+                $match = $stat->match;
+                return ($match->team1_id == $this->team_id && $match->team1_score > $match->team2_score) ||
+                       ($match->team2_id == $this->team_id && $match->team2_score > $match->team1_score);
+            })->count();
+
+            return [
+                'total_matches' => $stats->count(),
+                'wins' => $wins,
+                'losses' => $stats->count() - $wins,
+                'avg_performance' => [
+                    'rating' => round($stats->avg('performance_rating'), 2),
+                    'acs' => round($stats->avg('combat_score'), 1),
+                    'kda' => round($stats->avg('kda'), 2),
+                    'kast' => round($stats->avg('kast_percentage'), 1)
+                ],
+                'best_performance' => $stats->sortByDesc('performance_rating')->first(),
+                'head_to_head_record' => $stats->map(function($stat) {
+                    $match = $stat->match;
+                    $won = ($match->team1_id == $this->team_id && $match->team1_score > $match->team2_score) ||
+                           ($match->team2_id == $this->team_id && $match->team2_score > $match->team1_score);
+                    
+                    return [
+                        'date' => $match->created_at->format('Y-m-d'),
+                        'result' => $won ? 'W' : 'L',
+                        'rating' => round($stat->performance_rating, 2),
+                        'hero' => $stat->hero,
+                        'score' => [$match->team1_score, $match->team2_score]
+                    ];
+                })->values()
+            ];
+        }
+
+        // Return performance vs all teams
+        return $query->get()
+            ->groupBy(function($stat) {
+                $match = $stat->match;
+                $opponentId = $match->team1_id == $this->team_id ? $match->team2_id : $match->team1_id;
+                return $opponentId;
+            })
+            ->map(function($teamStats) {
+                $firstMatch = $teamStats->first()->match;
+                $opponent = $firstMatch->team1_id == $this->team_id 
+                    ? $firstMatch->team1 
+                    : $firstMatch->team2;
+
+                $wins = $teamStats->filter(function($stat) {
+                    $match = $stat->match;
+                    return ($match->team1_id == $this->team_id && $match->team1_score > $match->team2_score) ||
+                           ($match->team2_id == $this->team_id && $match->team2_score > $match->team1_score);
+                })->count();
+
+                return [
+                    'opponent' => [
+                        'id' => $opponent->id,
+                        'name' => $opponent->name,
+                        'logo' => $opponent->logo
+                    ],
+                    'matches' => $teamStats->count(),
+                    'wins' => $wins,
+                    'losses' => $teamStats->count() - $wins,
+                    'avg_rating' => round($teamStats->avg('performance_rating'), 2),
+                    'best_rating' => round($teamStats->max('performance_rating'), 2)
+                ];
+            })
+            ->sortByDesc('avg_rating')
+            ->values();
+    }
+
+    /**
+     * Get clutch performance metrics
+     */
+    public function getClutchPerformance($startDate = null)
+    {
+        $query = $this->matchStats()
+            ->whereHas('match', function($matchQuery) use ($startDate) {
+                $matchQuery->where('status', 'completed');
+                if ($startDate) {
+                    $matchQuery->where('created_at', '>=', $startDate);
+                }
+            });
+
+        $stats = $query->get();
+
+        if ($stats->isEmpty()) {
+            return [
+                'clutch_rating' => 0,
+                'pressure_performance' => [],
+                'comeback_performance' => [],
+                'decisive_moments' => []
+            ];
+        }
+
+        // Analyze performance in different scenarios
+        $highStakeMatches = $stats->filter(function($stat) {
+            return $stat->match->event_id !== null; // Tournament matches
+        });
+
+        $closeMatches = $stats->filter(function($stat) {
+            $match = $stat->match;
+            $scoreDiff = abs($match->team1_score - $match->team2_score);
+            return $scoreDiff <= 1; // Close matches (within 1 map)
+        });
+
+        return [
+            'clutch_rating' => $this->calculateClutchRating($stats),
+            'pressure_performance' => [
+                'tournament_rating' => $highStakeMatches->isNotEmpty() 
+                    ? round($highStakeMatches->avg('performance_rating'), 2) 
+                    : 0,
+                'regular_rating' => $stats->whereNull('match.event_id')->avg('performance_rating') ?? 0,
+                'pressure_differential' => $highStakeMatches->isNotEmpty() 
+                    ? round($highStakeMatches->avg('performance_rating') - $stats->avg('performance_rating'), 2)
+                    : 0
+            ],
+            'close_match_performance' => [
+                'close_match_rating' => $closeMatches->isNotEmpty() 
+                    ? round($closeMatches->avg('performance_rating'), 2)
+                    : 0,
+                'close_match_count' => $closeMatches->count(),
+                'clutch_factor' => $this->calculateClutchFactor($closeMatches)
+            ],
+            'mvp_frequency' => [
+                'match_mvps' => $stats->where('player_of_the_match', true)->count(),
+                'map_mvps' => $stats->where('player_of_the_map', true)->count(),
+                'mvp_rate' => $stats->count() > 0 
+                    ? round(($stats->where('player_of_the_match', true)->count() / $stats->count()) * 100, 1)
+                    : 0
+            ]
+        ];
+    }
+
+    /**
+     * Get career progression and milestones
+     */
+    public function getCareerProgression()
+    {
+        $allStats = $this->matchStats()
+            ->whereHas('match', function($query) {
+                $query->where('status', 'completed');
+            })
+            ->with('match')
+            ->orderBy('created_at')
+            ->get();
+
+        if ($allStats->isEmpty()) {
+            return [
+                'career_timeline' => [],
+                'milestones' => [],
+                'peak_performance' => null,
+                'improvement_areas' => []
+            ];
+        }
+
+        $monthlyStats = $allStats->groupBy(function($stat) {
+            return $stat->match->created_at->format('Y-m');
+        })->map(function($monthStats) {
+            return [
+                'month' => $monthStats->first()->match->created_at->format('Y-m'),
+                'matches' => $monthStats->count(),
+                'avg_rating' => round($monthStats->avg('performance_rating'), 2),
+                'avg_acs' => round($monthStats->avg('combat_score'), 1),
+                'avg_kda' => round($monthStats->avg('kda'), 2),
+                'mvp_count' => $monthStats->where('player_of_the_match', true)->count()
+            ];
+        });
+
+        return [
+            'career_timeline' => $monthlyStats->values(),
+            'milestones' => $this->identifyMilestones($allStats),
+            'peak_performance' => $this->findPeakPerformance($allStats),
+            'improvement_trajectory' => $this->calculateImprovementTrajectory($monthlyStats),
+            'consistency_over_time' => $this->calculateCareerConsistency($monthlyStats)
+        ];
+    }
+
+    /**
+     * Get hero mastery and specialization
+     */
+    public function getHeroMastery($startDate = null)
+    {
+        $query = $this->matchStats()
+            ->whereHas('match', function($matchQuery) use ($startDate) {
+                $matchQuery->where('status', 'completed');
+                if ($startDate) {
+                    $matchQuery->where('created_at', '>=', $startDate);
+                }
+            })
+            ->whereNotNull('hero');
+
+        $heroStats = $query->selectRaw('
+                hero,
+                COUNT(*) as matches_played,
+                AVG(performance_rating) as avg_rating,
+                AVG(combat_score) as avg_acs,
+                AVG(kda) as avg_kda,
+                MAX(performance_rating) as peak_rating,
+                SUM(CASE WHEN player_of_the_match = 1 THEN 1 ELSE 0 END) as mvp_count
+            ')
+            ->groupBy('hero')
+            ->orderBy('matches_played', 'desc')
+            ->get();
+
+        if ($heroStats->isEmpty()) {
+            return [
+                'hero_pool' => [],
+                'specializations' => [],
+                'versatility_score' => 0,
+                'signature_heroes' => []
+            ];
+        }
+
+        $totalMatches = $heroStats->sum('matches_played');
+
+        $heroData = $heroStats->map(function($hero) use ($totalMatches) {
+            $playRate = $totalMatches > 0 ? ($hero->matches_played / $totalMatches) * 100 : 0;
+            
+            return [
+                'hero' => $hero->hero,
+                'matches_played' => (int) $hero->matches_played,
+                'play_rate' => round($playRate, 1),
+                'avg_rating' => round($hero->avg_rating, 2),
+                'avg_acs' => round($hero->avg_acs, 1),
+                'avg_kda' => round($hero->avg_kda, 2),
+                'peak_rating' => round($hero->peak_rating, 2),
+                'mvp_count' => (int) $hero->mvp_count,
+                'mastery_level' => $this->calculateHeroMastery($hero, $playRate),
+                'effectiveness_score' => $this->calculateHeroEffectiveness($hero)
+            ];
+        });
+
+        return [
+            'hero_pool' => $heroData->values(),
+            'signature_heroes' => $heroData->where('mastery_level', 'expert')->take(3)->values(),
+            'versatility_score' => $this->calculateVersatilityScore($heroData),
+            'role_distribution' => $this->calculateRoleDistribution($heroData),
+            'improvement_recommendations' => $this->getHeroImprovementRecommendations($heroData)
+        ];
+    }
+
+    // Helper methods
+
+    private function calculateTrendDirection($trendData)
+    {
+        if (count($trendData) < 3) return 'stable';
+        
+        $recent = collect($trendData)->takeLast(3);
+        $earlier = collect($trendData)->slice(0, 3);
+        
+        $recentAvg = $recent->avg('moving_avg_rating');
+        $earlierAvg = $earlier->avg('moving_avg_rating');
+        
+        $difference = $recentAvg - $earlierAvg;
+        
+        if ($difference > 0.1) return 'improving';
+        if ($difference < -0.1) return 'declining';
+        return 'stable';
+    }
+
+    private function calculateRatingChange($trendData)
+    {
+        if (empty($trendData)) return 0;
+        
+        $first = collect($trendData)->first()['rating'] ?? 0;
+        $last = collect($trendData)->last()['rating'] ?? 0;
+        
+        return round($last - $first, 2);
+    }
+
+    private function calculateConsistency($ratings)
+    {
+        if ($ratings->count() < 2) return 0;
+        
+        $mean = $ratings->avg();
+        $variance = $ratings->map(function($rating) use ($mean) {
+            return pow($rating - $mean, 2);
+        })->avg();
+        
+        $standardDeviation = sqrt($variance);
+        
+        // Convert to consistency score (lower deviation = higher consistency)
+        return max(0, round(100 - ($standardDeviation * 50), 1));
+    }
+
+    private function calculatePlayerMomentum($trendData)
+    {
+        if (count($trendData) < 3) return 'neutral';
+        
+        $recent = collect($trendData)->takeLast(3);
+        $trend = $recent->pluck('rating');
+        
+        $isImproving = $trend->last() > $trend->first();
+        $variance = $this->calculateConsistency($trend);
+        
+        if ($isImproving && $variance > 70) return 'strong_positive';
+        if ($isImproving) return 'positive';
+        if (!$isImproving && $variance > 70) return 'strong_negative';
+        if (!$isImproving) return 'negative';
+        return 'neutral';
+    }
+
+    private function determineFormRating($ratings)
+    {
+        if ($ratings->isEmpty()) return 'unknown';
+        
+        $avgRating = $ratings->avg();
+        
+        if ($avgRating >= 1.3) return 'excellent';
+        if ($avgRating >= 1.1) return 'good';
+        if ($avgRating >= 0.9) return 'average';
+        if ($avgRating >= 0.7) return 'below_average';
+        return 'poor';
+    }
+
+    private function calculatePlayerStreak($results)
+    {
+        if ($results->isEmpty()) return null;
+        
+        $streak = 0;
+        $type = null;
+        
+        foreach ($results as $result) {
+            if ($type === null) {
+                $type = $result['result'] === 'W' ? 'win' : 'loss';
+                $streak = 1;
+            } elseif (($type === 'win' && $result['result'] === 'W') || 
+                      ($type === 'loss' && $result['result'] === 'L')) {
+                $streak++;
+            } else {
+                break;
+            }
+        }
+        
+        return [
+            'type' => $type,
+            'count' => $streak
+        ];
+    }
+
+    private function calculateImprovementTrend($results)
+    {
+        if ($results->count() < 4) return 'insufficient_data';
+        
+        $recent = $results->take(3);
+        $older = $results->skip(3)->take(3);
+        
+        $recentAvg = $recent->avg('rating');
+        $olderAvg = $older->avg('rating');
+        
+        $improvement = $recentAvg - $olderAvg;
+        
+        if ($improvement > 0.15) return 'strong_improvement';
+        if ($improvement > 0.05) return 'improving';
+        if ($improvement < -0.15) return 'declining';
+        if ($improvement < -0.05) return 'slight_decline';
+        return 'stable';
+    }
+
+    private function calculateClutchRating($stats)
+    {
+        if ($stats->isEmpty()) return 0;
+        
+        $baseRating = 50;
+        
+        // Factor in MVP performances
+        $mvpRate = $stats->where('player_of_the_match', true)->count() / $stats->count();
+        $baseRating += $mvpRate * 30;
+        
+        // Factor in first kill performance
+        $firstKillRate = $stats->avg('first_kills') / max($stats->avg('eliminations'), 1);
+        $baseRating += $firstKillRate * 15;
+        
+        // Factor in KDA in high-pressure situations
+        $avgKDA = $stats->avg('kda');
+        if ($avgKDA > 1.5) $baseRating += 15;
+        elseif ($avgKDA > 1.0) $baseRating += 10;
+        
+        return min(100, round($baseRating, 1));
+    }
+
+    private function calculateClutchFactor($closeMatches)
+    {
+        if ($closeMatches->isEmpty()) return 0;
+        
+        $avgRating = $closeMatches->avg('performance_rating');
+        $mvpCount = $closeMatches->where('player_of_the_match', true)->count();
+        
+        return round(($avgRating * 50) + ($mvpCount * 10), 1);
+    }
+
+    private function identifyMilestones($allStats)
+    {
+        $milestones = [];
+        
+        // Career highs
+        $highestRating = $allStats->max('performance_rating');
+        $highestRatingMatch = $allStats->where('performance_rating', $highestRating)->first();
+        
+        if ($highestRatingMatch) {
+            $milestones[] = [
+                'type' => 'career_high_rating',
+                'value' => round($highestRating, 2),
+                'date' => $highestRatingMatch->match->created_at->format('Y-m-d'),
+                'description' => "Career high rating of {$highestRating}"
+            ];
+        }
+        
+        // First MVP
+        $firstMVP = $allStats->where('player_of_the_match', true)->first();
+        if ($firstMVP) {
+            $milestones[] = [
+                'type' => 'first_mvp',
+                'date' => $firstMVP->match->created_at->format('Y-m-d'),
+                'description' => 'First Match MVP award'
+            ];
+        }
+        
+        // Match count milestones
+        $totalMatches = $allStats->count();
+        $milestoneMatches = [100, 250, 500, 1000];
+        
+        foreach ($milestoneMatches as $milestone) {
+            if ($totalMatches >= $milestone) {
+                $milestoneMatch = $allStats->skip($milestone - 1)->first();
+                if ($milestoneMatch) {
+                    $milestones[] = [
+                        'type' => 'match_milestone',
+                        'value' => $milestone,
+                        'date' => $milestoneMatch->match->created_at->format('Y-m-d'),
+                        'description' => "{$milestone}th professional match"
+                    ];
+                }
+            }
+        }
+        
+        return $milestones;
+    }
+
+    private function findPeakPerformance($allStats)
+    {
+        $bestPerformance = $allStats->sortByDesc('performance_rating')->first();
+        
+        if (!$bestPerformance) return null;
+        
+        return [
+            'rating' => round($bestPerformance->performance_rating, 2),
+            'acs' => round($bestPerformance->combat_score, 1),
+            'kda' => round($bestPerformance->kda, 2),
+            'hero' => $bestPerformance->hero,
+            'date' => $bestPerformance->match->created_at->format('Y-m-d'),
+            'opponent' => $bestPerformance->match->team1_id == $this->team_id 
+                ? $bestPerformance->match->team2?->name 
+                : $bestPerformance->match->team1?->name
+        ];
+    }
+
+    private function calculateImprovementTrajectory($monthlyStats)
+    {
+        if ($monthlyStats->count() < 3) return 'insufficient_data';
+        
+        $ratings = $monthlyStats->pluck('avg_rating');
+        $months = $ratings->keys();
+        
+        // Simple linear regression
+        $n = $ratings->count();
+        $sumX = $months->sum();
+        $sumY = $ratings->sum();
+        $sumXY = $months->zip($ratings)->sum(function($pair) {
+            return $pair[0] * $pair[1];
+        });
+        $sumXX = $months->sum(function($x) { return $x * $x; });
+        
+        $slope = ($n * $sumXY - $sumX * $sumY) / ($n * $sumXX - $sumX * $sumX);
+        
+        if ($slope > 0.02) return 'strong_upward';
+        if ($slope > 0.01) return 'upward';
+        if ($slope < -0.02) return 'strong_downward';
+        if ($slope < -0.01) return 'downward';
+        return 'stable';
+    }
+
+    private function calculateCareerConsistency($monthlyStats)
+    {
+        if ($monthlyStats->count() < 3) return 0;
+        
+        $ratings = $monthlyStats->pluck('avg_rating');
+        return $this->calculateConsistency($ratings);
+    }
+
+    private function calculateHeroMastery($hero, $playRate)
+    {
+        $matches = $hero->matches_played;
+        $rating = $hero->avg_rating;
+        
+        if ($matches >= 50 && $rating >= 1.2 && $playRate >= 15) return 'expert';
+        if ($matches >= 25 && $rating >= 1.0 && $playRate >= 10) return 'proficient';
+        if ($matches >= 10 && $rating >= 0.8) return 'competent';
+        if ($matches >= 5) return 'learning';
+        return 'novice';
+    }
+
+    private function calculateHeroEffectiveness($hero)
+    {
+        return round(($hero->avg_rating * 40) + ($hero->matches_played * 0.5), 1);
+    }
+
+    private function calculateVersatilityScore($heroData)
+    {
+        $uniqueHeroes = $heroData->count();
+        $playRateVariance = $this->calculateConsistency($heroData->pluck('play_rate'));
+        
+        return round(($uniqueHeroes * 5) + ($playRateVariance * 0.3), 1);
+    }
+
+    private function calculateRoleDistribution($heroData)
+    {
+        // This would require hero role data
+        return [
+            'Vanguard' => $heroData->where('hero', 'like', '%tank%')->count(),
+            'Duelist' => $heroData->where('hero', 'like', '%dps%')->count(),
+            'Strategist' => $heroData->where('hero', 'like', '%support%')->count()
+        ];
+    }
+
+    private function getHeroImprovementRecommendations($heroData)
+    {
+        $recommendations = [];
+        
+        $lowPerformanceHeroes = $heroData->where('avg_rating', '<', 0.9)
+                                         ->where('matches_played', '>=', 5);
+        
+        foreach ($lowPerformanceHeroes as $hero) {
+            $recommendations[] = [
+                'type' => 'improve_hero_performance',
+                'hero' => $hero['hero'],
+                'current_rating' => $hero['avg_rating'],
+                'suggestion' => "Focus on improving {$hero['hero']} gameplay - current rating below average"
+            ];
+        }
+        
+        if ($heroData->count() < 5) {
+            $recommendations[] = [
+                'type' => 'expand_hero_pool',
+                'suggestion' => 'Consider expanding hero pool for better team flexibility'
+            ];
+        }
+        
+        return $recommendations;
+    }
+
     // Remove problematic accessor - handled in frontend
 
     /**

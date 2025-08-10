@@ -4799,4 +4799,88 @@ class MatchController extends Controller
         }
     }
 
+
+    /**
+     * Reset match scores and data
+     */
+    public function resetMatch(Request $request, $matchId)
+    {
+        try {
+            $match = DB::table('matches')->where('id', $matchId)->first();
+            if (!$match) {
+                return response()->json(['success' => false, 'message' => 'Match not found'], 404);
+            }
+
+            // Reset match data
+            $resetData = [
+                'status' => 'upcoming',
+                'team1_score' => 0,
+                'team2_score' => 0,
+                'series_score_team1' => 0,
+                'series_score_team2' => 0,
+                'current_map_number' => 1,
+                'winner_id' => null,
+                'started_at' => null,
+                'ended_at' => null,
+                'updated_at' => now()
+            ];
+
+            // Reset maps data
+            $mapsData = is_string($match->maps_data) ? json_decode($match->maps_data, true) : $match->maps_data;
+            if (is_array($mapsData)) {
+                foreach ($mapsData as &$map) {
+                    $map['team1_score'] = 0;
+                    $map['team2_score'] = 0;
+                    $map['status'] = 'upcoming';
+                    $map['winner_id'] = null;
+                    $map['started_at'] = null;
+                    $map['completed_at'] = null;
+                    if (isset($map['team1_composition'])) {
+                        foreach ($map['team1_composition'] as &$player) {
+                            $player['eliminations'] = 0;
+                            $player['deaths'] = 0;
+                            $player['assists'] = 0;
+                            $player['damage'] = 0;
+                            $player['healing'] = 0;
+                            $player['damage_blocked'] = 0;
+                        }
+                    }
+                    if (isset($map['team2_composition'])) {
+                        foreach ($map['team2_composition'] as &$player) {
+                            $player['eliminations'] = 0;
+                            $player['deaths'] = 0;
+                            $player['assists'] = 0;
+                            $player['damage'] = 0;
+                            $player['healing'] = 0;
+                            $player['damage_blocked'] = 0;
+                        }
+                    }
+                }
+                $resetData['maps_data'] = json_encode($mapsData);
+            }
+
+            // Reset player stats
+            $resetData['player_stats'] = json_encode($this->initializePlayerStats($match->team1_id, $match->team2_id));
+
+            DB::table('matches')->where('id', $matchId)->update($resetData);
+
+            // Broadcast reset event
+            $this->broadcastLiveUpdate($matchId, 'status-update', [
+                'status' => 'upcoming',
+                'message' => 'Match reset by administrator'
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Match reset successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error resetting match: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
 }

@@ -1,0 +1,13 @@
+{
+    "timestamp": "2025-08-10 18:27:01",
+    "constraints_added": 1,
+    "constraints_skipped": 4,
+    "constraints_failed": 0,
+    "data_integrity_passed": true,
+    "summary": {
+        "total_players": 366,
+        "total_teams": 82,
+        "players_with_teams": 366,
+        "team_history_records": 0
+    }
+}

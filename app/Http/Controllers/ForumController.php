@@ -237,8 +237,8 @@ class ForumController extends ApiResponseController
                 'meta' => [
                     'pinned' => (bool)$thread->pinned,
                     'locked' => (bool)$thread->locked,
-                    'created_at' => $thread->created_at,
-                    'last_reply_at' => $thread->last_reply_at
+                    'created_at' => $thread->created_at ? date('c', strtotime($thread->created_at)) : null,
+                    'last_reply_at' => $thread->last_reply_at ? date('c', strtotime($thread->last_reply_at)) : null
                 ],
                 'mentions' => $this->mentionService->extractMentions($thread->content),
                 'user_vote' => $userVote,
@@ -1205,8 +1205,8 @@ class ForumController extends ApiResponseController
                     'downvotes' => $post->downvotes ?? 0
                 ],
                 'meta' => [
-                    'created_at' => $post->created_at,
-                    'updated_at' => $post->updated_at,
+                    'created_at' => $post->created_at ? date('c', strtotime($post->created_at)) : null,
+                    'updated_at' => $post->updated_at ? date('c', strtotime($post->updated_at)) : null,
                     'edited' => $post->created_at !== $post->updated_at
                 ],
                 'mentions' => $this->mentionService->extractMentions($post->content),

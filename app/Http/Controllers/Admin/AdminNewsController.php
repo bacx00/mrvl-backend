@@ -1362,6 +1362,474 @@ class AdminNewsController extends ApiResponseController
     }
 
     /**
+     * Toggle publish/unpublish a news article
+     */
+    public function togglePublish(Request $request, $newsId)
+    {
+        try {
+            // Check authorization
+            if (!auth('api')->check() || !auth('api')->user()->hasAnyRole(['admin', 'moderator'])) {
+                return $this->errorResponse('Unauthorized - Admin or Moderator access required', 403);
+            }
+
+            $article = DB::table('news')->where('id', $newsId)->first();
+            if (!$article) {
+                return $this->errorResponse('News article not found', 404);
+            }
+
+            $newStatus = $article->status === 'published' ? 'draft' : 'published';
+            
+            $updateData = [
+                'status' => $newStatus,
+                'updated_at' => now()
+            ];
+
+            if ($newStatus === 'published' && empty($article->published_at)) {
+                $updateData['published_at'] = now();
+            }
+
+            DB::table('news')->where('id', $newsId)->update($updateData);
+
+            $action = $newStatus === 'published' ? 'published' : 'unpublished';
+            $this->logModerationAction($action . '_news', 'news', $newsId);
+
+            return $this->successResponse(
+                ['status' => $newStatus], 
+                "News article {$action} successfully"
+            );
+
+        } catch (\Exception $e) {
+            return $this->errorResponse('Error toggling publish status: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Search news articles
+     */
+    public function search(Request $request)
+    {
+        try {
+            // Check authorization
+            if (!auth('api')->check() || !auth('api')->user()->hasAnyRole(['admin', 'moderator'])) {
+                return $this->errorResponse('Unauthorized - Admin or Moderator access required', 403);
+            }
+
+            $validator = Validator::make($request->all(), [
+                'query' => 'required|string|min:2',
+                'category_id' => 'nullable|exists:news_categories,id',
+                'status' => 'nullable|in:draft,published,scheduled,archived,rejected',
+                'featured' => 'nullable|boolean',
+                'date_from' => 'nullable|date',
+                'date_to' => 'nullable|date|after_or_equal:date_from'
+            ]);
+
+            if ($validator->fails()) {
+                return $this->errorResponse('Validation failed', 422, $validator->errors());
+            }
+
+            $query = DB::table('news as n')
+                ->leftJoin('users as u', 'n.author_id', '=', 'u.id')
+                ->leftJoin('news_categories as nc', 'n.category_id', '=', 'nc.id')
+                ->select([
+                    'n.*',
+                    'u.name as author_name',
+                    'u.avatar as author_avatar',
+                    'nc.name as category_name',
+                    'nc.color as category_color'
+                ]);
+
+            // Search in title, content, excerpt, and tags
+            $searchTerm = $request->input('query');
+            $query->where(function($q) use ($searchTerm) {
+                $q->where('n.title', 'LIKE', "%{$searchTerm}%")
+                  ->orWhere('n.content', 'LIKE', "%{$searchTerm}%")
+                  ->orWhere('n.excerpt', 'LIKE', "%{$searchTerm}%")
+                  ->orWhere('n.tags', 'LIKE', "%{$searchTerm}%");
+            });
+
+            // Apply filters
+            if ($request->filled('category_id')) {
+                $query->where('n.category_id', $request->input('category_id'));
+            }
+
+            if ($request->filled('status')) {
+                $query->where('n.status', $request->input('status'));
+            }
+
+            if ($request->filled('featured')) {
+                $query->where('n.featured', $request->boolean('featured'));
+            }
+
+            if ($request->filled('date_from')) {
+                $query->where('n.created_at', '>=', $request->input('date_from'));
+            }
+
+            if ($request->filled('date_to')) {
+                $query->where('n.created_at', '<=', $request->input('date_to') . ' 23:59:59');
+            }
+
+            $query->orderBy('n.created_at', 'desc');
+
+            $perPage = min($request->get('per_page', 20), 100);
+            $results = $query->paginate($perPage);
+
+            $newsData = collect($results->items())->map(function($article) {
+                return [
+                    'id' => $article->id,
+                    'title' => $article->title,
+                    'slug' => $article->slug,
+                    'excerpt' => $article->excerpt,
+                    'status' => $article->status,
+                    'featured' => (bool)$article->featured,
+                    'breaking' => (bool)$article->breaking,
+                    'featured_image' => $article->featured_image ? asset('storage/' . $article->featured_image) : null,
+                    'author' => [
+                        'id' => $article->author_id,
+                        'name' => $article->author_name,
+                        'avatar' => $article->author_avatar ? asset('storage/avatars/' . $article->author_avatar) : null
+                    ],
+                    'category' => [
+                        'id' => $article->category_id,
+                        'name' => $article->category_name,
+                        'color' => $article->category_color
+                    ],
+                    'stats' => [
+                        'views' => $article->views ?? 0,
+                        'comments' => $article->comments_count ?? 0,
+                        'score' => $article->score ?? 0
+                    ],
+                    'dates' => [
+                        'created_at' => $article->created_at,
+                        'updated_at' => $article->updated_at,
+                        'published_at' => $article->published_at
+                    ],
+                    'tags' => $article->tags ? json_decode($article->tags, true) : []
+                ];
+            });
+
+            return $this->successResponse([
+                'data' => $newsData,
+                'pagination' => [
+                    'current_page' => $results->currentPage(),
+                    'last_page' => $results->lastPage(),
+                    'per_page' => $results->perPage(),
+                    'total' => $results->total()
+                ]
+            ], 'Search results retrieved successfully');
+
+        } catch (\Exception $e) {
+            return $this->errorResponse('Error performing search: ' . $e->getMessage(), 500);
+        }
+    }
+
+    // ===================================
+    // COMMENTS MODERATION FUNCTIONALITY
+    // ===================================
+
+    /**
+     * Get news comments for moderation
+     */
+    public function getNewsComments(Request $request)
+    {
+        try {
+            // Check authorization
+            if (!auth('api')->check() || !auth('api')->user()->hasAnyRole(['admin', 'moderator'])) {
+                return $this->errorResponse('Unauthorized - Admin or Moderator access required', 403);
+            }
+
+            $query = DB::table('news_comments as nc')
+                ->leftJoin('users as u', 'nc.user_id', '=', 'u.id')
+                ->leftJoin('news as n', 'nc.news_id', '=', 'n.id')
+                ->select([
+                    'nc.*',
+                    'u.name as author_name',
+                    'u.avatar as author_avatar',
+                    'n.title as news_title',
+                    'n.slug as news_slug'
+                ]);
+
+            // Filter by status
+            if ($request->filled('status')) {
+                $query->where('nc.status', $request->status);
+            }
+
+            // Filter by news article
+            if ($request->filled('news_id')) {
+                $query->where('nc.news_id', $request->news_id);
+            }
+
+            // Search in content
+            if ($request->filled('search')) {
+                $searchTerm = $request->search;
+                $query->where('nc.content', 'LIKE', "%{$searchTerm}%");
+            }
+
+            // Date range filtering
+            if ($request->filled('date_from')) {
+                $query->where('nc.created_at', '>=', $request->date_from);
+            }
+
+            if ($request->filled('date_to')) {
+                $query->where('nc.created_at', '<=', $request->date_to . ' 23:59:59');
+            }
+
+            $query->orderBy('nc.created_at', 'desc');
+
+            $perPage = min($request->get('per_page', 20), 100);
+            $comments = $query->paginate($perPage);
+
+            return $this->successResponse([
+                'data' => $comments->items(),
+                'pagination' => [
+                    'current_page' => $comments->currentPage(),
+                    'last_page' => $comments->lastPage(),
+                    'per_page' => $comments->perPage(),
+                    'total' => $comments->total()
+                ]
+            ], 'News comments retrieved successfully');
+
+        } catch (\Exception $e) {
+            return $this->errorResponse('Error fetching comments: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Get reported comments
+     */
+    public function getReportedComments(Request $request)
+    {
+        try {
+            // Check authorization
+            if (!auth('api')->check() || !auth('api')->user()->hasAnyRole(['admin', 'moderator'])) {
+                return $this->errorResponse('Unauthorized - Admin or Moderator access required', 403);
+            }
+
+            $query = DB::table('news_comments as nc')
+                ->leftJoin('users as u', 'nc.user_id', '=', 'u.id')
+                ->leftJoin('news as n', 'nc.news_id', '=', 'n.id')
+                ->leftJoin('comment_reports as cr', 'nc.id', '=', 'cr.comment_id')
+                ->leftJoin('users as reporter', 'cr.reporter_id', '=', 'reporter.id')
+                ->where('nc.status', 'flagged')
+                ->orWhere('cr.status', 'pending')
+                ->select([
+                    'nc.*',
+                    'u.name as author_name',
+                    'u.avatar as author_avatar',
+                    'n.title as news_title',
+                    'n.slug as news_slug',
+                    'cr.reason as report_reason',
+                    'cr.created_at as reported_at',
+                    'reporter.name as reporter_name'
+                ])
+                ->orderBy('cr.created_at', 'desc');
+
+            $perPage = min($request->get('per_page', 20), 100);
+            $reportedComments = $query->paginate($perPage);
+
+            return $this->successResponse([
+                'data' => $reportedComments->items(),
+                'pagination' => [
+                    'current_page' => $reportedComments->currentPage(),
+                    'last_page' => $reportedComments->lastPage(),
+                    'per_page' => $reportedComments->perPage(),
+                    'total' => $reportedComments->total()
+                ]
+            ], 'Reported comments retrieved successfully');
+
+        } catch (\Exception $e) {
+            return $this->errorResponse('Error fetching reported comments: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Moderate a comment
+     */
+    public function moderateComment(Request $request, $commentId)
+    {
+        try {
+            // Check authorization
+            if (!auth('api')->check() || !auth('api')->user()->hasAnyRole(['admin', 'moderator'])) {
+                return $this->errorResponse('Unauthorized - Admin or Moderator access required', 403);
+            }
+
+            $validator = Validator::make($request->all(), [
+                'action' => 'required|in:approve,hide,delete,flag',
+                'reason' => 'nullable|string|max:500'
+            ]);
+
+            if ($validator->fails()) {
+                return $this->errorResponse('Validation failed', 422, $validator->errors());
+            }
+
+            $comment = DB::table('news_comments')->where('id', $commentId)->first();
+            if (!$comment) {
+                return $this->errorResponse('Comment not found', 404);
+            }
+
+            DB::beginTransaction();
+
+            try {
+                switch ($request->action) {
+                    case 'approve':
+                        DB::table('news_comments')
+                            ->where('id', $commentId)
+                            ->update(['status' => 'active', 'updated_at' => now()]);
+                        break;
+
+                    case 'hide':
+                        DB::table('news_comments')
+                            ->where('id', $commentId)
+                            ->update(['status' => 'hidden', 'updated_at' => now()]);
+                        break;
+
+                    case 'delete':
+                        if (!auth('api')->user()->hasRole('admin')) {
+                            return $this->errorResponse('Unauthorized - Admin access required for delete', 403);
+                        }
+                        DB::table('news_comments')->where('id', $commentId)->delete();
+                        break;
+
+                    case 'flag':
+                        DB::table('news_comments')
+                            ->where('id', $commentId)
+                            ->update(['status' => 'flagged', 'updated_at' => now()]);
+                        break;
+                }
+
+                // Log the moderation action
+                $this->logModerationAction(
+                    $request->action . '_comment',
+                    'news_comment',
+                    $commentId,
+                    $request->reason
+                );
+
+                DB::commit();
+
+                return $this->successResponse(null, "Comment {$request->action}d successfully");
+
+            } catch (\Exception $e) {
+                DB::rollback();
+                throw $e;
+            }
+
+        } catch (\Exception $e) {
+            return $this->errorResponse('Error moderating comment: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Delete a comment (admin only)
+     */
+    public function deleteComment($commentId)
+    {
+        try {
+            // Check authorization
+            if (!auth('api')->check() || !auth('api')->user()->hasRole('admin')) {
+                return $this->errorResponse('Unauthorized - Admin access required', 403);
+            }
+
+            $comment = DB::table('news_comments')->where('id', $commentId)->first();
+            if (!$comment) {
+                return $this->errorResponse('Comment not found', 404);
+            }
+
+            DB::table('news_comments')->where('id', $commentId)->delete();
+
+            // Log the moderation action
+            $this->logModerationAction('delete_comment', 'news_comment', $commentId);
+
+            return $this->successResponse(null, 'Comment deleted successfully');
+
+        } catch (\Exception $e) {
+            return $this->errorResponse('Error deleting comment: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Bulk moderate comments
+     */
+    public function bulkModerateComments(Request $request)
+    {
+        try {
+            // Check authorization
+            if (!auth('api')->check() || !auth('api')->user()->hasAnyRole(['admin', 'moderator'])) {
+                return $this->errorResponse('Unauthorized - Admin or Moderator access required', 403);
+            }
+
+            $validator = Validator::make($request->all(), [
+                'action' => 'required|in:approve,hide,delete,flag',
+                'comment_ids' => 'required|array|min:1',
+                'comment_ids.*' => 'integer|exists:news_comments,id',
+                'reason' => 'nullable|string|max:500'
+            ]);
+
+            if ($validator->fails()) {
+                return $this->errorResponse('Validation failed', 422, $validator->errors());
+            }
+
+            $action = $request->action;
+            $commentIds = $request->comment_ids;
+            $affected = 0;
+
+            DB::beginTransaction();
+
+            try {
+                switch ($action) {
+                    case 'approve':
+                        $affected = DB::table('news_comments')
+                            ->whereIn('id', $commentIds)
+                            ->update(['status' => 'active', 'updated_at' => now()]);
+                        break;
+
+                    case 'hide':
+                        $affected = DB::table('news_comments')
+                            ->whereIn('id', $commentIds)
+                            ->update(['status' => 'hidden', 'updated_at' => now()]);
+                        break;
+
+                    case 'delete':
+                        if (!auth('api')->user()->hasRole('admin')) {
+                            return $this->errorResponse('Unauthorized - Admin access required for bulk delete', 403);
+                        }
+                        $affected = DB::table('news_comments')->whereIn('id', $commentIds)->delete();
+                        break;
+
+                    case 'flag':
+                        $affected = DB::table('news_comments')
+                            ->whereIn('id', $commentIds)
+                            ->update(['status' => 'flagged', 'updated_at' => now()]);
+                        break;
+                }
+
+                // Log each moderation action
+                foreach ($commentIds as $commentId) {
+                    $this->logModerationAction(
+                        'bulk_' . $action . '_comment',
+                        'news_comment',
+                        $commentId,
+                        $request->reason
+                    );
+                }
+
+                DB::commit();
+
+                return $this->successResponse(
+                    ['affected_count' => $affected],
+                    "Bulk {$action} operation completed successfully. {$affected} comments affected."
+                );
+
+            } catch (\Exception $e) {
+                DB::rollback();
+                throw $e;
+            }
+
+        } catch (\Exception $e) {
+            return $this->errorResponse('Error performing bulk comment moderation: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
      * Log moderation actions
      */
     private function logModerationAction($action, $targetType, $targetId, $reason = null)
@@ -1381,3 +1849,4 @@ class AdminNewsController extends ApiResponseController
             \Log::error('Error logging moderation action: ' . $e->getMessage());
         }
     }
+}

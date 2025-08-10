@@ -1,0 +1,51 @@
+{
+  "timestamp": "2025-08-10T18:13:54.781Z",
+  "test_suite": "live_scoring_endpoints",
+  "base_url": "http://localhost:8000/api",
+  "tests": {
+    "sse_connection": {
+      "endpoint": "/api/live-updates/2/stream",
+      "method": "GET",
+      "response_code": 0,
+      "status": "connection_error",
+      "details": "Connection timeout or network error",
+      "has_content": false,
+      "timestamp": "2025-08-10T18:13:57.814Z"
+    },
+    "create_match": {
+      "endpoint": "/api/admin/matches",
+      "method": "POST",
+      "response_code": 401,
+      "status": "auth_required",
+      "details": "Authentication required (correct security behavior)",
+      "has_content": true,
+      "timestamp": "2025-08-10T18:14:54.923Z"
+    },
+    "live_control": {
+      "endpoint": "/api/admin/matches/2/live-control",
+      "method": "PUT",
+      "response_code": 401,
+      "status": "auth_required",
+      "details": "Authentication required (correct security behavior)",
+      "has_content": true,
+      "timestamp": "2025-08-10T18:14:55.212Z"
+    },
+    "update_stats": {
+      "endpoint": "/api/admin/matches/2/update-live-stats",
+      "method": "POST",
+      "response_code": 401,
+      "status": "auth_required",
+      "details": "Authentication required (correct security behavior)",
+      "has_content": true,
+      "timestamp": "2025-08-10T18:14:55.344Z"
+    }
+  },
+  "summary": {
+    "total_tests": 4,
+    "fully_working": 0,
+    "auth_protected": 3,
+    "failed_error": 1,
+    "other": 0,
+    "overall_status": "ISSUES_DETECTED"
+  }
+}

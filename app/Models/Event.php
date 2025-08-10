@@ -46,8 +46,11 @@ class Event extends Model
         'status' => 'upcoming',
         'tier' => 'B',
         'format' => 'single_elimination',
+        'game_mode' => '5v5',
         'currency' => 'USD',
         'timezone' => 'UTC',
+        'region' => 'International',
+        'description' => '',
         'max_teams' => 16,
         'featured' => false,
         'public' => true,
@@ -64,14 +67,21 @@ class Event extends Model
 
     public function teams(): BelongsToMany
     {
+        $pivotColumns = ['seed', 'status', 'registered_at'];
+        
+        // Only include registration_data if column exists
+        if (\Schema::hasColumn('event_teams', 'registration_data')) {
+            $pivotColumns[] = 'registration_data';
+        }
+        
         return $this->belongsToMany(Team::class, 'event_teams')
-                    ->withPivot(['seed', 'status', 'registered_at', 'registration_data'])
+                    ->withPivot($pivotColumns)
                     ->withTimestamps();
     }
 
     public function matches(): HasMany
     {
-        return $this->hasMany(GameMatch::class);
+        return $this->hasMany(MvrlMatch::class, 'event_id');
     }
 
     public function brackets(): HasMany
@@ -82,6 +92,21 @@ class Event extends Model
     public function standings(): HasMany
     {
         return $this->hasMany(EventStanding::class);
+    }
+
+    public function bracketStages(): HasMany
+    {
+        return $this->hasMany(BracketStage::class);
+    }
+
+    public function bracketMatches(): HasMany
+    {
+        return $this->hasMany(BracketMatch::class);
+    }
+
+    public function bracketStandings(): HasMany
+    {
+        return $this->hasMany(BracketStanding::class);
     }
 
     // Scopes

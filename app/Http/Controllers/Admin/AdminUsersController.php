@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Spatie\Permission\Models\Role;
@@ -79,14 +80,31 @@ class AdminUsersController extends Controller
                 ], 422);
             }
             
-            $query = User::with([
-                'teamFlair:id,name,logo,region', 
-                'warnings' => function($query) {
-                    $query->where('expires_at', '>', now())
-                          ->orWhereNull('expires_at')
-                          ->orderBy('created_at', 'desc');
+            $query = User::query();
+            
+            // Add relationships with null checks
+            try {
+                $query = $query->with([
+                    'teamFlair' => function($q) {
+                        $q->select('id', 'name', 'logo', 'region', 'short_name');
+                    }
+                ]);
+                
+                // Only add warnings relationship if the UserWarning model exists
+                if (class_exists('\\App\\Models\\UserWarning')) {
+                    $query = $query->with(['warnings' => function($query) {
+                        // Check if expires_at column exists
+                        if (Schema::hasColumn('user_warnings', 'expires_at')) {
+                            $query->where('expires_at', '>', now())
+                                  ->orWhereNull('expires_at');
+                        }
+                        $query->orderBy('created_at', 'desc');
+                    }]);
                 }
-            ]);
+            } catch (Exception $relationshipError) {
+                Log::warning('Failed to load user relationships: ' . $relationshipError->getMessage());
+                // Continue with basic query
+            }
             
             // Apply search filter
             if ($request->filled('search')) {
@@ -131,23 +149,49 @@ class AdminUsersController extends Controller
                 $query->where('last_login', '<=', $request->last_login_before);
             }
             
-            // Apply moderation filters
+            // Apply moderation filters with column existence checks
             if ($request->has('has_warnings') && $request->boolean('has_warnings')) {
-                $query->whereHas('warnings', function($q) {
-                    $q->where('expires_at', '>', now())->orWhereNull('expires_at');
-                });
+                if (class_exists('\\App\\Models\\UserWarning')) {
+                    try {
+                        $query->whereHas('warnings', function($q) {
+                            if (Schema::hasColumn('user_warnings', 'expires_at')) {
+                                $q->where('expires_at', '>', now())->orWhereNull('expires_at');
+                            }
+                            // If expires_at doesn't exist, just check for warnings existence
+                        });
+                    } catch (Exception $e) {
+                        Log::warning('Failed to apply has_warnings filter: ' . $e->getMessage());
+                    }
+                }
             }
             
             if ($request->has('is_banned') && $request->boolean('is_banned')) {
-                $query->whereNotNull('banned_at')
-                      ->where(function($q) {
-                          $q->whereNull('ban_expires_at')
-                            ->orWhere('ban_expires_at', '>', now());
-                      });
+                try {
+                    // Check if banned_at column exists before using it
+                    if (Schema::hasColumn('users', 'banned_at')) {
+                        $query->whereNotNull('banned_at')
+                              ->where(function($q) {
+                                  $q->whereNull('ban_expires_at')
+                                    ->orWhere('ban_expires_at', '>', now());
+                              });
+                    } else {
+                        // Fallback to status column
+                        $query->where('status', 'banned');
+                    }
+                } catch (Exception $e) {
+                    Log::warning('Failed to apply is_banned filter: ' . $e->getMessage());
+                }
             }
             
             if ($request->has('is_muted') && $request->boolean('is_muted')) {
-                $query->where('muted_until', '>', now());
+                try {
+                    // Check if muted_until column exists
+                    if (Schema::hasColumn('users', 'muted_until')) {
+                        $query->where('muted_until', '>', now());
+                    }
+                } catch (Exception $e) {
+                    Log::warning('Failed to apply is_muted filter: ' . $e->getMessage());
+                }
             }
             
             // Apply 2FA filter (placeholder - implement when 2FA is added)
@@ -311,7 +355,9 @@ class AdminUsersController extends Controller
     {
         try {
             $user = User::with([
-                'teamFlair:id,name,logo,region,short_name',
+                'teamFlair' => function($q) {
+                    $q->select('id', 'name', 'logo', 'region', 'short_name');
+                },
                 'warnings' => function($query) {
                     $query->with('moderator:id,name')
                           ->orderBy('created_at', 'desc');
@@ -455,7 +501,7 @@ class AdminUsersController extends Controller
 
             DB::commit();
 
-            $user->refresh()->load(['teamFlair:id,name,logo,region', 'warnings']);
+            $user->refresh()->load(['teamFlair', 'warnings']);
 
             return response()->json([
                 'success' => true,
@@ -1247,13 +1293,20 @@ class AdminUsersController extends Controller
                     'unverified' => User::whereNull('email_verified_at')->count()
                 ],
                 'activity' => [
-                    'online_now' => User::where('last_activity', '>', Carbon::now()->subMinutes(5))->count(),
-                    'active_today' => User::where('last_activity', '>', $last24Hours)->count(),
-                    'active_week' => User::where('last_activity', '>', $last7Days)->count()
+                    'online_now' => Schema::hasColumn('users', 'last_activity') ? 
+                        User::where('last_activity', '>', Carbon::now()->subMinutes(5))->count() : 0,
+                    'active_today' => Schema::hasColumn('users', 'last_activity') ? 
+                        User::where('last_activity', '>', $last24Hours)->count() : 0,
+                    'active_week' => Schema::hasColumn('users', 'last_activity') ? 
+                        User::where('last_activity', '>', $last7Days)->count() : 0
                 ],
                 'moderation' => [
-                    'with_warnings' => User::where('warning_count', '>', 0)->count(),
-                    'banned_users' => User::whereNotNull('banned_at')->count(),
+                    'with_warnings' => Schema::hasColumn('users', 'warning_count') ?
+                        User::where('warning_count', '>', 0)->count() :
+                        User::whereHas('warnings')->count(),
+                    'banned_users' => Schema::hasColumn('users', 'banned_at') ?
+                        User::whereNotNull('banned_at')->count() :
+                        User::where('status', 'banned')->count(),
                     'muted_users' => User::where('muted_until', '>', now())->count()
                 ]
             ];
@@ -1284,11 +1337,13 @@ class AdminUsersController extends Controller
             'status' => $user->status ?? 'active',
             'email_verified_at' => $user->email_verified_at,
             'last_login' => $user->last_login,
-            'last_activity' => $user->last_activity,
+            'last_activity' => Schema::hasColumn('users', 'last_activity') ? $user->last_activity : null,
             'created_at' => $user->created_at,
             'updated_at' => $user->updated_at,
             'moderation' => $moderationStatus,
-            'warning_count' => $user->warning_count ?? 0
+            'warning_count' => Schema::hasColumn('users', 'warning_count') ? 
+                ($user->warning_count ?? 0) : 
+                $user->warnings()->count()
         ];
 
         if (!$includeLimited) {
@@ -1983,7 +2038,8 @@ class AdminUsersController extends Controller
                     'end' => $endDate
                 ],
                 'new_registrations' => User::where('created_at', '>=', $startDate)->count(),
-                'active_users' => User::where('last_activity', '>=', $startDate)->count(),
+                'active_users' => Schema::hasColumn('users', 'last_activity') ?
+                    User::where('last_activity', '>=', $startDate)->count() : 0,
                 'role_distribution' => [
                     'admin' => User::where('role', 'admin')->count(),
                     'moderator' => User::where('role', 'moderator')->count(),
@@ -2043,20 +2099,25 @@ class AdminUsersController extends Controller
                     $reportData = [
                         'total_users' => User::count(),
                         'new_users_period' => User::whereBetween('created_at', [$dateFrom, $dateTo])->count(),
-                        'active_users_period' => User::whereBetween('last_activity', [$dateFrom, $dateTo])->count(),
-                        'top_active_users' => User::where('last_activity', '>=', $dateFrom)
-                                                  ->orderBy('last_activity', 'desc')
-                                                  ->limit(10)
-                                                  ->select(['id', 'name', 'last_activity'])
-                                                  ->get()
+                        'active_users_period' => Schema::hasColumn('users', 'last_activity') ? 
+                            User::whereBetween('last_activity', [$dateFrom, $dateTo])->count() : 0,
+                        'top_active_users' => Schema::hasColumn('users', 'last_activity') ?
+                            User::where('last_activity', '>=', $dateFrom)
+                                ->orderBy('last_activity', 'desc')
+                                ->limit(10)
+                                ->select(['id', 'name', 'last_activity'])
+                                ->get() : collect()
                     ];
                     break;
                     
                 case 'moderation_summary':
                     $reportData = [
                         'banned_users' => User::where('status', 'banned')->count(),
-                        'users_with_warnings' => User::where('warning_count', '>', 0)->count(),
-                        'recent_bans' => User::whereBetween('banned_at', [$dateFrom, $dateTo])->count(),
+                        'users_with_warnings' => Schema::hasColumn('users', 'warning_count') ?
+                            User::where('warning_count', '>', 0)->count() :
+                            User::whereHas('warnings')->count(),
+                        'recent_bans' => Schema::hasColumn('users', 'banned_at') ?
+                            User::whereBetween('banned_at', [$dateFrom, $dateTo])->count() : 0,
                         'total_warnings' => UserWarning::whereBetween('created_at', [$dateFrom, $dateTo])->count()
                     ];
                     break;
@@ -2064,7 +2125,8 @@ class AdminUsersController extends Controller
                 case 'security_audit':
                     $reportData = [
                         'unverified_emails' => User::whereNull('email_verified_at')->count(),
-                        'inactive_accounts' => User::where('last_activity', '<', Carbon::now()->subMonths(6))->count(),
+                        'inactive_accounts' => Schema::hasColumn('users', 'last_activity') ?
+                            User::where('last_activity', '<', Carbon::now()->subMonths(6))->count() : 0,
                         'admin_accounts' => User::where('role', 'admin')->count(),
                         'recent_password_resets' => 0 // Would need password reset tracking
                     ];
@@ -2072,9 +2134,12 @@ class AdminUsersController extends Controller
                     
                 case 'engagement_stats':
                     $reportData = [
-                        'daily_active_users' => User::where('last_activity', '>', Carbon::now()->subDay())->count(),
-                        'weekly_active_users' => User::where('last_activity', '>', Carbon::now()->subWeek())->count(),
-                        'monthly_active_users' => User::where('last_activity', '>', Carbon::now()->subMonth())->count()
+                        'daily_active_users' => Schema::hasColumn('users', 'last_activity') ?
+                            User::where('last_activity', '>', Carbon::now()->subDay())->count() : 0,
+                        'weekly_active_users' => Schema::hasColumn('users', 'last_activity') ?
+                            User::where('last_activity', '>', Carbon::now()->subWeek())->count() : 0,
+                        'monthly_active_users' => Schema::hasColumn('users', 'last_activity') ?
+                            User::where('last_activity', '>', Carbon::now()->subMonth())->count() : 0
                     ];
                     break;
             }

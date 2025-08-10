@@ -1,0 +1,14 @@
+{
+    "timestamp": "2025-08-10 18:26:28",
+    "indexes_added": 8,
+    "indexes_skipped": 0,
+    "total_players": 366,
+    "total_teams": 82,
+    "players_with_teams": 366,
+    "data_integrity_status": {
+        "players_with_flags": 366,
+        "teams_with_flags": 82,
+        "teams_with_logos": 82,
+        "teams_with_countries": 82
+    }
+}

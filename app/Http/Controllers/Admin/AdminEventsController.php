@@ -22,7 +22,7 @@ class AdminEventsController extends Controller
 {
     protected $bracketService;
 
-    public function __construct(BracketGenerationService $bracketService)
+    public function __construct(BracketGenerationService $bracketService = null)
     {
         $this->bracketService = $bracketService;
     }
@@ -199,9 +199,9 @@ class AdminEventsController extends Controller
                 'registration_requirements' => 'nullable|array',
                 'streams' => 'nullable|array',
                 'social_links' => 'nullable|array',
-                'featured' => 'boolean',
-                'public' => 'boolean',
-                'logo' => 'nullable|string',
+                'featured' => 'nullable|boolean',
+                'public' => 'nullable|boolean',
+                'logo' => 'nullable|file|image|mimes:jpeg,jpg,png,webp|max:5120',
                 'banner' => 'nullable|string',
                 'sponsors' => 'nullable|array',
                 'partners' => 'nullable|array'
@@ -221,6 +221,12 @@ class AdminEventsController extends Controller
             $eventData['slug'] = $this->generateUniqueSlug($eventData['name']);
             $eventData['organizer_id'] = $eventData['organizer_id'] ?? auth()->id();
             $eventData['status'] = 'upcoming';
+
+            // Handle logo file upload
+            if ($request->hasFile('logo')) {
+                $logoPath = $this->handleLogoUpload($request->file('logo'));
+                $eventData['logo'] = $logoPath;
+            }
 
             // Validate prize distribution if provided
             if (isset($eventData['prize_distribution']) && $eventData['prize_pool']) {
@@ -296,9 +302,9 @@ class AdminEventsController extends Controller
                 'registration_requirements' => 'nullable|array',
                 'streams' => 'nullable|array',
                 'social_links' => 'nullable|array',
-                'featured' => 'boolean',
-                'public' => 'boolean',
-                'logo' => 'nullable|string',
+                'featured' => 'nullable|boolean',
+                'public' => 'nullable|boolean',
+                'logo' => 'nullable|file|image|mimes:jpeg,jpg,png,webp|max:5120',
                 'banner' => 'nullable|string',
                 'sponsors' => 'nullable|array',
                 'partners' => 'nullable|array'
@@ -319,6 +325,12 @@ class AdminEventsController extends Controller
             // Update slug if name changed
             if (isset($eventData['name']) && $eventData['name'] !== $event->name) {
                 $eventData['slug'] = $this->generateUniqueSlug($eventData['name']);
+            }
+
+            // Handle logo file upload
+            if ($request->hasFile('logo')) {
+                $logoPath = $this->handleLogoUpload($request->file('logo'));
+                $eventData['logo'] = $logoPath;
             }
 
             // Validate prize distribution if provided
@@ -764,6 +776,13 @@ class AdminEventsController extends Controller
             DB::beginTransaction();
 
             // Generate bracket using the bracket service
+            if (!$this->bracketService) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Bracket generation service is not available'
+                ], 503);
+            }
+
             $bracketData = $this->bracketService->generateBracket(
                 $event->teams->pluck('id')->toArray(),
                 $request->format,
@@ -1086,5 +1105,25 @@ class AdminEventsController extends Controller
     {
         // Implementation for creating matches from bracket data
         // This would depend on the specific bracket format structure
+    }
+
+    /**
+     * Handle logo file upload for events
+     */
+    private function handleLogoUpload($file): string
+    {
+        try {
+            $extension = $file->getClientOriginalExtension();
+            $filename = 'event_' . time() . '_' . Str::random(10) . '.' . $extension;
+            $directory = 'events/logos';
+            
+            // Store the file
+            $path = $file->storeAs($directory, $filename, 'public');
+            
+            // Return the storage URL
+            return '/storage/' . $path;
+        } catch (\Exception $e) {
+            throw new \Exception('Failed to upload logo: ' . $e->getMessage());
+        }
     }
 }

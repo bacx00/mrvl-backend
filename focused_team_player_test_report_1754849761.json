@@ -1,0 +1,60 @@
+{
+    "timestamp": "2025-08-10 18:16:01",
+    "summary": {
+        "total_tests": 14,
+        "passed": 13,
+        "failed": 1,
+        "success_rate": 92.900000000000005684341886080801486968994140625
+    },
+    "detailed_results": {
+        "endpoint_test_\/teams": {
+            "status": "PASS",
+            "description": "Teams list"
+        },
+        "teams_data_validation": {
+            "status": "PASS"
+        },
+        "team_logo_path": {
+            "status": "PASS"
+        },
+        "team_social_media_structure": {
+            "status": "PASS"
+        },
+        "team_earnings_format": {
+            "status": "PASS"
+        },
+        "endpoint_test_\/players": {
+            "status": "PASS",
+            "description": "Players list"
+        },
+        "players_data_validation": {
+            "status": "FAIL"
+        },
+        "endpoint_test_\/teams\/33": {
+            "status": "PASS",
+            "description": "Single team details"
+        },
+        "endpoint_test_\/players\/1": {
+            "status": "PASS",
+            "description": "Single player details"
+        },
+        "team_player_relationships": {
+            "status": "PASS"
+        },
+        "image_endpoint_\/upload\/team\/33\/logo": {
+            "status": "PASS"
+        },
+        "image_endpoint_\/upload\/player\/1\/avatar": {
+            "status": "PASS"
+        },
+        "player_feature_\/players\/1\/team-history": {
+            "status": "PASS"
+        },
+        "player_feature_\/players\/1\/achievements": {
+            "status": "PASS"
+        }
+    },
+    "errors": [
+        "Players missing fields: name, team_id"
+    ]
+}

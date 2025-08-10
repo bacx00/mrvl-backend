@@ -583,12 +583,17 @@ class User extends Authenticatable
      */
     public function hasActiveWarnings(): bool
     {
-        return $this->warnings()
-                    ->where(function ($q) {
-                        $q->where('expires_at', '>', now())
-                          ->orWhereNull('expires_at');
-                    })
-                    ->exists();
+        // Check if expires_at column exists
+        if (\Schema::hasColumn('user_warnings', 'expires_at')) {
+            return $this->warnings()
+                        ->where(function ($q) {
+                            $q->where('expires_at', '>', now())
+                              ->orWhereNull('expires_at');
+                        })
+                        ->exists();
+        }
+        // If expires_at doesn't exist, just check if any warnings exist
+        return $this->warnings()->exists();
     }
 
     /**
@@ -679,7 +684,9 @@ class User extends Authenticatable
             'is_banned' => $this->isBanned(),
             'is_muted' => $this->isMuted(),
             'has_warnings' => $this->hasActiveWarnings(),
-            'warning_count' => $this->warning_count,
+            'warning_count' => \Schema::hasColumn('users', 'warning_count') ? 
+                $this->warning_count : 
+                $this->warnings()->count(),
             'ban_reason' => $this->ban_reason,
             'ban_expires_at' => $this->ban_expires_at,
             'muted_until' => $this->muted_until
@@ -761,6 +768,9 @@ class User extends Authenticatable
      */
     public function scopeWithWarnings($query)
     {
-        return $query->where('warning_count', '>', 0);
+        if (\Schema::hasColumn('users', 'warning_count')) {
+            return $query->where('warning_count', '>', 0);
+        }
+        return $query->whereHas('warnings');
     }
 }

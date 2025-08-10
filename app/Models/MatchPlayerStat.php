@@ -102,7 +102,7 @@ class MatchPlayerStat extends Model
      */
     public function match(): BelongsTo
     {
-        return $this->belongsTo(Match::class);
+        return $this->belongsTo(GameMatch::class, 'match_id');
     }
 
     public function map(): BelongsTo
@@ -149,7 +149,7 @@ class MatchPlayerStat extends Model
         return round(($this->eliminations + $this->assists) / $this->deaths, 2);
     }
 
-    public function getTimePl    ayedFormattedAttribute(): string
+    public function getTimePlayedFormattedAttribute(): string
     {
         $minutes = floor($this->time_played_seconds / 60);
         $seconds = $this->time_played_seconds % 60;

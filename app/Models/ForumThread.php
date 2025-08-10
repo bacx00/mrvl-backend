@@ -3,11 +3,10 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ForumThread extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
 
     protected $fillable = [
         'title', 'content', 'user_id', 'category_id', 'replies', 'views',
@@ -113,7 +112,7 @@ class ForumThread extends Model
 
     public function canBeModerated()
     {
-        return !$this->trashed();
+        return true;
     }
 
     public function hasReports()

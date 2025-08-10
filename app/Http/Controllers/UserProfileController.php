@@ -83,9 +83,22 @@ class UserProfileController extends Controller
         } catch (Exception $e) {
             Log::error('Error fetching user profile', [
                 'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
                 'trace' => $e->getTraceAsString(),
                 'user_id' => auth('api')->id()
             ]);
+            
+            // Return more detailed error in development
+            if (config('app.debug')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Profile loading error: ' . $e->getMessage(),
+                    'error' => $e->getMessage(),
+                    'file' => $e->getFile() . ':' . $e->getLine()
+                ], 500);
+            }
+            
             return response()->json([
                 'success' => false,
                 'message' => 'Unable to load profile data. Please try again later.',
@@ -1458,8 +1471,16 @@ class UserProfileController extends Controller
      */
     private function fixUserAvatar($user)
     {
+        // If user has use_hero_as_avatar set and hero_flair, generate avatar path
+        if ($user->use_hero_as_avatar && $user->hero_flair) {
+            // Generate the hero image path
+            $heroImagePath = $this->getHeroImagePath($user->hero_flair);
+            if ($heroImagePath && file_exists(public_path($heroImagePath))) {
+                $user->avatar = $heroImagePath;
+            }
+        }
         // If avatar contains old portrait PNG path
-        if ($user->avatar && strpos($user->avatar, '/portraits/') !== false) {
+        else if ($user->avatar && strpos($user->avatar, '/portraits/') !== false) {
             // Map specific portrait names to hero names
             $portraitToHero = [
                 'venom' => 'Venom',
@@ -1488,6 +1509,192 @@ class UserProfileController extends Controller
                     }
                 }
             }
+        }
+    }
+    
+    /**
+     * Get user profile with details (public endpoint)
+     */
+    public function getUserWithDetails($userId)
+    {
+        try {
+            $user = User::with(['teamFlair'])->findOrFail($userId);
+            
+            // Fix avatar if needed
+            $this->fixUserAvatar($user);
+            
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'avatar' => $user->avatar,
+                    'hero_flair' => $user->hero_flair,
+                    'team_flair' => $user->teamFlair,
+                    'show_hero_flair' => (bool)$user->show_hero_flair,
+                    'show_team_flair' => (bool)$user->show_team_flair,
+                    'use_hero_as_avatar' => (bool)$user->use_hero_as_avatar,
+                    'created_at' => $user->created_at,
+                    'role' => $user->role ?? 'user'
+                ]
+            ]);
+        } catch (ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User not found'
+            ], 404);
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load user profile'
+            ], 500);
+        }
+    }
+    
+    /**
+     * Get user statistics (public endpoint)
+     */
+    public function getUserStatsPublic($userId)
+    {
+        try {
+            $user = User::findOrFail($userId);
+            $stats = $user->getStatsWithCache();
+            
+            return response()->json([
+                'success' => true,
+                'data' => $stats
+            ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load user statistics',
+                'data' => [
+                    'news_comments' => 0,
+                    'match_comments' => 0,
+                    'forum_threads' => 0,
+                    'forum_posts' => 0,
+                    'upvotes_given' => 0,
+                    'downvotes_given' => 0,
+                    'upvotes_received' => 0,
+                    'downvotes_received' => 0
+                ]
+            ], 200);
+        }
+    }
+    
+    /**
+     * Get user activities
+     */
+    public function getUserActivities($userId)
+    {
+        try {
+            $activities = $this->getRecentActivityOptimized($userId, 20);
+            
+            return response()->json([
+                'success' => true,
+                'data' => $activities
+            ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load user activities',
+                'data' => []
+            ], 200);
+        }
+    }
+    
+    /**
+     * Get user achievements
+     */
+    public function getUserAchievements($userId)
+    {
+        try {
+            $user = User::findOrFail($userId);
+            
+            // Get achievements from cache if available
+            $achievements = Cache::remember(
+                "user_achievements_{$userId}",
+                300,
+                function () use ($user) {
+                    if (method_exists($user, 'achievements')) {
+                        return $user->achievements()->get();
+                    }
+                    return [];
+                }
+            );
+            
+            return response()->json([
+                'success' => true,
+                'data' => $achievements
+            ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load achievements',
+                'data' => []
+            ], 200);
+        }
+    }
+    
+    /**
+     * Get user forum statistics
+     */
+    public function getUserForumStats($userId)
+    {
+        try {
+            $user = User::findOrFail($userId);
+            
+            $forumStats = Cache::remember(
+                "user_forum_stats_{$userId}",
+                300,
+                function () use ($user) {
+                    return [
+                        'threads_created' => $user->forumThreads()->count(),
+                        'posts_created' => $user->forumPosts()->count(),
+                        'total_thread_views' => $user->forumThreads()->sum('views'),
+                        'total_thread_replies' => $user->forumThreads()->sum('replies')
+                    ];
+                }
+            );
+            
+            return response()->json([
+                'success' => true,
+                'data' => $forumStats
+            ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load forum stats',
+                'data' => [
+                    'threads_created' => 0,
+                    'posts_created' => 0,
+                    'total_thread_views' => 0,
+                    'total_thread_replies' => 0
+                ]
+            ], 200);
+        }
+    }
+    
+    /**
+     * Get user match history
+     */
+    public function getUserMatches($userId)
+    {
+        try {
+            // For now, return empty as match history is player-based, not user-based
+            // This can be expanded if users are linked to players
+            
+            return response()->json([
+                'success' => true,
+                'data' => [],
+                'message' => 'Match history is available for players, not users'
+            ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load match history',
+                'data' => []
+            ], 200);
         }
     }
 }

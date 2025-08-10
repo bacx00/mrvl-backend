@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\{Team, Player, GameMatch, Event, User, ForumThread};
+use App\Models\{Team, Player, GameMatch, Event, User, ForumThread, News};
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\{DB, Log, Schema};
 
 class AnalyticsController extends Controller
 {
@@ -126,8 +126,8 @@ class AnalyticsController extends Controller
                     'end' => $endDate->toISOString()
                 ],
                 'content_moderation' => [
-                    'total_forum_threads' => ForumThread::count(),
-                    'new_threads_period' => ForumThread::where('created_at', '>=', $startDate)->count(),
+                    'total_forum_threads' => $this->getSafeForumThreadCount(),
+                    'new_threads_period' => $this->getSafeNewThreadsCount($startDate),
                     'flagged_content' => $this->getFlaggedContentCount($startDate),
                     'moderation_actions' => $this->getModerationActionsCount($startDate),
                     'active_users' => User::where('last_login', '>=', $startDate)->count(),
@@ -254,12 +254,12 @@ class AnalyticsController extends Controller
                     'mps.hero',
                     'mrh.role',
                     DB::raw('COUNT(*) as pick_count'),
-                    DB::raw('AVG(mps.eliminations) as avg_eliminations'),
-                    DB::raw('AVG(mps.deaths) as avg_deaths'),
-                    DB::raw('AVG(mps.assists) as avg_assists'),
-                    DB::raw('AVG(mps.damage_dealt) as avg_damage'),
-                    DB::raw('AVG(mps.healing_done) as avg_healing'),
-                    DB::raw('AVG(mps.kda_ratio) as avg_kda')
+                    DB::raw('AVG(COALESCE(mps.eliminations, 0)) as avg_eliminations'),
+                    DB::raw('AVG(COALESCE(mps.deaths, 0)) as avg_deaths'),
+                    DB::raw('AVG(COALESCE(mps.assists, 0)) as avg_assists'),
+                    DB::raw('AVG(COALESCE(mps.damage_dealt, 0)) as avg_damage'),
+                    DB::raw('AVG(COALESCE(mps.healing_done, 0)) as avg_healing'),
+                    DB::raw('AVG(COALESCE(mps.kda_ratio, 0)) as avg_kda')
                 )
                 ->groupBy('mps.hero', 'mrh.role')
                 ->orderBy('pick_count', 'desc')
@@ -353,7 +353,7 @@ class AnalyticsController extends Controller
     {
         return [
             'forum_activity' => [
-                'total_threads' => ForumThread::where('created_at', '>=', $startDate)->count(),
+                'total_threads' => $this->getSafeNewThreadsCount($startDate),
                 'total_posts' => $this->getForumPostsCount($startDate),
                 'active_users' => $this->getActiveForumUsers($startDate)
             ],
@@ -753,14 +753,57 @@ class AnalyticsController extends Controller
         }
     }
 
+    private function getSafeForumThreadCount()
+    {
+        try {
+            return \DB::table('forum_threads')->count();
+        } catch (\Exception $e) {
+            \Log::error('Error getting forum thread count: ' . $e->getMessage());
+            return 0;
+        }
+    }
+
+    private function getSafeNewThreadsCount($startDate)
+    {
+        try {
+            return \DB::table('forum_threads')->where('created_at', '>=', $startDate)->count();
+        } catch (\Exception $e) {
+            \Log::error('Error getting new threads count: ' . $e->getMessage());
+            return 0;
+        }
+    }
+
+    private function getForumParticipants($startDate)
+    {
+        try {
+            return \DB::table('forum_threads')
+                ->where('created_at', '>=', $startDate)
+                ->distinct('user_id')
+                ->count('user_id');
+        } catch (\Exception $e) {
+            \Log::error('Error getting forum participants: ' . $e->getMessage());
+            return 0;
+        }
+    }
+
     private function getThreadActivity($startDate)
     {
-        return [
-            'new_threads' => ForumThread::where('created_at', '>=', $startDate)->count(),
-            'active_threads' => ForumThread::where('updated_at', '>=', $startDate)->count(),
-            'locked_threads' => ForumThread::where('locked', true)->count(),
-            'pinned_threads' => ForumThread::where('pinned', true)->count()
-        ];
+        try {
+            return [
+                'new_threads' => \DB::table('forum_threads')->where('created_at', '>=', $startDate)->count(),
+                'active_threads' => \DB::table('forum_threads')->where('updated_at', '>=', $startDate)->count(),
+                'locked_threads' => \DB::table('forum_threads')->where('locked', true)->count(),
+                'pinned_threads' => \DB::table('forum_threads')->where('pinned', true)->count()
+            ];
+        } catch (\Exception $e) {
+            \Log::error('Error getting thread activity: ' . $e->getMessage());
+            return [
+                'new_threads' => 0,
+                'active_threads' => 0,
+                'locked_threads' => 0,
+                'pinned_threads' => 0
+            ];
+        }
     }
 
     private function getUserEngagementModerator($startDate)
@@ -769,10 +812,7 @@ class AnalyticsController extends Controller
             'active_users' => User::where('last_login', '>=', $startDate)->count(),
             'new_users' => User::where('created_at', '>=', $startDate)->count(),
             'suspended_users' => User::where('status', 'suspended')->count(),
-            'forum_participants' => DB::table('forum_threads')
-                ->where('created_at', '>=', $startDate)
-                ->distinct('user_id')
-                ->count('user_id')
+            'forum_participants' => $this->getForumParticipants($startDate)
         ];
     }
 
