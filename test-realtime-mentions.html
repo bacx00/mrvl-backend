@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-time Mention Updates Test</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.jquery.com"></script>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold text-gray-900 mb-8">Real-time Marvel Rivals Mention System Test</h1>
+        
+        <!-- Test Controls -->
+        <div class="bg-white rounded-lg shadow p-6 mb-8">
+            <h2 class="text-xl font-semibold mb-4">Test Controls</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Create Mention Test -->
+                <div class="border rounded-lg p-4">
+                    <h3 class="font-semibold mb-3">Create Mention Test</h3>
+                    <div class="space-y-3">
+                        <select id="mentionType" class="w-full p-2 border rounded">
+                            <option value="user">User Mention</option>
+                            <option value="team">Team Mention</option>
+                            <option value="player">Player Mention</option>
+                        </select>
+                        
+                        <input type="number" id="entityId" placeholder="Entity ID" class="w-full p-2 border rounded">
+                        
+                        <textarea id="content" placeholder="Content with mentions (e.g., Hey @testuser, check out @team:teamname!)" 
+                                  class="w-full p-2 border rounded h-20"></textarea>
+                        
+                        <select id="contentType" class="w-full p-2 border rounded">
+                            <option value="news">News Article</option>
+                            <option value="forum_thread">Forum Thread</option>
+                            <option value="match">Match Comment</option>
+                        </select>
+                        
+                        <input type="number" id="contentId" placeholder="Content ID" class="w-full p-2 border rounded">
+                        <input type="number" id="mentionedBy" placeholder="Mentioned By User ID" class="w-full p-2 border rounded">
+                        
+                        <button onclick="createMention()" class="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700">
+                            Create Mention
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Get Mention Data Test -->
+                <div class="border rounded-lg p-4">
+                    <h3 class="font-semibold mb-3">Get Mention Data</h3>
+                    <div class="space-y-3">
+                        <select id="queryType" class="w-full p-2 border rounded">
+                            <option value="user">User</option>
+                            <option value="team">Team</option>
+                            <option value="player">Player</option>
+                        </select>
+                        
+                        <input type="number" id="queryEntityId" placeholder="Entity ID" class="w-full p-2 border rounded">
+                        
+                        <button onclick="getMentionCounts()" class="w-full bg-green-600 text-white p-2 rounded hover:bg-green-700">
+                            Get Mention Counts
+                        </button>
+                        
+                        <button onclick="getRecentMentions()" class="w-full bg-purple-600 text-white p-2 rounded hover:bg-purple-700">
+                            Get Recent Mentions
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Real-time Updates Display -->
+        <div class="bg-white rounded-lg shadow p-6 mb-8">
+            <h2 class="text-xl font-semibold mb-4">Real-time Updates</h2>
+            <div id="realtimeUpdates" class="space-y-2 h-64 overflow-y-auto border rounded p-4 bg-gray-50">
+                <p class="text-gray-500">Waiting for real-time updates...</p>
+            </div>
+        </div>
+
+        <!-- API Response Display -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h2 class="text-xl font-semibold mb-4">API Responses</h2>
+            <pre id="apiResponse" class="bg-gray-900 text-green-400 p-4 rounded overflow-auto h-64 text-sm">
+Waiting for API calls...
+            </pre>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin + '/api';
+        let updateCounter = 0;
+
+        // Function to display API responses
+        function displayResponse(title, data) {
+            const responseEl = document.getElementById('apiResponse');
+            const timestamp = new Date().toLocaleTimeString();
+            const response = JSON.stringify(data, null, 2);
+            
+            responseEl.textContent = `[${timestamp}] ${title}\n\n${response}`;
+        }
+
+        // Function to add real-time update
+        function addRealtimeUpdate(message, type = 'info') {
+            const updatesEl = document.getElementById('realtimeUpdates');
+            const timestamp = new Date().toLocaleTimeString();
+            updateCounter++;
+            
+            const colors = {
+                info: 'text-blue-600',
+                success: 'text-green-600',
+                error: 'text-red-600',
+                warning: 'text-yellow-600'
+            };
+            
+            const updateDiv = document.createElement('div');
+            updateDiv.className = `flex items-center space-x-2 p-2 rounded ${colors[type]}`;
+            updateDiv.innerHTML = `
+                <span class="font-mono text-xs">[${timestamp}]</span>
+                <span class="text-xs">#${updateCounter}</span>
+                <span>${message}</span>
+            `;
+            
+            updatesEl.insertBefore(updateDiv, updatesEl.firstChild);
+            
+            // Keep only last 20 updates
+            while (updatesEl.children.length > 20) {
+                updatesEl.removeChild(updatesEl.lastChild);
+            }
+        }
+
+        // Create mention function
+        async function createMention() {
+            const content = document.getElementById('content').value;
+            const mentionableType = document.getElementById('contentType').value;
+            const mentionableId = document.getElementById('contentId').value;
+            const mentionedBy = document.getElementById('mentionedBy').value;
+
+            if (!content || !mentionableId || !mentionedBy) {
+                addRealtimeUpdate('Please fill in all required fields (content, content ID, mentioned by)', 'error');
+                return;
+            }
+
+            try {
+                addRealtimeUpdate('Creating mention...', 'info');
+                
+                const response = await fetch(`${API_BASE}/mentions/create`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        content: content,
+                        mentionable_type: mentionableType,
+                        mentionable_id: parseInt(mentionableId),
+                        mentioned_by: parseInt(mentionedBy)
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    displayResponse('Create Mention Response', data);
+                    addRealtimeUpdate(`Mention created successfully! ${data.data?.mentions_created || 0} mentions processed`, 'success');
+                    
+                    // Simulate real-time update
+                    if (data.data?.mentions) {
+                        data.data.mentions.forEach(mention => {
+                            addRealtimeUpdate(`🔔 Real-time update: New ${mention.type} mention created for entity ${mention.entity.id}`, 'success');
+                        });
+                    }
+                } else {
+                    displayResponse('Create Mention Error', data);
+                    addRealtimeUpdate(`Error creating mention: ${data.message}`, 'error');
+                }
+            } catch (error) {
+                addRealtimeUpdate(`Network error: ${error.message}`, 'error');
+                console.error('Error creating mention:', error);
+            }
+        }
+
+        // Get mention counts function
+        async function getMentionCounts() {
+            const type = document.getElementById('queryType').value;
+            const entityId = document.getElementById('queryEntityId').value;
+
+            if (!entityId) {
+                addRealtimeUpdate('Please enter an entity ID', 'error');
+                return;
+            }
+
+            try {
+                addRealtimeUpdate(`Getting mention counts for ${type} ${entityId}...`, 'info');
+                
+                const response = await fetch(`${API_BASE}/mentions/${type}/${entityId}/counts`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    displayResponse('Mention Counts Response', data);
+                    addRealtimeUpdate(`Mention counts retrieved: ${data.data?.mention_count || 0} total mentions`, 'success');
+                } else {
+                    displayResponse('Mention Counts Error', data);
+                    addRealtimeUpdate(`Error getting mention counts: ${data.message}`, 'error');
+                }
+            } catch (error) {
+                addRealtimeUpdate(`Network error: ${error.message}`, 'error');
+                console.error('Error getting mention counts:', error);
+            }
+        }
+
+        // Get recent mentions function
+        async function getRecentMentions() {
+            const type = document.getElementById('queryType').value;
+            const entityId = document.getElementById('queryEntityId').value;
+
+            if (!entityId) {
+                addRealtimeUpdate('Please enter an entity ID', 'error');
+                return;
+            }
+
+            try {
+                addRealtimeUpdate(`Getting recent mentions for ${type} ${entityId}...`, 'info');
+                
+                const response = await fetch(`${API_BASE}/mentions/${type}/${entityId}/recent?limit=10`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    displayResponse('Recent Mentions Response', data);
+                    const mentionCount = data.data ? data.data.length : 0;
+                    addRealtimeUpdate(`Recent mentions retrieved: ${mentionCount} mentions found`, 'success');
+                } else {
+                    displayResponse('Recent Mentions Error', data);
+                    addRealtimeUpdate(`Error getting recent mentions: ${data.message}`, 'error');
+                }
+            } catch (error) {
+                addRealtimeUpdate(`Network error: ${error.message}`, 'error');
+                console.error('Error getting recent mentions:', error);
+            }
+        }
+
+        // Simulate real-time WebSocket updates (for demonstration)
+        function simulateRealtimeUpdates() {
+            // In a real implementation, this would be actual WebSocket/Server-Sent Events
+            setInterval(() => {
+                if (Math.random() > 0.95) { // 5% chance every second
+                    const events = [
+                        'Simulated mention created for team #1',
+                        'Simulated mention deleted for player #2',
+                        'Simulated user #3 mentioned in news article',
+                        'Simulated real-time update: mention count changed'
+                    ];
+                    const randomEvent = events[Math.floor(Math.random() * events.length)];
+                    addRealtimeUpdate(`🔄 ${randomEvent}`, 'warning');
+                }
+            }, 1000);
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            addRealtimeUpdate('Real-time mention system test page loaded', 'success');
+            addRealtimeUpdate('WebSocket simulation started', 'info');
+            
+            // Set some default values for testing
+            document.getElementById('content').value = 'Hey @testuser, great work by @team:testteam and @player:testplayer!';
+            document.getElementById('contentId').value = '1';
+            document.getElementById('mentionedBy').value = '1';
+            document.getElementById('entityId').value = '1';
+            document.getElementById('queryEntityId').value = '1';
+            
+            // Start simulating real-time updates
+            simulateRealtimeUpdates();
+        });
+    </script>
+</body>
+</html>

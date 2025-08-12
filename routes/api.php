@@ -4,8 +4,10 @@
 use App\Http\Controllers\{
     AuthController,
     TeamController,
+    Admin\AdminTeamController,
     PlayerController,
     MatchController,
+    MatchCommentController,
     EventController,
     EventControllerTemp,
     SearchController,
@@ -48,6 +50,7 @@ use App\Http\Controllers\{
     TournamentRegistrationController,
     TournamentBracketController,
     TournamentMatchController,
+    PlayerMatchHistoryController,
     TournamentProgressionController,
     TournamentAnalyticsController,
     TournamentSettingsController,
@@ -98,6 +101,16 @@ Route::prefix('auth')->group(function () {
 });
 
 // ===================================
+// ANALYTICS ROUTES (For tracking user activity)
+// ===================================
+Route::prefix('analytics')->group(function () {
+    Route::post('/events', function (Request $request) {
+        // Simple analytics endpoint that accepts events but doesn't require processing
+        return response()->json(['success' => true, 'message' => 'Event tracked']);
+    });
+});
+
+// ===================================
 // PUBLIC ROUTES (No Authentication Required)
 // ===================================
 Route::prefix('public')->group(function () {
@@ -109,10 +122,13 @@ Route::prefix('public')->group(function () {
     // Players
     Route::get('/players', [PlayerController::class, 'index']);
     Route::get('/players/{id}', [PlayerController::class, 'show']);
+    Route::get('/players/{id}/matches', [PlayerMatchHistoryController::class, 'getPlayerMatches']); // Use correct controller
+    Route::get('/player-profile/{id}', [PlayerMatchHistoryController::class, 'getPlayerProfile']);
+    Route::get('/match/{id}/player-stats', [PlayerMatchHistoryController::class, 'getMatchPlayerStats']);
     
     // New Player Profile Endpoints
     Route::get('/players/{id}/team-history', [PlayerController::class, 'getTeamHistory']);
-    Route::get('/players/{id}/matches', [PlayerController::class, 'getMatches']);
+    // Route removed - was duplicate: Route::get('/players/{id}/matches', [PlayerController::class, 'getMatches']);
     Route::get('/players/{id}/stats', [PlayerController::class, 'getStats']);
     
     // Player Statistics (Legacy - for backward compatibility)
@@ -296,13 +312,22 @@ Route::get('/matches', [MatchController::class, 'index']);
 Route::get('/matches/live', [MatchController::class, 'live']);
 Route::get('/matches/{match}', [MatchController::class, 'show']);
 Route::get('/matches/{match}/live-scoreboard', [MatchController::class, 'liveScoreboard']);
-Route::get('/matches/{match}/comments', [MatchController::class, 'getComments']);
-Route::middleware('auth:api')->post('/matches/{match}/comments', [MatchController::class, 'storeComment']);
+// Match Comments - Forum-style with voting and nested replies
+Route::get('/matches/{match}/comments', [MatchCommentController::class, 'index']);
+Route::middleware('auth:api')->group(function () {
+    Route::post('/matches/{match}/comments', [MatchCommentController::class, 'store']);
+    Route::put('/match-comments/{comment}', [MatchCommentController::class, 'update']);
+    Route::delete('/match-comments/{comment}', [MatchCommentController::class, 'destroy']);
+    Route::post('/match-comments/{comment}/vote', [MatchCommentController::class, 'vote']);
+    Route::post('/match-comments/{comment}/flag', [MatchCommentController::class, 'flag']);
+});
 Route::get('/matches/{match}/timeline', [MatchController::class, 'getMatchTimeline']);
 Route::get('/matches/head-to-head/{team1Id}/{team2Id}', [MatchController::class, 'getHeadToHead']);
 
 // Live Updates SSE Stream (No auth required for public viewing)
 Route::get('/live-updates/{matchId}/stream', [LiveUpdateController::class, 'stream']);
+// Live Updates Polling Status (No auth required for public viewing)
+Route::get('/live-updates/status/{matchId}', [LiveUpdateController::class, 'status']);
 
 Route::get('/news', [NewsController::class, 'index']);
 Route::get('/news/categories', [NewsController::class, 'getCategories']);
@@ -433,6 +458,12 @@ Route::get('/forums/overview', [ForumController::class, 'getForumOverview']);
 Route::get('/mentions/search', [MentionController::class, 'searchMentions']);
 Route::get('/mentions/popular', [MentionController::class, 'getPopularMentions']);
 
+// Real-time mention routes
+Route::get('/mentions/{type}/{id}/counts', [MentionController::class, 'getMentionCounts']);
+Route::get('/mentions/{type}/{id}/recent', [MentionController::class, 'getRecentMentions']);
+Route::post('/mentions/create', [MentionController::class, 'createMentionsFromContent'])->middleware('auth:api');
+Route::delete('/mentions/delete', [MentionController::class, 'deleteMentionsFromContent'])->middleware('auth:api');
+
 // Search for mentions (legacy route compatibility - moved to public section above)
 
 // FIXED: Add voting compatibility routes that frontend expects
@@ -492,8 +523,9 @@ Route::middleware(['auth:api', 'role:user|moderator|admin'])->prefix('user')->gr
         
         // Posts/Replies
         Route::post('/threads/{threadId}/posts', [ForumController::class, 'storePost']);
+        Route::post('/threads/{threadId}/reply', [ForumController::class, 'createReply']); // Alias route
         Route::put('/posts/{postId}', [ForumController::class, 'updatePost']);
-        Route::delete('/posts/{postId}', [ForumController::class, 'destroyPost']);
+        Route::delete('/posts/{postId}', [ForumController::class, 'deletePost']);
         
         // Voting
         Route::post('/threads/{threadId}/vote', [ForumController::class, 'voteThread']);
@@ -502,18 +534,18 @@ Route::middleware(['auth:api', 'role:user|moderator|admin'])->prefix('user')->gr
     
     // News Comments and Voting
     Route::prefix('news')->group(function () {
-        Route::post('/{newsId}/comments', [NewsController::class, 'comment']);
+        Route::post('/{newsId}/comments', [NewsController::class, 'createComment']);
         Route::post('/{newsId}/vote', [NewsController::class, 'vote']);
         Route::put('/comments/{commentId}', [NewsController::class, 'updateComment']);
-        Route::delete('/comments/{commentId}', [NewsController::class, 'destroyComment']);
+        Route::delete('/comments/{commentId}', [NewsController::class, 'deleteComment']);
         Route::post('/comments/{commentId}/vote', [NewsController::class, 'voteComment']);
     });
     
     // Match Comments
     Route::prefix('matches')->group(function () {
-        Route::post('/{matchId}/comments', [MatchController::class, 'storeComment']);
+        Route::post('/{matchId}/comments', [MatchController::class, 'createComment']);
         Route::put('/comments/{commentId}', [MatchController::class, 'updateComment']);
-        Route::delete('/comments/{commentId}', [MatchController::class, 'destroyComment']);
+        Route::delete('/comments/{commentId}', [MatchController::class, 'deleteComment']);
         Route::post('/comments/{commentId}/vote', [MatchController::class, 'voteComment']);
     });
     
@@ -545,6 +577,21 @@ Route::middleware(['auth:api', 'role:user|moderator|admin'])->prefix('user')->gr
     
     // Forum Engagement Stats
     Route::get('/forums/engagement-stats/{userId?}', [ForumController::class, 'getUserEngagementStats']);
+});
+
+// ===================================
+// MENTION ENDPOINTS
+// ===================================
+Route::prefix('users')->group(function () {
+    Route::get('/{id}/mentions', [MentionController::class, 'getUserMentions']);
+});
+
+Route::prefix('teams')->group(function () {
+    Route::get('/{id}/mentions', [MentionController::class, 'getTeamMentions']);
+});
+
+Route::prefix('players')->group(function () {
+    Route::get('/{id}/mentions', [MentionController::class, 'getPlayerMentions']);
 });
 
 // ===================================
@@ -717,6 +764,7 @@ Route::middleware(['auth:api', 'role:admin|moderator'])->prefix('api/admin')->gr
         
         // Bulk Operations - before {newsId}
         Route::post('/bulk', [\App\Http\Controllers\Admin\AdminNewsController::class, 'bulkOperation']);
+        Route::post('/bulk-delete', [\App\Http\Controllers\Admin\AdminNewsController::class, 'bulkDelete']);
         
         // Content Moderation Features - specific routes before {newsId}
         Route::get('/pending/all', [\App\Http\Controllers\Admin\AdminNewsController::class, 'getPendingNews']);
@@ -757,20 +805,7 @@ Route::middleware(['auth:api', 'role:admin|moderator'])->prefix('api/admin')->gr
         Route::delete('/{newsId}/media', [\App\Http\Controllers\Admin\AdminNewsMediaController::class, 'deleteImage']);
     });
     
-    // Users management routes (handling double /api/ path)
-    Route::prefix('users')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Admin\AdminUsersController::class, 'index']);
-        Route::post('/', [\App\Http\Controllers\Admin\AdminUsersController::class, 'store']);
-        Route::get('/{userId}', [\App\Http\Controllers\Admin\AdminUsersController::class, 'show']);
-        Route::put('/{userId}', [\App\Http\Controllers\Admin\AdminUsersController::class, 'update']);
-        Route::delete('/{userId}', [\App\Http\Controllers\Admin\AdminUsersController::class, 'destroy']);
-        Route::get('/search/advanced', [\App\Http\Controllers\Admin\AdminUsersController::class, 'search']);
-        Route::get('/{userId}/activity', [\App\Http\Controllers\Admin\AdminUsersController::class, 'getActivity']);
-        Route::post('/{userId}/ban', [\App\Http\Controllers\Admin\AdminUsersController::class, 'manageBan']);
-        Route::post('/{userId}/mute', [\App\Http\Controllers\Admin\AdminUsersController::class, 'manageMute']);
-        Route::post('/{userId}/reset-password', [\App\Http\Controllers\Admin\AdminUsersController::class, 'resetPassword']);
-        Route::get('/statistics', [\App\Http\Controllers\Admin\AdminUsersController::class, 'getUserStatistics']);
-    });
+    // Removed duplicate users routes - consolidated into comprehensive system below at line 930+
     
     // Events management routes (handling double /api/ path)  
     Route::prefix('events')->group(function () {
@@ -798,7 +833,7 @@ Route::middleware(['auth:api', 'role:admin|moderator'])->prefix('admin')->group(
     Route::get('/performance-metrics', [AdminStatsController::class, 'getPerformanceMetrics']);
     
     // Resource Management - Admin and Moderator access
-    Route::get('/teams', [TeamController::class, 'getAllTeams']);
+    Route::get('/teams', [\App\Http\Controllers\Admin\AdminTeamController::class, 'index']);
     Route::get('/players', [PlayerController::class, 'index']);
     Route::get('/matches', [MatchController::class, 'index']);
     Route::get('/events', [EventController::class, 'index']);
@@ -817,6 +852,7 @@ Route::middleware(['auth:api', 'role:admin|moderator'])->prefix('admin')->group(
         
         // Bulk Operations - before {newsId}
         Route::post('/bulk', [\App\Http\Controllers\Admin\AdminNewsController::class, 'bulkOperation']);
+        Route::post('/bulk-delete', [\App\Http\Controllers\Admin\AdminNewsController::class, 'bulkDelete']);
         
         // Content Moderation Features - specific routes before {newsId}
         Route::get('/pending/all', [\App\Http\Controllers\Admin\AdminNewsController::class, 'getPendingNews']);
@@ -939,6 +975,7 @@ Route::middleware(['auth:api', 'role:admin'])->prefix('admin')->group(function (
         
         // Bulk Operations
         Route::post('/bulk-operations', [\App\Http\Controllers\Admin\AdminUsersController::class, 'bulkOperation']);
+        Route::post('/bulk-delete', [\App\Http\Controllers\Admin\AdminUsersController::class, 'bulkDelete']);
         Route::post('/bulk-export', [\App\Http\Controllers\Admin\AdminUsersController::class, 'bulkExport']);
         
         // User Statistics and Reports
@@ -1026,11 +1063,11 @@ Route::middleware(['auth:api', 'role:admin'])->prefix('admin')->group(function (
     
     // Team Management - Full CRUD
     Route::prefix('teams')->group(function () {
-        Route::get('/', [TeamController::class, 'getAllTeams']);
-        Route::post('/', [TeamController::class, 'store']);
-        Route::get('/{teamId}', [TeamController::class, 'getTeamAdmin']);
-        Route::put('/{teamId}', [TeamController::class, 'update']);
-        Route::delete('/{teamId}', [TeamController::class, 'destroy']);
+        Route::get('/', [AdminTeamController::class, 'index']);
+        Route::post('/', [AdminTeamController::class, 'store']);
+        Route::get('/{teamId}', [AdminTeamController::class, 'show']);
+        Route::put('/{teamId}', [AdminTeamController::class, 'update']);
+        Route::delete('/{teamId}', [AdminTeamController::class, 'destroy']);
         
         // Team Roster Management
         Route::post('/{teamId}/players', [TeamController::class, 'addPlayer']);
@@ -1054,7 +1091,9 @@ Route::post('/teams/{teamId}/coach/upload', [TeamController::class, 'uploadCoach
     Route::prefix('players')->group(function () {
         Route::get('/', [PlayerController::class, 'getAllPlayers']);
         Route::post('/', [PlayerController::class, 'store']);
+        Route::post('/bulk-delete', [PlayerController::class, 'bulkDelete']);
         Route::get('/{playerId}', [PlayerController::class, 'getPlayerAdmin']);
+        Route::get('/{playerId}/matches', [PlayerMatchHistoryController::class, 'getPlayerMatches']);
         Route::put('/{playerId}', [PlayerController::class, 'update']);
         Route::delete('/{playerId}', [PlayerController::class, 'destroy']);
         
@@ -1234,6 +1273,7 @@ Route::post('/teams/{teamId}/coach/upload', [TeamController::class, 'uploadCoach
         
         // Bulk Operations
         Route::post('/bulk', [\App\Http\Controllers\Admin\AdminNewsController::class, 'bulkOperation']);
+        Route::post('/bulk-delete', [\App\Http\Controllers\Admin\AdminNewsController::class, 'bulkDelete']);
         
         // Content Moderation Features
         Route::get('/pending/all', [\App\Http\Controllers\Admin\AdminNewsController::class, 'getPendingNews']);
@@ -1833,6 +1873,9 @@ Route::middleware(['auth:api', 'role:admin|moderator'])->prefix('analytics')->gr
 
 // Public Analytics Endpoints (No Authentication Required)
 Route::prefix('analytics')->group(function () {
+    // Event tracking for user actions
+    Route::post('/events', [AnalyticsController::class, 'trackEvent']);
+    
     // Basic public analytics data
     Route::get('/public/overview', [AnalyticsController::class, 'getPublicOverview']);
     Route::get('/public/trending', [AnalyticsController::class, 'getTrendingContent']);
@@ -1875,6 +1918,10 @@ Route::prefix('analytics')->group(function () {
             return $service->generateLeaderboards('tournament', null, false);
         });
     });
+    
+    // Player Profile & Match History (Public endpoints)
+    Route::get('/player-profile/{id}', [PlayerMatchHistoryController::class, 'getPlayerProfile']);
+    Route::get('/players/{id}/matches', [PlayerMatchHistoryController::class, 'getPlayerMatches']);
 });
 
 // ===================================

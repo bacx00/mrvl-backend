@@ -1,0 +1,201 @@
+{
+    "timestamp": "2025-08-12 01:18:04",
+    "summary": {
+        "total_tests": 8,
+        "passed_tests": 3,
+        "failed_tests": 5,
+        "error_count": 0
+    },
+    "test_results": {
+        "parsing": [
+            {
+                "content": "Hey @testuser how are you?",
+                "success": true,
+                "expected_count": 1,
+                "extracted_count": 1,
+                "issues": [],
+                "extracted": [
+                    {
+                        "type": "user",
+                        "id": 22,
+                        "name": "testuser",
+                        "display_name": "testuser",
+                        "mention_text": "@testuser",
+                        "url": "\/users\/22",
+                        "avatar": null,
+                        "position_start": 4,
+                        "position_end": 13,
+                        "clickable": true
+                    }
+                ]
+            },
+            {
+                "content": "Check out @team:TSM and @team:C9",
+                "success": false,
+                "expected_count": 2,
+                "extracted_count": 1,
+                "issues": [
+                    "Expected 2 mentions, got 1",
+                    "Missing expected mention: @team:C9 (type: team)"
+                ],
+                "extracted": [
+                    {
+                        "type": "team",
+                        "id": 5,
+                        "name": "TSM",
+                        "display_name": "TSM",
+                        "mention_text": "@team:TSM",
+                        "url": "\/teams\/5",
+                        "avatar": null,
+                        "position_start": 10,
+                        "position_end": 19,
+                        "clickable": true
+                    }
+                ]
+            },
+            {
+                "content": "Great play by @player:shroud and @player:ninja",
+                "success": false,
+                "expected_count": 2,
+                "extracted_count": 1,
+                "issues": [
+                    "Expected 2 mentions, got 1",
+                    "Missing expected mention: @player:ninja (type: player)"
+                ],
+                "extracted": [
+                    {
+                        "type": "player",
+                        "id": 771,
+                        "name": "shroud",
+                        "display_name": "Michael Grzesiek",
+                        "mention_text": "@player:shroud",
+                        "url": "\/players\/771",
+                        "avatar": null,
+                        "position_start": 14,
+                        "position_end": 28,
+                        "clickable": true
+                    }
+                ]
+            },
+            {
+                "content": "Tournament @team:G2 vs @team:FNC with @player:caps and @testuser watching",
+                "success": false,
+                "expected_count": 4,
+                "extracted_count": 1,
+                "issues": [
+                    "Expected 4 mentions, got 1",
+                    "Missing expected mention: @team:G2 (type: team)",
+                    "Missing expected mention: @team:FNC (type: team)",
+                    "Missing expected mention: @player:caps (type: player)"
+                ],
+                "extracted": [
+                    {
+                        "type": "user",
+                        "id": 22,
+                        "name": "testuser",
+                        "display_name": "testuser",
+                        "mention_text": "@testuser",
+                        "url": "\/users\/22",
+                        "avatar": null,
+                        "position_start": 55,
+                        "position_end": 64,
+                        "clickable": true
+                    }
+                ]
+            },
+            {
+                "content": "Email test@example.com should not be parsed",
+                "success": true,
+                "expected_count": 0,
+                "extracted_count": 0,
+                "issues": [],
+                "extracted": []
+            },
+            {
+                "content": "@user_with_underscores is valid",
+                "success": false,
+                "expected_count": 1,
+                "extracted_count": 0,
+                "issues": [
+                    "Expected 1 mentions, got 0",
+                    "Missing expected mention: @user_with_underscores (type: user)"
+                ],
+                "extracted": []
+            },
+            {
+                "content": "@123numbers should work",
+                "success": false,
+                "expected_count": 1,
+                "extracted_count": 0,
+                "issues": [
+                    "Expected 1 mentions, got 0",
+                    "Missing expected mention: @123numbers (type: user)"
+                ],
+                "extracted": []
+            }
+        ],
+        "recording": {
+            "success": true,
+            "mentions_stored": 3,
+            "details": [
+                {
+                    "id": 4,
+                    "mentionable_type": "test",
+                    "mentionable_id": 1,
+                    "mentioned_type": "App\\Models\\User",
+                    "mentioned_id": 22,
+                    "context": "Great match! @testuser thanks for organizing, @team:TSM played well, and",
+                    "mention_text": "@testuser",
+                    "position_start": 13,
+                    "position_end": 22,
+                    "mentioned_by": null,
+                    "mentioned_at": "2025-08-12T01:18:04.000000Z",
+                    "is_active": true,
+                    "metadata": null,
+                    "created_at": "2025-08-12T01:18:04.000000Z",
+                    "updated_at": "2025-08-12T01:18:04.000000Z"
+                },
+                {
+                    "id": 5,
+                    "mentionable_type": "test",
+                    "mentionable_id": 1,
+                    "mentioned_type": "App\\Models\\Team",
+                    "mentioned_id": 5,
+                    "context": "Great match! @testuser thanks for organizing, @team:TSM played well, and @player:shroud was amazing!",
+                    "mention_text": "@team:TSM",
+                    "position_start": 46,
+                    "position_end": 55,
+                    "mentioned_by": null,
+                    "mentioned_at": "2025-08-12T01:18:04.000000Z",
+                    "is_active": true,
+                    "metadata": null,
+                    "created_at": "2025-08-12T01:18:04.000000Z",
+                    "updated_at": "2025-08-12T01:18:04.000000Z"
+                },
+                {
+                    "id": 6,
+                    "mentionable_type": "test",
+                    "mentionable_id": 1,
+                    "mentioned_type": "App\\Models\\Player",
+                    "mentioned_id": 771,
+                    "context": "thanks for organizing, @team:TSM played well, and @player:shroud was amazing!",
+                    "mention_text": "@player:shroud",
+                    "position_start": 73,
+                    "position_end": 87,
+                    "mentioned_by": null,
+                    "mentioned_at": "2025-08-12T01:18:04.000000Z",
+                    "is_active": true,
+                    "metadata": null,
+                    "created_at": "2025-08-12T01:18:04.000000Z",
+                    "updated_at": "2025-08-12T01:18:04.000000Z"
+                }
+            ]
+        }
+    },
+    "errors": [],
+    "recommendations": [
+        "Implement notification system for new mentions",
+        "Add real-time updates when mentions are created",
+        "Test mention functionality in all contexts (forums, news, matches)"
+    ]
+}

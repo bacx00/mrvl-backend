@@ -47,6 +47,19 @@ class GameMatch extends Model
                    ->withPivot(['kills', 'deaths', 'assists', 'damage', 'healing']);
     }
 
+    public function comments()
+    {
+        return $this->hasMany(MatchComment::class, 'match_id');
+    }
+
+    public function topLevelComments()
+    {
+        return $this->hasMany(MatchComment::class, 'match_id')
+                    ->whereNull('parent_id')
+                    ->approved()
+                    ->with(['user', 'replies.user', 'mentions']);
+    }
+
     public function getSeriesAttribute()
     {
         return [

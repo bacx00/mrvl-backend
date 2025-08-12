@@ -28,7 +28,7 @@ class Bracket extends Model
 
     public function match(): BelongsTo
     {
-        return $this->belongsTo(Match::class);
+        return $this->belongsTo(MatchModel::class, 'match_id');
     }
 
     // Scopes

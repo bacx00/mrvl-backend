@@ -10,11 +10,20 @@ use App\Models\Mention;
 use App\Models\MatchModel;
 use App\Models\MvrlMatch;
 use App\Events\MatchHeroUpdated;
+use App\Services\MentionService;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 class MatchController extends Controller
 {
+    private $mentionService;
+
+    public function __construct(MentionService $mentionService)
+    {
+        $this->mentionService = $mentionService;
+    }
+
     public function index(Request $request)
     {
         try {
@@ -1542,6 +1551,13 @@ class MatchController extends Controller
 
         return [
             'id' => $match->id,
+            
+            // CRITICAL FIX: Live scores at root level for MatchDetailPage
+            'team1_score' => $match->team1_score ?? 0,
+            'team2_score' => $match->team2_score ?? 0,
+            'series_score_team1' => $match->team1_score ?? 0,
+            'series_score_team2' => $match->team2_score ?? 0,
+            
             'team1' => [
                 'id' => $match->team1_id,
                 'name' => $match->team1_name,
@@ -1594,8 +1610,10 @@ class MatchController extends Controller
             'status' => $match->status,
             'current_map' => $match->current_map_number ?? 1,
             'maps_data' => $mapsData,
+            'maps' => $mapsData,  // Alternative key for compatibility
             'match_timer' => is_string($match->match_timer) ? json_decode($match->match_timer, true) : $match->match_timer,
-            'timer' => $this->extractTimerValue($match->match_timer)
+            'timer' => $this->extractTimerValue($match->match_timer),
+            'scheduled_at' => $match->scheduled_at
         ];
     }
 
@@ -2331,14 +2349,56 @@ class MatchController extends Controller
                 'updated_at' => now()
             ]);
 
-            // Process mentions using the new system
-            $this->processMentions($request->content, $matchId, $commentId);
+            // Process mentions using MentionService
+            $this->mentionService->storeMentions($request->content, 'match_comment', $commentId);
 
-            return response()->json([
-                'data' => ['id' => $commentId],
-                'success' => true,
-                'message' => 'Comment posted successfully'
-            ]);
+            // Get the complete comment data with author info
+            $newComment = DB::table('match_comments as mc')
+                ->leftJoin('users as u', 'mc.user_id', '=', 'u.id')
+                ->leftJoin('teams as t', 'u.team_flair_id', '=', 't.id')
+                ->where('mc.id', $commentId)
+                ->select([
+                    'mc.*',
+                    'u.name as user_name', 'u.avatar', 'u.hero_flair',
+                    'u.show_hero_flair', 'u.show_team_flair',
+                    't.name as team_flair_name', 't.short_name as team_flair_short',
+                    't.logo as team_flair_logo'
+                ])
+                ->first();
+
+            if ($newComment) {
+                $commentData = [
+                    'id' => $newComment->id,
+                    'content' => $newComment->content,
+                    'author' => [
+                        'username' => $newComment->user_name,
+                        'avatar' => $newComment->avatar
+                    ],
+                    'user' => $this->formatUserWithFlairs($newComment),
+                    'votes' => $this->getCommentVotes($newComment->id),
+                    'replies' => [],
+                    'created_at' => $newComment->created_at,
+                    'updated_at' => $newComment->updated_at,
+                    'upvotes' => 0,
+                    'downvotes' => 0,
+                    'user_vote' => null,
+                    'is_pinned' => false,
+                    'likes_count' => 0
+                ];
+
+                return response()->json([
+                    'data' => $commentData,
+                    'success' => true,
+                    'message' => 'Comment posted successfully'
+                ]);
+            } else {
+                // Fallback to just ID if comment fetch fails
+                return response()->json([
+                    'data' => ['id' => $commentId],
+                    'success' => true,
+                    'message' => 'Comment posted successfully'
+                ]);
+            }
 
         } catch (\Exception $e) {
             return response()->json([
@@ -2457,149 +2517,8 @@ class MatchController extends Controller
         ];
     }
 
-    private function extractMentions($content)
-    {
-        $mentions = [];
-        
-        // Extract @username mentions
-        preg_match_all('/@([a-zA-Z0-9_]+)/', $content, $userMatches);
-        if (!empty($userMatches[1])) {
-            $mentions['users'] = $userMatches[1];
-        }
-        
-        // Extract @team:teamname mentions
-        preg_match_all('/@team:([a-zA-Z0-9_\-]+)/', $content, $teamMatches);
-        if (!empty($teamMatches[1])) {
-            $mentions['teams'] = $teamMatches[1];
-        }
-        
-        // Extract @player:playername mentions
-        preg_match_all('/@player:([a-zA-Z0-9_\-]+)/', $content, $playerMatches);
-        if (!empty($playerMatches[1])) {
-            $mentions['players'] = $playerMatches[1];
-        }
-        
-        return $mentions;
-    }
 
-    private function processMentions($content, $matchId, $commentId = null)
-    {
-        $mentions = $this->extractMentionsNew($content);
-        
-        foreach ($mentions as $mention) {
-            try {
-                // Determine the mentionable type and ID
-                $mentionableType = $commentId ? 'match_comment' : 'match';
-                $mentionableId = $commentId ?: $matchId;
-                
-                // Create mention record using the new structure
-                Mention::updateOrCreate([
-                    'mentionable_type' => $mentionableType,
-                    'mentionable_id' => $mentionableId,
-                    'mentioned_type' => $mention['type'],
-                    'mentioned_id' => $mention['id'],
-                    'mention_text' => $mention['mention_text'] ?? "@{$mention['name']}"
-                ], [
-                    'mentioned_by' => auth('api')->id(),
-                    'mentioned_at' => now(),
-                    'is_active' => true,
-                    'context' => $this->extractMentionContext($content, $mention['mention_text'] ?? "@{$mention['name']}")
-                ]);
-            } catch (\Exception $e) {
-                \Log::error('Error processing mention: ' . $e->getMessage());
-            }
-        }
-    }
 
-    private function extractMentionsNew($content)
-    {
-        $mentions = [];
-        
-        // Extract @username mentions (users)
-        preg_match_all('/@([a-zA-Z0-9_]+)/', $content, $userMatches, PREG_OFFSET_CAPTURE);
-        foreach ($userMatches[1] as $match) {
-            $username = $match[0];
-            $position = $userMatches[0][array_search($match, $userMatches[1])][1];
-            
-            $user = DB::table('users')->where('name', $username)->first();
-            if ($user) {
-                $mentionText = "@{$username}";
-                $mentions[] = [
-                    'type' => 'user',
-                    'id' => $user->id,
-                    'name' => $user->name,
-                    'display_name' => $user->name,
-                    'mention_text' => $mentionText,
-                    'position_start' => $position,
-                    'position_end' => $position + strlen($mentionText)
-                ];
-            }
-        }
-
-        // Extract @team:teamname mentions
-        preg_match_all('/@team:([a-zA-Z0-9_]+)/', $content, $teamMatches, PREG_OFFSET_CAPTURE);
-        foreach ($teamMatches[1] as $match) {
-            $teamName = $match[0];
-            $position = $teamMatches[0][array_search($match, $teamMatches[1])][1];
-            
-            $team = DB::table('teams')->where('short_name', $teamName)->first();
-            if ($team) {
-                $mentionText = "@team:{$teamName}";
-                $mentions[] = [
-                    'type' => 'team',
-                    'id' => $team->id,
-                    'name' => $team->short_name,
-                    'display_name' => $team->name,
-                    'mention_text' => $mentionText,
-                    'position_start' => $position,
-                    'position_end' => $position + strlen($mentionText)
-                ];
-            }
-        }
-
-        // Extract @player:playername mentions
-        preg_match_all('/@player:([a-zA-Z0-9_]+)/', $content, $playerMatches, PREG_OFFSET_CAPTURE);
-        foreach ($playerMatches[1] as $match) {
-            $playerName = $match[0];
-            $position = $playerMatches[0][array_search($match, $playerMatches[1])][1];
-            
-            $player = DB::table('players')->where('username', $playerName)->first();
-            if ($player) {
-                $mentionText = "@player:{$playerName}";
-                $mentions[] = [
-                    'type' => 'player',
-                    'id' => $player->id,
-                    'name' => $player->username,
-                    'display_name' => $player->real_name ?? $player->username,
-                    'mention_text' => $mentionText,
-                    'position_start' => $position,
-                    'position_end' => $position + strlen($mentionText)
-                ];
-            }
-        }
-
-        return $mentions;
-    }
-
-    private function extractMentionContext($content, $mentionText)
-    {
-        $position = strpos($content, $mentionText);
-        if ($position === false) {
-            return null;
-        }
-
-        // Extract 50 characters before and after the mention for context
-        $contextLength = 50;
-        $start = max(0, $position - $contextLength);
-        $end = min(strlen($content), $position + strlen($mentionText) + $contextLength);
-        
-        $context = substr($content, $start, $end - $start);
-        
-        // Clean up context (remove excessive whitespace, etc.)
-        $context = preg_replace('/\s+/', ' ', trim($context));
-        
-        return $context;
-    }
 
     public function voteComment(Request $request, $commentId)
     {
@@ -4633,14 +4552,26 @@ class MatchController extends Controller
                 'timestamp' => now()->toIso8601String()
             ]);
 
+            // ENHANCED: Return comprehensive data structure for immediate live updates
+            $responseData = [
+                'match_id' => $matchId,
+                'team1_score' => $validatedData['series_score_team1'] ?? $match->team1_score,
+                'team2_score' => $validatedData['series_score_team2'] ?? $match->team2_score,
+                'series_score_team1' => $validatedData['series_score_team1'] ?? $match->team1_score,
+                'series_score_team2' => $validatedData['series_score_team2'] ?? $match->team2_score,
+                'status' => $validatedData['status'] ?? $match->status,
+                // ADDED: Include player data in response for immediate UI updates
+                'team1_players' => $validatedData['team1_players'] ?? [],
+                'team2_players' => $validatedData['team2_players'] ?? [],
+                'updated_at' => now()->toISOString(),
+                'timestamp' => now()->timestamp,
+                'version' => $match->version ?? 1
+            ];
+
             return response()->json([
                 'success' => true,
                 'message' => 'Live stats updated successfully',
-                'data' => [
-                    'match_id' => $matchId,
-                    'team1_score' => $validatedData['series_score_team1'] ?? $match->team1_score,
-                    'team2_score' => $validatedData['series_score_team2'] ?? $match->team2_score
-                ]
+                'data' => $responseData
             ]);
 
         } catch (\Exception $e) {
@@ -4751,6 +4682,7 @@ class MatchController extends Controller
                 continue; // Skip invalid player data
             }
 
+            // ENHANCED: Save ALL player data including damage, healing, blocked
             $statsToUpdate[] = [
                 'match_id' => $matchId,
                 'player_id' => $player['id'] ?? null,
@@ -4759,6 +4691,11 @@ class MatchController extends Controller
                 'eliminations' => $player['kills'] ?? 0,
                 'deaths' => $player['deaths'] ?? 0,
                 'assists' => $player['assists'] ?? 0,
+                // ADDED: Comprehensive stats for Marvel Rivals using correct field names
+                'damage' => $player['damage'] ?? 0,
+                'healing' => $player['healing'] ?? 0,
+                'damage_blocked' => $player['blocked'] ?? 0,
+                'kda' => floatval($player['kda'] ?? 0.0),
                 'created_at' => $timestamp,
                 'updated_at' => $timestamp
             ];
@@ -4768,8 +4705,14 @@ class MatchController extends Controller
             // Clear existing stats for this match
             DB::table('player_match_stats')->where('match_id', $matchId)->delete();
             
-            // Insert new stats
+            // Insert new comprehensive stats
             DB::table('player_match_stats')->insert($statsToUpdate);
+            
+            \Log::info('Updated comprehensive player stats for match', [
+                'match_id' => $matchId,
+                'player_count' => count($statsToUpdate),
+                'stats_fields' => ['kills', 'deaths', 'assists', 'damage', 'healing', 'blocked', 'hero']
+            ]);
         }
     }
 
@@ -4879,6 +4822,77 @@ class MatchController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error resetting match: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Create a match comment (alias for storeComment method)
+     */
+    public function createComment(Request $request, $matchId)
+    {
+        return $this->storeComment($request, $matchId);
+    }
+
+    /**
+     * Delete a match comment
+     */
+    public function deleteComment($commentId)
+    {
+        // Check if user is authenticated
+        if (!auth('api')->check()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized'
+            ], 401);
+        }
+
+        try {
+            $userId = auth('api')->id();
+            
+            // Find the comment
+            $comment = DB::table('match_comments')->where('id', $commentId)->first();
+            
+            if (!$comment) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Comment not found'
+                ], 404);
+            }
+
+            // Check if user owns the comment or has admin/moderator role
+            $user = auth('api')->user();
+            if ($comment->user_id !== $userId && !in_array($user->role, ['admin', 'moderator'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You can only delete your own comments'
+                ], 403);
+            }
+
+            // Delete mentions for this comment
+            $this->mentionService->deleteMentions('match_comment', $commentId);
+
+            // Delete the comment
+            DB::table('match_comments')->where('id', $commentId)->delete();
+
+            // Also delete any votes for this comment
+            DB::table('forum_votes')->where('comment_id', $commentId)->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Comment deleted successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error deleting match comment', [
+                'comment_id' => $commentId,
+                'user_id' => auth('api')->id(),
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error deleting comment: ' . $e->getMessage()
             ], 500);
         }
     }

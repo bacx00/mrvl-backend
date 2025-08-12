@@ -267,19 +267,25 @@ class UserActivity extends Model
         ];
 
         foreach ($cacheKeys as $key) {
-            Cache::increment($key);
+            $currentValue = Cache::get($key, 0);
             
-            // Set expiration based on key type
+            // Set expiration based on key type and use put with TTL
             if (str_contains($key, 'daily')) {
-                Cache::expire($key, now()->endOfDay()->diffInSeconds());
+                Cache::put($key, $currentValue + 1, now()->endOfDay()->diffInSeconds());
             } elseif (str_contains($key, 'hourly')) {
-                Cache::expire($key, now()->endOfHour()->diffInSeconds());
+                Cache::put($key, $currentValue + 1, now()->endOfHour()->diffInSeconds());
+            } else {
+                Cache::increment($key);
             }
         }
 
-        // Track unique active users
-        Cache::sadd('analytics:unique_users:' . now()->format('Y-m-d'), $userId);
-        Cache::expire('analytics:unique_users:' . now()->format('Y-m-d'), now()->endOfDay());
+        // Track unique active users - store as serialized array for database cache
+        $uniqueUsersKey = 'analytics:unique_users:' . now()->format('Y-m-d');
+        $uniqueUsers = Cache::get($uniqueUsersKey, []);
+        if (!in_array($userId, $uniqueUsers)) {
+            $uniqueUsers[] = $userId;
+            Cache::put($uniqueUsersKey, $uniqueUsers, now()->endOfDay());
+        }
     }
 
     private static function broadcastActivityUpdate($activity)

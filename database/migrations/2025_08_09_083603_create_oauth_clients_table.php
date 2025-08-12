@@ -11,7 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('oauth_clients', function (Blueprint $table) {
+        if (!Schema::hasTable('oauth_clients')) {
+            Schema::create('oauth_clients', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->unsignedBigInteger('user_id')->nullable()->index();
             $table->string('name');
@@ -23,6 +24,7 @@ return new class extends Migration
             $table->boolean('revoked');
             $table->timestamps();
         });
+        }
     }
 
     /**

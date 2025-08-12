@@ -276,6 +276,7 @@ Route::middleware(['auth:api', 'role:admin'])->prefix('admin')->group(function (
     Route::prefix('players')->group(function () {
         Route::get('/', [PlayerController::class, 'getAllPlayers']);
         Route::post('/', [PlayerController::class, 'store']);
+        Route::post('/bulk-delete', [PlayerController::class, 'bulkDelete']);
         Route::get('/{playerId}', [PlayerController::class, 'getPlayerAdmin']);
         Route::put('/{playerId}', [PlayerController::class, 'update']);
         Route::delete('/{playerId}', [PlayerController::class, 'destroy']);

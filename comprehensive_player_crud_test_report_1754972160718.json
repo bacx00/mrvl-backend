@@ -1,0 +1,61 @@
+{
+  "test_summary": {
+    "total_bugs_found": 2,
+    "critical_bugs": 2,
+    "high_bugs": 0,
+    "medium_bugs": 0,
+    "low_bugs": 0,
+    "test_execution_time": "2025-08-12T04:16:00.718Z",
+    "test_player_id": null
+  },
+  "test_results": {
+    "createTest": null,
+    "readTest": null,
+    "updateTest": null,
+    "deleteTest": null,
+    "errorHandlingTest": null,
+    "validationTest": null
+  },
+  "bugs_by_category": {
+    "functional": [],
+    "security": [],
+    "performance": [],
+    "usability": [],
+    "integration": [
+      {
+        "severity": "CRITICAL",
+        "classification": "Integration",
+        "description": "Test execution failed: Authentication failed - cannot proceed with tests",
+        "reproduction": "1. Run comprehensive test suite\n2. Execution error occurs",
+        "recommended_fix": "Check test environment setup and API availability",
+        "discovered_at": "2025-08-12T04:16:00.718Z"
+      }
+    ]
+  },
+  "detailed_bugs": [
+    {
+      "severity": "CRITICAL",
+      "classification": "Authentication",
+      "description": "Authentication endpoint unreachable: getaddrinfo ENOTFOUND mrvlapi.com",
+      "reproduction": "1. POST /auth/login\n2. Network error occurs",
+      "recommended_fix": "Check API server status and network connectivity",
+      "discovered_at": "2025-08-12T04:16:00.717Z"
+    },
+    {
+      "severity": "CRITICAL",
+      "classification": "Integration",
+      "description": "Test execution failed: Authentication failed - cannot proceed with tests",
+      "reproduction": "1. Run comprehensive test suite\n2. Execution error occurs",
+      "recommended_fix": "Check test environment setup and API availability",
+      "discovered_at": "2025-08-12T04:16:00.718Z"
+    }
+  ],
+  "recommendations": [
+    {
+      "priority": "HIGH",
+      "category": "Security",
+      "action": "Fix authentication issues immediately",
+      "description": "Authentication problems prevent proper testing and indicate security vulnerabilities"
+    }
+  ]
+}

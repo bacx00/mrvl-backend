@@ -55,9 +55,9 @@ class OptimizedAdminController extends Controller
         try {
             $validator = Validator::make($request->all(), [
                 'page' => 'integer|min:1',
-                'per_page' => 'integer|min:1|max:100',
+                'per_page' => 'integer|min:1|max:1000',
                 'search' => 'string|max:100',
-                'role' => 'string|in:all,Vanguard,Duelist,Strategist',
+                'role' => 'string|in:all,Vanguard,Duelist,Strategist,DPS,Tank,Support,Flex',
                 'team' => 'integer|exists:teams,id',
                 'status' => 'string|in:all,active,inactive,retired',
                 'region' => 'string|in:all,NA,EU,APAC,SA,OCE,KR,JP,CN',
@@ -121,7 +121,7 @@ class OptimizedAdminController extends Controller
         try {
             $validator = Validator::make($request->all(), [
                 'page' => 'integer|min:1',
-                'per_page' => 'integer|min:1|max:100',
+                'per_page' => 'integer|min:1|max:1000',
                 'search' => 'string|max:100',
                 'region' => 'string|in:all,NA,EU,APAC,SA,OCE,KR,JP,CN',
                 'platform' => 'string|in:all,PC,Console,Mobile',

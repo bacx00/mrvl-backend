@@ -16,8 +16,9 @@ class MatchPlayerStat extends Model
         'match_id',
         'map_id',
         'player_id',
+        'player_name',
         'team_id',
-        'hero',
+        'hero_played',
         'hero_role',
         'time_played_seconds',
         
@@ -26,9 +27,9 @@ class MatchPlayerStat extends Model
         'assists', 
         'deaths',
         'kda',
-        'damage_dealt',
+        'damage',
         'damage_taken',
-        'healing_done',
+        'healing',
         'damage_blocked',
         
         // Per-Round/Average Stats (like VLR.gg KPR, APR)
@@ -182,8 +183,8 @@ class MatchPlayerStat extends Model
             $this->eliminations_per_round = round($this->eliminations / $rounds, 2);
             $this->assists_per_round = round($this->assists / $rounds, 2);
             $this->deaths_per_round = round($this->deaths / $rounds, 2);
-            $this->damage_per_round = round($this->damage_dealt / $rounds, 2);
-            $this->healing_per_round = round($this->healing_done / $rounds, 2);
+            $this->damage_per_round = round($this->damage / $rounds, 2);
+            $this->healing_per_round = round($this->healing / $rounds, 2);
         }
         
         // Calculate accuracy
@@ -194,7 +195,7 @@ class MatchPlayerStat extends Model
         // Calculate Combat Score (similar to VLR.gg ACS)
         // Base formula: damage + (kills * 150) + (assists * 50) + (first kills * 100)
         $this->combat_score = round(
-            ($this->damage_dealt / 10) + 
+            ($this->damage / 10) + 
             ($this->eliminations * 150) + 
             ($this->assists * 50) + 
             ($this->first_kills * 100)

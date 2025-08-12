@@ -362,6 +362,33 @@ class EloRatingService
     }
     
     /**
+     * Calculate new ratings for both teams based on match result
+     */
+    public function calculateNewRatings(int $rating1, int $rating2, int $result, int $kFactor = 32): array
+    {
+        // Calculate expected scores
+        $expected1 = $this->calculateExpectedScore($rating1, $rating2);
+        $expected2 = 1 - $expected1;
+        
+        // Result: 1 = team1 wins, 0 = team2 wins
+        $actual1 = $result;
+        $actual2 = 1 - $result;
+        
+        // Calculate new ratings
+        $newRating1 = $rating1 + $kFactor * ($actual1 - $expected1);
+        $newRating2 = $rating2 + $kFactor * ($actual2 - $expected2);
+        
+        return [
+            'team1_new_rating' => round($newRating1),
+            'team2_new_rating' => round($newRating2),
+            'team1_change' => round($newRating1 - $rating1),
+            'team2_change' => round($newRating2 - $rating2),
+            'expected_score_team1' => $expected1,
+            'expected_score_team2' => $expected2
+        ];
+    }
+
+    /**
      * Get comprehensive ranking statistics
      */
     public function getComprehensiveStats()

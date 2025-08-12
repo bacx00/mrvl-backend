@@ -3,6 +3,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Facades\Cache;
 
 class Team extends Model
 {
@@ -20,7 +21,7 @@ class Team extends Model
         'youtube', 'twitch', 'tiktok', 'discord', 'facebook', 'social_media', 
         'social_links', 'achievements', 'recent_form', 'player_count', 'status',
         'earnings', 'owner', 'elo_rating', 'peak_elo', 'elo_changes', 'last_elo_update',
-        'ranking'
+        'ranking', 'mention_count', 'last_mentioned_at'
     ];
 
     protected $casts = [
@@ -33,7 +34,9 @@ class Team extends Model
         'social_media' => 'array',
         'coach_social_media' => 'array',
         'achievements' => 'array',
-        'recent_form' => 'array'
+        'recent_form' => 'array',
+        'mention_count' => 'integer',
+        'last_mentioned_at' => 'datetime'
     ];
 
     protected $appends = []; // Removed problematic accessors
@@ -575,5 +578,125 @@ class Team extends Model
             'longest_loss_streak' => 0,
             'current_streak' => null
         ];
+    }
+
+    /**
+     * Mention-related relationships and methods
+     */
+
+    /**
+     * Get mentions of this team
+     */
+    public function mentions()
+    {
+        return $this->morphMany(Mention::class, 'mentioned', 'mentioned_type', 'mentioned_id');
+    }
+
+    /**
+     * Get active mentions of this team with optimized query
+     */
+    public function activeMentions()
+    {
+        return $this->mentions()->where('is_active', true);
+    }
+
+    /**
+     * Get recent mentions with pagination support
+     */
+    public function getRecentMentions($limit = 10, $offset = 0)
+    {
+        return Cache::remember(
+            "team_mentions_{$this->id}_{$limit}_{$offset}",
+            300, // 5 minutes cache
+            function () use ($limit, $offset) {
+                return $this->activeMentions()
+                    ->with(['mentionable', 'mentionedBy'])
+                    ->orderBy('mentioned_at', 'desc')
+                    ->offset($offset)
+                    ->limit($limit)
+                    ->get();
+            }
+        );
+    }
+
+    /**
+     * Get mention count efficiently
+     */
+    public function getMentionCount(): int
+    {
+        // Use the denormalized column if available
+        if (isset($this->attributes['mention_count'])) {
+            return (int) $this->attributes['mention_count'];
+        }
+        
+        // Fallback to counting if column doesn't exist
+        return $this->activeMentions()->count();
+    }
+
+    /**
+     * Scope for teams with mentions above threshold
+     */
+    public function scopePopularMentions($query, $threshold = 5)
+    {
+        if (\Schema::hasColumn('teams', 'mention_count')) {
+            return $query->where('mention_count', '>=', $threshold);
+        }
+        
+        return $query->whereHas('mentions', function ($q) use ($threshold) {
+            $q->where('is_active', true)
+              ->havingRaw('COUNT(*) >= ?', [$threshold]);
+        });
+    }
+
+    /**
+     * Scope for recently mentioned teams
+     */
+    public function scopeRecentlyMentioned($query, $days = 7)
+    {
+        if (\Schema::hasColumn('teams', 'last_mentioned_at')) {
+            return $query->where('last_mentioned_at', '>=', now()->subDays($days));
+        }
+        
+        return $query->whereHas('mentions', function ($q) use ($days) {
+            $q->where('is_active', true)
+              ->where('mentioned_at', '>=', now()->subDays($days));
+        });
+    }
+
+    /**
+     * Get mention analytics data
+     */
+    public function getMentionAnalytics(): array
+    {
+        return Cache::remember(
+            "team_mention_analytics_{$this->id}",
+            3600, // 1 hour cache
+            function () {
+                $mentions = $this->activeMentions()
+                    ->selectRaw('
+                        COUNT(*) as total_mentions,
+                        COUNT(DISTINCT mentionable_type) as content_types,
+                        COUNT(DISTINCT mentioned_by) as unique_mentioners,
+                        MAX(mentioned_at) as last_mention,
+                        MIN(mentioned_at) as first_mention
+                    ')
+                    ->first();
+
+                $contentBreakdown = $this->activeMentions()
+                    ->selectRaw('mentionable_type, COUNT(*) as count')
+                    ->groupBy('mentionable_type')
+                    ->pluck('count', 'mentionable_type')
+                    ->toArray();
+
+                return [
+                    'total_mentions' => $mentions->total_mentions ?? 0,
+                    'content_types' => $mentions->content_types ?? 0,
+                    'unique_mentioners' => $mentions->unique_mentioners ?? 0,
+                    'last_mention' => $mentions->last_mention,
+                    'first_mention' => $mentions->first_mention,
+                    'content_breakdown' => $contentBreakdown
+                ];
+            }
+        );
     }
 }

@@ -127,7 +127,7 @@ class AdminNewsController extends ApiResponseController
                     'author' => [
                         'id' => $article->author_id,
                         'name' => $article->author_name,
-                        'avatar' => $article->author_avatar ? asset('storage/avatars/' . $article->author_avatar) : null
+                        'avatar' => $this->formatAvatarUrl($article->author_avatar)
                     ],
                     'category' => [
                         'id' => $article->category_id,
@@ -726,7 +726,7 @@ class AdminNewsController extends ApiResponseController
             'author' => [
                 'id' => $article->author_id,
                 'name' => $article->author_name,
-                'avatar' => $article->author_avatar ? asset('storage/avatars/' . $article->author_avatar) : null
+                'avatar' => $this->formatAvatarUrl($article->author_avatar)
             ],
             'category' => [
                 'id' => $article->category_id,
@@ -916,7 +916,7 @@ class AdminNewsController extends ApiResponseController
                     'author' => [
                         'id' => $article->author_id,
                         'name' => $article->author_name,
-                        'avatar' => $article->author_avatar ? asset('storage/avatars/' . $article->author_avatar) : null
+                        'avatar' => $this->formatAvatarUrl($article->author_avatar)
                     ],
                     'category' => [
                         'id' => $article->category_id,
@@ -1486,7 +1486,7 @@ class AdminNewsController extends ApiResponseController
                     'author' => [
                         'id' => $article->author_id,
                         'name' => $article->author_name,
-                        'avatar' => $article->author_avatar ? asset('storage/avatars/' . $article->author_avatar) : null
+                        'avatar' => $this->formatAvatarUrl($article->author_avatar)
                     ],
                     'category' => [
                         'id' => $article->category_id,
@@ -1827,6 +1827,78 @@ class AdminNewsController extends ApiResponseController
         } catch (\Exception $e) {
             return $this->errorResponse('Error performing bulk comment moderation: ' . $e->getMessage(), 500);
         }
+    }
+
+    /**
+     * Bulk delete news articles
+     */
+    public function bulkDelete(Request $request)
+    {
+        try {
+            $request->validate([
+                'news_ids' => 'required|array|min:1',
+                'news_ids.*' => 'required|integer|exists:news,id'
+            ]);
+
+            $newsIds = $request->news_ids;
+            
+            DB::beginTransaction();
+            
+            try {
+                // Get articles before deletion for logging
+                $articles = News::whereIn('id', $newsIds)->get();
+                
+                // Delete articles
+                $deletedCount = News::whereIn('id', $newsIds)->delete();
+                
+                // Log the action
+                foreach ($articles as $article) {
+                    $this->logModerationAction('bulk_delete_article', 'news', $article->id, 'Bulk delete operation');
+                }
+                
+                DB::commit();
+                
+                return response()->json([
+                    'success' => true,
+                    'message' => "Successfully deleted {$deletedCount} articles",
+                    'deleted_count' => $deletedCount
+                ]);
+                
+            } catch (\Exception $e) {
+                DB::rollBack();
+                throw $e;
+            }
+            
+        } catch (\Exception $e) {
+            \Log::error('Bulk delete news error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete articles'
+            ], 500);
+        }
+    }
+
+    /**
+     * Format avatar URL properly
+     */
+    private function formatAvatarUrl($avatar)
+    {
+        if (!$avatar) {
+            return null;
+        }
+        
+        // If it's already a full URL, return as is
+        if (str_starts_with($avatar, 'http')) {
+            return $avatar;
+        }
+        
+        // If it's a hero image path, return with proper URL
+        if (str_contains($avatar, '/images/heroes/')) {
+            return url($avatar);
+        }
+        
+        // Otherwise assume it's a regular uploaded avatar
+        return asset('storage/avatars/' . $avatar);
     }
 
     /**

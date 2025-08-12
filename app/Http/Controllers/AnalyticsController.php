@@ -992,4 +992,106 @@ class AnalyticsController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Track user events for analytics
+     */
+    public function trackEvent(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'event_type' => 'required|string|max:50',
+                'event_data' => 'nullable|array',
+                'page_url' => 'nullable|string|max:255',
+                'user_id' => 'nullable|integer',
+                'session_id' => 'nullable|string|max:255'
+            ]);
+
+            // Store the analytics event in the user_activities table
+            $userId = $validated['user_id'] ?? auth()->id() ?? null;
+            
+            // Validate user exists if user_id is provided
+            if ($userId && !\App\Models\User::find($userId)) {
+                $userId = null; // Handle as anonymous user if provided user doesn't exist
+            }
+            
+            $eventType = $validated['event_type'];
+            $eventData = $validated['event_data'] ?? [];
+            $pageUrl = $validated['page_url'] ?? $request->header('referer');
+            $sessionId = $validated['session_id'] ?? session()->getId();
+
+            // Create meaningful content description based on event type
+            $content = match($eventType) {
+                'page_view' => "Viewed page: " . ($pageUrl ?? 'Unknown'),
+                'page_visibility_change' => "Page visibility changed: " . ($eventData['state'] ?? 'unknown'),
+                'click' => "Clicked: " . ($eventData['element'] ?? 'unknown element'),
+                'scroll' => "Scrolled to: " . ($eventData['depth'] ?? '0') . '%',
+                'form_submit' => "Submitted form: " . ($eventData['form'] ?? 'unknown'),
+                'download' => "Downloaded: " . ($eventData['file'] ?? 'unknown file'),
+                'search' => "Searched for: " . ($eventData['query'] ?? 'unknown'),
+                'video_play' => "Played video: " . ($eventData['video'] ?? 'unknown'),
+                'engagement' => "User engagement: " . ($eventData['type'] ?? 'general'),
+                default => "Analytics event: {$eventType}"
+            };
+
+            // Store in user_activities table using the UserActivity model
+            $activity = \App\Models\UserActivity::create([
+                'user_id' => $userId,
+                'action' => "analytics_{$eventType}",
+                'content' => $content,
+                'resource_type' => 'analytics_event',
+                'resource_id' => null,
+                'metadata' => array_merge($eventData, [
+                    'event_type' => $eventType,
+                    'page_url' => $pageUrl,
+                    'session_id' => $sessionId,
+                    'tracked_at' => now()->toISOString()
+                ]),
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+                'session_id' => $sessionId,
+                'url' => $pageUrl,
+                'referrer' => $request->header('referer')
+            ]);
+
+            // Log for debugging (but don't rely on logs for data persistence)
+            Log::info('Analytics Event Tracked', [
+                'activity_id' => $activity->id,
+                'event_type' => $eventType,
+                'user_id' => $userId,
+                'timestamp' => now()->toISOString()
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Event tracked successfully',
+                'activity_id' => $activity->id
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::warning('Analytics Event Validation Error', [
+                'errors' => $e->errors(),
+                'request_data' => $request->all()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+
+        } catch (\Exception $e) {
+            Log::error('Analytics Event Tracking Error', [
+                'error' => $e->getMessage(),
+                'line' => $e->getLine(),
+                'file' => $e->getFile(),
+                'request_data' => $request->all()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error tracking event: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

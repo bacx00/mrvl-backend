@@ -14,12 +14,13 @@ class ImageHelper
      */
     public static function getTeamLogo($logoPath, $teamName = null)
     {
-        if (!$logoPath) {
+        // CRITICAL FIX: Block ALL external URLs including Liquipedia
+        if (!$logoPath || self::isExternalUrl($logoPath)) {
             return [
                 'url' => '/images/team-placeholder.svg',
-                'exists' => true,
+                'exists' => false,
                 'fallback' => [
-                    'text' => $teamName ?? '?',
+                    'text' => $teamName ? substr($teamName, 0, 3) : '?',
                     'color' => self::generateColorFromText($teamName ?? 'team'),
                     'type' => 'team-logo'
                 ]
@@ -112,7 +113,7 @@ class ImageHelper
         // Return placeholder if no image found
         return [
             'url' => '/images/team-placeholder.svg',
-            'exists' => false,
+            'exists' => true,
             'fallback' => [
                 'text' => $teamName ? substr($teamName, 0, 3) : '?',
                 'color' => self::generateColorFromText($teamName ?? 'team'),
@@ -219,10 +220,11 @@ class ImageHelper
      */
     public static function getPlayerAvatar($avatarPath, $playerName = null)
     {
-        if (!$avatarPath) {
+        // CRITICAL FIX: Block ALL external URLs including Liquipedia
+        if (!$avatarPath || self::isExternalUrl($avatarPath)) {
             return [
                 'url' => '/images/player-placeholder.svg',
-                'exists' => true,
+                'exists' => false,
                 'fallback' => [
                     'text' => $playerName ? substr($playerName, 0, 2) : '?',
                     'color' => self::generateColorFromText($playerName ?? 'player'),
@@ -297,7 +299,7 @@ class ImageHelper
         // Return placeholder if no image found
         return [
             'url' => '/images/player-placeholder.svg',
-            'exists' => false,
+            'exists' => true,
             'fallback' => [
                 'text' => $playerName ? substr($playerName, 0, 2) : '?',
                 'color' => self::generateColorFromText($playerName ?? 'player'),
@@ -602,6 +604,43 @@ class ImageHelper
         ];
         
         return $roleMapping[$heroName] ?? '#6b7280';
+    }
+
+    /**
+     * Check if a path is an external URL that should be blocked
+     * 
+     * @param string $path
+     * @return bool
+     */
+    private static function isExternalUrl($path)
+    {
+        if (!is_string($path)) {
+            return false;
+        }
+        
+        // Block all external HTTP/HTTPS URLs
+        if (preg_match('/^https?:\/\//', $path)) {
+            return true;
+        }
+        
+        // Block any URLs containing external domains
+        $blockedDomains = [
+            'liquipedia.net',
+            'liquipedia.org',
+            'vlr.gg',
+            'hltv.org',
+            'cdn.',
+            'imgur.com',
+            'i.imgur.com'
+        ];
+        
+        foreach ($blockedDomains as $domain) {
+            if (strpos($path, $domain) !== false) {
+                return true;
+            }
+        }
+        
+        return false;
     }
 
     /**

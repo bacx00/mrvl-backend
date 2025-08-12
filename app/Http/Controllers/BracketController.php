@@ -22,7 +22,14 @@ class BracketController extends Controller
     public function show($eventId)
     {
         try {
-            $event = DB::table('events')->where('id', $eventId)->first();
+            // Use cache to improve performance
+            $cacheKey = "bracket_data_{$eventId}";
+            $cacheTimeout = 30; // 30 seconds cache for live tournaments
+
+            $event = cache()->remember("event_{$eventId}", $cacheTimeout, function() use ($eventId) {
+                return DB::table('events')->where('id', $eventId)->first();
+            });
+
             if (!$event) {
                 return response()->json([
                     'success' => false,
@@ -30,26 +37,55 @@ class BracketController extends Controller
                 ], 404);
             }
 
-            // Get bracket structure based on event format
-            $bracket = $this->generateBracket($eventId, $event->format);
+            // Get bracket structure based on event format with caching
+            $bracket = cache()->remember($cacheKey, $cacheTimeout, function() use ($eventId, $event) {
+                return $this->generateBracket($eventId, $event->format);
+            });
+
+            // Get metadata efficiently in a single query batch
+            $metadata = cache()->remember("bracket_metadata_{$eventId}", $cacheTimeout, function() use ($eventId, $event) {
+                $teamsCount = DB::table('event_teams')->where('event_id', $eventId)->count();
+                $matchStats = DB::table('matches')
+                    ->where('event_id', $eventId)
+                    ->selectRaw('
+                        COUNT(*) as total_matches,
+                        SUM(CASE WHEN status = "completed" THEN 1 ELSE 0 END) as completed_matches,
+                        MIN(CASE WHEN status = "scheduled" THEN round ELSE NULL END) as current_round
+                    ')
+                    ->first();
+
+                return [
+                    'total_rounds' => $this->calculateTotalRounds($eventId, $event->format),
+                    'teams_count' => $teamsCount,
+                    'matches_completed' => $matchStats->completed_matches ?? 0,
+                    'total_matches' => $matchStats->total_matches ?? 0,
+                    'current_round' => $matchStats->current_round ?? 1,
+                    'completion_percentage' => $matchStats->total_matches > 0 
+                        ? round(($matchStats->completed_matches / $matchStats->total_matches) * 100, 1) 
+                        : 0
+                ];
+            });
 
             return response()->json([
                 'data' => [
                     'event_id' => $eventId,
                     'event_name' => $event->name,
                     'format' => $event->format,
+                    'status' => $event->status,
                     'bracket' => $bracket,
-                    'metadata' => [
-                        'total_rounds' => $this->calculateTotalRounds($eventId, $event->format),
-                        'teams_count' => $this->getEventTeamCount($eventId),
-                        'matches_completed' => $this->getCompletedMatchesCount($eventId),
-                        'current_round' => $this->getCurrentRound($eventId)
-                    ]
+                    'metadata' => $metadata,
+                    'last_updated' => now()->toISOString()
                 ],
                 'success' => true
             ]);
 
         } catch (\Exception $e) {
+            \Log::error('Bracket show error', [
+                'event_id' => $eventId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
             return response()->json([
                 'success' => false,
                 'message' => 'Error fetching bracket: ' . $e->getMessage()
@@ -732,20 +768,66 @@ class BracketController extends Controller
 
     private function processMatchCompletion($matchId, $team1Score, $team2Score)
     {
-        $match = DB::table('matches')->where('id', $matchId)->first();
-        $winnerId = $team1Score > $team2Score ? $match->team1_id : $match->team2_id;
-        $loserId = $team1Score > $team2Score ? $match->team2_id : $match->team1_id;
-        
-        // Advance winner to next round (implementation depends on bracket type)
-        $this->advanceWinnerToNextRound($match, $winnerId);
-        
-        // For double elimination, move loser to lower bracket
-        if ($match->bracket_type === 'upper') {
-            $this->moveLoserToLowerBracket($match, $loserId);
+        try {
+            DB::beginTransaction();
+            
+            $match = DB::table('matches')->where('id', $matchId)->first();
+            if (!$match) {
+                throw new \Exception('Match not found');
+            }
+            
+            // Determine winner and loser
+            if ($team1Score > $team2Score) {
+                $winnerId = $match->team1_id;
+                $loserId = $match->team2_id;
+            } elseif ($team2Score > $team1Score) {
+                $winnerId = $match->team2_id;
+                $loserId = $match->team1_id;
+            } else {
+                // Handle draw/tie scenarios
+                $winnerId = null;
+                $loserId = null;
+            }
+            
+            // Clear any existing cache for this event
+            cache()->forget("bracket_data_{$match->event_id}");
+            cache()->forget("bracket_metadata_{$match->event_id}");
+            cache()->forget("event_{$match->event_id}");
+            
+            // Advance winner to next round (implementation depends on bracket type)
+            if ($winnerId) {
+                $this->advanceWinnerToNextRound($match, $winnerId);
+            }
+            
+            // For double elimination, move loser to lower bracket
+            if ($match->bracket_type === 'upper' && $loserId) {
+                $this->moveLoserToLowerBracket($match, $loserId);
+            }
+            
+            // Update event standings
+            $this->updateEventStandings($match->event_id);
+            
+            // Check if tournament is complete
+            $this->checkTournamentCompletion($match->event_id);
+            
+            DB::commit();
+            
+            // Log the match completion for audit trail
+            \Log::info('Match completed', [
+                'match_id' => $matchId,
+                'event_id' => $match->event_id,
+                'winner_id' => $winnerId,
+                'score' => "{$team1Score}-{$team2Score}"
+            ]);
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Match completion error', [
+                'match_id' => $matchId,
+                'error' => $e->getMessage()
+            ]);
+            throw $e;
         }
-        
-        // Update event standings
-        $this->updateEventStandings($match->event_id);
     }
 
     private function advanceWinnerToNextRound($match, $winnerId)
@@ -1145,5 +1227,107 @@ class BracketController extends Controller
             1 => 8, 2 => 4, 3 => 3, 4 => 2
         ];
         return $upperPositions[$round] ?? 9;
+    }
+
+    /**
+     * Check if tournament is complete and update status
+     */
+    private function checkTournamentCompletion($eventId)
+    {
+        $event = DB::table('events')->where('id', $eventId)->first();
+        if (!$event || $event->status === 'completed') {
+            return;
+        }
+
+        // Check if all matches are completed
+        $pendingMatches = DB::table('matches')
+            ->where('event_id', $eventId)
+            ->whereIn('status', ['scheduled', 'live'])
+            ->count();
+
+        if ($pendingMatches === 0) {
+            // Tournament is complete
+            DB::table('events')
+                ->where('id', $eventId)
+                ->update([
+                    'status' => 'completed',
+                    'ended_at' => now(),
+                    'updated_at' => now()
+                ]);
+
+            \Log::info('Tournament completed', ['event_id' => $eventId]);
+
+            // Clear caches
+            cache()->forget("event_{$eventId}");
+            cache()->forget("bracket_data_{$eventId}");
+            cache()->forget("bracket_metadata_{$eventId}");
+        }
+    }
+
+    /**
+     * Validate bracket integrity and fix common issues
+     */
+    public function validateBracket($eventId)
+    {
+        try {
+            $issues = [];
+            
+            // Check for orphaned matches
+            $orphanedMatches = DB::table('matches as m')
+                ->leftJoin('teams as t1', 'm.team1_id', '=', 't1.id')
+                ->leftJoin('teams as t2', 'm.team2_id', '=', 't2.id')
+                ->where('m.event_id', $eventId)
+                ->whereNull('t1.id')
+                ->orWhereNull('t2.id')
+                ->count();
+
+            if ($orphanedMatches > 0) {
+                $issues[] = "Found {$orphanedMatches} matches with invalid team references";
+            }
+
+            // Check for bracket inconsistencies
+            $event = DB::table('events')->where('id', $eventId)->first();
+            if ($event) {
+                $totalMatches = DB::table('matches')->where('event_id', $eventId)->count();
+                $teamCount = $this->getEventTeamCount($eventId);
+                $expectedMatches = $this->calculateExpectedMatches($teamCount, $event->format);
+
+                if ($totalMatches !== $expectedMatches) {
+                    $issues[] = "Expected {$expectedMatches} matches but found {$totalMatches}";
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'issues' => $issues,
+                'is_valid' => count($issues) === 0
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error validating bracket: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Calculate expected number of matches for a tournament format
+     */
+    private function calculateExpectedMatches($teamCount, $format)
+    {
+        switch ($format) {
+            case 'single_elimination':
+                return max(0, $teamCount - 1);
+            case 'double_elimination':
+                return max(0, ($teamCount - 1) * 2);
+            case 'round_robin':
+                return max(0, ($teamCount * ($teamCount - 1)) / 2);
+            case 'swiss':
+                $rounds = $this->calculateSwissRounds($teamCount);
+                return ($teamCount / 2) * $rounds;
+            default:
+                return 0;
+        }
     }
 }

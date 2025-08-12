@@ -2150,6 +2150,9 @@ class ForumController extends ApiResponseController
         }
 
         try {
+            // Delete mentions for this post
+            $this->mentionService->deleteMentions('forum_post', $postId);
+            
             // Actually delete the post record
             $updated = DB::table('forum_posts')
                 ->where('id', $postId)
@@ -2480,5 +2483,21 @@ class ForumController extends ApiResponseController
                 'message' => 'Error fetching forum overview: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Create a new thread (alias for store method)
+     */
+    public function createThread(Request $request)
+    {
+        return $this->store($request);
+    }
+
+    /**
+     * Create a reply to a thread (alias for storePost method)
+     */
+    public function createReply(Request $request, $threadId)
+    {
+        return $this->storePost($request, $threadId);
     }
 }

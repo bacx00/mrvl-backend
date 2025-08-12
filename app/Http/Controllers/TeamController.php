@@ -666,7 +666,15 @@ class TeamController extends Controller
         // Authorization is handled by middleware in routes/api.php
         
         try {
-            $team = DB::table('teams')->where('id', $teamId)->first();
+            // Use caching for better performance
+            $cacheKey = "team_admin_{$teamId}";
+            $team = \Cache::remember($cacheKey, 300, function() use ($teamId) {
+                return DB::table('teams as t')
+                    ->leftJoin(DB::raw('(SELECT team_id, COUNT(*) as player_count FROM players WHERE team_id = ' . $teamId . ') as pc'), 't.id', '=', 'pc.team_id')
+                    ->where('t.id', $teamId)
+                    ->select('t.*', 'pc.player_count')
+                    ->first();
+            });
             
             if (!$team) {
                 return response()->json([
@@ -675,8 +683,21 @@ class TeamController extends Controller
                 ], 404);
             }
             
+            // Get team roster for admin view
+            $roster = \Cache::remember("team_roster_{$teamId}", 300, function() use ($teamId) {
+                return DB::table('players')
+                    ->where('team_id', $teamId)
+                    ->select('id', 'username', 'real_name', 'role', 'avatar', 'rating')
+                    ->orderBy('role')
+                    ->get();
+            });
+            
+            $teamData = (array) $team;
+            $teamData['roster'] = $roster;
+            $teamData['player_count'] = $roster->count();
+            
             return response()->json([
-                'data' => $team,
+                'data' => $teamData,
                 'success' => true
             ]);
             
@@ -692,17 +713,41 @@ class TeamController extends Controller
     {
         // Authorization is handled by middleware in routes/api.php
         
-        $request->validate([
+        $validated = $request->validate([
             'name' => 'required|string|max:255|unique:teams',
-            'short_name' => 'required|string|max:10|unique:teams',
-            'region' => 'required|string|max:10',
+            'short_name' => 'required|string|max:20|unique:teams',
+            'region' => 'required|string|max:20',
+            'platform' => 'nullable|string|max:50',
             'country' => 'nullable|string|max:100',
-            'rating' => 'nullable|integer|min:0|max:5000',
-            'description' => 'nullable|string',
+            'country_code' => 'nullable|string|max:5',
+            'rating' => 'nullable|numeric|min:0|max:5000',
+            'elo_rating' => 'nullable|numeric|min:0|max:5000',
+            'earnings' => 'nullable|numeric|min:0',
+            'description' => 'nullable|string|max:2000',
             'social_links' => 'nullable|array',
+            'social_media' => 'nullable|array',
+            'twitter' => 'nullable|string|max:50',
+            'instagram' => 'nullable|string|max:50',
+            'youtube' => 'nullable|string|max:100',
+            'twitch' => 'nullable|string|max:50',
+            'tiktok' => 'nullable|string|max:50',
+            'discord' => 'nullable|string|max:100',
+            'facebook' => 'nullable|string|url|max:255',
+            'website' => 'nullable|string|url|max:255',
+            'liquipedia_url' => 'nullable|string|url|max:255',
+            'logo' => 'nullable|string|url|max:500',
+            'coach' => 'nullable|string|max:255',
             'coach_name' => 'nullable|string|max:255',
             'coach_nationality' => 'nullable|string|max:255',
-            'coach_social_media' => 'nullable|array'
+            'coach_social_media' => 'nullable|array',
+            'coach_picture' => 'nullable|string|url|max:500',
+            'captain' => 'nullable|string|max:255',
+            'manager' => 'nullable|string|max:255',
+            'owner' => 'nullable|string|max:255',
+            'founded' => 'nullable|string|max:50',
+            'founded_date' => 'nullable|date|before:today',
+            'status' => 'nullable|in:active,inactive,disbanded,suspended',
+            'achievements' => 'nullable|array'
         ]);
         
         try {
@@ -760,6 +805,7 @@ class TeamController extends Controller
                 'name' => 'sometimes|string|max:255|unique:teams,name,' . $teamId,
                 'short_name' => 'sometimes|string|max:20|unique:teams,short_name,' . $teamId,
                 'region' => 'sometimes|string|max:20',
+                'platform' => 'nullable|string|max:50',
                 'country' => 'nullable|string|max:100',
                 'country_code' => 'nullable|string|max:5',
                 'rating' => 'nullable|numeric|min:0|max:5000',
@@ -770,38 +816,39 @@ class TeamController extends Controller
                 'earnings_decimal' => 'nullable|numeric|min:0',
                 'earnings_amount' => 'nullable|numeric|min:0',
                 'earnings_currency' => 'nullable|string|max:10',
-                'description' => 'nullable|string',
+                'description' => 'nullable|string|max:2000',
                 'social_links' => 'nullable|array',
                 'social_media' => 'nullable|array',
-                'twitter' => 'nullable|string',
-                'twitter_url' => 'nullable|string|url',
-                'instagram' => 'nullable|string',
-                'instagram_url' => 'nullable|string|url',
-                'youtube' => 'nullable|string',
-                'youtube_url' => 'nullable|string|url',
-                'twitch' => 'nullable|string',
-                'twitch_url' => 'nullable|string|url',
-                'tiktok' => 'nullable|string',
+                'twitter' => 'nullable|string|max:50',
+                'twitter_url' => 'nullable|string|url|max:255',
+                'instagram' => 'nullable|string|max:50',
+                'instagram_url' => 'nullable|string|url|max:255',
+                'youtube' => 'nullable|string|max:100',
+                'youtube_url' => 'nullable|string|url|max:255',
+                'twitch' => 'nullable|string|max:50',
+                'twitch_url' => 'nullable|string|url|max:255',
+                'tiktok' => 'nullable|string|max:50',
                 'coach_name' => 'nullable|string|max:255',
                 'coach_nationality' => 'nullable|string|max:255',
                 'coach_social_media' => 'nullable|array',
-                'discord' => 'nullable|string',
-                'discord_url' => 'nullable|string',
-                'facebook' => 'nullable|string|url',
-                'website' => 'nullable|string|url',
-                'website_url' => 'nullable|string|url',
-                'liquipedia_url' => 'nullable|string|url',
-                'vlr_url' => 'nullable|string|url',
-                'logo' => 'nullable|string|url',
-                'flag' => 'nullable|string|url',
-                'country_flag' => 'nullable|string|url',
+                'discord' => 'nullable|string|max:100',
+                'discord_url' => 'nullable|string|max:255',
+                'facebook' => 'nullable|string|url|max:255',
+                'website' => 'nullable|string|url|max:255',
+                'website_url' => 'nullable|string|url|max:255',
+                'liquipedia_url' => 'nullable|string|url|max:255',
+                'vlr_url' => 'nullable|string|url|max:255',
+                'logo' => 'nullable|string|url|max:500',
+                'flag' => 'nullable|string|url|max:500',
+                'country_flag' => 'nullable|string|url|max:500',
                 'coach' => 'nullable|string|max:255',
-                'coach_picture' => 'nullable|string|url',
+                'coach_picture' => 'nullable|string|url|max:500',
+                'coach_image' => 'nullable|string|url|max:500',
                 'captain' => 'nullable|string|max:255',
                 'manager' => 'nullable|string|max:255',
                 'owner' => 'nullable|string|max:255',
-                'founded' => 'nullable|string',
-                'founded_date' => 'nullable|date',
+                'founded' => 'nullable|string|max:50',
+                'founded_date' => 'nullable|date|before:today',
                 'status' => 'sometimes|in:active,inactive,disbanded,suspended',
                 'achievements' => 'nullable|array'
             ]);
@@ -875,21 +922,30 @@ class TeamController extends Controller
             // Set updated timestamp
             $validated['updated_at'] = now();
             
-            // Update the team
-            DB::table('teams')->where('id', $teamId)->update($validated);
+            // Update the team with transaction for data integrity
+            DB::transaction(function() use ($validated, $teamId) {
+                DB::table('teams')->where('id', $teamId)->update($validated);
+                
+                // Update team ranks after rating change if rating was updated
+                if (isset($validated['rating']) || isset($validated['elo_rating'])) {
+                    $this->updateAllTeamRanks();
+                }
+                
+                // Clear relevant caches for immediate updates
+                \Cache::tags(['teams', 'players', 'rankings'])->flush();
+                \Cache::forget("team_{$teamId}");
+                \Cache::forget("team_admin_{$teamId}");
+                \Cache::forget('team_rankings');
+            });
             
-            // Update team ranks after rating change if rating was updated
-            if (isset($validated['rating']) || isset($validated['elo_rating'])) {
-                $this->updateAllTeamRanks();
-            }
-            
-            // Return updated team data using the admin method
+            // Return optimized response with fresh data
             $updatedTeam = $this->getTeamAdmin($teamId);
             
             return response()->json([
                 'data' => $updatedTeam->original['data'],
                 'success' => true,
-                'message' => 'Team updated successfully'
+                'message' => 'Team updated successfully',
+                'timestamp' => now()->toISOString()
             ]);
             
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -898,12 +954,37 @@ class TeamController extends Controller
                 'message' => 'Validation failed',
                 'errors' => $e->errors()
             ], 422);
+        } catch (\Illuminate\Database\QueryException $e) {
+            \Log::error('TeamController@update DB error: ' . $e->getMessage());
+            
+            // Handle specific database constraint violations
+            if ($e->errorInfo[1] == 1062) { // Duplicate entry
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Team name or short name already exists',
+                    'error_code' => 'DUPLICATE_ENTRY'
+                ], 409);
+            }
+            if ($e->errorInfo[1] == 1452) { // Foreign key constraint
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid reference - related data does not exist',
+                    'error_code' => 'FOREIGN_KEY_VIOLATION'
+                ], 400);
+            }
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Database error occurred while updating team',
+                'error_code' => 'DATABASE_ERROR'
+            ], 500);
         } catch (\Exception $e) {
             \Log::error('TeamController@update error: ' . $e->getMessage());
             \Log::error('Stack trace: ' . $e->getTraceAsString());
             return response()->json([
                 'success' => false,
-                'message' => 'Error updating team: ' . $e->getMessage()
+                'message' => 'Error updating team: ' . $e->getMessage(),
+                'error_code' => 'GENERAL_ERROR'
             ], 500);
         }
     }

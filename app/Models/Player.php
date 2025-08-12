@@ -4,6 +4,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 
 class Player extends Model
 {
@@ -15,19 +16,25 @@ class Player extends Model
         'hero_preferences', 'skill_rating', 'main_hero', 'alt_heroes', 'region', 'country', 
         'flag', 'country_flag', 'country_code', 'nationality', 'team_country', 'rank', 
         'rating', 'elo_rating', 'peak_elo', 'elo_changes', 'last_elo_update', 'peak_rating',
-        'age', 'birth_date', 'earnings', 'earnings_amount', 'earnings_currency', 
+        'age', 'birth_date', 'earnings', 'earnings_amount', 'earnings_currency', 'total_earnings',
+        'wins', 'losses', 'kda', // Added missing stats fields
         'total_matches', 'tournaments_played', 'social_media', 'twitter', 'instagram', 
         'twitch', 'tiktok', 'youtube', 'facebook', 'discord', 'liquipedia_url', 
-        'biography', 'event_placements', 'hero_pool', 'status', 'total_earnings',
+        'biography', 'event_placements', 'hero_pool', 'status',
         'total_eliminations', 'total_deaths', 'total_assists', 'overall_kda',
         'average_damage_per_match', 'average_healing_per_match', 'average_damage_blocked_per_match',
         'hero_statistics', 'most_played_hero', 'best_winrate_hero', 'longest_win_streak',
-        'current_win_streak', 'achievements'
+        'current_win_streak', 'achievements', 'mention_count', 'last_mentioned_at'
     ];
 
     protected $casts = [
         'rating' => 'float',
         'age' => 'integer',
+        'earnings' => 'decimal:2',
+        'total_earnings' => 'decimal:2',
+        'wins' => 'integer',
+        'losses' => 'integer',
+        'kda' => 'decimal:2',
         'alt_heroes' => 'array',
         'social_media' => 'array',
         'past_teams' => 'array',
@@ -45,7 +52,9 @@ class Player extends Model
         'avg_first_deaths_per_round' => 'decimal:2',
         'hero_pool' => 'array',
         'career_stats' => 'array',
-        'achievements' => 'array'
+        'achievements' => 'array',
+        'mention_count' => 'integer',
+        'last_mentioned_at' => 'datetime'
     ];
 
     protected $appends = []; // Removed problematic accessors
@@ -910,5 +919,125 @@ class Player extends Model
     {
         if ($this->total_matches == 0) return 0;
         return round(($this->total_wins / $this->total_matches) * 100, 1);
+    }
+
+    /**
+     * Mention-related relationships and methods
+     */
+
+    /**
+     * Get mentions of this player
+     */
+    public function mentions()
+    {
+        return $this->morphMany(Mention::class, 'mentioned', 'mentioned_type', 'mentioned_id');
+    }
+
+    /**
+     * Get active mentions of this player with optimized query
+     */
+    public function activeMentions()
+    {
+        return $this->mentions()->where('is_active', true);
+    }
+
+    /**
+     * Get recent mentions with pagination support
+     */
+    public function getRecentMentions($limit = 10, $offset = 0)
+    {
+        return Cache::remember(
+            "player_mentions_{$this->id}_{$limit}_{$offset}",
+            300, // 5 minutes cache
+            function () use ($limit, $offset) {
+                return $this->activeMentions()
+                    ->with(['mentionable', 'mentionedBy'])
+                    ->orderBy('mentioned_at', 'desc')
+                    ->offset($offset)
+                    ->limit($limit)
+                    ->get();
+            }
+        );
+    }
+
+    /**
+     * Get mention count efficiently
+     */
+    public function getMentionCount(): int
+    {
+        // Use the denormalized column if available
+        if (isset($this->attributes['mention_count'])) {
+            return (int) $this->attributes['mention_count'];
+        }
+        
+        // Fallback to counting if column doesn't exist
+        return $this->activeMentions()->count();
+    }
+
+    /**
+     * Scope for players with mentions above threshold
+     */
+    public function scopePopularMentions($query, $threshold = 5)
+    {
+        if (\Schema::hasColumn('players', 'mention_count')) {
+            return $query->where('mention_count', '>=', $threshold);
+        }
+        
+        return $query->whereHas('mentions', function ($q) use ($threshold) {
+            $q->where('is_active', true)
+              ->havingRaw('COUNT(*) >= ?', [$threshold]);
+        });
+    }
+
+    /**
+     * Scope for recently mentioned players
+     */
+    public function scopeRecentlyMentioned($query, $days = 7)
+    {
+        if (\Schema::hasColumn('players', 'last_mentioned_at')) {
+            return $query->where('last_mentioned_at', '>=', now()->subDays($days));
+        }
+        
+        return $query->whereHas('mentions', function ($q) use ($days) {
+            $q->where('is_active', true)
+              ->where('mentioned_at', '>=', now()->subDays($days));
+        });
+    }
+
+    /**
+     * Get mention analytics data
+     */
+    public function getMentionAnalytics(): array
+    {
+        return Cache::remember(
+            "player_mention_analytics_{$this->id}",
+            3600, // 1 hour cache
+            function () {
+                $mentions = $this->activeMentions()
+                    ->selectRaw('
+                        COUNT(*) as total_mentions,
+                        COUNT(DISTINCT mentionable_type) as content_types,
+                        COUNT(DISTINCT mentioned_by) as unique_mentioners,
+                        MAX(mentioned_at) as last_mention,
+                        MIN(mentioned_at) as first_mention
+                    ')
+                    ->first();
+
+                $contentBreakdown = $this->activeMentions()
+                    ->selectRaw('mentionable_type, COUNT(*) as count')
+                    ->groupBy('mentionable_type')
+                    ->pluck('count', 'mentionable_type')
+                    ->toArray();
+
+                return [
+                    'total_mentions' => $mentions->total_mentions ?? 0,
+                    'content_types' => $mentions->content_types ?? 0,
+                    'unique_mentioners' => $mentions->unique_mentioners ?? 0,
+                    'last_mention' => $mentions->last_mention,
+                    'first_mention' => $mentions->first_mention,
+                    'content_breakdown' => $contentBreakdown
+                ];
+            }
+        );
     }
 }

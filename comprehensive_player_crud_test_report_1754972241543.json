@@ -1,0 +1,61 @@
+{
+  "test_summary": {
+    "total_bugs_found": 2,
+    "critical_bugs": 1,
+    "high_bugs": 1,
+    "medium_bugs": 0,
+    "low_bugs": 0,
+    "test_execution_time": "2025-08-12T04:17:21.543Z",
+    "test_player_id": null
+  },
+  "test_results": {
+    "createTest": null,
+    "readTest": null,
+    "updateTest": null,
+    "deleteTest": null,
+    "errorHandlingTest": null,
+    "validationTest": null
+  },
+  "bugs_by_category": {
+    "functional": [],
+    "security": [],
+    "performance": [],
+    "usability": [],
+    "integration": [
+      {
+        "severity": "CRITICAL",
+        "classification": "Integration",
+        "description": "Test execution failed: Authentication failed - cannot proceed with tests",
+        "reproduction": "1. Run comprehensive test suite\n2. Execution error occurs",
+        "recommended_fix": "Check test environment setup and API availability",
+        "discovered_at": "2025-08-12T04:17:21.543Z"
+      }
+    ]
+  },
+  "detailed_bugs": [
+    {
+      "severity": "HIGH",
+      "classification": "Authentication",
+      "description": "Unable to authenticate with admin credentials",
+      "reproduction": "1. POST /auth/login with admin@mrvl.com / password123\n2. Check response status and token",
+      "recommended_fix": "Verify admin user exists and credentials are correct",
+      "discovered_at": "2025-08-12T04:17:21.543Z"
+    },
+    {
+      "severity": "CRITICAL",
+      "classification": "Integration",
+      "description": "Test execution failed: Authentication failed - cannot proceed with tests",
+      "reproduction": "1. Run comprehensive test suite\n2. Execution error occurs",
+      "recommended_fix": "Check test environment setup and API availability",
+      "discovered_at": "2025-08-12T04:17:21.543Z"
+    }
+  ],
+  "recommendations": [
+    {
+      "priority": "HIGH",
+      "category": "Security",
+      "action": "Fix authentication issues immediately",
+      "description": "Authentication problems prevent proper testing and indicate security vulnerabilities"
+    }
+  ]
+}

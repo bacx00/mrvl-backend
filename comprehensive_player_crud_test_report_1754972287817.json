@@ -1,0 +1,717 @@
+{
+  "test_summary": {
+    "total_bugs_found": 41,
+    "critical_bugs": 1,
+    "high_bugs": 10,
+    "medium_bugs": 30,
+    "low_bugs": 0,
+    "test_execution_time": "2025-08-12T04:18:07.817Z",
+    "test_player_id": 775
+  },
+  "test_results": {
+    "createTest": {
+      "success": true,
+      "playerId": 775,
+      "protocol": "HTTP",
+      "responseTime": 1754972286945,
+      "fieldsValidated": 57
+    },
+    "readTest": {
+      "success": true,
+      "successfulEndpoints": 4,
+      "totalEndpoints": 4
+    },
+    "updateTest": {
+      "success": false,
+      "error": "Update operation failed"
+    },
+    "deleteTest": null,
+    "errorHandlingTest": {
+      "success": false,
+      "passedTests": 0,
+      "totalTests": 5
+    },
+    "validationTest": null,
+    "profileDisplayTest": {
+      "success": true,
+      "workingEndpoints": 5,
+      "totalEndpoints": 5
+    }
+  },
+  "bugs_by_category": {
+    "functional": [
+      {
+        "severity": "HIGH",
+        "classification": "Functional",
+        "description": "CREATE: Missing fields in response",
+        "reproduction": "1. Perform CREATE operation\n2. Check response for fields: earnings_amount, earnings_currency, peak_rating, peak_elo, rank, wins, losses, kda, total_matches, tournaments_played, hero_preferences, skill_rating, jersey_number, position_order, team_position, flag, country_flag, total_eliminations, total_deaths, total_assists, overall_kda, average_damage_per_match, average_healing_per_match, average_damage_blocked_per_match, most_played_hero, best_winrate_hero, longest_win_streak, current_win_streak, hero_pool, achievements",
+        "recommended_fix": "Ensure all fields are included in API response",
+        "discovered_at": "2025-08-12T04:18:06.945Z"
+      },
+      {
+        "severity": "MEDIUM",
+        "classification": "Functional",
+        "description": "CREATE: Type mismatch for earnings",
+        "reproduction": "1. Perform CREATE operation\n2. Expected type: number\n3. Actual type: string",
+        "recommended_fix": "Ensure proper type casting for earnings field",
+        "discovered_at": "2025-08-12T04:18:06.945Z"
+      },
+      {
+        "severity": "MEDIUM",
+        "classification": "Functional",
+        "description": "CREATE: Type mismatch for total_earnings",
+        "reproduction": "1. Perform CREATE operation\n2. Expected type: number\n3. Actual type: string",
+        "recommended_fix": "Ensure proper type casting for total_earnings field",
+        "discovered_at": "2025-08-12T04:18:06.945Z"
+      },
+      {
+        "severity": "HIGH",
+        "classification": "Functional",
+        "description": "READ: Missing fields in response",
+        "reproduction": "1. Perform READ operation\n2. Check response for fields: name, nationality, country_code, earnings, earnings_amount, earnings_currency, total_earnings, elo_rating, peak_elo, rank, birth_date, wins, losses, kda, total_matches, tournaments_played, twitter, instagram, youtube, twitch, discord, tiktok, facebook, hero_preferences, skill_rating, jersey_number, position_order, team_position, flag, country_flag, total_eliminations, total_deaths, total_assists, overall_kda, average_damage_per_match, average_healing_per_match, average_damage_blocked_per_match, most_played_hero, best_winrate_hero, longest_win_streak, current_win_streak, hero_pool, achievements, liquipedia_url",
+        "recommended_fix": "Ensure all fields are included in API response",
+        "discovered_at": "2025-08-12T04:18:06.999Z"
+      },
+      {
+        "severity": "MEDIUM",
+        "classification": "Functional",
+        "description": "READ: Incorrect field value for peak_rating",
+        "reproduction": "1. Perform READ operation\n2. Expected: 1300.75\n3. Actual: 0",
+        "recommended_fix": "Verify peak_rating field processing and storage",
+        "discovered_at": "2025-08-12T04:18:06.999Z"
+      },
+      {
+        "severity": "HIGH",
+        "classification": "Functional",
+        "description": "READ: Missing fields in response",
+        "reproduction": "1. Perform READ operation\n2. Check response for fields: name, country_code, earnings_amount, earnings_currency, elo_rating, peak_rating, peak_elo, birth_date, tournaments_played, hero_preferences, skill_rating, jersey_number, position_order, team_position, country_flag, total_eliminations, total_deaths, total_assists, overall_kda, average_damage_per_match, average_healing_per_match, average_damage_blocked_per_match, most_played_hero, best_winrate_hero, longest_win_streak, current_win_streak, hero_pool, achievements, liquipedia_url",
+        "recommended_fix": "Ensure all fields are included in API response",
+        "discovered_at": "2025-08-12T04:18:07.045Z"
+      },
+      {
+        "severity": "MEDIUM",
+        "classification": "Functional",
+        "description": "READ: Incorrect field value for rank",
+        "reproduction": "1. Perform READ operation\n2. Expected: Diamond\n3. Actual: 1923",
+        "recommended_fix": "Verify rank field processing and storage",
+        "discovered_at": "2025-08-12T04:18:07.045Z"
+      },
+      {
+        "severity": "MEDIUM",
+        "classification": "Functional",
+        "description": "READ: Incorrect field value for wins",
+        "reproduction": "1. Perform READ operation\n2. Expected: 145\n3. Actual: 0",
+        "recommended_fix": "Verify wins field processing and storage",
+        "discovered_at": "2025-08-12T04:18:07.045Z"
+      },
+      {
+        "severity": "MEDIUM",
+        "classification": "Functional",
+        "description": "READ: Incorrect field value for losses",
+        "reproduction": "1. Perform READ operation\n2. Expected: 78\n3. Actual: 0",
+        "recommended_fix": "Verify losses field processing and storage",
+        "discovered_at": "2025-08-12T04:18:07.045Z"
+      },
+      {
+        "severity": "MEDIUM",
+        "classification": "Functional",
+        "description": "READ: Incorrect field value for kda",
+        "reproduction": "1. Perform READ operation\n2. Expected: 1.85\n3. Actual: 0.00",
+        "recommended_fix": "Verify kda field processing and storage",
+        "discovered_at": "2025-08-12T04:18:07.045Z"
+      },
+      {
+        "severity": "MEDIUM",
+        "classification": "Functional",
+        "description": "READ: Incorrect field value for total_matches",
+        "reproduction": "1. Perform READ operation\n2. Expected: 223\n3. Actual: 0",
+        "recommended_fix": "Verify total_matches field processing and storage",
+        "discovered_at": "2025-08-12T04:18:07.045Z"
+      },
+      {
+        "severity": "MEDIUM",
+        "classification": "Functional",
+        "description": "READ: Incorrect field value for flag",
+        "reproduction": "1. Perform READ operation\n2. Expected: us.png\n3. Actual: 🇺🇸",
+        "recommended_fix": "Verify flag field processing and storage",
+        "discovered_at": "2025-08-12T04:18:07.045Z"
+      },
+      {
+        "severity": "MEDIUM",
+        "classification": "Functional",
+        "description": "READ: Type mismatch for earnings",
+        "reproduction": "1. Perform READ operation\n2. Expected type: number\n3. Actual type: string",
+        "recommended_fix": "Ensure proper type casting for earnings field",
+        "discovered_at": "2025-08-12T04:18:07.045Z"
+      },
+      {
+        "severity": "MEDIUM",
+        "classification": "Functional",
+        "description": "READ: Type mismatch for total_earnings",
+        "reproduction": "1. Perform READ operation\n2. Expected type: number\n3. Actual type: string",
+        "recommended_fix": "Ensure proper type casting for total_earnings field",
+        "discovered_at": "2025-08-12T04:18:07.045Z"
+      },
+      {
+        "severity": "MEDIUM",
+        "classification": "Functional",
+        "description": "READ: Type mismatch for rank",
+        "reproduction": "1. Perform READ operation\n2. Expected type: string\n3. Actual type: number",
+        "recommended_fix": "Ensure proper type casting for rank field",
+        "discovered_at": "2025-08-12T04:18:07.045Z"
+      },
+      {
+        "severity": "MEDIUM",
+        "classification": "Functional",
+        "description": "READ: Type mismatch for kda",
+        "reproduction": "1. Perform READ operation\n2. Expected type: number\n3. Actual type: string",
+        "recommended_fix": "Ensure proper type casting for kda field",
+        "discovered_at": "2025-08-12T04:18:07.045Z"
+      },
+      {
+        "severity": "HIGH",
+        "classification": "Functional",
+        "description": "READ: Missing fields in response",
+        "reproduction": "1. Perform READ operation\n2. Check response for fields: name, country_code, earnings_amount, earnings_currency, elo_rating, peak_rating, peak_elo, birth_date, tournaments_played, hero_preferences, skill_rating, jersey_number, position_order, team_position, country_flag, total_eliminations, total_deaths, total_assists, overall_kda, average_damage_per_match, average_healing_per_match, average_damage_blocked_per_match, most_played_hero, best_winrate_hero, longest_win_streak, current_win_streak, hero_pool, achievements, liquipedia_url",
+        "recommended_fix": "Ensure all fields are included in API response",
+        "discovered_at": "2025-08-12T04:18:07.088Z"
+      },
+      {
+        "severity": "MEDIUM",
+        "classification": "Functional",
+        "description": "READ: Incorrect field value for rank",
+        "reproduction": "1. Perform READ operation\n2. Expected: Diamond\n3. Actual: 4739",
+        "recommended_fix": "Verify rank field processing and storage",
+        "discovered_at": "2025-08-12T04:18:07.088Z"
+      },
+      {
+        "severity": "MEDIUM",
+        "classification": "Functional",
+        "description": "READ: Incorrect field value for wins",
+        "reproduction": "1. Perform READ operation\n2. Expected: 145\n3. Actual: 0",
+        "recommended_fix": "Verify wins field processing and storage",
+        "discovered_at": "2025-08-12T04:18:07.088Z"
+      },
+      {
+        "severity": "MEDIUM",
+        "classification": "Functional",
+        "description": "READ: Incorrect field value for losses",
+        "reproduction": "1. Perform READ operation\n2. Expected: 78\n3. Actual: 0",
+        "recommended_fix": "Verify losses field processing and storage",
+        "discovered_at": "2025-08-12T04:18:07.088Z"
+      },
+      {
+        "severity": "MEDIUM",
+        "classification": "Functional",
+        "description": "READ: Incorrect field value for kda",
+        "reproduction": "1. Perform READ operation\n2. Expected: 1.85\n3. Actual: 0.00",
+        "recommended_fix": "Verify kda field processing and storage",
+        "discovered_at": "2025-08-12T04:18:07.088Z"
+      },
+      {
+        "severity": "MEDIUM",
+        "classification": "Functional",
+        "description": "READ: Incorrect field value for total_matches",
+        "reproduction": "1. Perform READ operation\n2. Expected: 223\n3. Actual: 0",
+        "recommended_fix": "Verify total_matches field processing and storage",
+        "discovered_at": "2025-08-12T04:18:07.088Z"
+      },
+      {
+        "severity": "MEDIUM",
+        "classification": "Functional",
+        "description": "READ: Incorrect field value for flag",
+        "reproduction": "1. Perform READ operation\n2. Expected: us.png\n3. Actual: 🇺🇸",
+        "recommended_fix": "Verify flag field processing and storage",
+        "discovered_at": "2025-08-12T04:18:07.088Z"
+      },
+      {
+        "severity": "MEDIUM",
+        "classification": "Functional",
+        "description": "READ: Type mismatch for earnings",
+        "reproduction": "1. Perform READ operation\n2. Expected type: number\n3. Actual type: string",
+        "recommended_fix": "Ensure proper type casting for earnings field",
+        "discovered_at": "2025-08-12T04:18:07.088Z"
+      },
+      {
+        "severity": "MEDIUM",
+        "classification": "Functional",
+        "description": "READ: Type mismatch for total_earnings",
+        "reproduction": "1. Perform READ operation\n2. Expected type: number\n3. Actual type: string",
+        "recommended_fix": "Ensure proper type casting for total_earnings field",
+        "discovered_at": "2025-08-12T04:18:07.088Z"
+      },
+      {
+        "severity": "MEDIUM",
+        "classification": "Functional",
+        "description": "READ: Type mismatch for rank",
+        "reproduction": "1. Perform READ operation\n2. Expected type: string\n3. Actual type: number",
+        "recommended_fix": "Ensure proper type casting for rank field",
+        "discovered_at": "2025-08-12T04:18:07.088Z"
+      },
+      {
+        "severity": "MEDIUM",
+        "classification": "Functional",
+        "description": "READ: Type mismatch for kda",
+        "reproduction": "1. Perform READ operation\n2. Expected type: number\n3. Actual type: string",
+        "recommended_fix": "Ensure proper type casting for kda field",
+        "discovered_at": "2025-08-12T04:18:07.088Z"
+      },
+      {
+        "severity": "HIGH",
+        "classification": "Functional",
+        "description": "READ: Missing fields in response",
+        "reproduction": "1. Perform READ operation\n2. Check response for fields: username, nationality, country_code, earnings, earnings_amount, earnings_currency, total_earnings, rating, elo_rating, peak_rating, peak_elo, rank, age, birth_date, wins, losses, kda, tournaments_played, twitter, instagram, youtube, twitch, discord, tiktok, facebook, biography, hero_preferences, alt_heroes, skill_rating, jersey_number, position_order, team_position, region, flag, country_flag, status, total_eliminations, total_deaths, total_assists, average_damage_per_match, average_healing_per_match, average_damage_blocked_per_match, most_played_hero, best_winrate_hero, longest_win_streak, current_win_streak, hero_pool, achievements, liquipedia_url",
+        "recommended_fix": "Ensure all fields are included in API response",
+        "discovered_at": "2025-08-12T04:18:07.137Z"
+      },
+      {
+        "severity": "MEDIUM",
+        "classification": "Functional",
+        "description": "READ: Incorrect field value for total_matches",
+        "reproduction": "1. Perform READ operation\n2. Expected: 223\n3. Actual: 0",
+        "recommended_fix": "Verify total_matches field processing and storage",
+        "discovered_at": "2025-08-12T04:18:07.137Z"
+      },
+      {
+        "severity": "MEDIUM",
+        "classification": "Functional",
+        "description": "READ: Incorrect field value for overall_kda",
+        "reproduction": "1. Perform READ operation\n2. Expected: 1.85\n3. Actual: 0",
+        "recommended_fix": "Verify overall_kda field processing and storage",
+        "discovered_at": "2025-08-12T04:18:07.137Z"
+      },
+      {
+        "severity": "HIGH",
+        "classification": "Functional",
+        "description": "Player update failed with status 500",
+        "reproduction": "1. PUT /admin/players/{id}\n2. Response: {\"success\":false,\"message\":\"Error updating player: This cache store does not support tagging.\",\"error_code\":\"GENERAL_ERROR\"}",
+        "recommended_fix": "Check update endpoint implementation and constraints",
+        "discovered_at": "2025-08-12T04:18:07.198Z"
+      },
+      {
+        "severity": "MEDIUM",
+        "classification": "Functional",
+        "description": "Error handling test failed: Invalid team_id",
+        "reproduction": "1. POST /admin/players with invalid data\n2. Expected status 422, got 500",
+        "recommended_fix": "Review validation rules and error responses",
+        "discovered_at": "2025-08-12T04:18:07.249Z"
+      },
+      {
+        "severity": "MEDIUM",
+        "classification": "Functional",
+        "description": "Error handling test failed: Missing required fields",
+        "reproduction": "1. POST /admin/players with invalid data\n2. Expected status 422, got 500",
+        "recommended_fix": "Review validation rules and error responses",
+        "discovered_at": "2025-08-12T04:18:07.297Z"
+      },
+      {
+        "severity": "MEDIUM",
+        "classification": "Functional",
+        "description": "Error handling test failed: Invalid earnings format",
+        "reproduction": "1. POST /admin/players with invalid data\n2. Expected status 422, got 500",
+        "recommended_fix": "Review validation rules and error responses",
+        "discovered_at": "2025-08-12T04:18:07.353Z"
+      },
+      {
+        "severity": "MEDIUM",
+        "classification": "Functional",
+        "description": "Error handling test failed: Invalid social media URLs",
+        "reproduction": "1. POST /admin/players with invalid data\n2. Expected status 422, got 201",
+        "recommended_fix": "Review validation rules and error responses",
+        "discovered_at": "2025-08-12T04:18:07.434Z"
+      },
+      {
+        "severity": "MEDIUM",
+        "classification": "Functional",
+        "description": "Error handling test failed: Duplicate username",
+        "reproduction": "1. POST /admin/players with invalid data\n2. Expected status 422, got 500",
+        "recommended_fix": "Review validation rules and error responses",
+        "discovered_at": "2025-08-12T04:18:07.562Z"
+      }
+    ],
+    "security": [],
+    "performance": [],
+    "usability": [
+      {
+        "severity": "HIGH",
+        "classification": "Usability",
+        "description": "Profile missing critical display fields: username",
+        "reproduction": "1. GET /public/player-profile/775\n2. Check response for display fields",
+        "recommended_fix": "Ensure critical fields are included in profile responses",
+        "discovered_at": "2025-08-12T04:18:07.602Z"
+      },
+      {
+        "severity": "HIGH",
+        "classification": "Usability",
+        "description": "Profile missing critical display fields: username, real_name, role, team_id",
+        "reproduction": "1. GET /public/players/775/matches\n2. Check response for display fields",
+        "recommended_fix": "Ensure critical fields are included in profile responses",
+        "discovered_at": "2025-08-12T04:18:07.680Z"
+      },
+      {
+        "severity": "HIGH",
+        "classification": "Usability",
+        "description": "Profile missing critical display fields: username, real_name, role, team_id",
+        "reproduction": "1. GET /public/players/775/stats\n2. Check response for display fields",
+        "recommended_fix": "Ensure critical fields are included in profile responses",
+        "discovered_at": "2025-08-12T04:18:07.718Z"
+      },
+      {
+        "severity": "HIGH",
+        "classification": "Usability",
+        "description": "Profile missing critical display fields: username, real_name, role, team_id",
+        "reproduction": "1. GET /public/players/775/team-history\n2. Check response for display fields",
+        "recommended_fix": "Ensure critical fields are included in profile responses",
+        "discovered_at": "2025-08-12T04:18:07.754Z"
+      }
+    ],
+    "integration": [
+      {
+        "severity": "CRITICAL",
+        "classification": "Integration",
+        "description": "Player creation endpoint error: Protocol \"http:\" not supported. Expected \"https:\"",
+        "reproduction": "1. POST /admin/players\n2. Network/server error occurs",
+        "recommended_fix": "Check API endpoint availability and server logs",
+        "discovered_at": "2025-08-12T04:18:06.821Z"
+      }
+    ]
+  },
+  "detailed_bugs": [
+    {
+      "severity": "CRITICAL",
+      "classification": "Integration",
+      "description": "Player creation endpoint error: Protocol \"http:\" not supported. Expected \"https:\"",
+      "reproduction": "1. POST /admin/players\n2. Network/server error occurs",
+      "recommended_fix": "Check API endpoint availability and server logs",
+      "discovered_at": "2025-08-12T04:18:06.821Z"
+    },
+    {
+      "severity": "HIGH",
+      "classification": "Functional",
+      "description": "CREATE: Missing fields in response",
+      "reproduction": "1. Perform CREATE operation\n2. Check response for fields: earnings_amount, earnings_currency, peak_rating, peak_elo, rank, wins, losses, kda, total_matches, tournaments_played, hero_preferences, skill_rating, jersey_number, position_order, team_position, flag, country_flag, total_eliminations, total_deaths, total_assists, overall_kda, average_damage_per_match, average_healing_per_match, average_damage_blocked_per_match, most_played_hero, best_winrate_hero, longest_win_streak, current_win_streak, hero_pool, achievements",
+      "recommended_fix": "Ensure all fields are included in API response",
+      "discovered_at": "2025-08-12T04:18:06.945Z"
+    },
+    {
+      "severity": "MEDIUM",
+      "classification": "Functional",
+      "description": "CREATE: Type mismatch for earnings",
+      "reproduction": "1. Perform CREATE operation\n2. Expected type: number\n3. Actual type: string",
+      "recommended_fix": "Ensure proper type casting for earnings field",
+      "discovered_at": "2025-08-12T04:18:06.945Z"
+    },
+    {
+      "severity": "MEDIUM",
+      "classification": "Functional",
+      "description": "CREATE: Type mismatch for total_earnings",
+      "reproduction": "1. Perform CREATE operation\n2. Expected type: number\n3. Actual type: string",
+      "recommended_fix": "Ensure proper type casting for total_earnings field",
+      "discovered_at": "2025-08-12T04:18:06.945Z"
+    },
+    {
+      "severity": "HIGH",
+      "classification": "Functional",
+      "description": "READ: Missing fields in response",
+      "reproduction": "1. Perform READ operation\n2. Check response for fields: name, nationality, country_code, earnings, earnings_amount, earnings_currency, total_earnings, elo_rating, peak_elo, rank, birth_date, wins, losses, kda, total_matches, tournaments_played, twitter, instagram, youtube, twitch, discord, tiktok, facebook, hero_preferences, skill_rating, jersey_number, position_order, team_position, flag, country_flag, total_eliminations, total_deaths, total_assists, overall_kda, average_damage_per_match, average_healing_per_match, average_damage_blocked_per_match, most_played_hero, best_winrate_hero, longest_win_streak, current_win_streak, hero_pool, achievements, liquipedia_url",
+      "recommended_fix": "Ensure all fields are included in API response",
+      "discovered_at": "2025-08-12T04:18:06.999Z"
+    },
+    {
+      "severity": "MEDIUM",
+      "classification": "Functional",
+      "description": "READ: Incorrect field value for peak_rating",
+      "reproduction": "1. Perform READ operation\n2. Expected: 1300.75\n3. Actual: 0",
+      "recommended_fix": "Verify peak_rating field processing and storage",
+      "discovered_at": "2025-08-12T04:18:06.999Z"
+    },
+    {
+      "severity": "HIGH",
+      "classification": "Functional",
+      "description": "READ: Missing fields in response",
+      "reproduction": "1. Perform READ operation\n2. Check response for fields: name, country_code, earnings_amount, earnings_currency, elo_rating, peak_rating, peak_elo, birth_date, tournaments_played, hero_preferences, skill_rating, jersey_number, position_order, team_position, country_flag, total_eliminations, total_deaths, total_assists, overall_kda, average_damage_per_match, average_healing_per_match, average_damage_blocked_per_match, most_played_hero, best_winrate_hero, longest_win_streak, current_win_streak, hero_pool, achievements, liquipedia_url",
+      "recommended_fix": "Ensure all fields are included in API response",
+      "discovered_at": "2025-08-12T04:18:07.045Z"
+    },
+    {
+      "severity": "MEDIUM",
+      "classification": "Functional",
+      "description": "READ: Incorrect field value for rank",
+      "reproduction": "1. Perform READ operation\n2. Expected: Diamond\n3. Actual: 1923",
+      "recommended_fix": "Verify rank field processing and storage",
+      "discovered_at": "2025-08-12T04:18:07.045Z"
+    },
+    {
+      "severity": "MEDIUM",
+      "classification": "Functional",
+      "description": "READ: Incorrect field value for wins",
+      "reproduction": "1. Perform READ operation\n2. Expected: 145\n3. Actual: 0",
+      "recommended_fix": "Verify wins field processing and storage",
+      "discovered_at": "2025-08-12T04:18:07.045Z"
+    },
+    {
+      "severity": "MEDIUM",
+      "classification": "Functional",
+      "description": "READ: Incorrect field value for losses",
+      "reproduction": "1. Perform READ operation\n2. Expected: 78\n3. Actual: 0",
+      "recommended_fix": "Verify losses field processing and storage",
+      "discovered_at": "2025-08-12T04:18:07.045Z"
+    },
+    {
+      "severity": "MEDIUM",
+      "classification": "Functional",
+      "description": "READ: Incorrect field value for kda",
+      "reproduction": "1. Perform READ operation\n2. Expected: 1.85\n3. Actual: 0.00",
+      "recommended_fix": "Verify kda field processing and storage",
+      "discovered_at": "2025-08-12T04:18:07.045Z"
+    },
+    {
+      "severity": "MEDIUM",
+      "classification": "Functional",
+      "description": "READ: Incorrect field value for total_matches",
+      "reproduction": "1. Perform READ operation\n2. Expected: 223\n3. Actual: 0",
+      "recommended_fix": "Verify total_matches field processing and storage",
+      "discovered_at": "2025-08-12T04:18:07.045Z"
+    },
+    {
+      "severity": "MEDIUM",
+      "classification": "Functional",
+      "description": "READ: Incorrect field value for flag",
+      "reproduction": "1. Perform READ operation\n2. Expected: us.png\n3. Actual: 🇺🇸",
+      "recommended_fix": "Verify flag field processing and storage",
+      "discovered_at": "2025-08-12T04:18:07.045Z"
+    },
+    {
+      "severity": "MEDIUM",
+      "classification": "Functional",
+      "description": "READ: Type mismatch for earnings",
+      "reproduction": "1. Perform READ operation\n2. Expected type: number\n3. Actual type: string",
+      "recommended_fix": "Ensure proper type casting for earnings field",
+      "discovered_at": "2025-08-12T04:18:07.045Z"
+    },
+    {
+      "severity": "MEDIUM",
+      "classification": "Functional",
+      "description": "READ: Type mismatch for total_earnings",
+      "reproduction": "1. Perform READ operation\n2. Expected type: number\n3. Actual type: string",
+      "recommended_fix": "Ensure proper type casting for total_earnings field",
+      "discovered_at": "2025-08-12T04:18:07.045Z"
+    },
+    {
+      "severity": "MEDIUM",
+      "classification": "Functional",
+      "description": "READ: Type mismatch for rank",
+      "reproduction": "1. Perform READ operation\n2. Expected type: string\n3. Actual type: number",
+      "recommended_fix": "Ensure proper type casting for rank field",
+      "discovered_at": "2025-08-12T04:18:07.045Z"
+    },
+    {
+      "severity": "MEDIUM",
+      "classification": "Functional",
+      "description": "READ: Type mismatch for kda",
+      "reproduction": "1. Perform READ operation\n2. Expected type: number\n3. Actual type: string",
+      "recommended_fix": "Ensure proper type casting for kda field",
+      "discovered_at": "2025-08-12T04:18:07.045Z"
+    },
+    {
+      "severity": "HIGH",
+      "classification": "Functional",
+      "description": "READ: Missing fields in response",
+      "reproduction": "1. Perform READ operation\n2. Check response for fields: name, country_code, earnings_amount, earnings_currency, elo_rating, peak_rating, peak_elo, birth_date, tournaments_played, hero_preferences, skill_rating, jersey_number, position_order, team_position, country_flag, total_eliminations, total_deaths, total_assists, overall_kda, average_damage_per_match, average_healing_per_match, average_damage_blocked_per_match, most_played_hero, best_winrate_hero, longest_win_streak, current_win_streak, hero_pool, achievements, liquipedia_url",
+      "recommended_fix": "Ensure all fields are included in API response",
+      "discovered_at": "2025-08-12T04:18:07.088Z"
+    },
+    {
+      "severity": "MEDIUM",
+      "classification": "Functional",
+      "description": "READ: Incorrect field value for rank",
+      "reproduction": "1. Perform READ operation\n2. Expected: Diamond\n3. Actual: 4739",
+      "recommended_fix": "Verify rank field processing and storage",
+      "discovered_at": "2025-08-12T04:18:07.088Z"
+    },
+    {
+      "severity": "MEDIUM",
+      "classification": "Functional",
+      "description": "READ: Incorrect field value for wins",
+      "reproduction": "1. Perform READ operation\n2. Expected: 145\n3. Actual: 0",
+      "recommended_fix": "Verify wins field processing and storage",
+      "discovered_at": "2025-08-12T04:18:07.088Z"
+    },
+    {
+      "severity": "MEDIUM",
+      "classification": "Functional",
+      "description": "READ: Incorrect field value for losses",
+      "reproduction": "1. Perform READ operation\n2. Expected: 78\n3. Actual: 0",
+      "recommended_fix": "Verify losses field processing and storage",
+      "discovered_at": "2025-08-12T04:18:07.088Z"
+    },
+    {
+      "severity": "MEDIUM",
+      "classification": "Functional",
+      "description": "READ: Incorrect field value for kda",
+      "reproduction": "1. Perform READ operation\n2. Expected: 1.85\n3. Actual: 0.00",
+      "recommended_fix": "Verify kda field processing and storage",
+      "discovered_at": "2025-08-12T04:18:07.088Z"
+    },
+    {
+      "severity": "MEDIUM",
+      "classification": "Functional",
+      "description": "READ: Incorrect field value for total_matches",
+      "reproduction": "1. Perform READ operation\n2. Expected: 223\n3. Actual: 0",
+      "recommended_fix": "Verify total_matches field processing and storage",
+      "discovered_at": "2025-08-12T04:18:07.088Z"
+    },
+    {
+      "severity": "MEDIUM",
+      "classification": "Functional",
+      "description": "READ: Incorrect field value for flag",
+      "reproduction": "1. Perform READ operation\n2. Expected: us.png\n3. Actual: 🇺🇸",
+      "recommended_fix": "Verify flag field processing and storage",
+      "discovered_at": "2025-08-12T04:18:07.088Z"
+    },
+    {
+      "severity": "MEDIUM",
+      "classification": "Functional",
+      "description": "READ: Type mismatch for earnings",
+      "reproduction": "1. Perform READ operation\n2. Expected type: number\n3. Actual type: string",
+      "recommended_fix": "Ensure proper type casting for earnings field",
+      "discovered_at": "2025-08-12T04:18:07.088Z"
+    },
+    {
+      "severity": "MEDIUM",
+      "classification": "Functional",
+      "description": "READ: Type mismatch for total_earnings",
+      "reproduction": "1. Perform READ operation\n2. Expected type: number\n3. Actual type: string",
+      "recommended_fix": "Ensure proper type casting for total_earnings field",
+      "discovered_at": "2025-08-12T04:18:07.088Z"
+    },
+    {
+      "severity": "MEDIUM",
+      "classification": "Functional",
+      "description": "READ: Type mismatch for rank",
+      "reproduction": "1. Perform READ operation\n2. Expected type: string\n3. Actual type: number",
+      "recommended_fix": "Ensure proper type casting for rank field",
+      "discovered_at": "2025-08-12T04:18:07.088Z"
+    },
+    {
+      "severity": "MEDIUM",
+      "classification": "Functional",
+      "description": "READ: Type mismatch for kda",
+      "reproduction": "1. Perform READ operation\n2. Expected type: number\n3. Actual type: string",
+      "recommended_fix": "Ensure proper type casting for kda field",
+      "discovered_at": "2025-08-12T04:18:07.088Z"
+    },
+    {
+      "severity": "HIGH",
+      "classification": "Functional",
+      "description": "READ: Missing fields in response",
+      "reproduction": "1. Perform READ operation\n2. Check response for fields: username, nationality, country_code, earnings, earnings_amount, earnings_currency, total_earnings, rating, elo_rating, peak_rating, peak_elo, rank, age, birth_date, wins, losses, kda, tournaments_played, twitter, instagram, youtube, twitch, discord, tiktok, facebook, biography, hero_preferences, alt_heroes, skill_rating, jersey_number, position_order, team_position, region, flag, country_flag, status, total_eliminations, total_deaths, total_assists, average_damage_per_match, average_healing_per_match, average_damage_blocked_per_match, most_played_hero, best_winrate_hero, longest_win_streak, current_win_streak, hero_pool, achievements, liquipedia_url",
+      "recommended_fix": "Ensure all fields are included in API response",
+      "discovered_at": "2025-08-12T04:18:07.137Z"
+    },
+    {
+      "severity": "MEDIUM",
+      "classification": "Functional",
+      "description": "READ: Incorrect field value for total_matches",
+      "reproduction": "1. Perform READ operation\n2. Expected: 223\n3. Actual: 0",
+      "recommended_fix": "Verify total_matches field processing and storage",
+      "discovered_at": "2025-08-12T04:18:07.137Z"
+    },
+    {
+      "severity": "MEDIUM",
+      "classification": "Functional",
+      "description": "READ: Incorrect field value for overall_kda",
+      "reproduction": "1. Perform READ operation\n2. Expected: 1.85\n3. Actual: 0",
+      "recommended_fix": "Verify overall_kda field processing and storage",
+      "discovered_at": "2025-08-12T04:18:07.137Z"
+    },
+    {
+      "severity": "HIGH",
+      "classification": "Functional",
+      "description": "Player update failed with status 500",
+      "reproduction": "1. PUT /admin/players/{id}\n2. Response: {\"success\":false,\"message\":\"Error updating player: This cache store does not support tagging.\",\"error_code\":\"GENERAL_ERROR\"}",
+      "recommended_fix": "Check update endpoint implementation and constraints",
+      "discovered_at": "2025-08-12T04:18:07.198Z"
+    },
+    {
+      "severity": "MEDIUM",
+      "classification": "Functional",
+      "description": "Error handling test failed: Invalid team_id",
+      "reproduction": "1. POST /admin/players with invalid data\n2. Expected status 422, got 500",
+      "recommended_fix": "Review validation rules and error responses",
+      "discovered_at": "2025-08-12T04:18:07.249Z"
+    },
+    {
+      "severity": "MEDIUM",
+      "classification": "Functional",
+      "description": "Error handling test failed: Missing required fields",
+      "reproduction": "1. POST /admin/players with invalid data\n2. Expected status 422, got 500",
+      "recommended_fix": "Review validation rules and error responses",
+      "discovered_at": "2025-08-12T04:18:07.297Z"
+    },
+    {
+      "severity": "MEDIUM",
+      "classification": "Functional",
+      "description": "Error handling test failed: Invalid earnings format",
+      "reproduction": "1. POST /admin/players with invalid data\n2. Expected status 422, got 500",
+      "recommended_fix": "Review validation rules and error responses",
+      "discovered_at": "2025-08-12T04:18:07.353Z"
+    },
+    {
+      "severity": "MEDIUM",
+      "classification": "Functional",
+      "description": "Error handling test failed: Invalid social media URLs",
+      "reproduction": "1. POST /admin/players with invalid data\n2. Expected status 422, got 201",
+      "recommended_fix": "Review validation rules and error responses",
+      "discovered_at": "2025-08-12T04:18:07.434Z"
+    },
+    {
+      "severity": "MEDIUM",
+      "classification": "Functional",
+      "description": "Error handling test failed: Duplicate username",
+      "reproduction": "1. POST /admin/players with invalid data\n2. Expected status 422, got 500",
+      "recommended_fix": "Review validation rules and error responses",
+      "discovered_at": "2025-08-12T04:18:07.562Z"
+    },
+    {
+      "severity": "HIGH",
+      "classification": "Usability",
+      "description": "Profile missing critical display fields: username",
+      "reproduction": "1. GET /public/player-profile/775\n2. Check response for display fields",
+      "recommended_fix": "Ensure critical fields are included in profile responses",
+      "discovered_at": "2025-08-12T04:18:07.602Z"
+    },
+    {
+      "severity": "HIGH",
+      "classification": "Usability",
+      "description": "Profile missing critical display fields: username, real_name, role, team_id",
+      "reproduction": "1. GET /public/players/775/matches\n2. Check response for display fields",
+      "recommended_fix": "Ensure critical fields are included in profile responses",
+      "discovered_at": "2025-08-12T04:18:07.680Z"
+    },
+    {
+      "severity": "HIGH",
+      "classification": "Usability",
+      "description": "Profile missing critical display fields: username, real_name, role, team_id",
+      "reproduction": "1. GET /public/players/775/stats\n2. Check response for display fields",
+      "recommended_fix": "Ensure critical fields are included in profile responses",
+      "discovered_at": "2025-08-12T04:18:07.718Z"
+    },
+    {
+      "severity": "HIGH",
+      "classification": "Usability",
+      "description": "Profile missing critical display fields: username, real_name, role, team_id",
+      "reproduction": "1. GET /public/players/775/team-history\n2. Check response for display fields",
+      "recommended_fix": "Ensure critical fields are included in profile responses",
+      "discovered_at": "2025-08-12T04:18:07.754Z"
+    }
+  ],
+  "recommendations": [
+    {
+      "priority": "HIGH",
+      "category": "Data Integrity",
+      "action": "Ensure all fields are properly stored and retrieved",
+      "description": "Missing fields in API responses can break frontend functionality"
+    }
+  ]
+}

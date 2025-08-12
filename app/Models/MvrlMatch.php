@@ -52,7 +52,11 @@ class MvrlMatch extends Model
         'started_at' => 'datetime',
         'ended_at' => 'datetime',
         'overtime' => 'boolean',
-        'allow_past_date' => 'boolean'
+        'allow_past_date' => 'boolean',
+        'maps_data' => 'array',
+        'hero_data' => 'array',
+        'live_data' => 'array',
+        'player_stats' => 'array'
     ];
 
     /**************************************************************

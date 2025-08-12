@@ -1,0 +1,31 @@
+{
+  "test_date": "2025-08-11 23:17:42",
+  "team_id": "121",
+  "summary": {
+    "total_tests": 8,
+    "passed_tests": 8,
+    "success_rate": "100%"
+  },
+  "performance": {
+    "create_time_ms": 583,
+    "retrieve_time_ms": 112,
+    "update_time_ms": 303,
+    "verify_time_ms": 83,
+    "delete_time_ms": 666,
+    "avg_response_time_ms": 88,
+    "max_response_time_ms": 98,
+    "min_response_time_ms": 79
+  },
+  "fields_tested": {
+    "total_fields": "30+",
+    "social_media_platforms": 8,
+    "required_fields": ["name", "short_name", "region"],
+    "optional_fields": ["platform", "country", "description", "ratings", "social_media", "achievements"]
+  },
+  "validation": {
+    "duplicate_rejection": "passed",
+    "missing_fields_rejection": "passed",
+    "social_media_json": "passed",
+    "immediate_updates": "passed"
+  }
+}

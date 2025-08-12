@@ -146,3 +146,46 @@ Broadcast::channel('tournament.{tournamentId}.admin', function ($user, $tourname
 
     return false;
 });
+
+// Mention channels for real-time updates
+Broadcast::channel('mentions', function ($user = null) {
+    return true; // Public mentions channel for general mention updates
+});
+
+Broadcast::channel('mentions.{type}', function ($user = null, $type) {
+    return true; // Public channel for specific mention types (news, forum_thread, etc.)
+});
+
+// Private user mention channel - only the mentioned user can listen
+Broadcast::channel('user.{userId}', function ($user, $userId) {
+    if (!$user) return false;
+    
+    // Only the user themselves can listen to their mention channel
+    if ($user->id == $userId) {
+        return [
+            'id' => $user->id,
+            'name' => $user->name
+        ];
+    }
+    
+    // Admins can also listen to user channels for moderation
+    if ($user->isAdmin() || $user->isModerator()) {
+        return [
+            'id' => $user->id,
+            'name' => $user->name,
+            'role' => $user->role
+        ];
+    }
+    
+    return false;
+});
+
+// Team mention channels - team members and public access for team mentions
+Broadcast::channel('team.{teamId}.mentions', function ($user = null, $teamId) {
+    return true; // Public access to team mention updates
+});
+
+// Player mention channels - public access for player mentions  
+Broadcast::channel('player.{playerId}.mentions', function ($user = null, $playerId) {
+    return true; // Public access to player mention updates
+});

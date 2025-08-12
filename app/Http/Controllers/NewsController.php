@@ -647,6 +647,9 @@ class NewsController extends ApiResponseController
                 ], 403);
             }
 
+            // Delete mentions for this comment
+            $this->mentionService->deleteMentions('news_comment', $commentId);
+            
             // Soft delete by updating status
             DB::table('news_comments')
                 ->where('id', $commentId)
@@ -1058,9 +1061,15 @@ class NewsController extends ApiResponseController
             $avatar = $this->getHeroImagePath($user->hero_flair);
         } else if ($user->avatar) {
             // Ensure avatar URL is properly formatted
-            $avatar = str_starts_with($user->avatar, 'http') 
-                ? $user->avatar 
-                : asset('storage/avatars/' . $user->avatar);
+            if (str_starts_with($user->avatar, 'http')) {
+                $avatar = $user->avatar;
+            } else if (str_contains($user->avatar, '/images/heroes/')) {
+                // Hero image path already present
+                $avatar = url($user->avatar);
+            } else {
+                // Regular uploaded avatar
+                $avatar = asset('storage/avatars/' . $user->avatar);
+            }
         }
 
         return [
@@ -2007,5 +2016,21 @@ class NewsController extends ApiResponseController
         }
 
         return array_values($uniqueVideos);
+    }
+
+    /**
+     * Create a news comment (alias for comment method)
+     */
+    public function createComment(Request $request, $newsId)
+    {
+        return $this->comment($request, $newsId);
+    }
+
+    /**
+     * Delete a news comment (alias for destroyComment method)
+     */
+    public function deleteComment($commentId)
+    {
+        return $this->destroyComment($commentId);
     }
 }

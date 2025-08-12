@@ -292,7 +292,7 @@ class AdminUsersController extends Controller
                 'name' => $request->name,
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
-                'role' => $request->role,
+                'role' => $request->get('role', 'user'),
                 'status' => $request->get('status', 'active'),
                 'hero_flair' => $request->hero_flair,
                 'team_flair_id' => $request->team_flair_id,
@@ -2171,6 +2171,67 @@ class AdminUsersController extends Controller
         }
     }
     
+    /**
+     * Bulk delete users
+     */
+    public function bulkDelete(Request $request)
+    {
+        try {
+            $request->validate([
+                'user_ids' => 'required|array|min:1|max:' . self::BULK_OPERATION_LIMIT,
+                'user_ids.*' => 'required|integer|exists:users,id'
+            ]);
+
+            $userIds = $request->user_ids;
+            $currentUserId = auth()->id();
+            
+            // Prevent deleting self
+            if (in_array($currentUserId, $userIds)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot delete your own account'
+                ], 400);
+            }
+
+            DB::beginTransaction();
+            
+            try {
+                // Get users before deletion for logging
+                $users = User::whereIn('id', $userIds)->get();
+                
+                // Delete users
+                $deletedCount = User::whereIn('id', $userIds)->delete();
+                
+                // Log admin action
+                $this->logAdminAction('bulk_delete_users', [
+                    'admin_id' => $currentUserId,
+                    'deleted_user_ids' => $userIds,
+                    'deleted_count' => $deletedCount,
+                    'deleted_users' => $users->pluck('name', 'id')->toArray()
+                ]);
+                
+                DB::commit();
+                
+                return response()->json([
+                    'success' => true,
+                    'message' => "Successfully deleted {$deletedCount} users",
+                    'deleted_count' => $deletedCount
+                ]);
+                
+            } catch (Exception $e) {
+                DB::rollBack();
+                throw $e;
+            }
+            
+        } catch (Exception $e) {
+            Log::error('Bulk delete users error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete users'
+            ], 500);
+        }
+    }
+
     /**
      * Log admin actions for audit trail
      */

@@ -31,7 +31,22 @@ class User extends Authenticatable
         'name', 'email', 'password', 'avatar', 'last_login', 'status', 'role',
         'hero_flair', 'team_flair_id', 'show_hero_flair', 'show_team_flair',
         'profile_picture_type', 'use_hero_as_avatar', 'banned_at', 'ban_reason',
-        'ban_expires_at', 'muted_until', 'last_activity', 'warning_count'
+        'ban_expires_at', 'muted_until', 'last_activity',
+        'mention_count', 'last_mentioned_at'
+    ];
+
+    /**
+     * The model's default values for attributes.
+     *
+     * @var array
+     */
+    protected $attributes = [
+        'role' => 'user',
+        'status' => 'active',
+        'show_hero_flair' => true,
+        'show_team_flair' => false,
+        'use_hero_as_avatar' => false,
+        'mention_count' => 0
     ];
 
     protected $hidden = [
@@ -51,13 +66,10 @@ class User extends Authenticatable
             'ban_expires_at' => 'datetime',
             'muted_until' => 'datetime',
             'last_activity' => 'datetime',
-            'warning_count' => 'integer'
+            'last_mentioned_at' => 'datetime',
+            'warning_count' => 'integer',
+            'mention_count' => 'integer'
         ];
-    }
-
-    public function setPasswordAttribute($value)
-    {
-        $this->attributes['password'] = bcrypt($value);
     }
 
     public function forumThreads()
@@ -772,5 +784,148 @@ class User extends Authenticatable
             return $query->where('warning_count', '>', 0);
         }
         return $query->whereHas('warnings');
+    }
+
+    /**
+     * Mention-related relationships and methods
+     */
+
+    /**
+     * Get mentions of this user
+     */
+    public function mentions()
+    {
+        return $this->morphMany(Mention::class, 'mentioned', 'mentioned_type', 'mentioned_id');
+    }
+
+    /**
+     * Get mentions created by this user
+     */
+    public function createdMentions()
+    {
+        return $this->hasMany(Mention::class, 'mentioned_by');
+    }
+
+    /**
+     * Get active mentions of this user with optimized query
+     */
+    public function activeMentions()
+    {
+        return $this->mentions()->where('is_active', true);
+    }
+
+    /**
+     * Get recent mentions with pagination support
+     */
+    public function getRecentMentions($limit = 10, $offset = 0)
+    {
+        return Cache::remember(
+            "user_mentions_{$this->id}_{$limit}_{$offset}",
+            300, // 5 minutes cache
+            function () use ($limit, $offset) {
+                return $this->activeMentions()
+                    ->with(['mentionable'])
+                    ->orderBy('mentioned_at', 'desc')
+                    ->offset($offset)
+                    ->limit($limit)
+                    ->get();
+            }
+        );
+    }
+
+    /**
+     * Get mention count efficiently
+     */
+    public function getMentionCount(): int
+    {
+        // Use the denormalized column if available
+        if (isset($this->attributes['mention_count'])) {
+            return (int) $this->attributes['mention_count'];
+        }
+        
+        // Fallback to counting if column doesn't exist
+        return $this->activeMentions()->count();
+    }
+
+    /**
+     * Scope for users with mentions above threshold
+     */
+    public function scopePopularMentions($query, $threshold = 5)
+    {
+        if (\Schema::hasColumn('users', 'mention_count')) {
+            return $query->where('mention_count', '>=', $threshold);
+        }
+        
+        return $query->whereHas('mentions', function ($q) use ($threshold) {
+            $q->where('is_active', true)
+              ->havingRaw('COUNT(*) >= ?', [$threshold]);
+        });
+    }
+
+    /**
+     * Scope for recently mentioned users
+     */
+    public function scopeRecentlyMentioned($query, $days = 7)
+    {
+        if (\Schema::hasColumn('users', 'last_mentioned_at')) {
+            return $query->where('last_mentioned_at', '>=', now()->subDays($days));
+        }
+        
+        return $query->whereHas('mentions', function ($q) use ($days) {
+            $q->where('is_active', true)
+              ->where('mentioned_at', '>=', now()->subDays($days));
+        });
+    }
+
+    /**
+     * Get mention analytics data
+     */
+    public function getMentionAnalytics(): array
+    {
+        return Cache::remember(
+            "user_mention_analytics_{$this->id}",
+            self::CACHE_DURATION,
+            function () {
+                $mentions = $this->activeMentions()
+                    ->selectRaw('
+                        COUNT(*) as total_mentions,
+                        COUNT(DISTINCT mentionable_type) as content_types,
+                        COUNT(DISTINCT mentioned_by) as unique_mentioners,
+                        MAX(mentioned_at) as last_mention,
+                        MIN(mentioned_at) as first_mention
+                    ')
+                    ->first();
+
+                $contentBreakdown = $this->activeMentions()
+                    ->selectRaw('mentionable_type, COUNT(*) as count')
+                    ->groupBy('mentionable_type')
+                    ->pluck('count', 'mentionable_type')
+                    ->toArray();
+
+                return [
+                    'total_mentions' => $mentions->total_mentions ?? 0,
+                    'content_types' => $mentions->content_types ?? 0,
+                    'unique_mentioners' => $mentions->unique_mentioners ?? 0,
+                    'last_mention' => $mentions->last_mention,
+                    'first_mention' => $mentions->first_mention,
+                    'content_breakdown' => $contentBreakdown
+                ];
+            }
+        );
+    }
+
+    /**
+     * Clear mention-related cache
+     */
+    public function clearMentionCache(): void
+    {
+        $patterns = [
+            "user_mentions_{$this->id}_*",
+            "user_mention_analytics_{$this->id}",
+        ];
+
+        foreach ($patterns as $pattern) {
+            Cache::tags(['user_mentions', "user_{$this->id}"])->flush();
+        }
     }
 }

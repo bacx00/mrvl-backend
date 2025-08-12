@@ -24,6 +24,7 @@ class EventServiceProvider extends ServiceProvider
     protected $subscribe = [
         TournamentEventListener::class,
         \App\Listeners\TournamentCacheInvalidationListener::class,
+        \App\Listeners\MentionEventListener::class,
     ];
 
     public function boot(): void

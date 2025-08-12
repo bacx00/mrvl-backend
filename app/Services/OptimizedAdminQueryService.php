@@ -19,19 +19,37 @@ class OptimizedAdminQueryService
         'analytics' => 600,          // 10 minutes
     ];
 
+    // Performance configuration for large datasets
+    const LARGE_DATASET_THRESHOLD = 100;  // Pages larger than this use memory-efficient pagination
+    const MAX_PER_PAGE = 1000;           // Maximum allowed per page
+
     /**
      * Get optimized player list for admin dashboard
      * Eliminates N+1 queries and uses proper indexing
      */
     public function getOptimizedPlayerList($filters = [], $page = 1, $perPage = 20, $useCache = true)
     {
+        // Enforce maximum per page limit
+        $perPage = min($perPage, self::MAX_PER_PAGE);
+        
+        // For large datasets, reduce cache TTL and adjust caching strategy
+        $isLargeDataset = $perPage >= self::LARGE_DATASET_THRESHOLD;
+        $cacheTTL = $isLargeDataset ? self::CACHE_TTL['player_list'] / 2 : self::CACHE_TTL['player_list'];
+        
         $cacheKey = 'admin_players_' . md5(serialize($filters) . "_{$page}_{$perPage}");
         
-        if ($useCache && Cache::has($cacheKey)) {
+        if ($useCache && !$isLargeDataset && Cache::has($cacheKey)) {
             return Cache::get($cacheKey);
         }
 
         try {
+            $queryStartTime = microtime(true);
+            
+            // For very large per_page requests, use specialized large dataset method
+            if ($perPage >= 500) {
+                return $this->getOptimizedLargePlayerList($filters, $page, $perPage);
+            }
+            
             // Single optimized query with proper joins and indexes
             $query = DB::table('players as p')
                 ->leftJoin('teams as t', 'p.team_id', '=', 't.id')
@@ -39,7 +57,7 @@ class OptimizedAdminQueryService
                     // Player fields
                     'p.id', 'p.username', 'p.real_name', 'p.avatar', 'p.role', 'p.main_hero',
                     'p.rating', 'p.elo_rating', 'p.peak_elo', 'p.country', 'p.age', 'p.status',
-                    'p.total_matches', 'p.total_wins', 'p.total_eliminations', 'p.total_deaths',
+                    'p.team_id', 'p.total_matches', 'p.wins', 'p.total_eliminations', 'p.total_deaths',
                     'p.total_assists', 'p.overall_kda', 'p.earnings_amount', 'p.earnings_currency',
                     'p.created_at', 'p.updated_at',
                     
@@ -62,8 +80,21 @@ class OptimizedAdminQueryService
             }
 
             if (!empty($filters['role']) && $filters['role'] !== 'all') {
+                // Map frontend roles to database roles
+                $roleMapping = [
+                    'DPS' => 'Duelist',
+                    'Tank' => 'Vanguard',
+                    'Support' => 'Strategist',
+                    'Duelist' => 'Duelist', // Allow direct database values too
+                    'Vanguard' => 'Vanguard',
+                    'Strategist' => 'Strategist',
+                    'Flex' => 'Flex'
+                ];
+                
+                $dbRole = $roleMapping[$filters['role']] ?? $filters['role'];
+                
                 // Uses idx_players_rating_role index
-                $query->where('p.role', $filters['role']);
+                $query->where('p.role', $dbRole);
             }
 
             if (!empty($filters['team']) && $filters['team'] !== 'all') {
@@ -138,12 +169,17 @@ class OptimizedAdminQueryService
                     'to' => min($offset + $perPage, $total),
                 ],
                 'success' => true,
-                'query_time' => microtime(true) - LARAVEL_START,
+                'query_time' => round((microtime(true) - $queryStartTime) * 1000, 2),
                 'cache_hit' => false
             ];
 
-            if ($useCache) {
-                Cache::put($cacheKey, $result, self::CACHE_TTL['player_list']);
+            // Cache results with adjusted TTL for large datasets
+            if ($useCache && !$isLargeDataset) {
+                Cache::put($cacheKey, $result, $cacheTTL);
+            } elseif ($useCache && $isLargeDataset) {
+                // For large datasets, cache for shorter time with different key pattern
+                $largeCacheKey = 'admin_players_large_' . md5(serialize($filters) . "_{$page}_{$perPage}");
+                Cache::put($largeCacheKey, $result, $cacheTTL);
             }
 
             return $result;
@@ -183,6 +219,8 @@ class OptimizedAdminQueryService
         }
 
         try {
+            $queryStartTime = microtime(true);
+            
             // Optimized query with player count subquery
             $query = DB::table('teams as t')
                 ->leftJoin(
@@ -302,7 +340,7 @@ class OptimizedAdminQueryService
                     'to' => min($offset + $perPage, $total),
                 ],
                 'success' => true,
-                'query_time' => microtime(true) - LARAVEL_START,
+                'query_time' => round((microtime(true) - $queryStartTime) * 1000, 2),
                 'cache_hit' => false
             ];
 
@@ -566,6 +604,145 @@ class OptimizedAdminQueryService
     }
 
     /**
+     * Get optimized player list for large paginations (500+ per page)
+     * Uses memory-efficient techniques and optimized indexes
+     */
+    public function getOptimizedLargePlayerList($filters = [], $page = 1, $perPage = 500)
+    {
+        try {
+            $queryStartTime = microtime(true);
+            
+            // For very large pages, use streaming approach with chunking
+            $offset = ($page - 1) * $perPage;
+            
+            // Use raw SQL for maximum performance with large datasets
+            $query = "
+                SELECT SQL_CALC_FOUND_ROWS
+                    p.id, p.username, p.real_name, p.avatar, p.role, p.main_hero,
+                    p.rating, p.elo_rating, p.peak_elo, p.country, p.age, p.status,
+                    p.team_id, p.total_matches, p.wins, p.total_eliminations, p.total_deaths,
+                    p.total_assists, p.overall_kda, p.earnings_amount, p.earnings_currency,
+                    p.created_at, p.updated_at,
+                    t.name as team_name, t.short_name as team_short_name, t.logo as team_logo,
+                    t.region as team_region, t.rating as team_rating,
+                    ROW_NUMBER() OVER (ORDER BY COALESCE(p.elo_rating, p.rating, 0) DESC) as calculated_rank
+                FROM players p
+                LEFT JOIN teams t ON p.team_id = t.id
+                WHERE 1=1
+            ";
+            
+            $params = [];
+            
+            // Add filters to raw query for performance
+            if (!empty($filters['search'])) {
+                $query .= " AND (p.username LIKE ? OR p.real_name LIKE ?)";
+                $searchTerm = '%' . $filters['search'] . '%';
+                $params[] = $searchTerm;
+                $params[] = $searchTerm;
+            }
+            
+            if (!empty($filters['role']) && $filters['role'] !== 'all') {
+                $roleMapping = [
+                    'DPS' => 'Duelist',
+                    'Tank' => 'Vanguard',
+                    'Support' => 'Strategist',
+                ];
+                $dbRole = $roleMapping[$filters['role']] ?? $filters['role'];
+                $query .= " AND p.role = ?";
+                $params[] = $dbRole;
+            }
+            
+            if (!empty($filters['team']) && $filters['team'] !== 'all') {
+                $query .= " AND p.team_id = ?";
+                $params[] = $filters['team'];
+            }
+            
+            if (!empty($filters['status']) && $filters['status'] !== 'all') {
+                $query .= " AND p.status = ?";
+                $params[] = $filters['status'];
+            }
+            
+            if (!empty($filters['region']) && $filters['region'] !== 'all') {
+                $query .= " AND p.region = ?";
+                $params[] = $filters['region'];
+            }
+            
+            // Add sorting
+            $sortBy = $filters['sort_by'] ?? 'rating';
+            $sortOrder = $filters['sort_order'] ?? 'desc';
+            
+            switch ($sortBy) {
+                case 'rating':
+                    $query .= " ORDER BY COALESCE(p.elo_rating, p.rating, 0) {$sortOrder}";
+                    break;
+                case 'username':
+                    $query .= " ORDER BY p.username {$sortOrder}";
+                    break;
+                case 'team':
+                    $query .= " ORDER BY t.name {$sortOrder}";
+                    break;
+                case 'created_at':
+                    $query .= " ORDER BY p.created_at {$sortOrder}, p.id {$sortOrder}";
+                    break;
+                default:
+                    $query .= " ORDER BY COALESCE(p.elo_rating, p.rating, 0) DESC";
+            }
+            
+            $query .= " LIMIT ? OFFSET ?";
+            $params[] = $perPage;
+            $params[] = $offset;
+            
+            // Execute optimized query
+            $players = collect(DB::select($query, $params));
+            
+            // Get total count efficiently
+            $totalResult = DB::select("SELECT FOUND_ROWS() as total");
+            $total = $totalResult[0]->total;
+            
+            // Format results
+            $formattedPlayers = $players->map(function($player) {
+                return $this->formatPlayerForAdmin($player);
+            });
+            
+            return [
+                'data' => $formattedPlayers,
+                'pagination' => [
+                    'current_page' => $page,
+                    'per_page' => $perPage,
+                    'total' => $total,
+                    'last_page' => ceil($total / $perPage),
+                    'from' => $offset + 1,
+                    'to' => min($offset + $perPage, $total),
+                ],
+                'success' => true,
+                'query_time' => round((microtime(true) - $queryStartTime) * 1000, 2),
+                'optimized_for_large_dataset' => true
+            ];
+            
+        } catch (\Exception $e) {
+            Log::error('OptimizedAdminQueryService::getOptimizedLargePlayerList failed', [
+                'error' => $e->getMessage(),
+                'filters' => $filters,
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return [
+                'data' => [],
+                'pagination' => [
+                    'current_page' => $page,
+                    'per_page' => $perPage,
+                    'total' => 0,
+                    'last_page' => 0,
+                    'from' => 0,
+                    'to' => 0,
+                ],
+                'success' => false,
+                'error' => 'Failed to fetch large player list: ' . $e->getMessage()
+            ];
+        }
+    }
+
+    /**
      * Clear cache for admin dashboard
      */
     public function clearAdminCache($specific = null)
@@ -579,6 +756,7 @@ class OptimizedAdminQueryService
             // Clear all admin cache
             $patterns = [
                 'admin_players_*',
+                'admin_players_large_*',
                 'admin_teams_*',
                 'admin_live_matches',
                 'admin_dashboard_stats'
@@ -599,18 +777,37 @@ class OptimizedAdminQueryService
     {
         $rating = $player->elo_rating ?? $player->rating ?? 0;
         
+        // Map Marvel Rivals roles to frontend-expected roles
+        $roleMapping = [
+            'Duelist' => 'DPS',
+            'Vanguard' => 'Tank', 
+            'Strategist' => 'Support',
+            'DPS' => 'DPS',
+            'Tank' => 'Tank',
+            'Support' => 'Support',
+            'Flex' => 'Flex'
+        ];
+        
+        $frontendRole = $roleMapping[$player->role] ?? $player->role ?? 'DPS';
+        
         return [
             'id' => $player->id,
-            'username' => $player->username,
-            'real_name' => $player->real_name,
+            'name' => $player->real_name ?: $player->username, // Frontend expects 'name' for real name
+            'ign' => $player->username, // Frontend expects 'ign' for in-game name
+            'username' => $player->username, // Keep for backward compatibility
+            'real_name' => $player->real_name, // Keep for backward compatibility
             'avatar' => $player->avatar,
-            'role' => $player->role,
+            'role' => $frontendRole, // Use mapped role
             'main_hero' => $player->main_hero,
             'rating' => (int) $rating,
             'rank' => $player->calculated_rank ?? 999,
             'country' => $player->country,
             'age' => $player->age,
             'status' => $player->status ?? 'active',
+            'team_id' => $player->team_id, // Frontend needs team_id
+            'team_name' => $player->team_name, // Frontend expects flat team_name field
+            'team_short' => $player->team_short_name,
+            'team_logo' => $player->team_logo,
             'team' => $player->team_name ? [
                 'name' => $player->team_name,
                 'short_name' => $player->team_short_name,
@@ -620,9 +817,9 @@ class OptimizedAdminQueryService
             ] : null,
             'stats' => [
                 'total_matches' => $player->total_matches ?? 0,
-                'total_wins' => $player->total_wins ?? 0,
+                'wins' => $player->wins ?? 0,
                 'win_rate' => $player->total_matches > 0 
-                    ? round(($player->total_wins / $player->total_matches) * 100, 1) 
+                    ? round(($player->wins / $player->total_matches) * 100, 1) 
                     : 0,
                 'kda' => $player->overall_kda ?? 0,
                 'eliminations' => $player->total_eliminations ?? 0,

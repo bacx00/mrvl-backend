@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>MRVL Live Scoring Test</title>
+    <style>
+        body { font-family: Arial; padding: 20px; background: #1a1a1a; color: #fff; }
+        .container { max-width: 800px; margin: 0 auto; }
+        h1 { color: #00ff88; }
+        .score { font-size: 48px; text-align: center; margin: 20px 0; }
+        .updates { background: #2a2a2a; padding: 15px; border-radius: 8px; margin: 20px 0; }
+        .update { padding: 8px; margin: 5px 0; background: #333; border-radius: 4px; }
+        .button { background: #00ff88; color: #000; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; margin: 5px; }
+        .status { padding: 10px; background: #2a2a2a; border-radius: 4px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 MRVL Live Scoring Test</h1>
+        
+        <div class="status">
+            <strong>Status:</strong> <span id="status">Disconnected</span>
+        </div>
+        
+        <div class="score" id="score">0 - 0</div>
+        
+        <div>
+            <button class="button" onclick="connectSSE()">Connect to Live Updates</button>
+            <button class="button" onclick="disconnect()">Disconnect</button>
+            <button class="button" onclick="simulateUpdate()">Simulate Score Update</button>
+        </div>
+        
+        <div class="updates">
+            <h3>Live Updates:</h3>
+            <div id="updates"></div>
+        </div>
+    </div>
+
+    <script>
+        let eventSource = null;
+        let team1Score = 0;
+        let team2Score = 0;
+
+        function connectSSE() {
+            if (eventSource) eventSource.close();
+            
+            const matchId = 1;
+            eventSource = new EventSource(\`https://staging.mrvl.net/api/matches/\${matchId}/live-updates\`);
+            
+            document.getElementById('status').textContent = 'Connecting...';
+            
+            eventSource.onopen = () => {
+                document.getElementById('status').textContent = 'Connected';
+                addUpdate('Connected to live updates');
+            };
+            
+            eventSource.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                handleUpdate(data);
+            };
+            
+            eventSource.onerror = () => {
+                document.getElementById('status').textContent = 'Connection error';
+                addUpdate('Connection lost, retrying...');
+            };
+        }
+
+        function disconnect() {
+            if (eventSource) {
+                eventSource.close();
+                eventSource = null;
+                document.getElementById('status').textContent = 'Disconnected';
+                addUpdate('Disconnected from live updates');
+            }
+        }
+
+        function handleUpdate(data) {
+            if (data.type === 'score_update') {
+                team1Score = data.team1_score || team1Score;
+                team2Score = data.team2_score || team2Score;
+                document.getElementById('score').textContent = \`\${team1Score} - \${team2Score}\`;
+                addUpdate(\`Score updated: \${team1Score} - \${team2Score}\`);
+            } else {
+                addUpdate(\`Event: \${data.type}\`);
+            }
+        }
+
+        function addUpdate(message) {
+            const updates = document.getElementById('updates');
+            const update = document.createElement('div');
+            update.className = 'update';
+            update.textContent = new Date().toLocaleTimeString() + ' - ' + message;
+            updates.insertBefore(update, updates.firstChild);
+            if (updates.children.length > 10) {
+                updates.removeChild(updates.lastChild);
+            }
+        }
+
+        function simulateUpdate() {
+            team1Score++;
+            handleUpdate({ type: 'score_update', team1_score: team1Score, team2_score: team2Score });
+        }
+
+        // Auto-connect on load
+        window.onload = () => {
+            setTimeout(connectSSE, 1000);
+        };
+    </script>
+</body>
+</html>

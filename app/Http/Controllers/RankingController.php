@@ -537,7 +537,16 @@ class RankingController extends Controller
 
     private function getPlayerRankingHistory($playerId)
     {
-        return collect([]); // Placeholder - would come from rating_changes table
+        try {
+            $rankingService = app(RankingService::class);
+            return $rankingService->getPlayerRankingHistory($playerId, 30);
+        } catch (\Exception $e) {
+            Log::error('Failed to get player ranking history', [
+                'player_id' => $playerId,
+                'error' => $e->getMessage()
+            ]);
+            return [];
+        }
     }
 
     private function getPlayerCompetitiveStats($playerId)

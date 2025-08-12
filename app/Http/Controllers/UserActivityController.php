@@ -330,12 +330,12 @@ class UserActivityController extends Controller
     {
         // Update various cache counters for real-time analytics
         $cacheKey = 'analytics:page_views_last_minute';
-        Cache::increment($cacheKey);
-        Cache::expire($cacheKey, 60);
+        $currentMinuteViews = Cache::get($cacheKey, 0);
+        Cache::put($cacheKey, $currentMinuteViews + 1, 60); // Use put with TTL instead of expire
 
         $hourKey = 'analytics:page_views_last_hour';
-        Cache::increment($hourKey);
-        Cache::expire($hourKey, 3600);
+        $currentHourViews = Cache::get($hourKey, 0);
+        Cache::put($hourKey, $currentHourViews + 1, 3600); // Use put with TTL instead of expire
 
         // Track peak users
         $currentOnline = Cache::get('analytics:users_online', 0);

@@ -506,7 +506,8 @@ class EventController extends Controller
         $teamCount = $this->getEventTeamsPrivate($eventId)->count();
 
         foreach ($matches as $match) {
-            $roundName = $this->getRoundName($match->round, $teamCount);
+            // Use the round name directly since it's already a string
+            $roundName = $match->round ?: 'Round';
             
             if (!isset($roundsData[$match->round])) {
                 $roundsData[$match->round] = [
@@ -565,7 +566,7 @@ class EventController extends Controller
         }
 
         $totalRounds = ceil(log($teamCount, 2));
-        $roundsFromEnd = $totalRounds - $round + 1;
+        $roundsFromEnd = $totalRounds - (int)$round + 1;
         
         switch ($roundsFromEnd) {
             case 1:

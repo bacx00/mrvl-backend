@@ -6,6 +6,7 @@ use App\Models\Mention;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Helpers\ImageHelper;
+use App\Services\OptimizedAdminQueryService;
 
 class PlayerController extends Controller
 {
@@ -84,115 +85,115 @@ class PlayerController extends Controller
     public function show($id)
     {
         try {
-            // Debug: Log the incoming parameter
-            \Log::info('PlayerController@show called with id: ' . $id);
-            
-            $playerId = $id;
-            $playerData = DB::table('players')->where('id', $playerId)->first();
-            
-            if (!$playerData) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Player not found'
-                ], 404);
-            }
+            // Use Player model with relationships for better efficiency
+            $player = Player::with(['team', 'teamHistory', 'matchStats'])
+                ->findOrFail($id);
 
-            // Get complete VLR.gg-style player profile data
-            
-            // Current team information
+            // Format team information with logo helper
             $currentTeam = null;
-            if ($playerData->team_id) {
-                $currentTeam = DB::table('teams')
-                    ->where('id', $playerData->team_id)
-                    ->select(['id', 'name', 'short_name', 'logo', 'region', 'rating', 'rank'])
-                    ->first();
+            if ($player->team) {
+                $teamLogoInfo = $player->team->logo ? ImageHelper::getTeamLogo($player->team->logo, $player->team->name) : null;
+                $currentTeam = [
+                    'id' => $player->team->id,
+                    'name' => $player->team->name,
+                    'short_name' => $player->team->short_name,
+                    'logo' => $teamLogoInfo ? $teamLogoInfo['url'] : '/images/team-placeholder.svg',
+                    'logo_exists' => $teamLogoInfo ? $teamLogoInfo['exists'] : false,
+                    'region' => $player->team->region,
+                    'rating' => $player->team->rating ?? 1000,
+                    'rank' => $this->getRankByRating($player->team->rating ?? 1000)
+                ];
             }
 
-            // Team history (previous teams) - REMOVED per requirements
-            // $teamHistory = $this->getPlayerTeamHistory($playerId);
+            // Format avatar with helper
+            $avatarInfo = ImageHelper::getPlayerAvatar($player->avatar, $player->username);
 
-            // Match statistics
-            $matchStats = $this->calculatePlayerMatchStats($playerId);
+            // Get social media properly - merge individual columns with JSON array
+            $socialMedia = [];
+            if ($player->social_media && is_array($player->social_media)) {
+                $socialMedia = $player->social_media;
+            }
+            
+            // Add individual social media columns if they exist
+            $socialFields = ['twitter', 'instagram', 'youtube', 'twitch', 'tiktok', 'discord', 'facebook'];
+            foreach ($socialFields as $field) {
+                if (!empty($player->{$field})) {
+                    $socialMedia[$field] = $player->{$field};
+                }
+            }
 
-            // Recent matches (last 15)
-            $recentMatches = $this->getPlayerRecentMatches($playerId, 15);
-
-            // Performance metrics by hero
-            $heroStats = $this->getPlayerHeroStats($playerId);
-
-            // Performance by time period (30d, 60d, 90d)
-            $timeframeStats = $this->getPlayerTimeframeStats($playerId);
-
-            // Event placements
-            $eventPlacements = $this->getPlayerEventPlacements($playerId);
-
-            // Rating history
-            $ratingHistory = $this->generatePlayerRatingHistory($playerData->rating ?? 1000);
-
-            // Social media and streaming
-            $socialMedia = $this->decodeJsonField($playerData->social_media);
-
-            $comprehensiveProfile = [
-                // Basic player info
-                'id' => $playerData->id,
-                'username' => $playerData->username,
-                'real_name' => $playerData->real_name,
-                'avatar' => $playerData->avatar,
-                'country' => $playerData->country,
-                'flag' => $this->getCountryFlag($playerData->country),
-                'age' => $playerData->age,
-                'status' => $playerData->status ?? 'active',
-                'biography' => $playerData->biography,
-                
-                // Performance metrics
-                'role' => $playerData->role,
-                'main_hero' => $playerData->main_hero,
-                'alt_heroes' => $playerData->alt_heroes ? json_decode($playerData->alt_heroes, true) : [],
-                'rating' => $playerData->rating ?? 1500,
-                'peak_rating' => $playerData->peak_rating ?? $playerData->rating ?? 1500,
-                'rank' => $this->getRankByRating($playerData->rating ?? 1500),
-                'division' => $this->getDivisionByRating($playerData->rating ?? 1500),
-                
-                // Team information
-                'current_team' => $currentTeam,
-                // 'team_history' => $teamHistory, // REMOVED per requirements
-                
-                // Performance data
-                'stats' => $matchStats,
-                'hero_stats' => $heroStats,
-                'timeframe_stats' => $timeframeStats,
-                'rating_history' => $ratingHistory,
-                
-                // Match data
-                'recent_matches' => $recentMatches,
-                'total_matches' => $matchStats['matches_played'] ?? 0,
-                
-                // Tournament data
-                'event_placements' => $eventPlacements,
-                'total_earnings' => $this->calculatePlayerEarnings($eventPlacements),
-                
-                // Social & streaming
-                'social_media' => $socialMedia,
-                'streaming' => $this->getStreamingInfo($socialMedia),
-                
-                // Marvel Rivals specific
-                'game' => 'Marvel Rivals',
-                'region' => $playerData->region ?? 'Unknown',
-                'last_active' => $this->getPlayerLastActive($playerId),
-                'career_highlights' => $this->getCareerHighlights($playerId)
-            ];
+            // Calculate basic stats from match data if not stored
+            $calculatedStats = $this->calculateBasicPlayerStats($player);
 
             return response()->json([
-                'data' => $comprehensiveProfile,
+                'data' => [
+                    // Basic player information
+                    'id' => $player->id,
+                    'username' => $player->username,
+                    'real_name' => $player->real_name,
+                    'avatar' => $avatarInfo['url'],
+                    'avatar_exists' => $avatarInfo['exists'],
+                    'avatar_fallback' => $avatarInfo['fallback'],
+                    
+                    // Personal details
+                    'country' => $player->country,
+                    'nationality' => $player->nationality ?? $player->country,
+                    'flag' => $this->getCountryFlag($player->country),
+                    'age' => $player->age,
+                    'region' => $player->region,
+                    'biography' => $player->biography,
+                    'status' => $player->status ?? 'active',
+                    
+                    // Game performance
+                    'role' => $player->role,
+                    'main_hero' => $player->main_hero,
+                    'alt_heroes' => $player->alt_heroes ?? [],
+                    'rating' => $player->rating ?? 1000,
+                    'rank' => $this->getRankByRating($player->rating ?? 1000),
+                    'division' => $this->getDivisionByRating($player->rating ?? 1000),
+                    
+                    // Statistics (from database or calculated)
+                    'wins' => $player->wins ?? $calculatedStats['wins'],
+                    'losses' => $player->losses ?? $calculatedStats['losses'],
+                    'kda' => $player->kda ?? $calculatedStats['kda'],
+                    'total_matches' => $calculatedStats['total_matches'],
+                    
+                    // Financial
+                    'earnings' => $player->earnings ?? 0,
+                    'total_earnings' => $player->total_earnings ?? $player->earnings ?? 0,
+                    
+                    // Social media (all platforms)
+                    'twitter' => $player->twitter,
+                    'instagram' => $player->instagram,
+                    'youtube' => $player->youtube,
+                    'twitch' => $player->twitch,
+                    'discord' => $player->discord,
+                    'tiktok' => $player->tiktok,
+                    'facebook' => $player->facebook,
+                    'social_media' => $socialMedia,
+                    
+                    // Team information
+                    'team_id' => $player->team_id,
+                    'current_team' => $currentTeam,
+                    
+                    // Metadata
+                    'created_at' => $player->created_at,
+                    'updated_at' => $player->updated_at,
+                    'game' => 'Marvel Rivals'
+                ],
                 'success' => true
             ]);
 
-        } catch (\Exception $e) {
-            \Log::error('PlayerController@show error: ' . $e->getMessage());
-            \Log::error('Stack trace: ' . $e->getTraceAsString());
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error fetching player: ' . $e->getMessage()
+                'message' => 'Player not found'
+            ], 404);
+        } catch (\Exception $e) {
+            \Log::error('PlayerController@show error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching player data'
             ], 500);
         }
     }
@@ -200,28 +201,117 @@ class PlayerController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'username' => 'required|string|max:255|unique:players',
+            // Support both frontend and backend field names
+            'username' => 'nullable|string|max:255|unique:players',
+            'ign' => 'nullable|string|max:255', // Frontend sends 'ign'
             'real_name' => 'nullable|string|max:255',
+            'name' => 'nullable|string|max:255', // Frontend sends 'name' for real name
             'team_id' => 'nullable|exists:teams,id',
-            'role' => 'required|in:Vanguard,Duelist,Strategist',
-            'main_hero' => 'nullable|string',
+            'role' => 'required|in:Vanguard,Duelist,Strategist,DPS,Tank,Support,Flex',
+            'main_hero' => 'nullable|string|max:100',
             'alt_heroes' => 'nullable|array',
-            'region' => 'nullable|string|max:10',
-            'country' => 'nullable|string',
-            'rating' => 'nullable|numeric|min:0',
+            'region' => 'nullable|string|max:20',
+            'country' => 'nullable|string|max:100',
+            'country_code' => 'nullable|string|max:5',
+            'nationality' => 'nullable|string|max:100',
+            'rating' => 'nullable|numeric|min:0|max:5000',
+            'elo_rating' => 'nullable|numeric|min:0|max:5000',
             'age' => 'nullable|integer|min:13|max:50',
+            'birth_date' => 'nullable|date|before:today',
+            'earnings' => 'nullable|numeric|min:0',
+            'total_earnings' => 'nullable|numeric|min:0',
             'social_media' => 'nullable|array',
-            'biography' => 'nullable|string',
-            'past_teams' => 'nullable|array'
+            'twitter' => 'nullable|string|max:50',
+            'instagram' => 'nullable|string|max:50',
+            'youtube' => 'nullable|string|max:100',
+            'twitch' => 'nullable|string|max:50',
+            'tiktok' => 'nullable|string|max:50',
+            'discord' => 'nullable|string|max:100',
+            'facebook' => 'nullable|string|url|max:255',
+            'liquipedia_url' => 'nullable|string|url|max:255',
+            'biography' => 'nullable|string|max:2000',
+            'description' => 'nullable|string|max:2000', // Frontend sends 'description'
+            'past_teams' => 'nullable|array',
+            'status' => 'nullable|in:active,inactive,retired,suspended',
+            'avatar' => 'nullable|string|url|max:500'
         ]);
         
+        // Validate that either ign or username is provided
+        if (empty($validated['ign']) && empty($validated['username'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Either IGN or username is required',
+                'errors' => ['ign' => ['IGN or username is required']]
+            ], 422);
+        }
+        
+        // Map frontend field names to database field names
+        $playerData = [];
+        
+        // Handle IGN/username mapping
+        $playerData['username'] = $validated['ign'] ?? $validated['username'];
+        
+        // Check for unique username
+        if (DB::table('players')->where('username', $playerData['username'])->exists()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This username is already taken',
+                'errors' => ['ign' => ['This username is already taken']]
+            ], 422);
+        }
+        
+        // Handle name/real_name mapping
+        $playerData['real_name'] = $validated['name'] ?? $validated['real_name'];
+        
+        // Handle role mapping from frontend to database
+        $roleMapping = [
+            'DPS' => 'Duelist',
+            'Tank' => 'Vanguard',
+            'Support' => 'Strategist',
+            'Duelist' => 'Duelist',
+            'Vanguard' => 'Vanguard',
+            'Strategist' => 'Strategist',
+            'Flex' => 'Flex'
+        ];
+        $playerData['role'] = $roleMapping[$validated['role']] ?? $validated['role'];
+        
+        // Handle description/biography mapping
+        $playerData['biography'] = $validated['description'] ?? $validated['biography'];
+        
+        // Copy other fields
+        $otherFields = [
+            'team_id', 'main_hero', 'alt_heroes', 'region', 'country', 'country_code',
+            'nationality', 'rating', 'elo_rating', 'age', 'birth_date', 'earnings',
+            'total_earnings', 'social_media', 'twitter', 'instagram', 'youtube',
+            'twitch', 'tiktok', 'discord', 'facebook', 'liquipedia_url',
+            'past_teams', 'status', 'avatar'
+        ];
+        
+        foreach ($otherFields as $field) {
+            if (isset($validated[$field])) {
+                $playerData[$field] = $validated[$field];
+            }
+        }
+        
         // Set defaults for missing fields
-        $validated['main_hero'] = $validated['main_hero'] ?? 'Spider-Man';
-        $validated['region'] = $validated['region'] ?? 'NA';
-        $validated['country'] = $validated['country'] ?? 'US';
-        $validated['rating'] = $validated['rating'] ?? 1000;
+        $playerData['main_hero'] = $playerData['main_hero'] ?? 'Spider-Man';
+        $playerData['region'] = $playerData['region'] ?? 'NA';
+        $playerData['country'] = $playerData['country'] ?? 'US';
+        $playerData['rating'] = $playerData['rating'] ?? 1000;
+        $playerData['status'] = $playerData['status'] ?? 'active';
 
-        $player = Player::create($validated);
+        $player = Player::create($playerData);
+
+        // Fire real-time update event for new player
+        try {
+            event(new \App\Events\PlayerUpdated(
+                $player->id, 
+                $player->load('team')->toArray(), 
+                ['created']
+            ));
+        } catch (\Exception $e) {
+            \Log::warning('Failed to broadcast player creation event: ' . $e->getMessage());
+        }
 
         return response()->json([
             'data' => $player->load('team'),
@@ -245,48 +335,81 @@ class PlayerController extends Controller
             
             $validated = $request->validate([
                 'username' => 'sometimes|string|max:255|unique:players,username,' . $playerId,
+                'ign' => 'sometimes|string|max:255', // Frontend sends 'ign'
                 'real_name' => 'nullable|string|max:255',
-                'name' => 'nullable|string|max:255', // Handle 'name' field if provided
+                'name' => 'nullable|string|max:255', // Frontend sends 'name' for real name
                 'team_id' => 'nullable|exists:teams,id',
-                'role' => 'sometimes|in:Vanguard,Duelist,Strategist',
-                'main_hero' => 'sometimes|string',
+                'role' => 'sometimes|in:Vanguard,Duelist,Strategist,DPS,Tank,Support,Flex',
+                'main_hero' => 'sometimes|string|max:100',
                 'alt_heroes' => 'nullable|array',
                 'hero_preferences' => 'nullable|array',
-                'region' => 'sometimes|string|max:10',
+                'region' => 'sometimes|string|max:20',
                 'country' => 'sometimes|string|max:100',
                 'country_code' => 'sometimes|string|max:5',
+                'nationality' => 'nullable|string|max:100',
                 'rating' => 'nullable|numeric|min:0|max:5000',
                 'skill_rating' => 'nullable|numeric|min:0|max:5000',
                 'elo_rating' => 'nullable|numeric|min:0|max:5000',
                 'peak_rating' => 'nullable|numeric|min:0|max:5000',
                 'peak_elo' => 'nullable|numeric|min:0|max:5000',
                 'age' => 'nullable|integer|min:13|max:50',
-                'birth_date' => 'nullable|date',
+                'birth_date' => 'nullable|date|before:today',
                 'earnings' => 'nullable|numeric|min:0',
                 'total_earnings' => 'nullable|numeric|min:0',
                 'earnings_amount' => 'nullable|numeric|min:0',
                 'earnings_currency' => 'nullable|string|max:10',
                 'social_media' => 'nullable|array',
                 'social_links' => 'nullable|array',
-                'twitter' => 'nullable|string',
-                'twitter_url' => 'nullable|string|url',
-                'instagram' => 'nullable|string',
-                'instagram_url' => 'nullable|string|url',
-                'youtube' => 'nullable|string',
-                'youtube_url' => 'nullable|string|url',
-                'twitch' => 'nullable|string',
-                'twitch_url' => 'nullable|string|url',
-                'tiktok' => 'nullable|string',
-                'discord' => 'nullable|string',
-                'discord_url' => 'nullable|string',
-                'facebook' => 'nullable|string|url',
-                'liquipedia_url' => 'nullable|string|url',
-                'vlr_url' => 'nullable|string|url',
-                'biography' => 'nullable|string',
+                'twitter' => 'nullable|string|max:50',
+                'twitter_url' => 'nullable|string|url|max:255',
+                'instagram' => 'nullable|string|max:50',
+                'instagram_url' => 'nullable|string|url|max:255',
+                'youtube' => 'nullable|string|max:100',
+                'youtube_url' => 'nullable|string|url|max:255',
+                'twitch' => 'nullable|string|max:50',
+                'twitch_url' => 'nullable|string|url|max:255',
+                'tiktok' => 'nullable|string|max:50',
+                'discord' => 'nullable|string|max:100',
+                'discord_url' => 'nullable|string|max:255',
+                'facebook' => 'nullable|string|url|max:255',
+                'liquipedia_url' => 'nullable|string|url|max:255',
+                'vlr_url' => 'nullable|string|url|max:255',
+                'biography' => 'nullable|string|max:2000',
+                'description' => 'nullable|string|max:2000', // Frontend sends 'description'
                 'past_teams' => 'nullable|array',
                 'status' => 'sometimes|in:active,inactive,retired,suspended',
-                'avatar' => 'nullable|string|url'
+                'avatar' => 'nullable|string|url|max:500'
             ]);
+
+            // Map frontend field names to database field names
+            if (isset($validated['ign'])) {
+                $validated['username'] = $validated['ign'];
+                unset($validated['ign']);
+            }
+            
+            if (isset($validated['name'])) {
+                $validated['real_name'] = $validated['name'];
+                unset($validated['name']);
+            }
+            
+            if (isset($validated['description'])) {
+                $validated['biography'] = $validated['description'];
+                unset($validated['description']);
+            }
+            
+            // Handle role mapping from frontend to database
+            if (isset($validated['role'])) {
+                $roleMapping = [
+                    'DPS' => 'Duelist',
+                    'Tank' => 'Vanguard',
+                    'Support' => 'Strategist',
+                    'Duelist' => 'Duelist',
+                    'Vanguard' => 'Vanguard',
+                    'Strategist' => 'Strategist',
+                    'Flex' => 'Flex'
+                ];
+                $validated['role'] = $roleMapping[$validated['role']] ?? $validated['role'];
+            }
 
             // Handle team transfer logic
             if (isset($validated['team_id']) && $validated['team_id'] != $player->team_id) {
@@ -374,16 +497,38 @@ class PlayerController extends Controller
             // Set updated timestamp
             $validated['updated_at'] = now();
 
-            // Update the player
-            DB::table('players')->where('id', $playerId)->update($validated);
+            // Update the player with transaction for data integrity
+            DB::transaction(function() use ($validated, $playerId) {
+                DB::table('players')->where('id', $playerId)->update($validated);
+                
+                // Clear relevant caches for immediate updates
+                \Cache::tags(['players', 'teams', 'profiles'])->flush();
+                \Cache::forget("player_{$playerId}");
+                \Cache::forget("player_admin_{$playerId}");
+                if (isset($validated['team_id'])) {
+                    \Cache::forget("team_{$validated['team_id']}");
+                }
+            });
 
-            // Return updated player data
+            // Return optimized response with fresh data
             $updatedPlayer = $this->getPlayerAdmin($playerId);
+            
+            // Fire real-time update event
+            try {
+                event(new \App\Events\PlayerUpdated(
+                    $playerId, 
+                    $updatedPlayer->original['data'], 
+                    array_keys($validated)
+                ));
+            } catch (\Exception $e) {
+                \Log::warning('Failed to broadcast player update event: ' . $e->getMessage());
+            }
             
             return response()->json([
                 'data' => $updatedPlayer->original['data'],
                 'success' => true,
-                'message' => 'Player updated successfully'
+                'message' => 'Player updated successfully',
+                'timestamp' => now()->toISOString()
             ]);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -392,12 +537,37 @@ class PlayerController extends Controller
                 'message' => 'Validation failed',
                 'errors' => $e->errors()
             ], 422);
+        } catch (\Illuminate\Database\QueryException $e) {
+            \Log::error('PlayerController@update DB error: ' . $e->getMessage());
+            
+            // Handle specific database constraint violations
+            if ($e->errorInfo[1] == 1062) { // Duplicate entry
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Player username or unique field already exists',
+                    'error_code' => 'DUPLICATE_ENTRY'
+                ], 409);
+            }
+            if ($e->errorInfo[1] == 1452) { // Foreign key constraint
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid team assignment - team does not exist',
+                    'error_code' => 'FOREIGN_KEY_VIOLATION'
+                ], 400);
+            }
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Database error occurred while updating player',
+                'error_code' => 'DATABASE_ERROR'
+            ], 500);
         } catch (\Exception $e) {
             \Log::error('PlayerController@update error: ' . $e->getMessage());
             \Log::error('Stack trace: ' . $e->getTraceAsString());
             return response()->json([
                 'success' => false,
-                'message' => 'Error updating player: ' . $e->getMessage()
+                'message' => 'Error updating player: ' . $e->getMessage(),
+                'error_code' => 'GENERAL_ERROR'
             ], 500);
         }
     }
@@ -415,17 +585,25 @@ class PlayerController extends Controller
     public function getPlayerAdmin($playerId)
     {
         try {
-            $player = DB::table('players as p')
-                ->leftJoin('teams as t', 'p.team_id', '=', 't.id')
-                ->where('p.id', $playerId)
-                ->select([
-                    'p.id', 'p.username', 'p.real_name', 'p.role', 'p.avatar', 
-                    'p.rating', 'p.main_hero', 'p.country', 'p.age', 'p.status',
-                    'p.biography', 'p.social_media', 'p.alt_heroes', 'p.peak_rating',
-                    'p.region', 'p.team_id', 'p.past_teams', 'p.created_at', 'p.updated_at',
-                    't.name as team_name', 't.short_name as team_short', 't.logo as team_logo'
-                ])
-                ->first();
+            // Use caching for better performance
+            $cacheKey = "player_admin_{$playerId}";
+            $player = \Cache::remember($cacheKey, 300, function() use ($playerId) {
+                return DB::table('players as p')
+                    ->leftJoin('teams as t', 'p.team_id', '=', 't.id')
+                    ->where('p.id', $playerId)
+                    ->select([
+                        'p.id', 'p.name', 'p.username', 'p.real_name', 'p.role', 'p.avatar', 
+                        'p.rating', 'p.elo_rating', 'p.peak_rating', 'p.peak_elo',
+                        'p.main_hero', 'p.alt_heroes', 'p.country', 'p.country_code', 'p.nationality',
+                        'p.age', 'p.birth_date', 'p.status', 'p.biography', 'p.social_media',
+                        'p.region', 'p.team_id', 'p.past_teams', 'p.earnings', 'p.total_earnings',
+                        'p.twitter', 'p.instagram', 'p.youtube', 'p.twitch', 'p.tiktok', 'p.discord',
+                        'p.facebook', 'p.liquipedia_url', 'p.created_at', 'p.updated_at',
+                        't.name as team_name', 't.short_name as team_short', 't.logo as team_logo',
+                        't.region as team_region'
+                    ])
+                    ->first();
+            });
             
             if (!$player) {
                 return response()->json([
@@ -481,58 +659,58 @@ class PlayerController extends Controller
     public function getAllPlayers(Request $request)
     {
         try {
-            $query = DB::table('players as p')
-                ->leftJoin('teams as t', 'p.team_id', '=', 't.id')
-                ->select([
-                    'p.id', 'p.username', 'p.real_name', 'p.role', 'p.avatar', 
-                    'p.rating', 'p.main_hero', 'p.country', 'p.age', 'p.status',
-                    'p.created_at', 'p.updated_at',
-                    't.name as team_name', 't.short_name as team_short', 't.logo as team_logo'
-                ]);
+            // Use OptimizedAdminQueryService for enhanced performance
+            $adminQueryService = new OptimizedAdminQueryService();
+            
+            // Prepare filters for the optimized service
+            $filters = [
+                'search' => $request->get('search'),
+                'role' => $request->get('role', 'all'),
+                'team' => $request->get('team'),
+                'status' => $request->get('status', 'all'),
+                'region' => $request->get('region', 'all'),
+                'min_rating' => $request->get('min_rating'),
+                'sort_by' => $request->get('sort_by', 'rating'),
+                'sort_order' => $request->get('sort_order', 'desc')
+            ];
 
-            if ($request->search) {
-                $query->where(function($q) use ($request) {
-                    $q->where('p.username', 'LIKE', "%{$request->search}%")
-                      ->orWhere('p.real_name', 'LIKE', "%{$request->search}%");
+            $page = $request->get('page', 1);
+            $perPage = $request->get('per_page', 50);
+            
+            // Disable cache for admin requests if no_cache parameter is set
+            $useCache = !$request->get('no_cache', false);
+
+            // Get optimized results
+            $result = $adminQueryService->getOptimizedPlayerList(
+                $filters, 
+                $page, 
+                $perPage, 
+                $useCache
+            );
+
+            // Add country flags to the data
+            if (!empty($result['data'])) {
+                $result['data'] = collect($result['data'])->map(function($player) {
+                    $player['flag'] = $this->getCountryFlag($player['country'] ?? '');
+                    return $player;
                 });
             }
 
-            if ($request->role && $request->role !== 'all') {
-                $query->where('p.role', $request->role);
-            }
-
-            if ($request->team && $request->team !== 'all') {
-                $query->where('p.team_id', $request->team);
-            }
-
-            if ($request->status && $request->status !== 'all') {
-                $query->where('p.status', $request->status);
-            }
-
-            $players = $query->orderBy('p.rating', 'desc')->paginate(20);
-
-            // Format players data to include flags
-            $formattedPlayers = collect($players->items())->map(function($player) {
-                return (object) array_merge((array) $player, [
-                    'flag' => $this->getCountryFlag($player->country)
-                ]);
-            });
-
-            return response()->json([
-                'data' => $formattedPlayers,
-                'pagination' => [
-                    'current_page' => $players->currentPage(),
-                    'last_page' => $players->lastPage(),
-                    'per_page' => $players->perPage(),
-                    'total' => $players->total()
-                ],
-                'success' => true
-            ]);
+            return response()->json($result);
             
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error fetching players: ' . $e->getMessage()
+                'message' => 'Error fetching players: ' . $e->getMessage(),
+                'data' => [],
+                'pagination' => [
+                    'current_page' => $request->get('page', 1),
+                    'per_page' => $request->get('per_page', 50),
+                    'total' => 0,
+                    'last_page' => 0,
+                    'from' => 0,
+                    'to' => 0,
+                ]
             ], 500);
         }
     }
@@ -2959,5 +3137,119 @@ class PlayerController extends Controller
         }
         
         return $sampleMatches;
+    }
+
+    /**
+     * Calculate basic player statistics from match data
+     */
+    private function calculateBasicPlayerStats($player)
+    {
+        $stats = [
+            'wins' => 0,
+            'losses' => 0,
+            'kda' => 0.0,
+            'total_matches' => 0
+        ];
+
+        if ($player->matchStats && $player->matchStats->count() > 0) {
+            $totalMatches = $player->matchStats->count();
+            $wins = 0;
+            $totalKills = 0;
+            $totalDeaths = 0;
+            $totalAssists = 0;
+
+            foreach ($player->matchStats as $matchStat) {
+                // Check if player won this match
+                if ($matchStat->match) {
+                    $match = $matchStat->match;
+                    $playerWon = ($match->team1_id == $player->team_id && $match->team1_score > $match->team2_score) ||
+                                ($match->team2_id == $player->team_id && $match->team2_score > $match->team1_score);
+                    if ($playerWon) {
+                        $wins++;
+                    }
+                }
+
+                // Accumulate KDA stats
+                $totalKills += $matchStat->eliminations ?? 0;
+                $totalDeaths += $matchStat->deaths ?? 0;
+                $totalAssists += $matchStat->assists ?? 0;
+            }
+
+            $stats['total_matches'] = $totalMatches;
+            $stats['wins'] = $wins;
+            $stats['losses'] = $totalMatches - $wins;
+            
+            // Calculate KDA ratio
+            if ($totalDeaths > 0) {
+                $stats['kda'] = round(($totalKills + $totalAssists) / $totalDeaths, 2);
+            } else {
+                $stats['kda'] = $totalKills + $totalAssists; // Perfect KDA when no deaths
+            }
+        }
+
+        return $stats;
+    }
+
+    /**
+     * Bulk delete players
+     */
+    public function bulkDelete(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'player_ids' => 'required|array|min:1',
+                'player_ids.*' => 'integer|exists:players,id'
+            ]);
+
+            $playerIds = $validated['player_ids'];
+            
+            // Get player names for response
+            $players = DB::table('players')
+                ->whereIn('id', $playerIds)
+                ->select('id', 'username', 'real_name')
+                ->get();
+
+            if ($players->isEmpty()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No players found to delete'
+                ], 404);
+            }
+
+            // Delete players in transaction
+            DB::transaction(function() use ($playerIds) {
+                // Delete related data first to maintain referential integrity
+                DB::table('player_match_stats')->whereIn('player_id', $playerIds)->delete();
+                DB::table('player_team_history')->whereIn('player_id', $playerIds)->delete();
+                DB::table('mentions')->where('mentioned_type', 'player')->whereIn('mentioned_id', $playerIds)->delete();
+                
+                // Delete players
+                DB::table('players')->whereIn('id', $playerIds)->delete();
+
+                // Clear caches
+                \Cache::tags(['players', 'teams', 'profiles'])->flush();
+                foreach ($playerIds as $playerId) {
+                    \Cache::forget("player_{$playerId}");
+                    \Cache::forget("player_admin_{$playerId}");
+                }
+            });
+
+            $deletedCount = $players->count();
+            $playerNames = $players->pluck('username')->join(', ');
+
+            return response()->json([
+                'success' => true,
+                'message' => "Successfully deleted {$deletedCount} players: {$playerNames}",
+                'deleted_count' => $deletedCount,
+                'deleted_players' => $players->toArray()
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('PlayerController@bulkDelete error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error deleting players: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

@@ -15,20 +15,44 @@ class AuthController extends Controller
 {
     public function login(Request $request)
     {
+        // Rate limiting: 5 attempts per minute per IP
+        $key = 'login_attempts_' . $request->ip();
+        if (\Illuminate\Support\Facades\RateLimiter::tooManyAttempts($key, 5)) {
+            $seconds = \Illuminate\Support\Facades\RateLimiter::availableIn($key);
+            return response()->json([
+                'success' => false,
+                'message' => 'Too many login attempts. Please try again in ' . $seconds . ' seconds.',
+                'error' => 'Rate limit exceeded'
+            ], 429);
+        }
+
         try {
             $request->validate([
-                'email' => 'required|email',
-                'password' => 'required',
+                'email' => 'required|email|max:255',
+                'password' => 'required|string|min:1|max:255',
             ]);
 
             $user = User::where('email', $request->email)->first();
 
             if (!$user || !Hash::check($request->password, $user->password)) {
+                // Hit rate limiter on failed login
+                \Illuminate\Support\Facades\RateLimiter::hit($key, 60); // 1 minute decay
+                
+                // Log failed login attempt
+                \Log::warning('Failed login attempt', [
+                    'email' => $request->email,
+                    'ip' => $request->ip(),
+                    'user_agent' => $request->header('User-Agent')
+                ]);
+                
                 return response()->json([
                     'success' => false,
                     'message' => 'Invalid credentials'
                 ], 401);
             }
+
+            // Clear rate limit on successful login
+            \Illuminate\Support\Facades\RateLimiter::clear($key);
 
             // Update last login
             try {
@@ -77,9 +101,12 @@ class AuthController extends Controller
     {
         try {
             $request->validate([
-                'name' => 'required|string|max:255',
+                'name' => 'required|string|max:255|min:2|regex:/^[a-zA-Z0-9\s\-_\.]+$/',
                 'email' => 'required|string|email|max:255|unique:users',
-                'password' => 'required|string|min:8',
+                'password' => 'required|string|min:8|max:255|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/',
+            ], [
+                'name.regex' => 'Name can only contain letters, numbers, spaces, hyphens, underscores, and dots.',
+                'password.regex' => 'Password must contain at least one lowercase letter, one uppercase letter, one digit, and one special character (@$!%*?&).',
             ]);
 
             $user = User::create([

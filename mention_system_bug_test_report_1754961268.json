@@ -1,0 +1,113 @@
+{
+    "timestamp": "2025-08-12 01:14:28",
+    "summary": {
+        "total_tests": 8,
+        "passed_tests": 1,
+        "failed_tests": 7,
+        "error_count": 2
+    },
+    "test_results": {
+        "parsing": [
+            {
+                "content": "Hey @testuser how are you?",
+                "success": false,
+                "expected_count": 1,
+                "extracted_count": 0,
+                "issues": [
+                    "Expected 1 mentions, got 0",
+                    "Missing expected mention: @testuser (type: user)"
+                ],
+                "extracted": []
+            },
+            {
+                "content": "Check out @team:TSM and @team:C9",
+                "success": false,
+                "expected_count": 2,
+                "extracted_count": 1,
+                "issues": [
+                    "Expected 2 mentions, got 1",
+                    "Missing expected mention: @team:C9 (type: team)"
+                ],
+                "extracted": [
+                    {
+                        "type": "team",
+                        "id": 5,
+                        "name": "TSM",
+                        "display_name": "TSM",
+                        "mention_text": "@team:TSM",
+                        "url": "\/teams\/5",
+                        "avatar": null,
+                        "position_start": 10,
+                        "position_end": 19,
+                        "clickable": true
+                    }
+                ]
+            },
+            {
+                "content": "Great play by @player:shroud and @player:ninja",
+                "success": false,
+                "expected_count": 2,
+                "extracted_count": 0,
+                "issues": [
+                    "Expected 2 mentions, got 0",
+                    "Missing expected mention: @player:shroud (type: player)",
+                    "Missing expected mention: @player:ninja (type: player)"
+                ],
+                "extracted": []
+            },
+            {
+                "content": "Tournament @team:G2 vs @team:FNC with @player:caps and @testuser watching",
+                "success": false,
+                "expected_count": 4,
+                "extracted_count": 0,
+                "issues": [
+                    "Expected 4 mentions, got 0",
+                    "Missing expected mention: @team:G2 (type: team)",
+                    "Missing expected mention: @team:FNC (type: team)",
+                    "Missing expected mention: @player:caps (type: player)",
+                    "Missing expected mention: @testuser (type: user)"
+                ],
+                "extracted": []
+            },
+            {
+                "content": "Email test@example.com should not be parsed",
+                "success": true,
+                "expected_count": 0,
+                "extracted_count": 0,
+                "issues": [],
+                "extracted": []
+            },
+            {
+                "content": "@user_with_underscores is valid",
+                "success": false,
+                "expected_count": 1,
+                "extracted_count": 0,
+                "issues": [
+                    "Expected 1 mentions, got 0",
+                    "Missing expected mention: @user_with_underscores (type: user)"
+                ],
+                "extracted": []
+            },
+            {
+                "content": "@123numbers should work",
+                "success": false,
+                "expected_count": 1,
+                "extracted_count": 0,
+                "issues": [
+                    "Expected 1 mentions, got 0",
+                    "Missing expected mention: @123numbers (type: user)"
+                ],
+                "extracted": []
+            }
+        ]
+    },
+    "errors": [
+        "Mention recording error: SQLSTATE[HY000]: General error: 1364 Field 'main_hero' doesn't have a default value (Connection: mysql, SQL: insert into `players` (`username`, `real_name`, `role`, `updated_at`, `created_at`) values (shroud, Michael Grzesiek, DPS, 2025-08-12 01:14:28, 2025-08-12 01:14:28))",
+        "Controller injection issue in \/app\/Http\/Controllers\/MatchController.php: Missing MentionService import"
+    ],
+    "recommendations": [
+        "Implement notification system for new mentions",
+        "Add real-time updates when mentions are created",
+        "Test mention functionality in all contexts (forums, news, matches)"
+    ]
+}

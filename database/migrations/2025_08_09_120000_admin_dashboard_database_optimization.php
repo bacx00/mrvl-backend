@@ -56,8 +56,8 @@ return new class extends Migration
                 $table->index(['created_at', 'id'], 'idx_players_admin_pagination');
             }
             
-            // Email-based lookups for admin operations
-            if (!$this->indexExists('players', 'idx_players_email')) {
+            // Email-based lookups for admin operations - only if email column exists
+            if (Schema::hasColumn('players', 'email') && !$this->indexExists('players', 'idx_players_email')) {
                 // Optimizes: WHERE email = ? for admin user management
                 $table->index('email', 'idx_players_email');
             }
@@ -105,9 +105,9 @@ return new class extends Migration
             }
             
             // Earnings-based queries for admin analytics
-            if (!$this->indexExists('teams', 'idx_teams_earnings')) {
-                // Optimizes: WHERE earnings_amount > 0 ORDER BY earnings_amount DESC
-                $table->index(['earnings_amount', 'earnings_currency'], 'idx_teams_earnings');
+            if (Schema::hasColumn('teams', 'earnings') && !$this->indexExists('teams', 'idx_teams_earnings')) {
+                // Optimizes: WHERE earnings > 0 ORDER BY earnings DESC
+                $table->index(['earnings'], 'idx_teams_earnings');
             }
         });
 
@@ -162,9 +162,9 @@ return new class extends Migration
                 }
                 
                 // Activity type analysis
-                if (!$this->indexExists('user_activities', 'idx_user_activities_type_date')) {
-                    // Optimizes: WHERE activity_type = ? AND created_at >= ?
-                    $table->index(['activity_type', 'created_at'], 'idx_user_activities_type_date');
+                if (Schema::hasColumn('user_activities', 'action') && !$this->indexExists('user_activities', 'idx_user_activities_type_date')) {
+                    // Optimizes: WHERE action = ? AND created_at >= ?
+                    $table->index(['action', 'created_at'], 'idx_user_activities_type_date');
                 }
             });
         }
@@ -202,9 +202,9 @@ return new class extends Migration
                 }
                 
                 // Hero statistics
-                if (!$this->indexExists('match_player_stats', 'idx_match_player_stats_hero')) {
-                    // Optimizes: WHERE hero_played = ? AND player_id = ?
-                    $table->index(['hero_played', 'player_id'], 'idx_match_player_stats_hero');
+                if (Schema::hasColumn('match_player_stats', 'hero') && !$this->indexExists('match_player_stats', 'idx_match_player_stats_hero')) {
+                    // Optimizes: WHERE hero = ? AND player_id = ?
+                    $table->index(['hero', 'player_id'], 'idx_match_player_stats_hero');
                 }
                 
                 // Match-based stats loading
