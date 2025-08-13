@@ -168,7 +168,7 @@ class AdminTeamController extends Controller
             $validatedData = $request->validate([
                 'name' => 'required|string|max:255|unique:teams,name',
                 'short_name' => 'required|string|max:10|unique:teams,short_name',
-                'region' => 'required|string|in:NA,EU,APAC,LATAM,BR,CN,KR,JP',
+                'region' => 'required|string|in:NA,EU,APAC,ASIA,LATAM,BR,CN,KR,JP,Americas,EMEA,Oceania,China',
                 'country' => 'nullable|string|max:255',
                 'rating' => 'nullable|integer|min:0|max:5000',
                 'description' => 'nullable|string|max:1000',
@@ -269,7 +269,7 @@ class AdminTeamController extends Controller
             $validatedData = $request->validate([
                 'name' => 'sometimes|required|string|max:255|unique:teams,name,' . $id,
                 'short_name' => 'sometimes|required|string|max:10|unique:teams,short_name,' . $id,
-                'region' => 'sometimes|required|string|in:NA,EU,APAC,LATAM,BR,CN,KR,JP',
+                'region' => 'sometimes|required|string|in:NA,EU,APAC,ASIA,LATAM,BR,CN,KR,JP,Americas,EMEA,Oceania,China',
                 'country' => 'nullable|string|max:255',
                 'rating' => 'nullable|integer|min:0|max:5000',
                 'description' => 'nullable|string|max:1000',

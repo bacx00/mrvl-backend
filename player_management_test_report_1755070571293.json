@@ -1,0 +1,290 @@
+{
+  "summary": {
+    "total": 8,
+    "passed": 4,
+    "failed": 4,
+    "successRate": "50.0",
+    "duration": "3.14",
+    "timestamp": "2025-08-13T07:36:11.292Z"
+  },
+  "tests": [
+    {
+      "name": "Player Admin Routes Existence",
+      "success": true,
+      "message": "3/5 player admin routes exist",
+      "details": [
+        {
+          "method": "GET",
+          "path": "/admin/players",
+          "description": "List all players",
+          "exists": true,
+          "statusCode": 200
+        },
+        {
+          "method": "POST",
+          "path": "/admin/players",
+          "description": "Create player",
+          "exists": true,
+          "statusCode": 500
+        },
+        {
+          "method": "GET",
+          "path": "/admin/players/1",
+          "description": "Get specific player",
+          "exists": false,
+          "statusCode": 404
+        },
+        {
+          "method": "PUT",
+          "path": "/admin/players/1",
+          "description": "Update player",
+          "exists": false,
+          "statusCode": 404
+        },
+        {
+          "method": "DELETE",
+          "path": "/admin/players/1",
+          "description": "Delete player",
+          "exists": true,
+          "statusCode": 500
+        }
+      ]
+    },
+    {
+      "name": "Fetch All Players",
+      "success": true,
+      "message": "Successfully fetched 50 players",
+      "details": {
+        "statusCode": 200,
+        "playerCount": 50,
+        "samplePlayer": {
+          "id": 526,
+          "name": "flame91",
+          "ign": "flame91",
+          "username": "flame91",
+          "real_name": null,
+          "avatar": "/images/player-placeholder.svg",
+          "role": "DPS",
+          "main_hero": "Spider-Man",
+          "rating": 1200,
+          "rank": 1,
+          "country": "United Kingdom",
+          "age": null,
+          "status": "active",
+          "team_id": 21,
+          "team_name": "MAD Lions",
+          "team_short": "ML",
+          "team_logo": null,
+          "team": {
+            "name": "MAD Lions",
+            "short_name": "ML",
+            "logo": null,
+            "region": "EMEA",
+            "rating": 2000
+          },
+          "stats": {
+            "total_matches": 0,
+            "wins": 0,
+            "win_rate": 0,
+            "kda": "0.00",
+            "eliminations": 0,
+            "deaths": 0,
+            "assists": 0
+          },
+          "earnings": {
+            "amount": "0.00",
+            "currency": "USD"
+          },
+          "created_at": "2025-08-10 09:07:01",
+          "updated_at": "2025-08-10 18:24:52",
+          "flag": "🇬🇧"
+        }
+      }
+    },
+    {
+      "name": "Create New Player",
+      "success": true,
+      "message": "Successfully created player",
+      "details": {
+        "statusCode": 201,
+        "playerId": 779,
+        "playerData": {
+          "username": "TestGamer",
+          "real_name": "Test Player",
+          "role": "Duelist",
+          "biography": "Test player for system validation",
+          "main_hero": "Spider-Man",
+          "country": "US",
+          "rating": 2500,
+          "age": 25,
+          "region": "NA",
+          "status": "active",
+          "updated_at": "2025-08-13T07:36:09.000000Z",
+          "created_at": "2025-08-13T07:36:09.000000Z",
+          "id": 779,
+          "team": null
+        }
+      }
+    },
+    {
+      "name": "Update Player Fields",
+      "success": false,
+      "message": "0/4 field categories updated successfully",
+      "details": {
+        "playerId": 526,
+        "updateResults": [
+          {
+            "category": "Basic Info",
+            "success": false,
+            "statusCode": 500,
+            "fields": [
+              "username",
+              "real_name",
+              "age"
+            ],
+            "response": {
+              "success": false,
+              "message": "Error updating player: This cache store does not support tagging.",
+              "error_code": "GENERAL_ERROR"
+            }
+          },
+          {
+            "category": "Game Info",
+            "success": false,
+            "statusCode": 500,
+            "fields": [
+              "role",
+              "main_hero",
+              "rating"
+            ],
+            "response": {
+              "success": false,
+              "message": "Error updating player: This cache store does not support tagging.",
+              "error_code": "GENERAL_ERROR"
+            }
+          },
+          {
+            "category": "Location Info",
+            "success": false,
+            "statusCode": 500,
+            "fields": [
+              "country",
+              "region"
+            ],
+            "response": {
+              "success": false,
+              "message": "Database error occurred while updating player",
+              "error_code": "DATABASE_ERROR"
+            }
+          },
+          {
+            "category": "Team Info",
+            "success": false,
+            "statusCode": 500,
+            "fields": [
+              "team_id"
+            ],
+            "response": {
+              "success": false,
+              "message": "Error updating player: This cache store does not support tagging.",
+              "error_code": "GENERAL_ERROR"
+            }
+          }
+        ],
+        "updatableFields": []
+      }
+    },
+    {
+      "name": "Player-Team Relationships",
+      "success": false,
+      "message": "Team assignment: FAILED, Free agent: FAILED",
+      "details": {
+        "assignResult": {
+          "statusCode": 500,
+          "success": false
+        },
+        "removeResult": {
+          "statusCode": 500,
+          "success": false
+        },
+        "testPlayer": 526,
+        "testTeam": 33
+      }
+    },
+    {
+      "name": "Bulk Operations",
+      "success": false,
+      "message": "Bulk delete: FAILED",
+      "details": {
+        "statusCode": 500,
+        "testedPlayerIds": [
+          648,
+          455
+        ],
+        "response": {
+          "success": false,
+          "message": "Error deleting players: This cache store does not support tagging."
+        }
+      }
+    },
+    {
+      "name": "Field Validation",
+      "success": false,
+      "message": "3/4 validation tests correct",
+      "details": [
+        {
+          "name": "Invalid Role",
+          "expectedToFail": true,
+          "actuallyFailed": true,
+          "correct": true,
+          "statusCode": 500
+        },
+        {
+          "name": "Invalid Age",
+          "expectedToFail": true,
+          "actuallyFailed": true,
+          "correct": true,
+          "statusCode": 500
+        },
+        {
+          "name": "Invalid Rating",
+          "expectedToFail": true,
+          "actuallyFailed": true,
+          "correct": true,
+          "statusCode": 500
+        },
+        {
+          "name": "Valid Data",
+          "expectedToFail": false,
+          "actuallyFailed": true,
+          "correct": false,
+          "statusCode": 500
+        }
+      ]
+    },
+    {
+      "name": "Admin UI Availability",
+      "success": true,
+      "message": "1/1 admin UI components exist",
+      "details": [
+        {
+          "name": "AdminPlayers Component",
+          "exists": true,
+          "path": "/var/www/mrvl-frontend/frontend/src/components/admin/AdminPlayers.js"
+        }
+      ]
+    }
+  ],
+  "errors": [
+    "Update Player Fields: 0/4 field categories updated successfully",
+    "Player-Team Relationships: Team assignment: FAILED, Free agent: FAILED",
+    "Bulk Operations: Bulk delete: FAILED",
+    "Field Validation: 3/4 validation tests correct"
+  ],
+  "recommendations": [
+    "Review failed test cases and fix identified issues",
+    "Review field validation rules",
+    "Consider adding automated tests to CI/CD pipeline",
+    "Monitor player management performance under load"
+  ]
+}

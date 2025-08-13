@@ -2500,4 +2500,5 @@ class ForumController extends ApiResponseController
     {
         return $this->storePost($request, $threadId);
     }
+
 }

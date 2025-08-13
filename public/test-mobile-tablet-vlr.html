@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>MRVL Rivals - Mobile/Tablet VLR.gg Test</title>
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="/static/css/main.css">
+    <style>
+        /* Import all mobile and tablet styles */
+        @import url('../src/styles/mobile-vlr-enhanced.css');
+        @import url('../src/styles/tablet-vlr-enhanced.css');
+        @import url('../src/styles/mobile.css');
+        @import url('../src/styles/tablet.css');
+        
+        /* Test container styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f9fafb;
+            color: #111827;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        
+        /* Device Frame Simulator */
+        .device-frame {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #000;
+            border-radius: 36px;
+            padding: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .device-screen {
+            background: white;
+            border-radius: 24px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        /* iPhone 14 Pro */
+        .device-frame.iphone-14-pro {
+            width: 393px;
+            height: 852px;
+        }
+        
+        .device-frame.iphone-14-pro .device-screen {
+            width: 369px;
+            height: 828px;
+        }
+        
+        /* iPad Air */
+        .device-frame.ipad-air {
+            width: 834px;
+            height: 1194px;
+        }
+        
+        .device-frame.ipad-air .device-screen {
+            width: 810px;
+            height: 1170px;
+        }
+        
+        /* iPad Pro 12.9" */
+        .device-frame.ipad-pro {
+            width: 1024px;
+            height: 1366px;
+        }
+        
+        .device-frame.ipad-pro .device-screen {
+            width: 1000px;
+            height: 1342px;
+        }
+        
+        /* Device Selector */
+        .device-selector {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .device-selector h3 {
+            margin-bottom: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .device-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .device-btn {
+            padding: 10px 16px;
+            background: #f3f4f6;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: left;
+        }
+        
+        .device-btn:hover {
+            background: #e5e7eb;
+        }
+        
+        .device-btn.active {
+            background: #dc2626;
+            color: white;
+            border-color: #dc2626;
+        }
+        
+        .orientation-toggle {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #e5e7eb;
+        }
+        
+        .orientation-btn {
+            width: 100%;
+            padding: 8px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .orientation-btn:hover {
+            background: #2563eb;
+        }
+        
+        /* Hide device frame on actual mobile */
+        @media (max-width: 768px) {
+            .device-frame {
+                position: static;
+                transform: none;
+                background: none;
+                border-radius: 0;
+                padding: 0;
+                box-shadow: none;
+                width: 100% !important;
+                height: 100vh !important;
+            }
+            
+            .device-screen {
+                border-radius: 0;
+                width: 100% !important;
+                height: 100vh !important;
+            }
+            
+            .device-selector {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Device Selector (Desktop Only) -->
+    <div class="device-selector">
+        <h3>Device Simulator</h3>
+        <div class="device-buttons">
+            <button class="device-btn active" onclick="switchDevice('iphone-14-pro')">
+                iPhone 14 Pro (393×852)
+            </button>
+            <button class="device-btn" onclick="switchDevice('ipad-air')">
+                iPad Air (834×1194)
+            </button>
+            <button class="device-btn" onclick="switchDevice('ipad-pro')">
+                iPad Pro 12.9" (1024×1366)
+            </button>
+        </div>
+        <div class="orientation-toggle">
+            <button class="orientation-btn" onclick="toggleOrientation()">
+                Rotate Device
+            </button>
+        </div>
+    </div>
+
+    <!-- Device Frame -->
+    <div class="device-frame iphone-14-pro" id="deviceFrame">
+        <div class="device-screen" id="deviceScreen">
+            <!-- Mobile/Tablet Content -->
+            <div id="app">
+                <!-- VLR.gg Style Mobile Header -->
+                <header class="mobile-header-vlr">
+                    <div class="mobile-header-content">
+                        <div class="mobile-header-left">
+                            <button class="mobile-menu-toggle touch-optimized">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                                </svg>
+                            </button>
+                            <div class="mobile-logo">
+                                <span class="logo-text">MRVL</span>
+                                <span class="logo-badge">RIVALS</span>
+                            </div>
+                        </div>
+                        <div class="mobile-header-right">
+                            <button class="mobile-search-toggle touch-optimized">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <path d="m21 21-4.35-4.35"></path>
+                                </svg>
+                            </button>
+                            <button class="mobile-notification-toggle touch-optimized">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path>
+                                    <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path>
+                                </svg>
+                                <span class="notification-badge">3</span>
+                            </button>
+                        </div>
+                    </div>
+                </header>
+
+                <!-- Main Content Area -->
+                <main class="mobile-content" style="padding-top: 60px; padding-bottom: 80px;">
+                    <!-- Live Match Section -->
+                    <section style="padding: 16px;">
+                        <h2 style="font-size: 18px; font-weight: 700; margin-bottom: 16px; color: #111827;">
+                            Live Matches
+                        </h2>
+                        
+                        <!-- Match Card 1 - Live -->
+                        <div class="mobile-match-card-vlr live">
+                            <div class="match-header-mobile">
+                                <div class="match-event-mobile">Marvel Rivals Championship</div>
+                                <div class="match-status-badge live animated">
+                                    <span class="live-dot-indicator"></span>
+                                    <span>LIVE</span>
+                                </div>
+                            </div>
+                            <div class="match-teams-section">
+                                <div class="team-row-mobile">
+                                    <div class="team-info-mobile">
+                                        <div class="team-logo-placeholder" style="background: #ef4444;">TL</div>
+                                        <div class="team-details">
+                                            <span class="team-name-mobile">Team Liquid</span>
+                                            <span class="team-region">NA</span>
+                                        </div>
+                                    </div>
+                                    <div class="team-score-container">
+                                        <span class="map-score">(13)</span>
+                                        <span class="team-score-mobile winner">2</span>
+                                    </div>
+                                </div>
+                                <div class="vs-separator"><span>VS</span></div>
+                                <div class="team-row-mobile">
+                                    <div class="team-info-mobile">
+                                        <div class="team-logo-placeholder" style="background: #3b82f6;">NRG</div>
+                                        <div class="team-details">
+                                            <span class="team-name-mobile">NRG Esports</span>
+                                            <span class="team-region">NA</span>
+                                        </div>
+                                    </div>
+                                    <div class="team-score-container">
+                                        <span class="map-score">(11)</span>
+                                        <span class="team-score-mobile">1</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="live-map-indicator">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                                </svg>
+                                <span>Map 3: Hellfire Gala - OT</span>
+                            </div>
+                            <div class="match-footer-mobile">
+                                <span class="match-round">Upper Final</span>
+                                <span class="view-details">
+                                    View Details
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="9 18 15 12 9 6"></polyline>
+                                    </svg>
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Match Card 2 - Upcoming -->
+                        <div class="mobile-match-card-vlr upcoming" style="margin-top: 12px;">
+                            <div class="match-header-mobile">
+                                <div class="match-event-mobile">NA Qualifiers</div>
+                                <div class="match-status-badge upcoming">IN 2H</div>
+                            </div>
+                            <div class="match-teams-section">
+                                <div class="team-row-mobile">
+                                    <div class="team-info-mobile">
+                                        <div class="team-logo-placeholder" style="background: #10b981;">TSM</div>
+                                        <div class="team-details">
+                                            <span class="team-name-mobile">TSM</span>
+                                            <span class="team-region">NA</span>
+                                        </div>
+                                    </div>
+                                    <div class="team-score-container">
+                                        <span class="team-score-mobile">-</span>
+                                    </div>
+                                </div>
+                                <div class="vs-separator"><span>VS</span></div>
+                                <div class="team-row-mobile">
+                                    <div class="team-info-mobile">
+                                        <div class="team-logo-placeholder" style="background: #f59e0b;">C9</div>
+                                        <div class="team-details">
+                                            <span class="team-name-mobile">Cloud9</span>
+                                            <span class="team-region">NA</span>
+                                        </div>
+                                    </div>
+                                    <div class="team-score-container">
+                                        <span class="team-score-mobile">-</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="match-details-mobile">
+                                <div class="match-detail-item">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <polyline points="12 6 12 12 16 14"></polyline>
+                                    </svg>
+                                    <span>18:00</span>
+                                </div>
+                                <div class="match-detail-item">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                                    </svg>
+                                    <span>BO3</span>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Rankings Section -->
+                    <section style="padding: 16px;">
+                        <h2 style="font-size: 18px; font-weight: 700; margin-bottom: 16px; color: #111827;">
+                            Global Rankings
+                        </h2>
+                        
+                        <div class="mobile-rankings-container">
+                            <div class="mobile-ranking-card">
+                                <span class="ranking-position top-3">1</span>
+                                <div class="ranking-team-info">
+                                    <div class="team-logo-placeholder" style="background: #ef4444; width: 36px; height: 36px; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">TL</div>
+                                    <div class="ranking-team-details">
+                                        <div class="ranking-team-name">Team Liquid</div>
+                                        <div class="ranking-team-region">NA</div>
+                                    </div>
+                                </div>
+                                <div style="display: flex; flex-direction: column; align-items: flex-end;">
+                                    <span class="ranking-points">2450</span>
+                                    <span class="ranking-change up">↑ 2</span>
+                                </div>
+                            </div>
+                            
+                            <div class="mobile-ranking-card">
+                                <span class="ranking-position top-3">2</span>
+                                <div class="ranking-team-info">
+                                    <div class="team-logo-placeholder" style="background: #3b82f6; width: 36px; height: 36px; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">NRG</div>
+                                    <div class="ranking-team-details">
+                                        <div class="ranking-team-name">NRG Esports</div>
+                                        <div class="ranking-team-region">NA</div>
+                                    </div>
+                                </div>
+                                <div style="display: flex; flex-direction: column; align-items: flex-end;">
+                                    <span class="ranking-points">2380</span>
+                                    <span class="ranking-change up">↑ 1</span>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </main>
+
+                <!-- Bottom Navigation -->
+                <nav class="mobile-bottom-nav-vlr">
+                    <button class="bottom-nav-item active touch-optimized">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                        </svg>
+                        <span>Home</span>
+                    </button>
+                    <button class="bottom-nav-item touch-optimized">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
+                            <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
+                            <path d="M4 22h16"></path>
+                            <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path>
+                            <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path>
+                            <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path>
+                        </svg>
+                        <span>Matches</span>
+                        <span class="live-indicator-dot"></span>
+                    </button>
+                    <button class="bottom-nav-item touch-optimized">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect>
+                            <line x1="16" x2="16" y1="2" y2="6"></line>
+                            <line x1="8" x2="8" y1="2" y2="6"></line>
+                            <line x1="3" x2="21" y1="10" y2="10"></line>
+                        </svg>
+                        <span>Events</span>
+                    </button>
+                    <button class="bottom-nav-item touch-optimized">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" x2="18" y1="20" y2="10"></line>
+                            <line x1="12" x2="12" y1="20" y2="4"></line>
+                            <line x1="6" x2="6" y1="20" y2="14"></line>
+                        </svg>
+                        <span>Rankings</span>
+                    </button>
+                    <button class="bottom-nav-item touch-optimized">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                        </svg>
+                        <span>Forums</span>
+                    </button>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript for Device Switching -->
+    <script>
+        let isLandscape = false;
+        
+        function switchDevice(device) {
+            const frame = document.getElementById('deviceFrame');
+            const buttons = document.querySelectorAll('.device-btn');
+            
+            // Remove all device classes
+            frame.classList.remove('iphone-14-pro', 'ipad-air', 'ipad-pro');
+            
+            // Add selected device class
+            frame.classList.add(device);
+            
+            // Update active button
+            buttons.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Reset orientation for new device
+            if (isLandscape) {
+                toggleOrientation();
+            }
+        }
+        
+        function toggleOrientation() {
+            const frame = document.getElementById('deviceFrame');
+            const screen = document.getElementById('deviceScreen');
+            
+            if (!isLandscape) {
+                // Switch to landscape
+                const width = frame.offsetWidth;
+                const height = frame.offsetHeight;
+                frame.style.width = height + 'px';
+                frame.style.height = width + 'px';
+                
+                const screenWidth = screen.offsetWidth;
+                const screenHeight = screen.offsetHeight;
+                screen.style.width = screenHeight + 'px';
+                screen.style.height = screenWidth + 'px';
+                
+                isLandscape = true;
+            } else {
+                // Switch to portrait
+                const width = frame.offsetWidth;
+                const height = frame.offsetHeight;
+                frame.style.width = height + 'px';
+                frame.style.height = width + 'px';
+                
+                const screenWidth = screen.offsetWidth;
+                const screenHeight = screen.offsetHeight;
+                screen.style.width = screenHeight + 'px';
+                screen.style.height = screenWidth + 'px';
+                
+                isLandscape = false;
+            }
+        }
+        
+        // Add touch interaction feedback
+        document.querySelectorAll('.touch-optimized').forEach(element => {
+            element.addEventListener('touchstart', function() {
+                this.style.transform = 'scale(0.95)';
+            });
+            
+            element.addEventListener('touchend', function() {
+                this.style.transform = 'scale(1)';
+            });
+        });
+        
+        // Simulate live match updates
+        setInterval(() => {
+            const liveDots = document.querySelectorAll('.live-dot-indicator');
+            liveDots.forEach(dot => {
+                dot.style.opacity = dot.style.opacity === '0' ? '1' : '0';
+            });
+        }, 1000);
+    </script>
+</body>
+</html>
