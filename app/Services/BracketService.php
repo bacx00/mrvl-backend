@@ -240,7 +240,10 @@ class BracketService
 
         if ($tournament instanceof Tournament) {
             $data['tournament_id'] = $tournament->id;
+            $data['event_id'] = null;
         } else {
+            // For events, use the default tournament ID (8) to satisfy the NOT NULL constraint
+            $data['tournament_id'] = 8; // Default tournament for event brackets
             $data['event_id'] = $tournament->id;
         }
 
@@ -304,7 +307,7 @@ class BracketService
                 'team2_id' => $seeds[$seed2] ?? null,
                 'team1_source' => "Seed #{$seed1}",
                 'team2_source' => "Seed #{$seed2}",
-                'status' => 'ready',
+                'status' => 'pending',
                 'best_of' => $options['best_of']
             ]);
 
@@ -484,7 +487,7 @@ class BracketService
                     'team2_id' => $team2->team_id,
                     'team1_source' => "Swiss Pairing ({$team1->wins}-{$team1->losses})",
                     'team2_source' => "Swiss Pairing ({$team2->wins}-{$team2->losses})",
-                    'status' => 'ready',
+                    'status' => 'pending',
                     'best_of' => '3'
                 ]);
 
@@ -666,7 +669,7 @@ class BracketService
                     'team2_id' => $shuffledTeams[$i + 1]->id,
                     'team1_source' => "Swiss Round {$round}",
                     'team2_source' => "Swiss Round {$round}",
-                    'status' => 'ready',
+                    'status' => 'pending',
                     'best_of' => $options['best_of']
                 ]);
 
@@ -697,7 +700,7 @@ class BracketService
                     'team2_id' => $teamsArray[$j]->id,
                     'team1_source' => 'Round Robin',
                     'team2_source' => 'Round Robin',
-                    'status' => 'ready',
+                    'status' => 'pending',
                     'best_of' => $options['best_of']
                 ]);
 
@@ -720,7 +723,7 @@ class BracketService
                     'team2_id' => $match->team1_id,
                     'team1_source' => 'Round Robin Return',
                     'team2_source' => 'Round Robin Return',
-                    'status' => 'ready',
+                    'status' => 'pending',
                     'best_of' => $options['best_of']
                 ]);
             });
