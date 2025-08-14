@@ -286,11 +286,17 @@ Route::get('/teams/{team}/matches/upcoming', [TeamController::class, 'getUpcomin
 Route::get('/teams/{team}/matches/live', [TeamController::class, 'getLiveMatches']);
 Route::get('/teams/{team}/matches/recent', [TeamController::class, 'getRecentResults']);
 Route::get('/teams/{team}/matches/stats', [TeamController::class, 'getMatchStats']);
+Route::get('/teams/{team}/coach', [TeamController::class, 'getCoach']);
+Route::put('/teams/{team}/coach', [TeamController::class, 'updateCoach']);
+Route::post('/teams/{team}/coach/image', [TeamController::class, 'uploadCoachImage']);
 Route::get('/teams/logos/test', [TeamController::class, 'testTeamLogos']);
 Route::get('/teams/logos/all', [TeamController::class, 'getAllTeamLogos']);
 Route::get('/players', [PlayerController::class, 'index']);
+Route::get('/players/free-agents', [PlayerController::class, 'getFreeAgents']);
 Route::get('/players/{player}', [PlayerController::class, 'show']);
 Route::get('/players/{player}/mentions', [PlayerController::class, 'getMentions']);
+Route::get('/players/{player}/transfer-history', [PlayerController::class, 'getTransferHistory']);
+Route::post('/players/{player}/transfer', [PlayerController::class, 'recordTransfer']);
 Route::get('/players/{player}/match-history', [PlayerController::class, 'getMatchHistory']);
 Route::get('/players/{player}/hero-stats', [PlayerController::class, 'getHeroStats']);
 Route::get('/players/{player}/performance-stats', [PlayerController::class, 'getPerformanceStats']);
@@ -1129,6 +1135,7 @@ Route::post('/teams/{teamId}/coach/upload', [TeamController::class, 'uploadCoach
         
         // Bracket Generation and Management
         Route::post('/{id}/generate-bracket', [AdminEventsController::class, 'generateBracket']);
+        Route::get('/{id}/bracket', [AdminEventsController::class, 'getEventBracket']);
         
         // Event Statistics and Analytics
         Route::get('/{id}/statistics', [AdminEventsController::class, 'getEventStatistics']);

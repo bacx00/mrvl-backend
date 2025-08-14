@@ -1,88 +1,33 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160">
   <defs>
-    <!-- Marvel Rivals Dark Background -->
-    <radialGradient id="darkBg" cx="50%" cy="50%" r="60%">
-      <stop offset="0%" style="stop-color:#1a1a2e;stop-opacity:1" />
-      <stop offset="70%" style="stop-color:#16213e;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#0f0f23;stop-opacity:1" />
-    </radialGradient>
-    
-    <!-- Marvel Red Gradient -->
-    <linearGradient id="marvelRed" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#dc2626;stop-opacity:1" />
-      <stop offset="50%" style="stop-color:#b91c1c;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#991b1b;stop-opacity:1" />
-    </linearGradient>
-    
-    <!-- Blue Accent -->
-    <linearGradient id="rivalBlue" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#2563eb;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#1d4ed8;stop-opacity:1" />
-    </linearGradient>
-    
-    <!-- Gold Accent -->
-    <linearGradient id="marvelGold" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#fbbf24;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#f59e0b;stop-opacity:1" />
-    </linearGradient>
+    <style>
+      .cls-1 {
+        fill: #101826;
+        stroke: #1b1464;
+        stroke-miterlimit: 10;
+        stroke-width: .25px;
+      }
+
+      .cls-2 {
+        fill: #f77272;
+      }
+
+      .cls-3 {
+        fill: #f76772;
+      }
+    </style>
   </defs>
-  
-  <!-- Dark Background -->
-  <circle cx="32" cy="32" r="30" fill="url(#darkBg)" stroke="url(#marvelRed)" stroke-width="2"/>
-  
-  <!-- VS Match Icon -->
-  <g transform="translate(32,32)">
-    <!-- Left Team Shield -->
-    <path d="M-18,-8 L-12,-12 L-8,-8 L-8,8 L-12,12 L-18,8 Z" 
-          fill="url(#marvelRed)" stroke="#ffffff" stroke-width="0.5" opacity="0.9"/>
-    
-    <!-- Right Team Shield -->
-    <path d="M18,-8 L12,-12 L8,-8 L8,8 L12,12 L18,8 Z" 
-          fill="url(#rivalBlue)" stroke="#ffffff" stroke-width="0.5" opacity="0.9"/>
-    
-    <!-- VS Lightning Bolt -->
-    <path d="M-3,-6 L1,-6 L-1,0 L3,0 L-1,6 L-3,6 L-1,2 L-5,2 Z" 
-          fill="url(#marvelGold)" stroke="#ffffff" stroke-width="0.3"/>
-    
-    <!-- Team Icons -->
-    <!-- Left Team Symbol (Fist) -->
-    <circle cx="-13" cy="0" r="3" fill="#ffffff" opacity="0.9"/>
-    <path d="M-15,-1 L-14,-2 L-12,-2 L-11,-1 L-11,1 L-15,1 Z" fill="url(#marvelRed)"/>
-    
-    <!-- Right Team Symbol (Star) -->
-    <circle cx="13" cy="0" r="3" fill="#ffffff" opacity="0.9"/>
-    <path d="M13,-2 L13.8,-0.6 L15.4,-0.6 L14.3,0.4 L14.6,2 L13,1.2 L11.4,2 L11.7,0.4 L10.6,-0.6 L12.2,-0.6 Z" 
-          fill="url(#rivalBlue)"/>
+  <rect class="cls-1" x="-.5" y="-.5" width="160" height="160"/>
+  <g id="Generative_Object" data-name="Generative Object">
+    <g>
+      <path class="cls-2" d="M102.48,33.19c-.28.02-.84-.2-1.06-.15-.77.17-3.09,5.38-3.62,6.38-4.48,8.36-9.15,18.57-12.42,27.77-.28.79-2.13,6.05-2.07,6.38.04.22.07.29.26.43.34.01.69-.03,1.03.03,2.6.52,9.73.03,12.66-.19,2.6-.19,5.18-.79,7.78-1-.51,1.09-1.41,1.97-2.14,2.92-.04.05-.07.09-.11.14-1.99-1.85-2.72.72-3.97,2.15-11.85,13.57-23.64,28.26-34.32,42.25-.41,1.44-3.68,4.87-.68,4.5l.11-.14-.11.14c-2.19,2.75-4.38,5.49-6.57,8.24-.11-1.64-1.18-2.8-.17-4.38l19.6-44.82-20.07-.35c9.5-11.75,19.04-23.47,28.58-35.19.8-.99,1.61-1.94,2.41-2.93,6.67-8.2,13.14-16.67,20.03-24.68l.24.14c-1.68,4.16-3.62,8.25-5.42,12.36Z"/>
+      <path class="cls-3" d="M102.92,75.76s-.07.09-.11.14c-12.72,16.42-25.92,32.53-38.87,48.77l-.11.14c-3,.37.27-3.07.68-4.5,10.68-13.99,22.47-28.68,34.32-42.25,1.25-1.43,1.98-4,3.97-2.15.04-.05.07-.09.11-.14Z"/>
+      <path class="cls-3" d="M102.48,33.19c-5.95,13.62-11.97,27.21-17.87,40.84-.34-.07-.69-.02-1.03-.03-.19-.14-.22-.21-.26-.43-.06-.33,1.79-5.59,2.07-6.38,3.26-9.2,7.94-19.41,12.42-27.77.54-1,2.85-6.21,3.62-6.38.21-.05.77.17,1.06.15Z"/>
+    </g>
+    <g>
+      <path class="cls-2" d="M52.77,133.9l23.02-49.79,1.73,2.75-23.58-.39c-1.6.03-2.51-2.03-1.44-3.2,2.65-3.08,36.47-42.47,38.06-44.29.13,1.28.42,4.07.51,5.01,1.38-.81-35.49,41.39-35.63,41.79,0,0-1.44-3.2-1.44-3.2l23.58.39c1.37,0,2.33,1.53,1.73,2.75-.83,1.65-25,54.35-25.1,54.11-.66.12-3.84-.06-4-.34.37-2.32,2.04-3.7,2.56-5.6h0Z"/>
+      <path class="cls-2" d="M50.27,138.73c13.96-17.57,36.31-45.52,50.04-62.8.85-1.17,2.39-2.75,2.99-3.9,0,0,1.92,2.75,1.92,2.75-1.58.13-3.23.42-4.97.67-3.4.48-7.03.62-10.47.73-1.91.01-3.55.09-5.55-.25-1.04-.19-1.73-1.18-1.54-2.22,3.89-9.26,14-32,17.86-40.94,1.62-3.67,4.13-9.45,5.74-13.08,0,0,.07-.16.07-.16.03-.08-.02.07-.02.07-.04.17-.06.33-.06.5-.12-.05.29,1.45.95,1.61,0,0,2.22-.17,2.22-.17-2.56,3.02-7.63,9.18-10.1,12.28-4.2,5.14-8.16,10.55-12.64,15.49-.49.5-1.12,1.61-1.95,1.17.06-.05-.04-3.75,0-4.67,3.87-4.73,7.72-9.61,11.56-14.41,1.67-2.06,6.1-7.55,7.77-9.51.35-.39,1.63-1.94,1.99-2.35.5-.68,1.36-1.69,2.45-1.35,0,0,.67.18.67.18.66.17,1.08,1.69.96,1.64,0,.36-.09.68-.21.99-.36.82-1.02,2.31-1.39,3.16-6.05,13.78-16.04,36.64-22.17,50.63,0,0-1.4-2.67-1.4-2.67.6.11,1.42.16,2.22.18,3.28.07,6.75-.18,10.05-.41,2.56-.21,4.94-.76,7.63-.99,1.07-.09,2.01.7,2.09,1.76.03,1.43-1.37,2.76-1.99,3.6-.46.62-1.16,1.4-1.63,2.03-6.04,7.64-17.23,21.58-23.37,29.33,0,0-26.71,33.51-26.71,33.51-1.57,1.9-4.61-.3-3.03-2.42h0Z"/>
+    </g>
   </g>
-  
-  <!-- Battle Sparks Effects -->
-  <g opacity="0.8">
-    <!-- Top sparks -->
-    <circle cx="22" cy="15" r="0.8" fill="#fbbf24">
-      <animate attributeName="opacity" values="0.8;0.2;0.8" dur="1.5s" repeatCount="indefinite"/>
-    </circle>
-    <circle cx="42" cy="15" r="0.6" fill="#dc2626">
-      <animate attributeName="opacity" values="0.6;0.1;0.6" dur="2s" repeatCount="indefinite"/>
-    </circle>
-    
-    <!-- Bottom sparks -->
-    <circle cx="22" cy="49" r="0.7" fill="#2563eb">
-      <animate attributeName="opacity" values="0.7;0.2;0.7" dur="1.8s" repeatCount="indefinite"/>
-    </circle>
-    <circle cx="42" cy="49" r="0.9" fill="#fbbf24">
-      <animate attributeName="opacity" values="0.9;0.3;0.9" dur="1.3s" repeatCount="indefinite"/>
-    </circle>
-  </g>
-  
-  <!-- Side energy lines -->
-  <line x1="12" y1="32" x2="18" y2="32" stroke="url(#marvelRed)" stroke-width="1" opacity="0.6">
-    <animate attributeName="opacity" values="0.6;0.1;0.6" dur="2.5s" repeatCount="indefinite"/>
-  </line>
-  <line x1="46" y1="32" x2="52" y2="32" stroke="url(#rivalBlue)" stroke-width="1" opacity="0.6">
-    <animate attributeName="opacity" values="0.6;0.1;0.6" dur="2.2s" repeatCount="indefinite"/>
-  </line>
-  
-  <!-- MRVL Text at bottom -->
-  <text x="32" y="55" font-family="Arial, sans-serif" font-size="6" font-weight="bold" 
-        text-anchor="middle" fill="url(#marvelGold)" letter-spacing="0.5px">MRVL</text>
 </svg>

@@ -715,6 +715,198 @@ class PlayerController extends Controller
         }
     }
 
+    /**
+     * Get player transfer history
+     */
+    public function getTransferHistory($playerId)
+    {
+        try {
+            $player = Player::findOrFail($playerId);
+            
+            $transfers = $player->teamHistory()
+                ->with(['fromTeam', 'toTeam', 'announcedBy'])
+                ->orderBy('change_date', 'desc')
+                ->get()
+                ->map(function($transfer) {
+                    return [
+                        'id' => $transfer->id,
+                        'from_team' => $transfer->fromTeam ? [
+                            'id' => $transfer->fromTeam->id,
+                            'name' => $transfer->fromTeam->name,
+                            'logo' => ImageHelper::getTeamLogo($transfer->fromTeam->logo, $transfer->fromTeam->name)['url']
+                        ] : null,
+                        'to_team' => $transfer->toTeam ? [
+                            'id' => $transfer->toTeam->id,
+                            'name' => $transfer->toTeam->name,
+                            'logo' => ImageHelper::getTeamLogo($transfer->toTeam->logo, $transfer->toTeam->name)['url']
+                        ] : null,
+                        'change_date' => $transfer->change_date->format('Y-m-d'),
+                        'change_type' => $transfer->change_type,
+                        'description' => $transfer->change_description,
+                        'reason' => $transfer->reason,
+                        'transfer_fee' => $transfer->formatted_transfer_fee,
+                        'is_official' => $transfer->is_official,
+                        'source_url' => $transfer->source_url
+                    ];
+                });
+            
+            return response()->json([
+                'success' => true,
+                'data' => $transfers
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching transfer history: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+    
+    /**
+     * Record a player transfer
+     */
+    public function recordTransfer(Request $request, $playerId)
+    {
+        try {
+            $validated = $request->validate([
+                'to_team_id' => 'nullable|exists:teams,id',
+                'change_type' => 'required|in:joined,left,transferred,released,retired,loan_start,loan_end',
+                'reason' => 'nullable|string|max:500',
+                'notes' => 'nullable|string|max:1000',
+                'transfer_fee' => 'nullable|numeric|min:0',
+                'currency' => 'nullable|string|max:3',
+                'source_url' => 'nullable|url',
+                'is_official' => 'boolean'
+            ]);
+            
+            $player = Player::findOrFail($playerId);
+            
+            // Create transfer record
+            $transfer = \App\Models\PlayerTeamHistory::create([
+                'player_id' => $player->id,
+                'from_team_id' => $player->team_id,
+                'to_team_id' => $validated['to_team_id'] ?? null,
+                'change_date' => now(),
+                'change_type' => $validated['change_type'],
+                'reason' => $validated['reason'] ?? null,
+                'notes' => $validated['notes'] ?? null,
+                'transfer_fee' => $validated['transfer_fee'] ?? null,
+                'currency' => $validated['currency'] ?? 'USD',
+                'is_official' => $validated['is_official'] ?? true,
+                'source_url' => $validated['source_url'] ?? null,
+                'announced_by' => auth()->id()
+            ]);
+            
+            // Update player's current team
+            $player->update([
+                'team_id' => $validated['to_team_id'] ?? null,
+                'status' => $validated['change_type'] === 'retired' ? 'retired' : 'active'
+            ]);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Transfer recorded successfully',
+                'data' => $transfer
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error recording transfer: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+    
+    /**
+     * Get free agents
+     */
+    public function getFreeAgents(Request $request)
+    {
+        try {
+            $query = Player::whereNull('team_id')
+                ->where('status', '!=', 'retired');
+            
+            // Filter by role if specified
+            if ($request->role && $request->role !== 'all') {
+                $query->where('role', $request->role);
+            }
+            
+            // Filter by region if specified
+            if ($request->region && $request->region !== 'all') {
+                $query->where('region', $request->region);
+            }
+            
+            // Search
+            if ($request->search) {
+                $query->where(function($q) use ($request) {
+                    $q->where('username', 'LIKE', "%{$request->search}%")
+                      ->orWhere('real_name', 'LIKE', "%{$request->search}%");
+                });
+            }
+            
+            // Sort by rating by default
+            $sortBy = $request->sort_by ?? 'rating';
+            $sortOrder = $request->sort_order ?? 'desc';
+            $query->orderBy($sortBy, $sortOrder);
+            
+            $freeAgents = $query->paginate($request->per_page ?? 20);
+            
+            $formatted = $freeAgents->map(function($player) {
+                $avatarInfo = ImageHelper::getPlayerAvatar($player->avatar, $player->username);
+                
+                // Get last team from history
+                $lastTeam = null;
+                $lastTransfer = $player->teamHistory()->with('fromTeam')->latest('change_date')->first();
+                if ($lastTransfer && $lastTransfer->fromTeam) {
+                    $teamLogoInfo = ImageHelper::getTeamLogo($lastTransfer->fromTeam->logo, $lastTransfer->fromTeam->name);
+                    $lastTeam = [
+                        'id' => $lastTransfer->fromTeam->id,
+                        'name' => $lastTransfer->fromTeam->name,
+                        'logo' => $teamLogoInfo['url'],
+                        'left_date' => $lastTransfer->change_date->format('Y-m-d')
+                    ];
+                }
+                
+                return [
+                    'id' => $player->id,
+                    'username' => $player->username,
+                    'real_name' => $player->real_name,
+                    'avatar' => $avatarInfo['url'],
+                    'role' => $player->role,
+                    'main_hero' => $player->main_hero,
+                    'rating' => $player->rating ?? 1000,
+                    'elo_rating' => $player->elo_rating ?? 1000,
+                    'country' => $player->country,
+                    'flag' => $this->getCountryFlag($player->country),
+                    'age' => $player->age,
+                    'earnings' => $player->total_earnings ?? 0,
+                    'last_team' => $lastTeam,
+                    'social_media' => json_decode($player->social_media, true) ?? [],
+                    'status' => 'free_agent',
+                    'available_since' => $lastTransfer ? $lastTransfer->change_date->diffForHumans() : 'Unknown'
+                ];
+            });
+            
+            return response()->json([
+                'success' => true,
+                'data' => $formatted,
+                'pagination' => [
+                    'total' => $freeAgents->total(),
+                    'current_page' => $freeAgents->currentPage(),
+                    'per_page' => $freeAgents->perPage(),
+                    'last_page' => $freeAgents->lastPage()
+                ]
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching free agents: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+    
     // VLR.gg-style comprehensive helper methods for player profiles
     
     private function getPlayerTeamHistory($playerId)

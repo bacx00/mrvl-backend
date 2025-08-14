@@ -6,125 +6,17 @@
     {
       "src": "favicon.svg",
       "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "type": "image/svg+xml"
     },
     {
       "src": "favicon.ico",
       "sizes": "32x32 16x16",
       "type": "image/x-icon"
-    },
-    {
-      "src": "apple-touch-icon.png",
-      "sizes": "180x180",
-      "type": "image/png",
-      "purpose": "apple touch icon"
-    },
-    {
-      "src": "favicon.svg",
-      "sizes": "192x192",
-      "type": "image/svg+xml",
-      "purpose": "any"
-    },
-    {
-      "src": "favicon.svg",
-      "sizes": "512x512",
-      "type": "image/svg+xml",
-      "purpose": "any"
     }
   ],
-  "start_url": "/?source=pwa",
+  "start_url": "/",
   "display": "standalone",
-  "display_override": ["standalone", "minimal-ui"],
   "theme_color": "#dc2626",
   "background_color": "#0f0f23",
-  "orientation": "portrait-primary",
-  "categories": ["games", "sports", "entertainment", "productivity"],
-  "lang": "en-US",
-  "scope": "/",
-  "id": "mrvl-esports-platform",
-  "prefer_related_applications": false,
-  "edge_side_panel": {
-    "preferred_width": 400
-  },
-  "launch_handler": {
-    "client_mode": "navigate-existing"
-  },
-  "protocol_handlers": [
-    {
-      "protocol": "web+mrvl",
-      "url": "/match?id=%s"
-    }
-  ],
-  "shortcuts": [
-    {
-      "name": "Live Matches",
-      "short_name": "Live",
-      "description": "View live tournament matches",
-      "url": "/matches?filter=live",
-      "icons": [
-        {
-          "src": "favicon.svg",
-          "sizes": "192x192",
-          "type": "image/svg+xml"
-        }
-      ]
-    },
-    {
-      "name": "Tournament Brackets",
-      "short_name": "Brackets",
-      "description": "Browse tournament brackets",
-      "url": "/events",
-      "icons": [
-        {
-          "src": "favicon.svg",
-          "sizes": "192x192",
-          "type": "image/svg+xml"
-        }
-      ]
-    },
-    {
-      "name": "Team Rankings",
-      "short_name": "Rankings",
-      "description": "Check team rankings and stats",
-      "url": "/rankings",
-      "icons": [
-        {
-          "src": "favicon.svg",
-          "sizes": "192x192",
-          "type": "image/svg+xml"
-        }
-      ]
-    },
-    {
-      "name": "News & Updates",
-      "short_name": "News",
-      "description": "Latest esports news and updates",
-      "url": "/news",
-      "icons": [
-        {
-          "src": "favicon.svg",
-          "sizes": "192x192",
-          "type": "image/svg+xml"
-        }
-      ]
-    }
-  ],
-  "screenshots": [
-    {
-      "src": "/images/screenshot-mobile.png",
-      "sizes": "640x1136",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "MRVL Mobile Experience"
-    },
-    {
-      "src": "/images/screenshot-tablet.png", 
-      "sizes": "1024x768",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "MRVL Tablet Experience"
-    }
-  ],
-  "handle_links": "preferred"
+  "orientation": "any"
 }

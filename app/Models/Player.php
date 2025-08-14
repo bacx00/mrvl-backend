@@ -24,7 +24,7 @@ class Player extends Model
         'total_eliminations', 'total_deaths', 'total_assists', 'overall_kda',
         'average_damage_per_match', 'average_healing_per_match', 'average_damage_blocked_per_match',
         'hero_statistics', 'most_played_hero', 'best_winrate_hero', 'longest_win_streak',
-        'current_win_streak', 'achievements', 'mention_count', 'last_mentioned_at'
+        'current_win_streak', 'mention_count', 'last_mentioned_at'
     ];
 
     protected $casts = [
@@ -52,7 +52,6 @@ class Player extends Model
         'avg_first_deaths_per_round' => 'decimal:2',
         'hero_pool' => 'array',
         'career_stats' => 'array',
-        'achievements' => 'array',
         'mention_count' => 'integer',
         'last_mentioned_at' => 'datetime'
     ];

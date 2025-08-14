@@ -708,7 +708,9 @@ class NewsController extends ApiResponseController
             $voteType = $request->vote_type;
 
             // Check for existing vote with proper constraint handling
+            // Include news_id in the check to handle the unique constraint properly
             $existingVote = DB::table('news_votes')
+                ->where('news_id', $comment->news_id)
                 ->where('comment_id', $commentId)
                 ->where('user_id', $userId)
                 ->first();
@@ -749,6 +751,18 @@ class NewsController extends ApiResponseController
                         ]);
                     }
                 } else {
+                    // First, check if there's a conflicting vote on the article itself
+                    $articleVote = DB::table('news_votes')
+                        ->where('news_id', $comment->news_id)
+                        ->where('user_id', $userId)
+                        ->whereNull('comment_id')
+                        ->first();
+                        
+                    // If there's a vote on the article, remove it first to avoid constraint conflict
+                    if ($articleVote) {
+                        DB::table('news_votes')->where('id', $articleVote->id)->delete();
+                    }
+                    
                     // Create new vote
                     $inserted = DB::table('news_votes')->insert([
                         'news_id' => $comment->news_id,
@@ -770,7 +784,12 @@ class NewsController extends ApiResponseController
                         'success' => true,
                         'message' => 'Vote recorded',
                         'action' => 'created',
-                        'vote_type' => $voteType
+                        'vote_type' => $voteType,
+                        'updated_stats' => [
+                            'upvotes' => 0,
+                            'downvotes' => 0,
+                            'score' => 0
+                        ]
                     ]);
                 }
             } catch (\Exception $innerException) {

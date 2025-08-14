@@ -1553,10 +1553,10 @@ class MatchController extends Controller
             'id' => $match->id,
             
             // CRITICAL FIX: Live scores at root level for MatchDetailPage
-            'team1_score' => $match->team1_score ?? 0,
-            'team2_score' => $match->team2_score ?? 0,
-            'series_score_team1' => $match->team1_score ?? 0,
-            'series_score_team2' => $match->team2_score ?? 0,
+            'team1_score' => $match->series_score_team1 ?? 0,
+            'team2_score' => $match->series_score_team2 ?? 0,
+            'series_score_team1' => $match->series_score_team1 ?? 0,
+            'series_score_team2' => $match->series_score_team2 ?? 0,
             
             'team1' => [
                 'id' => $match->team1_id,
@@ -1593,8 +1593,8 @@ class MatchController extends Controller
                 'viewers' => $match->viewers ?? 0
             ],
             'score' => [
-                'team1' => $match->team1_score ?? 0,
-                'team2' => $match->team2_score ?? 0,
+                'team1' => $match->series_score_team1 ?? 0,
+                'team2' => $match->series_score_team2 ?? 0,
                 'maps' => $mapsData
             ],
             'broadcast' => [
@@ -1710,8 +1710,8 @@ class MatchController extends Controller
         
         $matchData['scores'] = [
             'series' => [
-                'team1' => $match->team1_score ?? 0,
-                'team2' => $match->team2_score ?? 0
+                'team1' => $match->series_score_team1 ?? 0,
+                'team2' => $match->series_score_team2 ?? 0
             ],
             'maps' => $mapsData
         ];
@@ -2700,7 +2700,26 @@ class MatchController extends Controller
             'map_number' => 'required|integer|min:1',
             'team1_score' => 'required|integer|min:0',
             'team2_score' => 'required|integer|min:0',
-            'winner_id' => 'nullable|exists:teams,id'
+            'winner_id' => 'nullable|exists:teams,id',
+            // Optional: Allow updating player compositions and stats
+            'team1_composition' => 'nullable|array',
+            'team2_composition' => 'nullable|array',
+            'team1_composition.*.player_id' => 'nullable|exists:players,id',
+            'team1_composition.*.hero' => 'nullable|string',
+            'team1_composition.*.eliminations' => 'nullable|integer|min:0',
+            'team1_composition.*.deaths' => 'nullable|integer|min:0',
+            'team1_composition.*.assists' => 'nullable|integer|min:0',
+            'team1_composition.*.damage' => 'nullable|integer|min:0',
+            'team1_composition.*.healing' => 'nullable|integer|min:0',
+            'team1_composition.*.damage_blocked' => 'nullable|integer|min:0',
+            'team2_composition.*.player_id' => 'nullable|exists:players,id',
+            'team2_composition.*.hero' => 'nullable|string',
+            'team2_composition.*.eliminations' => 'nullable|integer|min:0',
+            'team2_composition.*.deaths' => 'nullable|integer|min:0',
+            'team2_composition.*.assists' => 'nullable|integer|min:0',
+            'team2_composition.*.damage' => 'nullable|integer|min:0',
+            'team2_composition.*.healing' => 'nullable|integer|min:0',
+            'team2_composition.*.damage_blocked' => 'nullable|integer|min:0'
         ]);
 
         try {
@@ -2721,25 +2740,113 @@ class MatchController extends Controller
             $mapsData[$mapIndex]['team2_score'] = $request->team2_score;
             $mapsData[$mapIndex]['status'] = 'live';
 
+            // Update player compositions if provided
+            if ($request->has('team1_composition')) {
+                // Get player details for team1 composition
+                $team1Players = [];
+                foreach ($request->team1_composition as $playerData) {
+                    $player = DB::table('players')->where('id', $playerData['player_id'])->first();
+                    if ($player) {
+                        $team1Players[] = [
+                            'id' => $player->id,
+                            'player_id' => $player->id,
+                            'name' => $player->username ?? $player->real_name,
+                            'username' => $player->username,
+                            'real_name' => $player->real_name,
+                            'hero' => $playerData['hero'] ?? $player->main_hero ?? 'Captain America',
+                            'role' => $player->role ?? 'Duelist',
+                            'country' => $player->country ?? 'US',
+                            'nationality' => $player->country ?? 'US',
+                            'avatar' => $player->avatar,
+                            // Include live stats
+                            'eliminations' => $playerData['eliminations'] ?? 0,
+                            'deaths' => $playerData['deaths'] ?? 0,
+                            'assists' => $playerData['assists'] ?? 0,
+                            'damage' => $playerData['damage'] ?? 0,
+                            'healing' => $playerData['healing'] ?? 0,
+                            'damage_blocked' => $playerData['damage_blocked'] ?? 0
+                        ];
+                    }
+                }
+                $mapsData[$mapIndex]['team1_composition'] = $team1Players;
+                $mapsData[$mapIndex]['team1_players'] = $team1Players; // Duplicate for compatibility
+            }
+
+            if ($request->has('team2_composition')) {
+                // Get player details for team2 composition
+                $team2Players = [];
+                foreach ($request->team2_composition as $playerData) {
+                    $player = DB::table('players')->where('id', $playerData['player_id'])->first();
+                    if ($player) {
+                        $team2Players[] = [
+                            'id' => $player->id,
+                            'player_id' => $player->id,
+                            'name' => $player->username ?? $player->real_name,
+                            'username' => $player->username,
+                            'real_name' => $player->real_name,
+                            'hero' => $playerData['hero'] ?? $player->main_hero ?? 'Captain America',
+                            'role' => $player->role ?? 'Duelist',
+                            'country' => $player->country ?? 'US',
+                            'nationality' => $player->country ?? 'US',
+                            'avatar' => $player->avatar,
+                            // Include live stats
+                            'eliminations' => $playerData['eliminations'] ?? 0,
+                            'deaths' => $playerData['deaths'] ?? 0,
+                            'assists' => $playerData['assists'] ?? 0,
+                            'damage' => $playerData['damage'] ?? 0,
+                            'healing' => $playerData['healing'] ?? 0,
+                            'damage_blocked' => $playerData['damage_blocked'] ?? 0
+                        ];
+                    }
+                }
+                $mapsData[$mapIndex]['team2_composition'] = $team2Players;
+                $mapsData[$mapIndex]['team2_players'] = $team2Players; // Duplicate for compatibility
+            }
+
             if ($request->winner_id) {
+                // Check if this map was already completed to avoid double-counting
+                $wasAlreadyCompleted = ($mapsData[$mapIndex]['status'] ?? '') === 'completed' && 
+                                     isset($mapsData[$mapIndex]['winner_id']);
+                
                 $mapsData[$mapIndex]['winner_id'] = $request->winner_id;
                 $mapsData[$mapIndex]['status'] = 'completed';
                 $mapsData[$mapIndex]['completed_at'] = now();
 
-                // Update series score
-                $seriesScore1 = $match->series_score_team1;
-                $seriesScore2 = $match->series_score_team2;
-                
-                if ($request->winner_id == $match->team1_id) {
-                    $seriesScore1++;
-                } else {
-                    $seriesScore2++;
-                }
+                // Only update series score if this map wasn't already completed
+                if (!$wasAlreadyCompleted) {
+                    $seriesScore1 = $match->series_score_team1;
+                    $seriesScore2 = $match->series_score_team2;
+                    
+                    // Get team IDs - check both team1_id field and team1 object
+                    $team1Id = $match->team1_id ?? $match->team1;
+                    $team2Id = $match->team2_id ?? $match->team2;
+                    
+                    if ($request->winner_id == $team1Id) {
+                        $seriesScore1++;
+                    } elseif ($request->winner_id == $team2Id) {
+                        $seriesScore2++;
+                    }
 
-                DB::table('matches')->where('id', $matchId)->update([
-                    'series_score_team1' => $seriesScore1,
-                    'series_score_team2' => $seriesScore2
-                ]);
+                    DB::table('matches')->where('id', $matchId)->update([
+                        'series_score_team1' => $seriesScore1,
+                        'series_score_team2' => $seriesScore2
+                    ]);
+                    
+                    \Log::info("Series score updated for match {$matchId}", [
+                        'map_number' => $request->map_number,
+                        'winner_id' => $request->winner_id,
+                        'new_series_score' => "{$seriesScore1}-{$seriesScore2}"
+                    ]);
+                } else {
+                    // Map was already completed, use existing series scores
+                    $seriesScore1 = $match->series_score_team1;
+                    $seriesScore2 = $match->series_score_team2;
+                    
+                    \Log::info("Map already completed, series score unchanged for match {$matchId}", [
+                        'map_number' => $request->map_number,
+                        'existing_series_score' => "{$seriesScore1}-{$seriesScore2}"
+                    ]);
+                }
             }
 
             DB::table('matches')->where('id', $matchId)->update([
@@ -2759,7 +2866,8 @@ class MatchController extends Controller
                     'series_score' => [
                         'team1' => $seriesScore1 ?? $match->series_score_team1,
                         'team2' => $seriesScore2 ?? $match->series_score_team2
-                    ]
+                    ],
+                    'maps' => $mapsData // Return full maps data for frontend update
                 ]
             ]);
 
@@ -2769,6 +2877,53 @@ class MatchController extends Controller
                 'message' => 'Error updating live score: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Recalculate series scores based on completed maps
+     */
+    private function recalculateSeriesScores($matchId)
+    {
+        $match = DB::table('matches')->where('id', $matchId)->first();
+        if (!$match) {
+            return false;
+        }
+
+        $mapsData = json_decode($match->maps_data, true) ?? [];
+        
+        // Get team IDs - check both team1_id field and team1 object
+        $team1Id = $match->team1_id ?? $match->team1;
+        $team2Id = $match->team2_id ?? $match->team2;
+        
+        $seriesScore1 = 0;
+        $seriesScore2 = 0;
+        
+        // Count wins from completed maps
+        foreach ($mapsData as $map) {
+            if (($map['status'] ?? '') === 'completed' && isset($map['winner_id'])) {
+                if ($map['winner_id'] == $team1Id) {
+                    $seriesScore1++;
+                } elseif ($map['winner_id'] == $team2Id) {
+                    $seriesScore2++;
+                }
+            }
+        }
+        
+        // Update the match with correct series scores
+        DB::table('matches')->where('id', $matchId)->update([
+            'series_score_team1' => $seriesScore1,
+            'series_score_team2' => $seriesScore2,
+            'updated_at' => now()
+        ]);
+        
+        \Log::info("Series scores recalculated for match {$matchId}", [
+            'team1_id' => $team1Id,
+            'team2_id' => $team2Id,
+            'series_score' => "{$seriesScore1}-{$seriesScore2}",
+            'completed_maps' => count(array_filter($mapsData, fn($m) => ($m['status'] ?? '') === 'completed'))
+        ]);
+        
+        return ['team1' => $seriesScore1, 'team2' => $seriesScore2];
     }
 
     public function updateLiveTimer(Request $request, $matchId)
@@ -3784,11 +3939,17 @@ class MatchController extends Controller
             $validated = $request->validate([
                 'team1_score' => 'sometimes|integer|min:0',
                 'team2_score' => 'sometimes|integer|min:0',
+                'series_score_team1' => 'sometimes|integer|min:0',
+                'series_score_team2' => 'sometimes|integer|min:0',
                 'current_map' => 'sometimes|integer|min:1',
                 'status' => 'sometimes|string|in:upcoming,live,completed,cancelled,postponed',
                 'timer' => 'sometimes|string',
                 'viewers' => 'sometimes|integer|min:0',
-                'map_scores' => 'sometimes|array'
+                'maps' => 'sometimes|array',
+                'map_scores' => 'sometimes|array',
+                'team1_players' => 'sometimes|array',
+                'team2_players' => 'sometimes|array',
+                'total_maps' => 'sometimes|integer|min:1|max:7'
             ]);
 
             // Update match fields
@@ -3798,6 +3959,13 @@ class MatchController extends Controller
             }
             if (isset($validated['team2_score'])) {
                 $updateData['team2_score'] = $validated['team2_score'];
+            }
+            // Support series scores for BO3/BO5 matches
+            if (isset($validated['series_score_team1'])) {
+                $updateData['series_score_team1'] = $validated['series_score_team1'];
+            }
+            if (isset($validated['series_score_team2'])) {
+                $updateData['series_score_team2'] = $validated['series_score_team2'];
             }
             if (isset($validated['current_map'])) {
                 $updateData['current_map_number'] = $validated['current_map'];
@@ -3812,8 +3980,23 @@ class MatchController extends Controller
                 $updateData['viewers'] = $validated['viewers'];
             }
 
-            // Handle map scores update
-            if (isset($validated['map_scores'])) {
+            // Handle new unified maps structure
+            if (isset($validated['maps'])) {
+                $mapsData = [];
+                foreach ($validated['maps'] as $mapNumber => $mapData) {
+                    $mapsData[] = [
+                        'map_number' => $mapNumber,
+                        'team1_score' => $mapData['team1Score'] ?? 0,
+                        'team2_score' => $mapData['team2Score'] ?? 0,
+                        'status' => $mapData['status'] ?? 'pending',
+                        'winner' => $mapData['winner'] ?? null,
+                        'map_name' => $mapData['map_name'] ?? null
+                    ];
+                }
+                $updateData['maps_data'] = json_encode($mapsData);
+            }
+            // Handle legacy map_scores update
+            elseif (isset($validated['map_scores'])) {
                 $mapsData = json_decode($match->maps_data, true) ?? [];
                 foreach ($validated['map_scores'] as $mapUpdate) {
                     if (isset($mapUpdate['map_number'])) {
@@ -3835,6 +4018,17 @@ class MatchController extends Controller
                     }
                 }
                 $updateData['maps_data'] = json_encode($mapsData);
+            }
+            
+            // Handle player stats updates
+            if (isset($validated['team1_players'])) {
+                $updateData['team1_players'] = json_encode($validated['team1_players']);
+            }
+            if (isset($validated['team2_players'])) {
+                $updateData['team2_players'] = json_encode($validated['team2_players']);
+            }
+            if (isset($validated['total_maps'])) {
+                $updateData['total_maps'] = $validated['total_maps'];
             }
 
             $updateData['updated_at'] = now();
@@ -3865,8 +4059,8 @@ class MatchController extends Controller
                 'team2_short' => $updatedMatch->team2_short,
                 'status' => $updatedMatch->status,
                 'current_map' => $updatedMatch->current_map_number,
-                'timer' => $updatedMatch->live_timer,
-                'viewers' => $updatedMatch->viewers,
+                'timer' => $updatedMatch->live_timer ?? null,
+                'viewers' => $updatedMatch->viewers ?? 0,
                 'maps_data' => json_decode($updatedMatch->maps_data, true),
                 'timestamp' => now()->toISOString()
             ];

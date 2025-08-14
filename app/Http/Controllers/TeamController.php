@@ -2859,6 +2859,117 @@ class TeamController extends Controller
     }
 
     /**
+     * Update coach information for a team
+     */
+    public function updateCoach(Request $request, $teamId)
+    {
+        try {
+            $team = DB::table('teams')->where('id', $teamId)->first();
+            
+            if (!$team) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Team not found'
+                ], 404);
+            }
+
+            $validated = $request->validate([
+                'coach_name' => 'nullable|string|max:255',
+                'coach_nationality' => 'nullable|string|max:100',
+                'coach_social_media' => 'nullable|array',
+                'coach_social_media.twitter' => 'nullable|string',
+                'coach_social_media.instagram' => 'nullable|string',
+                'coach_social_media.linkedin' => 'nullable|string'
+            ]);
+
+            $updateData = [];
+            
+            if (isset($validated['coach_name'])) {
+                $updateData['coach_name'] = $validated['coach_name'];
+                $updateData['coach'] = $validated['coach_name']; // Update legacy field
+            }
+            
+            if (isset($validated['coach_nationality'])) {
+                $updateData['coach_nationality'] = $validated['coach_nationality'];
+            }
+            
+            if (isset($validated['coach_social_media'])) {
+                $updateData['coach_social_media'] = json_encode($validated['coach_social_media']);
+            }
+            
+            $updateData['updated_at'] = now();
+            
+            DB::table('teams')->where('id', $teamId)->update($updateData);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Coach information updated successfully',
+                'data' => [
+                    'coach_name' => $validated['coach_name'] ?? $team->coach_name,
+                    'coach_nationality' => $validated['coach_nationality'] ?? $team->coach_nationality,
+                    'coach_social_media' => isset($validated['coach_social_media']) ? 
+                        $validated['coach_social_media'] : 
+                        json_decode($team->coach_social_media, true)
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating coach information: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+    
+    /**
+     * Get coach information for a team
+     */
+    public function getCoach($teamId)
+    {
+        try {
+            $team = DB::table('teams')
+                ->where('id', $teamId)
+                ->select(['id', 'name', 'coach', 'coach_name', 'coach_nationality', 
+                         'coach_image', 'coach_picture', 'coach_social_media'])
+                ->first();
+            
+            if (!$team) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Team not found'
+                ], 404);
+            }
+
+            $coachImage = $team->coach_image ?? $team->coach_picture;
+            $coachImageInfo = null;
+            
+            if ($coachImage) {
+                $coachImageInfo = ImageHelper::getCoachImage($coachImage, $team->coach_name);
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'team_id' => $team->id,
+                    'team_name' => $team->name,
+                    'coach_name' => $team->coach_name ?? $team->coach,
+                    'coach_nationality' => $team->coach_nationality,
+                    'coach_image' => $coachImageInfo ? $coachImageInfo['url'] : null,
+                    'coach_image_exists' => $coachImageInfo ? $coachImageInfo['exists'] : false,
+                    'coach_social_media' => $team->coach_social_media ? 
+                        json_decode($team->coach_social_media, true) : []
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching coach information: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Upload coach image for a team
      */
     public function uploadCoachImage(Request $request, $teamId)

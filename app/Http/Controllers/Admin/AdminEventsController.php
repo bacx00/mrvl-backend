@@ -9,7 +9,7 @@ use App\Models\Team;
 use App\Models\User;
 use App\Models\BracketMatch;
 use App\Models\TournamentRegistration;
-use App\Services\BracketGenerationService;
+use App\Services\BracketService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
@@ -22,7 +22,7 @@ class AdminEventsController extends Controller
 {
     protected $bracketService;
 
-    public function __construct(BracketGenerationService $bracketService = null)
+    public function __construct(BracketService $bracketService)
     {
         $this->bracketService = $bracketService;
     }
@@ -604,7 +604,7 @@ class AdminEventsController extends Controller
                 'seed' => $seed,
                 'status' => $status,
                 'registered_at' => now(),
-                'registration_data' => $request->registration_data ?? []
+                'registration_data' => json_encode($request->registration_data ?? [])
             ]);
 
             DB::commit();
@@ -783,12 +783,48 @@ class AdminEventsController extends Controller
                 ], 503);
             }
 
-            $bracketData = $this->bracketService->generateBracket(
-                $event->teams->pluck('id')->toArray(),
-                $request->format,
-                $request->seeding_method ?? 'rating',
-                $request->shuffle_seeds ?? false
-            );
+            // Generate bracket based on format
+            $options = [
+                'best_of' => '3',
+                'seeding_method' => $request->seeding_method ?? 'seed',
+                'third_place_match' => false,
+                'bracket_reset' => true
+            ];
+
+            switch ($request->format) {
+                case 'single_elimination':
+                    $result = $this->bracketService->generateSingleEliminationBracket(
+                        $event, 
+                        $event->teams, 
+                        $options
+                    );
+                    break;
+                case 'double_elimination':
+                    $result = $this->bracketService->generateDoubleEliminationBracket(
+                        $event,
+                        $event->teams,
+                        $options
+                    );
+                    break;
+                case 'swiss':
+                    $result = $this->bracketService->generateSwissBracket(
+                        $event,
+                        $event->teams,
+                        $options
+                    );
+                    break;
+                case 'round_robin':
+                    $result = $this->bracketService->generateRoundRobinBracket(
+                        $event,
+                        $event->teams,
+                        $options
+                    );
+                    break;
+                default:
+                    throw new \Exception("Unsupported bracket format: {$request->format}");
+            }
+
+            $bracketData = $result;
 
             $event->update([
                 'format' => $request->format,
@@ -797,8 +833,8 @@ class AdminEventsController extends Controller
                 'current_round' => 1
             ]);
 
-            // Create matches based on bracket
-            $this->createMatchesFromBracket($event, $bracketData);
+            // Matches are already created by the BracketService
+            // $this->createMatchesFromBracket($event, $bracketData);
 
             DB::commit();
 
@@ -1099,6 +1135,42 @@ class AdminEventsController extends Controller
         // Handle event cancellation logic
         // Cancel all ongoing matches
         $event->matches()->where('status', 'scheduled')->update(['status' => 'cancelled']);
+    }
+
+    /**
+     * Get bracket data for event visualization
+     */
+    public function getEventBracket($id): JsonResponse
+    {
+        try {
+            $event = Event::with(['bracketStages.matches.team1', 'bracketStages.matches.team2'])
+                         ->findOrFail($id);
+
+            // Get bracket matches
+            $bracketMatches = BracketMatch::where('event_id', $id)
+                ->with(['team1', 'team2', 'bracketStage'])
+                ->orderBy('round_number')
+                ->orderBy('match_number')
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'event' => $event->only(['id', 'name', 'format', 'status']),
+                    'bracket_data' => $event->bracket_data,
+                    'matches' => $bracketMatches,
+                    'stages' => $event->bracketStages
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error fetching event bracket: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch event bracket',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     private function createMatchesFromBracket(Event $event, array $bracketData): void

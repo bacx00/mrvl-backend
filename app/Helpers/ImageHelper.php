@@ -867,6 +867,103 @@ class ImageHelper
     }
 
     /**
+     * Get a coach image with fallback support
+     * 
+     * @param string $imagePath The image path from database
+     * @param string $coachName The coach name for fallback
+     * @return array Array with url, exists, and fallback info
+     */
+    public static function getCoachImage($imagePath, $coachName = null)
+    {
+        if (!$imagePath) {
+            return [
+                'url' => '/images/coach-placeholder.svg',
+                'exists' => false,
+                'fallback' => [
+                    'text' => $coachName ? substr($coachName, 0, 2) : 'C',
+                    'color' => self::generateColorFromText($coachName ?? 'coach'),
+                    'type' => 'coach-image'
+                ]
+            ];
+        }
+
+        // Clean up image path
+        $imagePath = ltrim($imagePath, '/');
+        $baseName = pathinfo($imagePath, PATHINFO_FILENAME);
+        $extension = pathinfo($imagePath, PATHINFO_EXTENSION);
+        $extensions = $extension ? [$extension] : ['jpg', 'jpeg', 'png', 'webp', 'svg'];
+        
+        // Priority order for coach image paths
+        $possiblePaths = [];
+        
+        // 1. First priority: /storage/teams/coaches/ (Laravel storage symlink)
+        foreach ($extensions as $ext) {
+            $filename = $extension ? $imagePath : "{$baseName}.{$ext}";
+            $possiblePaths[] = "/storage/teams/coaches/{$filename}";
+        }
+        
+        // 2. Second priority: public/teams/coaches (direct upload path)
+        foreach ($extensions as $ext) {
+            $filename = $extension ? $imagePath : "{$baseName}.{$ext}";
+            $possiblePaths[] = "/teams/coaches/{$filename}";
+        }
+        
+        // 3. Third priority: /storage/ with original path
+        $possiblePaths[] = "/storage/{$imagePath}";
+        
+        // 4. Last resort: direct path
+        $possiblePaths[] = "/{$imagePath}";
+
+        // Check each path and return the first one that exists
+        foreach ($possiblePaths as $path) {
+            $publicPath = public_path($path);
+            
+            // For storage paths, also check the actual storage directory
+            if (strpos($path, '/storage/') === 0) {
+                $storagePath = str_replace('/storage/', '', $path);
+                $actualStoragePath = storage_path("app/public/{$storagePath}");
+                
+                if (file_exists($actualStoragePath) && is_file($actualStoragePath)) {
+                    return [
+                        'url' => $path,
+                        'exists' => true,
+                        'fallback' => [
+                            'text' => $coachName ? substr($coachName, 0, 2) : 'C',
+                            'color' => self::generateColorFromText($coachName ?? 'coach'),
+                            'type' => 'coach-image'
+                        ]
+                    ];
+                }
+            }
+            
+            // Check public path for direct access
+            if (file_exists($publicPath) && is_file($publicPath)) {
+                return [
+                    'url' => $path,
+                    'exists' => true,
+                    'fallback' => [
+                        'text' => $coachName ? substr($coachName, 0, 2) : 'C',
+                        'color' => self::generateColorFromText($coachName ?? 'coach'),
+                        'type' => 'coach-image'
+                    ]
+                ];
+            }
+        }
+
+        // Return placeholder if no image found
+        return [
+            'url' => '/images/coach-placeholder.svg',
+            'exists' => false,
+            'fallback' => [
+                'text' => $coachName ? substr($coachName, 0, 2) : 'C',
+                'color' => self::generateColorFromText($coachName ?? 'coach'),
+                'type' => 'coach-image',
+                'original_path' => $imagePath
+            ]
+        ];
+    }
+
+    /**
      * Debug team logo paths - returns detailed information about path resolution
      * 
      * @param string $logoPath
