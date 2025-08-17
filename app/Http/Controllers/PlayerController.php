@@ -1719,12 +1719,14 @@ class PlayerController extends Controller
                     'message' => 'Player not found'
                 ], 404);
             }
+            
+            \Log::info('getMatchHistory for player ' . $playerId . ', team_id: ' . ($player->team_id ?? 'NULL'));
 
             // Base query to get match player stats
             $query = DB::table('match_player_stats as mps')
                 ->join('matches as m', 'mps.match_id', '=', 'm.id')
-                ->join('teams as t1', 'm.team1_id', '=', 't1.id')
-                ->join('teams as t2', 'm.team2_id', '=', 't2.id')
+                ->leftJoin('teams as t1', 'm.team1_id', '=', 't1.id')
+                ->leftJoin('teams as t2', 'm.team2_id', '=', 't2.id')
                 ->leftJoin('events as e', 'm.event_id', '=', 'e.id')
                 ->where('mps.player_id', $playerId)
                 ->where('m.status', 'completed')
@@ -1776,7 +1778,14 @@ class PlayerController extends Controller
 
             // Paginate results
             $perPage = $request->get('per_page', 20);
+            
+            // Debug: Get the raw query
+            \Log::info('Query SQL: ' . $query->toSql());
+            \Log::info('Query Bindings: ' . json_encode($query->getBindings()));
+            
             $matchHistory = $query->paginate($perPage);
+            
+            \Log::info('Match history count: ' . $matchHistory->count());
 
             // Format the match history data
             $formattedMatches = $matchHistory->getCollection()->map(function($match) use ($player) {
@@ -3441,6 +3450,220 @@ class PlayerController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error deleting players: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get detailed match history with map-specific hero stats
+     */
+    public function getDetailedMatchHistory($playerId, Request $request)
+    {
+        try {
+            \Log::info('getDetailedMatchHistory called for player: ' . $playerId);
+            
+            $player = DB::table('players')->where('id', $playerId)->first();
+            if (!$player) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Player not found'
+                ], 404);
+            }
+
+            $perPage = $request->input('per_page', 10);
+            $page = $request->input('page', 1);
+
+            // Get matches where player participated
+            $matchesQuery = DB::table('matches as m')
+                ->leftJoin('teams as t1', 'm.team1_id', '=', 't1.id')
+                ->leftJoin('teams as t2', 'm.team2_id', '=', 't2.id')
+                ->leftJoin('events as e', 'm.event_id', '=', 'e.id')
+                ->where(function($q) use ($playerId, $player) {
+                    // Check if player's current team is in the match
+                    if ($player->team_id) {
+                        $q->where('m.team1_id', $player->team_id)
+                          ->orWhere('m.team2_id', $player->team_id);
+                    }
+                })
+                ->whereIn('m.status', ['completed', 'live'])
+                ->select([
+                    'm.id',
+                    'm.team1_id',
+                    'm.team2_id',
+                    'm.team1_score',
+                    'm.team2_score',
+                    'm.series_score_team1',
+                    'm.series_score_team2',
+                    'm.scheduled_at',
+                    'm.format',
+                    'm.status',
+                    't1.name as team1_name',
+                    't1.short_name as team1_short',
+                    't1.logo as team1_logo',
+                    't2.name as team2_name',
+                    't2.short_name as team2_short',
+                    't2.logo as team2_logo',
+                    'e.name as event_name',
+                    'e.type as event_type',
+                    'e.logo as event_logo'
+                ])
+                ->orderBy('m.scheduled_at', 'desc')
+                ->limit($perPage)
+                ->offset(($page - 1) * $perPage)
+                ->get();
+            
+            // Get total count for pagination
+            $totalCount = DB::table('matches as m')
+                ->where(function($q) use ($playerId, $player) {
+                    if ($player->team_id) {
+                        $q->where('m.team1_id', $player->team_id)
+                          ->orWhere('m.team2_id', $player->team_id);
+                    }
+                })
+                ->whereIn('m.status', ['completed', 'live'])
+                ->count();
+
+            // Process each match to extract map-specific stats
+            $matches = collect($matchesQuery)->map(function($match) use ($playerId, $player) {
+                // Determine which team the player was on
+                $playerTeam = null;
+                $opponentTeam = null;
+                
+                // Check team rosters
+                $team1Players = DB::table('players')
+                    ->where('team_id', $match->team1_id)
+                    ->pluck('id')
+                    ->toArray();
+                    
+                $isTeam1 = in_array($playerId, $team1Players);
+                
+                if ($isTeam1) {
+                    $playerTeam = [
+                        'id' => $match->team1_id,
+                        'name' => $match->team1_name,
+                        'short_name' => $match->team1_short,
+                        'logo' => $match->team1_logo,
+                        'score' => $match->series_score_team1
+                    ];
+                    $opponentTeam = [
+                        'id' => $match->team2_id,
+                        'name' => $match->team2_name,
+                        'short_name' => $match->team2_short,
+                        'logo' => $match->team2_logo,
+                        'score' => $match->series_score_team2
+                    ];
+                } else {
+                    $playerTeam = [
+                        'id' => $match->team2_id,
+                        'name' => $match->team2_name,
+                        'short_name' => $match->team2_short,
+                        'logo' => $match->team2_logo,
+                        'score' => $match->series_score_team2
+                    ];
+                    $opponentTeam = [
+                        'id' => $match->team1_id,
+                        'name' => $match->team1_name,
+                        'short_name' => $match->team1_short,
+                        'logo' => $match->team1_logo,
+                        'score' => $match->series_score_team1
+                    ];
+                }
+
+                // Get map-specific stats
+                $matchMaps = DB::table('match_maps')
+                    ->where('match_id', $match->id)
+                    ->orderBy('map_number')
+                    ->get();
+
+                $mapStats = [];
+                foreach ($matchMaps as $map) {
+                    $team1Comp = json_decode($map->team1_composition, true) ?? [];
+                    $team2Comp = json_decode($map->team2_composition, true) ?? [];
+                    
+                    $compositions = $isTeam1 ? $team1Comp : $team2Comp;
+                    
+                    // Find player's stats for this map
+                    $playerStats = null;
+                    foreach ($compositions as $comp) {
+                        if (isset($comp['player_id']) && $comp['player_id'] == $playerId) {
+                            $playerStats = $comp;
+                            break;
+                        }
+                    }
+
+                    if ($playerStats) {
+                        // Calculate KDA
+                        $kills = $playerStats['kills'] ?? $playerStats['eliminations'] ?? 0;
+                        $deaths = $playerStats['deaths'] ?? 0;
+                        $assists = $playerStats['assists'] ?? 0;
+                        $kda = $deaths > 0 ? round(($kills + $assists) / $deaths, 2) : $kills + $assists;
+
+                        $mapStats[] = [
+                            'map_number' => $map->map_number,
+                            'map_name' => $map->map_name,
+                            'game_mode' => $map->game_mode,
+                            'team_score' => $isTeam1 ? $map->team1_score : $map->team2_score,
+                            'opponent_score' => $isTeam1 ? $map->team2_score : $map->team1_score,
+                            'won' => ($isTeam1 && $map->team1_score > $map->team2_score) || 
+                                    (!$isTeam1 && $map->team2_score > $map->team1_score),
+                            'hero' => $playerStats['hero'] ?? 'Unknown',
+                            'role' => $playerStats['role'] ?? '-',
+                            'stats' => [
+                                'kills' => $kills,
+                                'deaths' => $deaths,
+                                'assists' => $assists,
+                                'kda' => $kda,
+                                'damage' => $playerStats['damage'] ?? $playerStats['damage_dealt'] ?? '-',
+                                'healing' => $playerStats['healing'] ?? $playerStats['healing_done'] ?? '-',
+                                'blocked' => $playerStats['blocked'] ?? $playerStats['damage_blocked'] ?? '-'
+                            ]
+                        ];
+                    }
+                }
+
+                $won = $playerTeam['score'] > $opponentTeam['score'];
+
+                return [
+                    'match_id' => $match->id,
+                    'date' => $match->scheduled_at,
+                    'format' => $match->format,
+                    'status' => $match->status,
+                    'player_team' => $playerTeam,
+                    'opponent_team' => $opponentTeam,
+                    'result' => $won ? 'W' : 'L',
+                    'score' => $playerTeam['score'] . '-' . $opponentTeam['score'],
+                    'event' => [
+                        'name' => $match->event_name,
+                        'type' => $match->event_type,
+                        'logo' => $match->event_logo
+                    ],
+                    'map_stats' => $mapStats
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'player' => [
+                        'id' => $player->id,
+                        'username' => $player->username,
+                        'real_name' => $player->real_name
+                    ],
+                    'matches' => $matches,
+                    'pagination' => [
+                        'current_page' => (int)$page,
+                        'last_page' => ceil($totalCount / $perPage),
+                        'per_page' => (int)$perPage,
+                        'total' => $totalCount
+                    ]
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('PlayerController@getDetailedMatchHistory error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching match history: ' . $e->getMessage()
             ], 500);
         }
     }

@@ -133,6 +133,7 @@ Route::prefix('public')->group(function () {
     
     // Player Statistics (Legacy - for backward compatibility)
     Route::get('/players/{player}/match-history', [PlayerController::class, 'getMatchHistory']);
+    Route::get('/players/{player}/detailed-match-history', [PlayerController::class, 'getDetailedMatchHistory']);
     Route::get('/players/{player}/hero-stats', [PlayerController::class, 'getHeroStats']);
     Route::get('/players/{player}/performance-stats', [PlayerController::class, 'getPerformanceStats']);
     Route::get('/players/{player}/map-stats', [PlayerController::class, 'getMapStats']);

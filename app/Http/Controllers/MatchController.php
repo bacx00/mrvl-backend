@@ -1111,12 +1111,15 @@ class MatchController extends Controller
             $action = $request->input('action', 'update_all');
             
             if ($action === 'update_scores' || $action === 'update_all') {
+                // Get current match to preserve status if not provided
+                $currentMatch = DB::table('matches')->where('id', $matchId)->first();
+                
                 // Handle score updates with immediate response
                 $data = [
                     'team1_score' => $request->input('team1_score') ?? $request->input('team_scores.team1'),
                     'team2_score' => $request->input('team2_score') ?? $request->input('team_scores.team2'),
                     'current_map' => $request->input('current_map'),
-                    'status' => $request->input('status', 'live'),
+                    'status' => $request->input('status', $currentMatch->status ?? 'live'),  // Preserve existing status
                     'match_timer' => $request->input('timer') ?? $request->input('match_timer', '00:00'),
                     'updated_at' => now()
                 ];
@@ -1251,12 +1254,17 @@ class MatchController extends Controller
 
             // Legacy support for update_all
             if ($action === 'update_all') {
+                // Get current match to preserve status if not provided
+                if (!isset($currentMatch)) {
+                    $currentMatch = DB::table('matches')->where('id', $matchId)->first();
+                }
+                
                 // Update all match data including player stats
                 $data = [
                     'team1_score' => $request->input('team1_score'),
                     'team2_score' => $request->input('team2_score'),
                     'current_map' => $request->input('current_map'),
-                    'status' => $request->input('status', 'live'),
+                    'status' => $request->input('status', $currentMatch->status ?? 'live'),  // Preserve existing status
                     'match_timer' => $request->input('match_timer', '00:00'),
                     'updated_at' => now()
                 ];
