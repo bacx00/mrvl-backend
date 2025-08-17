@@ -334,6 +334,8 @@ Route::get('/matches/head-to-head/{team1Id}/{team2Id}', [MatchController::class,
 Route::get('/live-updates/{matchId}/stream', [LiveUpdateController::class, 'stream']);
 // Live Updates Polling Status (No auth required for public viewing)
 Route::get('/live-updates/status/{matchId}', [LiveUpdateController::class, 'status']);
+// Live Updates POST endpoint (No auth required for live scoring)
+Route::post('/matches/{matchId}/live-update', [LiveUpdateController::class, 'update']);
 
 Route::get('/news', [NewsController::class, 'index']);
 Route::get('/news/categories', [NewsController::class, 'getCategories']);
@@ -916,6 +918,9 @@ Route::middleware(['auth:api', 'role:admin|moderator'])->prefix('admin')->group(
     
     // Admin-only routes (checked internally)
     Route::get('/users', [AdminUserController::class, 'getAllUsers']);
+    
+    // Bracket Match Score Management - Available to admin and moderator
+    Route::put('/bracket-matches/{matchId}/score', [AdminEventsController::class, 'updateBracketMatchScore']);
 });
 
 Route::middleware(['auth:api', 'role:admin'])->prefix('admin')->group(function () {
@@ -1071,6 +1076,7 @@ Route::middleware(['auth:api', 'role:admin'])->prefix('admin')->group(function (
     Route::prefix('teams')->group(function () {
         Route::get('/', [AdminTeamController::class, 'index']);
         Route::post('/', [AdminTeamController::class, 'store']);
+        Route::post('/bulk-delete', [TeamController::class, 'bulkDelete']); // Bulk delete teams
         Route::get('/{teamId}', [AdminTeamController::class, 'show']);
         Route::put('/{teamId}', [AdminTeamController::class, 'update']);
         Route::delete('/{teamId}', [AdminTeamController::class, 'destroy']);
@@ -1169,6 +1175,7 @@ Route::post('/teams/{teamId}/coach/upload', [TeamController::class, 'uploadCoach
         Route::post('/bracket/matches/{matchId}/reset-bracket', [ComprehensiveBracketController::class, 'resetBracket']);
         Route::post('/{eventId}/swiss/generate-round', [ComprehensiveBracketController::class, 'generateSwissRound']);
     });
+    
     
     // Match Management - Full CRUD
     Route::prefix('matches')->group(function () {

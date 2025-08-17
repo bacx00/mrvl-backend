@@ -3018,4 +3018,58 @@ class TeamController extends Controller
         }
     }
 
+    /**
+     * Bulk delete teams
+     */
+    public function bulkDelete(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'team_ids' => 'required|array',
+                'team_ids.*' => 'integer|exists:teams,id'
+            ]);
+
+            $teamIds = $validated['team_ids'];
+            
+            // Get team names for logging
+            $teams = DB::table('teams')
+                ->whereIn('id', $teamIds)
+                ->pluck('name', 'id');
+            
+            // Delete teams (this will cascade to related records if foreign keys are set up)
+            $deletedCount = DB::table('teams')
+                ->whereIn('id', $teamIds)
+                ->delete();
+            
+            Log::info('Bulk deleted teams', [
+                'count' => $deletedCount,
+                'team_ids' => $teamIds,
+                'team_names' => $teams->toArray()
+            ]);
+            
+            return response()->json([
+                'success' => true,
+                'message' => "$deletedCount teams deleted successfully",
+                'deleted_count' => $deletedCount
+            ]);
+            
+        } catch (ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            Log::error('Error in bulk delete teams', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Error deleting teams: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
 }

@@ -775,6 +775,15 @@ class AdminEventsController extends Controller
 
             DB::beginTransaction();
 
+            // Clear existing bracket data for this event
+            \App\Models\BracketPosition::whereHas('bracketMatch', function($q) use ($id) {
+                $q->where('event_id', $id);
+            })->delete();
+            \App\Models\BracketSeeding::where('event_id', $id)->delete();
+            \App\Models\BracketMatch::where('event_id', $id)->delete();
+            \App\Models\BracketStage::where('event_id', $id)->delete();
+            \App\Models\BracketStanding::where('event_id', $id)->delete();
+
             // Generate bracket using the bracket service
             if (!$this->bracketService) {
                 return response()->json([
@@ -860,6 +869,179 @@ class AdminEventsController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to generate bracket',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Update bracket match score
+     */
+    public function updateBracketMatchScore(Request $request, $matchId): JsonResponse
+    {
+        try {
+            $request->validate([
+                'team1_score' => 'required|integer|min:0|max:3',
+                'team2_score' => 'required|integer|min:0|max:3'
+            ]);
+            
+            $match = \App\Models\BracketMatch::findOrFail($matchId);
+            
+            // Update scores
+            $match->team1_score = $request->team1_score;
+            $match->team2_score = $request->team2_score;
+            
+            // Determine winner if match is complete (best of 3)
+            if ($request->team1_score >= 2 || $request->team2_score >= 2) {
+                $match->status = 'completed';
+                $match->winner_id = $request->team1_score > $request->team2_score 
+                    ? $match->team1_id 
+                    : $match->team2_id;
+                $match->loser_id = $request->team1_score > $request->team2_score 
+                    ? $match->team2_id 
+                    : $match->team1_id;
+                
+                // Progress winner to next match if configured
+                if ($match->winner_advances_to) {
+                    $this->progressWinnerToNextMatch($match);
+                }
+                
+                // Progress loser to lower bracket if configured (double elimination)
+                if ($match->loser_advances_to) {
+                    $this->progressLoserToLowerBracket($match);
+                }
+            } else if ($request->team1_score > 0 || $request->team2_score > 0) {
+                $match->status = 'ongoing';
+            }
+            
+            $match->save();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Match score updated successfully',
+                'data' => $match
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Error updating bracket match score: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update match score',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+    
+    private function progressWinnerToNextMatch($match)
+    {
+        // Find the next match and set the winner as a participant
+        $nextMatch = \App\Models\BracketMatch::where('match_id', $match->winner_advances_to)->first();
+        if ($nextMatch) {
+            // Determine which slot (team1 or team2) based on match position
+            if (strpos($match->match_id, '-1') !== false || strpos($match->match_id, '-3') !== false) {
+                $nextMatch->team1_id = $match->winner_id;
+            } else {
+                $nextMatch->team2_id = $match->winner_id;
+            }
+            $nextMatch->save();
+        }
+    }
+    
+    private function progressLoserToLowerBracket($match)
+    {
+        // Find the lower bracket match and set the loser as a participant
+        $lowerMatch = \App\Models\BracketMatch::where('match_id', $match->loser_advances_to)->first();
+        if ($lowerMatch) {
+            // Determine which slot based on match position
+            if (!$lowerMatch->team1_id) {
+                $lowerMatch->team1_id = $match->loser_id;
+            } else {
+                $lowerMatch->team2_id = $match->loser_id;
+            }
+            $lowerMatch->save();
+        }
+    }
+
+    /**
+     * Get bracket data for an event
+     */
+    public function getEventBracket($id): JsonResponse
+    {
+        try {
+            $event = Event::findOrFail($id);
+            
+            // Get bracket stages and matches
+            $bracketStages = \App\Models\BracketStage::where('event_id', $id)
+                ->with(['matches.team1', 'matches.team2', 'matches.winner', 'matches.loser'])
+                ->orderBy('stage_order')
+                ->get();
+            
+            // Format bracket data for frontend
+            $bracketData = [
+                'matches' => [],
+                'upper_bracket' => [],
+                'lower_bracket' => [],
+                'grand_final' => null
+            ];
+            
+            foreach ($bracketStages as $stage) {
+                $stageMatches = $stage->matches->map(function($match) {
+                    return [
+                        'id' => $match->id,
+                        'match_id' => $match->match_id,
+                        'round_name' => $match->round_name,
+                        'round_number' => $match->round_number,
+                        'match_number' => $match->match_number,
+                        'team1_id' => $match->team1_id,
+                        'team2_id' => $match->team2_id,
+                        'team1' => $match->team1,
+                        'team2' => $match->team2,
+                        'team1_score' => $match->team1_score,
+                        'team2_score' => $match->team2_score,
+                        'winner_id' => $match->winner_id,
+                        'loser_id' => $match->loser_id,
+                        'status' => $match->status,
+                        'best_of' => $match->best_of,
+                        'team1_source' => $match->team1_source,
+                        'team2_source' => $match->team2_source,
+                        'winner_advances_to' => $match->winner_advances_to,
+                        'loser_advances_to' => $match->loser_advances_to
+                    ];
+                });
+                
+                // Organize by stage type
+                if ($stage->type === 'upper_bracket') {
+                    $bracketData['upper_bracket'] = $stageMatches->groupBy('round_number');
+                    $bracketData['matches'] = array_merge($bracketData['matches'], $stageMatches->toArray());
+                } elseif ($stage->type === 'lower_bracket') {
+                    $bracketData['lower_bracket'] = $stageMatches->groupBy('round_number');
+                } elseif ($stage->type === 'grand_final') {
+                    $bracketData['grand_final'] = $stageMatches->first();
+                } else {
+                    // Single elimination or other formats
+                    $bracketData['matches'] = array_merge($bracketData['matches'], $stageMatches->toArray());
+                }
+            }
+            
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'event' => [
+                        'id' => $event->id,
+                        'name' => $event->name,
+                        'format' => $event->format,
+                        'status' => $event->status
+                    ],
+                    'bracket_data' => $bracketData,
+                    'stages' => $bracketStages
+                ]
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Error fetching bracket: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch bracket data',
                 'error' => $e->getMessage()
             ], 500);
         }
@@ -1137,41 +1319,6 @@ class AdminEventsController extends Controller
         $event->matches()->where('status', 'scheduled')->update(['status' => 'cancelled']);
     }
 
-    /**
-     * Get bracket data for event visualization
-     */
-    public function getEventBracket($id): JsonResponse
-    {
-        try {
-            $event = Event::with(['bracketStages.matches.team1', 'bracketStages.matches.team2'])
-                         ->findOrFail($id);
-
-            // Get bracket matches
-            $bracketMatches = BracketMatch::where('event_id', $id)
-                ->with(['team1', 'team2', 'bracketStage'])
-                ->orderBy('round_number')
-                ->orderBy('match_number')
-                ->get();
-
-            return response()->json([
-                'success' => true,
-                'data' => [
-                    'event' => $event->only(['id', 'name', 'format', 'status']),
-                    'bracket_data' => $event->bracket_data,
-                    'matches' => $bracketMatches,
-                    'stages' => $event->bracketStages
-                ]
-            ]);
-
-        } catch (\Exception $e) {
-            Log::error('Error fetching event bracket: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to fetch event bracket',
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    }
 
     private function createMatchesFromBracket(Event $event, array $bracketData): void
     {

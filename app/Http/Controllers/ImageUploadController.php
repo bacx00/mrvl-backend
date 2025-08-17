@@ -280,14 +280,22 @@ class ImageUploadController extends Controller
                 'maintain_ratio' => true
             ]);
 
-            $news->update(['featured_image' => $path]);
+            // Clean the path to ensure we're not saving a full URL
+            $cleanPath = $path;
+            if (str_starts_with($cleanPath, 'http://') || str_starts_with($cleanPath, 'https://')) {
+                // Extract just the path if a full URL was somehow returned
+                $parsedUrl = parse_url($cleanPath);
+                $cleanPath = isset($parsedUrl['path']) ? ltrim($parsedUrl['path'], '/storage/') : $path;
+            }
+            
+            $news->update(['featured_image' => $cleanPath]);
 
             return response()->json([
                 'success' => true,
                 'message' => 'Featured image uploaded successfully',
                 'data' => [
-                    'featured_image' => $path,
-                    'featured_image_url' => Storage::disk('public')->url($path)
+                    'featured_image' => $cleanPath,
+                    'featured_image_url' => asset('storage/' . $cleanPath)
                 ]
             ]);
 

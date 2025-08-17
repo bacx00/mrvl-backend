@@ -54,7 +54,7 @@ class AdminMatchesController extends Controller
             // Status filter
             if ($request->filled('status')) {
                 $status = $request->input('status');
-                if (in_array($status, ['upcoming', 'live', 'completed', 'cancelled', 'paused'])) {
+                if (in_array($status, ['upcoming', 'live', 'completed'])) {
                     $query->where('status', $status);
                 }
             }
@@ -125,7 +125,7 @@ class AdminMatchesController extends Controller
                     'to' => $matches->lastItem()
                 ],
                 'filters' => [
-                    'available_statuses' => ['upcoming', 'live', 'completed', 'cancelled', 'paused'],
+                    'available_statuses' => ['upcoming', 'live', 'completed'],
                     'available_formats' => ['BO1', 'BO3', 'BO5', 'BO7', 'BO9'],
                     'total_matches' => MvrlMatch::count(),
                     'live_matches' => MvrlMatch::where('status', 'live')->count()
@@ -340,7 +340,7 @@ class AdminMatchesController extends Controller
             'event_id' => 'sometimes|nullable|exists:events,id',
             'scheduled_at' => 'sometimes|date',
             'format' => 'sometimes|in:BO1,BO3,BO5,BO7,BO9',
-            'status' => 'sometimes|in:upcoming,live,completed,cancelled,paused',
+            'status' => 'sometimes|in:upcoming,live,completed',
             'team1_score' => 'sometimes|integer|min:0',
             'team2_score' => 'sometimes|integer|min:0',
             'winner_id' => 'sometimes|nullable|exists:teams,id',
@@ -411,10 +411,6 @@ class AdminMatchesController extends Controller
                         if (!$match->ended_at) {
                             $updateData['ended_at'] = now();
                         }
-                        break;
-                    case 'cancelled':
-                        $updateData['ended_at'] = now();
-                        $updateData['winner_id'] = null;
                         break;
                 }
             }
@@ -575,7 +571,7 @@ class AdminMatchesController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'status' => 'sometimes|in:upcoming,live,completed,paused',
+            'status' => 'sometimes|in:upcoming,live,completed',
             'current_map' => 'sometimes|integer|min:1',
             'series_score' => 'sometimes|array',
             'series_score.team1' => 'sometimes|integer|min:0',
@@ -758,7 +754,7 @@ class AdminMatchesController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'action' => 'required|in:start,pause,resume,complete,restart,cancel',
+            'action' => 'required|in:start,complete,restart',
             'reason' => 'sometimes|string|max:500'
         ]);
 
@@ -790,31 +786,11 @@ class AdminMatchesController extends Controller
                     ];
                     break;
 
-                case 'pause':
+                case 'complete':
                     if ($match->status !== 'live') {
                         return response()->json([
                             'success' => false,
-                            'message' => 'Only live matches can be paused'
-                        ], 422);
-                    }
-                    $updateData['status'] = 'paused';
-                    break;
-
-                case 'resume':
-                    if ($match->status !== 'paused') {
-                        return response()->json([
-                            'success' => false,
-                            'message' => 'Only paused matches can be resumed'
-                        ], 422);
-                    }
-                    $updateData['status'] = 'live';
-                    break;
-
-                case 'complete':
-                    if (!in_array($match->status, ['live', 'paused'])) {
-                        return response()->json([
-                            'success' => false,
-                            'message' => 'Only live or paused matches can be completed'
+                            'message' => 'Only live matches can be completed'
                         ], 422);
                     }
                     
@@ -869,16 +845,6 @@ class AdminMatchesController extends Controller
                     MatchPlayerStat::where('match_id', $match->id)->delete();
                     break;
 
-                case 'cancel':
-                    $updateData = [
-                        'status' => 'cancelled',
-                        'ended_at' => now(),
-                        'winner_id' => null
-                    ];
-
-                    // Mark all maps as cancelled
-                    MatchMap::where('match_id', $match->id)->update(['status' => 'cancelled']);
-                    break;
             }
 
             $match->update($updateData);
@@ -1084,7 +1050,7 @@ class AdminMatchesController extends Controller
             'maps.*.map_number' => 'required|integer|min:1',
             'maps.*.map_name' => 'required|string|max:100',
             'maps.*.game_mode' => 'required|string|max:50',
-            'maps.*.status' => 'sometimes|in:upcoming,live,completed,cancelled'
+            'maps.*.status' => 'sometimes|in:upcoming,live,completed'
         ]);
 
         if ($validator->fails()) {
@@ -1272,12 +1238,12 @@ class AdminMatchesController extends Controller
     public function bulkOperation(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'action' => 'required|in:delete,cancel,reschedule,change_status,change_format',
+            'action' => 'required|in:delete,reschedule,change_status,change_format',
             'match_ids' => 'required|array|min:1|max:100',
             'match_ids.*' => 'exists:matches,id',
             'data' => 'sometimes|array',
             'data.scheduled_at' => 'sometimes|date',
-            'data.status' => 'sometimes|in:upcoming,live,completed,cancelled,paused',
+            'data.status' => 'sometimes|in:upcoming,live,completed',
             'data.format' => 'sometimes|in:BO1,BO3,BO5,BO7,BO9'
         ]);
 
@@ -1315,13 +1281,6 @@ class AdminMatchesController extends Controller
                             $match->delete();
                             break;
 
-                        case 'cancel':
-                            $match->update([
-                                'status' => 'cancelled',
-                                'ended_at' => now(),
-                                'winner_id' => null
-                            ]);
-                            break;
 
                         case 'reschedule':
                             if (!isset($data['scheduled_at'])) {
@@ -1405,8 +1364,6 @@ class AdminMatchesController extends Controller
                     'upcoming' => MvrlMatch::where('status', 'upcoming')->count(),
                     'live' => MvrlMatch::where('status', 'live')->count(),
                     'completed' => MvrlMatch::where('status', 'completed')->count(),
-                    'cancelled' => MvrlMatch::where('status', 'cancelled')->count(),
-                    'paused' => MvrlMatch::where('status', 'paused')->count()
                 ],
                 'by_format' => [
                     'BO1' => MvrlMatch::where('format', 'BO1')->count(),
@@ -1489,7 +1446,7 @@ class AdminMatchesController extends Controller
             'format' => 'sometimes|in:json,csv',
             'date_from' => 'sometimes|date',
             'date_to' => 'sometimes|date',
-            'status' => 'sometimes|in:upcoming,live,completed,cancelled,paused',
+            'status' => 'sometimes|in:upcoming,live,completed',
             'event_id' => 'sometimes|exists:events,id'
         ]);
 

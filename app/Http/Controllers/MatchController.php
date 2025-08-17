@@ -1494,7 +1494,7 @@ class MatchController extends Controller
                     'player_name' => $player->username,
                     'username' => $player->username,
                     'real_name' => $player->real_name,
-                    'hero' => $player->main_hero ?? 'Captain America',
+                    'hero' => null,  // No default hero
                     'main_hero' => $player->main_hero,
                     'current_hero' => $player->main_hero,
                     'role' => $player->role ?? 'Vanguard',
@@ -1608,7 +1608,8 @@ class MatchController extends Controller
             'player_stats' => json_decode($match->player_stats ?? '{}', true),
             'format' => $match->format,
             'status' => $match->status,
-            'current_map' => $match->current_map_number ?? 1,
+            'current_map' => $match->current_map ?? $match->current_map_number ?? 1,
+            'current_map_number' => $match->current_map_number ?? $match->current_map ?? 1,
             'maps_data' => $mapsData,
             'maps' => $mapsData,  // Alternative key for compatibility
             'match_timer' => is_string($match->match_timer) ? json_decode($match->match_timer, true) : $match->match_timer,
@@ -1742,6 +1743,10 @@ class MatchController extends Controller
         // Ensure format is set
         $matchData['format'] = $match->format ?? 'BO3';
         
+        // Ensure current_map is at root level for frontend compatibility
+        $matchData['current_map'] = $match->current_map ?? $match->current_map_number ?? 1;
+        $matchData['current_map_number'] = $match->current_map_number ?? $match->current_map ?? 1;
+        
         return $matchData;
     }
 
@@ -1778,7 +1783,7 @@ class MatchController extends Controller
                     'real_name' => $player->real_name,
                     'role' => $player->role,
                     'avatar' => $player->avatar,
-                    'hero' => $player->main_hero,  // For consistency
+                    'hero' => null,  // No default hero
                     'main_hero' => $player->main_hero,
                     'country' => $player->country,  // For consistency
                     'nationality' => $player->country,  // For consistency
@@ -1883,7 +1888,7 @@ class MatchController extends Controller
                     'name' => $player->username ?? $player->real_name,
                     'username' => $player->username,
                     'real_name' => $player->real_name,
-                    'hero' => $player->main_hero ?? 'Captain America',
+                    'hero' => null,  // No default hero
                     'role' => $player->role ?? 'Duelist',
                     'country' => $player->country ?? 'US',
                     'nationality' => $player->country ?? 'US',
@@ -1916,7 +1921,7 @@ class MatchController extends Controller
                     'name' => $player->username ?? $player->real_name,
                     'username' => $player->username,
                     'real_name' => $player->real_name,
-                    'hero' => $player->main_hero ?? 'Captain America',
+                    'hero' => null,  // No default hero
                     'role' => $player->role ?? 'Duelist',
                     'country' => $player->country ?? 'US',
                     'nationality' => $player->country ?? 'US',
@@ -3936,6 +3941,11 @@ class MatchController extends Controller
                 ], 404);
             }
 
+            // Handle type-based updates from frontend
+            if ($request->has('type') && $request->has('data')) {
+                return $this->handleTypedUpdate($request, $matchId, $match);
+            }
+
             $validated = $request->validate([
                 'team1_score' => 'sometimes|integer|min:0',
                 'team2_score' => 'sometimes|integer|min:0',
@@ -3969,6 +3979,7 @@ class MatchController extends Controller
             }
             if (isset($validated['current_map'])) {
                 $updateData['current_map_number'] = $validated['current_map'];
+                $updateData['current_map'] = $validated['current_map'];
             }
             if (isset($validated['status'])) {
                 $updateData['status'] = $validated['status'];
@@ -4028,7 +4039,7 @@ class MatchController extends Controller
                 $updateData['team2_players'] = json_encode($validated['team2_players']);
             }
             if (isset($validated['total_maps'])) {
-                $updateData['total_maps'] = $validated['total_maps'];
+                $updateData['total_maps_played'] = $validated['total_maps'];
             }
 
             $updateData['updated_at'] = now();
@@ -4068,10 +4079,20 @@ class MatchController extends Controller
             // Broadcast to match-specific channel
             $this->broadcastMatchUpdate($matchId, 'live-score-update', $broadcastData);
 
+            // Return full match data like the show() method does
+            $fullMatch = MvrlMatch::with(['team1.players', 'team2.players', 'event', 'maps'])->find($matchId);
+            
             return response()->json([
                 'success' => true,
                 'message' => 'Live score updated successfully',
-                'data' => $broadcastData
+                'data' => $this->formatMatchData($fullMatch),
+                // Also include simple fields for backwards compatibility
+                'id' => $matchId,
+                'team1_score' => $updatedMatch->team1_score,
+                'team2_score' => $updatedMatch->team2_score,
+                'series_score_team1' => $updatedMatch->series_score_team1,
+                'series_score_team2' => $updatedMatch->series_score_team2,
+                'maps' => json_decode($updatedMatch->maps_data, true)
             ]);
 
         } catch (\Exception $e) {
@@ -4081,6 +4102,132 @@ class MatchController extends Controller
                 'message' => 'Failed to update live score: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Handle typed updates from frontend (with type and data fields)
+     */
+    private function handleTypedUpdate($request, $matchId, $match)
+    {
+        $type = $request->input('type');
+        $data = $request->input('data');
+        
+        switch ($type) {
+            case 'score-update':
+                // Handle score update with map switching support
+                $updateData = [];
+                
+                if (isset($data['team1_score'])) {
+                    $updateData['team1_score'] = $data['team1_score'];
+                }
+                if (isset($data['team2_score'])) {
+                    $updateData['team2_score'] = $data['team2_score'];
+                }
+                if (isset($data['series_score_team1'])) {
+                    $updateData['series_score_team1'] = $data['series_score_team1'];
+                }
+                if (isset($data['series_score_team2'])) {
+                    $updateData['series_score_team2'] = $data['series_score_team2'];
+                }
+                
+                // Handle map switching - CRITICAL FIX
+                if (isset($data['current_map']) && isset($data['isMapSwitch']) && $data['isMapSwitch'] === true) {
+                    \Log::info('Map switch detected', ['current_map' => $data['current_map'], 'isMapSwitch' => $data['isMapSwitch']]);
+                    $updateData['current_map'] = $data['current_map'];
+                    $updateData['current_map_number'] = $data['current_map'];
+                } else if (isset($data['current_map'])) {
+                    \Log::info('Current map in data but no isMapSwitch', ['current_map' => $data['current_map'], 'isMapSwitch' => $data['isMapSwitch'] ?? 'not set']);
+                }
+                
+                if (isset($data['status'])) {
+                    $updateData['status'] = $data['status'];
+                }
+                
+                // Handle maps data
+                if (isset($data['maps'])) {
+                    $mapsData = [];
+                    foreach ($data['maps'] as $mapNumber => $mapData) {
+                        $mapsData[] = [
+                            'map_number' => $mapNumber,
+                            'team1_score' => $mapData['team1Score'] ?? 0,
+                            'team2_score' => $mapData['team2Score'] ?? 0,
+                            'status' => $mapData['status'] ?? 'pending',
+                            'winner' => $mapData['winner'] ?? null,
+                            'map_name' => $mapData['mapName'] ?? $mapData['map_name'] ?? null,
+                            'mode' => $mapData['mode'] ?? null,
+                            'team1_composition' => $mapData['team1Players'] ?? [],
+                            'team2_composition' => $mapData['team2Players'] ?? []
+                        ];
+                    }
+                    $updateData['maps_data'] = json_encode($mapsData);
+                }
+                
+                // Handle player data
+                if (isset($data['team1_players'])) {
+                    $updateData['team1_players'] = json_encode($data['team1_players']);
+                }
+                if (isset($data['team2_players'])) {
+                    $updateData['team2_players'] = json_encode($data['team2_players']);
+                }
+                
+                if (!empty($updateData)) {
+                    $updateData['updated_at'] = now();
+                    \Log::info('Updating match with data', ['match_id' => $matchId, 'updateData' => $updateData]);
+                    DB::table('matches')->where('id', $matchId)->update($updateData);
+                    
+                    // Verify the update
+                    $updatedMatch = DB::table('matches')->where('id', $matchId)->select('current_map', 'current_map_number')->first();
+                    \Log::info('Match after update', ['current_map' => $updatedMatch->current_map, 'current_map_number' => $updatedMatch->current_map_number]);
+                }
+                
+                break;
+                
+            case 'hero-update':
+                // Handle hero update - don't update scores or map
+                // This is handled by separate logic
+                break;
+                
+            case 'stats-update':
+                // Handle stats update - don't update scores or map
+                // This is handled by separate logic
+                break;
+                
+            default:
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unknown update type: ' . $type
+                ], 400);
+        }
+        
+        // Get updated match for response
+        $updatedMatch = DB::table('matches as m')
+            ->leftJoin('teams as t1', 'm.team1_id', '=', 't1.id')
+            ->leftJoin('teams as t2', 'm.team2_id', '=', 't2.id')
+            ->where('m.id', $matchId)
+            ->select([
+                'm.*',
+                't1.short_name as team1_short',
+                't2.short_name as team2_short'
+            ])
+            ->first();
+            
+        return response()->json([
+            'success' => true,
+            'message' => 'Match updated successfully',
+            'data' => [
+                'id' => $updatedMatch->id,
+                'team1_score' => $updatedMatch->team1_score,
+                'team2_score' => $updatedMatch->team2_score,
+                'series_score_team1' => $updatedMatch->series_score_team1 ?? 0,
+                'series_score_team2' => $updatedMatch->series_score_team2 ?? 0,
+                'current_map' => $updatedMatch->current_map ?? $updatedMatch->current_map_number ?? 1,
+                'current_map_number' => $updatedMatch->current_map_number ?? $updatedMatch->current_map ?? 1,
+                'status' => $updatedMatch->status,
+                'maps_data' => json_decode($updatedMatch->maps_data, true),
+                'team1_players' => json_decode($updatedMatch->team1_players, true),
+                'team2_players' => json_decode($updatedMatch->team2_players, true)
+            ]
+        ]);
     }
 
     /**

@@ -219,7 +219,8 @@ class BracketController extends Controller
 
     private function generateSingleEliminationBracket($eventId)
     {
-        $matches = DB::table('matches as m')
+        // Use bracket_matches table instead of matches table
+        $matches = DB::table('bracket_matches as m')
             ->leftJoin('teams as t1', 'm.team1_id', '=', 't1.id')
             ->leftJoin('teams as t2', 'm.team2_id', '=', 't2.id')
             ->where('m.event_id', $eventId)
@@ -228,8 +229,8 @@ class BracketController extends Controller
                 't1.name as team1_name', 't1.short_name as team1_short', 't1.logo as team1_logo',
                 't2.name as team2_name', 't2.short_name as team2_short', 't2.logo as team2_logo'
             ])
-            ->orderBy('m.round')
-            ->orderBy('m.bracket_position')
+            ->orderBy('m.round_number')
+            ->orderBy('m.match_number')
             ->get();
 
         // Group by rounds
@@ -239,18 +240,19 @@ class BracketController extends Controller
         ];
 
         foreach ($matches as $match) {
-            $roundName = $this->getRoundName($match->round, $this->getEventTeamCount($eventId));
+            $roundName = $match->round_name ?: $this->getRoundName($match->round_number, $this->getEventTeamCount($eventId));
             
             if (!isset($bracket['rounds'][$roundName])) {
                 $bracket['rounds'][$roundName] = [
-                    'round_number' => $match->round,
+                    'round_number' => $match->round_number,
                     'matches' => []
                 ];
             }
 
             $bracket['rounds'][$roundName]['matches'][] = [
                 'id' => $match->id,
-                'position' => $match->bracket_position,
+                'match_id' => $match->match_id,
+                'position' => $match->match_number,
                 'team1' => [
                     'id' => $match->team1_id,
                     'name' => $match->team1_name,
@@ -268,12 +270,19 @@ class BracketController extends Controller
                     'seed' => $this->getTeamSeed($eventId, $match->team2_id)
                 ],
                 'status' => $match->status,
-                'scheduled_at' => $match->scheduled_at,
-                'completed_at' => $match->completed_at,
-                'winner_id' => $this->getMatchWinner($match),
-                'stream_url' => $match->stream_url,
-                'maps_data' => $match->maps_data ? json_decode($match->maps_data, true) : null
+                'best_of' => $match->best_of,
+                'winner_id' => $match->winner_id,
+                'team1_source' => $match->team1_source,
+                'team2_source' => $match->team2_source,
+                'winner_advances_to' => $match->winner_advances_to,
+                'loser_advances_to' => $match->loser_advances_to
             ];
+        }
+
+        // Convert to array format expected by frontend
+        $bracket['matches'] = [];
+        foreach ($bracket['rounds'] as $round) {
+            $bracket['matches'] = array_merge($bracket['matches'], $round['matches']);
         }
 
         return $bracket;

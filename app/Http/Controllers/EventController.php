@@ -417,6 +417,99 @@ class EventController extends Controller
         }
     }
 
+    /**
+     * Get bracket data for an event (public endpoint)
+     */
+    public function getBracket($eventId)
+    {
+        try {
+            $event = Event::findOrFail($eventId);
+            
+            // Get bracket stages and matches
+            $bracketStages = \App\Models\BracketStage::where('event_id', $eventId)
+                ->with(['matches.team1', 'matches.team2'])
+                ->orderBy('stage_order')
+                ->get();
+            
+            // Format bracket data for frontend
+            $bracketData = [
+                'matches' => [],
+                'upper_bracket' => [],
+                'lower_bracket' => [],
+                'grand_final' => null
+            ];
+            
+            foreach ($bracketStages as $stage) {
+                $stageMatches = $stage->matches->map(function($match) {
+                    return [
+                        'id' => $match->id,
+                        'match_id' => $match->match_id,
+                        'round_name' => $match->round_name,
+                        'round_number' => $match->round_number,
+                        'match_number' => $match->match_number,
+                        'team1_id' => $match->team1_id,
+                        'team2_id' => $match->team2_id,
+                        'team1' => $match->team1 ? [
+                            'id' => $match->team1->id,
+                            'name' => $match->team1->name,
+                            'short_name' => $match->team1->short_name,
+                            'logo' => $match->team1->logo
+                        ] : null,
+                        'team2' => $match->team2 ? [
+                            'id' => $match->team2->id,
+                            'name' => $match->team2->name,
+                            'short_name' => $match->team2->short_name,
+                            'logo' => $match->team2->logo
+                        ] : null,
+                        'team1_score' => $match->team1_score,
+                        'team2_score' => $match->team2_score,
+                        'winner_id' => $match->winner_id,
+                        'status' => $match->status,
+                        'best_of' => $match->best_of,
+                        'team1_source' => $match->team1_source,
+                        'team2_source' => $match->team2_source,
+                        'winner_advances_to' => $match->winner_advances_to,
+                        'loser_advances_to' => $match->loser_advances_to
+                    ];
+                });
+                
+                // Organize by stage type
+                if ($stage->type === 'upper_bracket') {
+                    $bracketData['upper_bracket'] = $stageMatches->groupBy('round_number');
+                    $bracketData['matches'] = array_merge($bracketData['matches'], $stageMatches->toArray());
+                } elseif ($stage->type === 'lower_bracket') {
+                    $bracketData['lower_bracket'] = $stageMatches->groupBy('round_number');
+                } elseif ($stage->type === 'grand_final') {
+                    $bracketData['grand_final'] = $stageMatches->first();
+                } else {
+                    // Single elimination or other formats
+                    $bracketData['matches'] = array_merge($bracketData['matches'], $stageMatches->toArray());
+                }
+            }
+            
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'event' => [
+                        'id' => $event->id,
+                        'name' => $event->name,
+                        'format' => $event->format,
+                        'status' => $event->status
+                    ],
+                    'bracket_data' => $bracketData,
+                    'has_bracket' => count($bracketData['matches']) > 0
+                ]
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch bracket data',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
     // Helper methods for VLR.gg-style event management
 
     private function getEventTeamsPrivate($eventId)

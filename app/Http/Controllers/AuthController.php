@@ -2,6 +2,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Rules\StrongPassword;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
@@ -103,10 +104,9 @@ class AuthController extends Controller
             $request->validate([
                 'name' => 'required|string|max:255|min:2|regex:/^[a-zA-Z0-9\s\-_\.]+$/',
                 'email' => 'required|string|email|max:255|unique:users',
-                'password' => 'required|string|min:8|max:255|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/',
+                'password' => ['required', 'string', 'confirmed', new StrongPassword],
             ], [
                 'name.regex' => 'Name can only contain letters, numbers, spaces, hyphens, underscores, and dots.',
-                'password.regex' => 'Password must contain at least one lowercase letter, one uppercase letter, one digit, and one special character (@$!%*?&).',
             ]);
 
             $user = User::create([

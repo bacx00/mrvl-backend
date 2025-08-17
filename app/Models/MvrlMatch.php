@@ -106,4 +106,12 @@ class MvrlMatch extends Model
     {
         return $this->belongsTo(User::class, 'created_by');
     }
+
+    /**
+     * Maps belonging to this match
+     */
+    public function maps()
+    {
+        return $this->hasMany(MatchMap::class, 'match_id');
+    }
 }

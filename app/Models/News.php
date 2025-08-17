@@ -47,9 +47,22 @@ class News extends Model
     // Accessors
     public function getFeaturedImageUrlAttribute()
     {
-        return $this->featured_image 
-            ? asset('storage/' . $this->featured_image) 
-            : asset('storage/images/news/default-news.jpg');
+        if (!$this->featured_image) {
+            return asset('storage/images/news/default-news.jpg');
+        }
+        
+        // If it's already a full URL, return as-is
+        if (str_starts_with($this->featured_image, 'http://') || str_starts_with($this->featured_image, 'https://')) {
+            return $this->featured_image;
+        }
+        
+        // If it already starts with storage/, don't add it again
+        if (str_starts_with($this->featured_image, 'storage/')) {
+            return asset($this->featured_image);
+        }
+        
+        // Otherwise, add storage/ prefix
+        return asset('storage/' . $this->featured_image);
     }
 
     public function getGalleryUrlsAttribute()

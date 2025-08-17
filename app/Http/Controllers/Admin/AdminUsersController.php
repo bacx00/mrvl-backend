@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\Team;
 use App\Models\UserActivity;
 use App\Models\UserWarning;
+use App\Rules\StrongPassword;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
@@ -263,7 +264,7 @@ class AdminUsersController extends Controller
             $validator = Validator::make($request->all(), [
                 'name' => 'required|string|max:255|unique:users|regex:/^[a-zA-Z0-9_-]+$/',
                 'email' => 'required|email|unique:users|max:255',
-                'password' => 'required|string|min:8|confirmed|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/',
+                'password' => ['required', 'string', 'confirmed', new StrongPassword],
                 'role' => 'required|string|in:admin,moderator,user',
                 'status' => 'string|in:active,inactive,banned,suspended',
                 'send_welcome_email' => 'boolean',
@@ -274,8 +275,7 @@ class AdminUsersController extends Controller
                 'show_team_flair' => 'boolean',
                 'avatar_url' => 'nullable|url|max:500'
             ], [
-                'name.regex' => 'Username can only contain letters, numbers, underscores, and hyphens.',
-                'password.regex' => 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.'
+                'name.regex' => 'Username can only contain letters, numbers, underscores, and hyphens.'
             ]);
 
             if ($validator->fails()) {
@@ -402,7 +402,7 @@ class AdminUsersController extends Controller
                 'email' => ['email', 'max:255', Rule::unique('users')->ignore($userId)],
                 'role' => 'string|in:admin,moderator,user',
                 'status' => 'string|in:active,inactive,banned,suspended',
-                'password' => 'nullable|string|min:8|confirmed|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/',
+                'password' => $request->filled('password') ? ['nullable', 'string', 'confirmed', new StrongPassword] : 'nullable',
                 'hero_flair' => 'nullable|string|max:100',
                 'team_flair_id' => 'nullable|exists:teams,id',
                 'show_hero_flair' => 'boolean',

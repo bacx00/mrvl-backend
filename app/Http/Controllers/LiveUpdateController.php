@@ -284,6 +284,26 @@ class LiveUpdateController extends Controller
     
     private function handleScoreUpdate($match, $data)
     {
+        // Handle map switching if isMapSwitch flag is present
+        if (isset($data['isMapSwitch']) && $data['isMapSwitch'] === true && isset($data['current_map'])) {
+            \Log::info('Map switch detected in LiveUpdateController', [
+                'match_id' => $match->id,
+                'current_map' => $data['current_map'],
+                'isMapSwitch' => $data['isMapSwitch']
+            ]);
+            
+            // Update current map in database
+            $match->current_map = $data['current_map'];
+            $match->current_map_number = $data['current_map'];
+            $match->save();
+            
+            \Log::info('Map switch saved', [
+                'match_id' => $match->id,
+                'current_map' => $match->current_map,
+                'current_map_number' => $match->current_map_number
+            ]);
+        }
+        
         $mapIndex = isset($data['map_index']) ? $data['map_index'] : max(0, ($match->current_map_number ?? 1) - 1);
         
         // Get existing maps data - handle JSON string from database
@@ -359,13 +379,54 @@ class LiveUpdateController extends Controller
         
         // Ensure we have a map at this index with proper structure
         if (!isset($mapsData[$mapIndex])) {
+            // Initialize with team rosters if compositions are empty
+            $team1Composition = [];
+            $team2Composition = [];
+            
+            // Auto-populate with team players if no existing data
+            if ($match->team1 && $match->team1->players) {
+                foreach ($match->team1->players as $player) {
+                    $team1Composition[] = [
+                        'player_id' => $player->id,
+                        'name' => $player->name,
+                        'hero' => 'Unknown',
+                        'role' => $player->role ?? 'Unknown',
+                        'eliminations' => 0,
+                        'deaths' => 0,
+                        'assists' => 0,
+                        'damage' => 0,
+                        'healing' => 0,
+                        'damage_blocked' => 0,
+                        'country' => $player->country ?? ''
+                    ];
+                }
+            }
+            
+            if ($match->team2 && $match->team2->players) {
+                foreach ($match->team2->players as $player) {
+                    $team2Composition[] = [
+                        'player_id' => $player->id,
+                        'name' => $player->name,
+                        'hero' => 'Unknown',
+                        'role' => $player->role ?? 'Unknown',
+                        'eliminations' => 0,
+                        'deaths' => 0,
+                        'assists' => 0,
+                        'damage' => 0,
+                        'healing' => 0,
+                        'damage_blocked' => 0,
+                        'country' => $player->country ?? ''
+                    ];
+                }
+            }
+            
             $mapsData[$mapIndex] = [
                 'name' => 'Map ' . ($mapIndex + 1),
                 'mode' => 'Unknown',
                 'team1_score' => 0,
                 'team2_score' => 0,
-                'team1_composition' => [],
-                'team2_composition' => [],
+                'team1_composition' => $team1Composition,
+                'team2_composition' => $team2Composition,
                 'status' => 'in_progress'
             ];
         }
@@ -445,13 +506,54 @@ class LiveUpdateController extends Controller
         
         // Ensure we have a map at this index with proper structure
         if (!isset($mapsData[$mapIndex])) {
+            // Initialize with team rosters if compositions are empty
+            $team1Composition = [];
+            $team2Composition = [];
+            
+            // Auto-populate with team players if no existing data
+            if ($match->team1 && $match->team1->players) {
+                foreach ($match->team1->players as $player) {
+                    $team1Composition[] = [
+                        'player_id' => $player->id,
+                        'name' => $player->name,
+                        'hero' => 'Unknown',
+                        'role' => $player->role ?? 'Unknown',
+                        'eliminations' => 0,
+                        'deaths' => 0,
+                        'assists' => 0,
+                        'damage' => 0,
+                        'healing' => 0,
+                        'damage_blocked' => 0,
+                        'country' => $player->country ?? ''
+                    ];
+                }
+            }
+            
+            if ($match->team2 && $match->team2->players) {
+                foreach ($match->team2->players as $player) {
+                    $team2Composition[] = [
+                        'player_id' => $player->id,
+                        'name' => $player->name,
+                        'hero' => 'Unknown',
+                        'role' => $player->role ?? 'Unknown',
+                        'eliminations' => 0,
+                        'deaths' => 0,
+                        'assists' => 0,
+                        'damage' => 0,
+                        'healing' => 0,
+                        'damage_blocked' => 0,
+                        'country' => $player->country ?? ''
+                    ];
+                }
+            }
+            
             $mapsData[$mapIndex] = [
                 'name' => 'Map ' . ($mapIndex + 1),
                 'mode' => 'Unknown',
                 'team1_score' => 0,
                 'team2_score' => 0,
-                'team1_composition' => [],
-                'team2_composition' => [],
+                'team1_composition' => $team1Composition,
+                'team2_composition' => $team2Composition,
                 'status' => 'in_progress'
             ];
         }
@@ -584,8 +686,8 @@ class LiveUpdateController extends Controller
         $team1Score = $mapData['team1_score'] ?? ($mapData['team1']['score'] ?? 0);
         $team2Score = $mapData['team2_score'] ?? ($mapData['team2']['score'] ?? 0);
         
-        // Map is completed when one team reaches winning score (e.g., 3 for standard maps)
-        return $team1Score >= 3 || $team2Score >= 3;
+        // Map is completed when one team reaches winning score (2 for Marvel Rivals)
+        return $team1Score >= 2 || $team2Score >= 2;
     }
     
     private function updateSeriesScore($match)

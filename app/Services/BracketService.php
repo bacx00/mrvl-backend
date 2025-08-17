@@ -295,8 +295,9 @@ class BracketService
             $seed1 = $i;
             $seed2 = $teamCount - $i + 1;
             
+            $eventPrefix = $stage->event_id ? "E{$stage->event_id}-" : "T{$stage->tournament_id}-";
             $match = BracketMatch::create([
-                'match_id' => "UB{$seed1}-{$seed2}",
+                'match_id' => "{$eventPrefix}UB{$seed1}-{$seed2}",
                 'tournament_id' => $stage->tournament_id,
                 'event_id' => $stage->event_id,
                 'bracket_stage_id' => $stage->id,
@@ -320,7 +321,8 @@ class BracketService
             $roundName = $this->getRoundName($round, $totalRounds);
 
             for ($match = 1; $match <= $matchesInRound; $match++) {
-                $matchId = "UB{$round}-{$match}";
+                $eventPrefix = $stage->event_id ? "E{$stage->event_id}-" : "T{$stage->tournament_id}-";
+                $matchId = "{$eventPrefix}UB{$round}-{$match}";
                 
                 $bracketMatch = BracketMatch::create([
                     'match_id' => $matchId,
@@ -357,7 +359,8 @@ class BracketService
             $roundName = "Lower Bracket Round {$round}";
 
             for ($match = 1; $match <= $matchesInRound; $match++) {
-                $matchId = "LB{$round}-{$matchNumber}";
+                $eventPrefix = $stage->event_id ? "E{$stage->event_id}-" : "T{$stage->tournament_id}-";
+                $matchId = "{$eventPrefix}LB{$round}-{$matchNumber}";
                 
                 $bracketMatch = BracketMatch::create([
                     'match_id' => $matchId,
@@ -383,8 +386,9 @@ class BracketService
      */
     private function generateGrandFinalMatch(BracketStage $stage, array $options): BracketMatch
     {
+        $eventPrefix = $stage->event_id ? "E{$stage->event_id}-" : "T{$stage->tournament_id}-";
         return BracketMatch::create([
-            'match_id' => 'GF',
+            'match_id' => "{$eventPrefix}GF",
             'tournament_id' => $stage->tournament_id,
             'event_id' => $stage->event_id,
             'bracket_stage_id' => $stage->id,
@@ -421,7 +425,8 @@ class BracketService
                 }
             } else {
                 // Last upper bracket match advances to grand final
-                $match->update(['winner_advances_to' => 'GF']);
+                $eventPrefix = $match->event_id ? "E{$match->event_id}-" : "T{$match->tournament_id}-";
+                $match->update(['winner_advances_to' => "{$eventPrefix}GF"]);
             }
         }
 
@@ -448,7 +453,8 @@ class BracketService
                 }
             } else {
                 // Last lower bracket match advances to grand final
-                $match->update(['winner_advances_to' => 'GF']);
+                $eventPrefix = $match->event_id ? "E{$match->event_id}-" : "T{$match->tournament_id}-";
+                $match->update(['winner_advances_to' => "{$eventPrefix}GF"]);
             }
         }
     }
@@ -475,8 +481,9 @@ class BracketService
                 $team1 = $availableTeams->shift();
                 $team2 = $availableTeams->shift();
                 
+                $eventPrefix = $stage->event_id ? "E{$stage->event_id}-" : "T{$stage->tournament_id}-";
                 $match = BracketMatch::create([
-                    'match_id' => "SW{$roundNumber}-" . ($matches->count() + 1),
+                    'match_id' => "{$eventPrefix}SW{$roundNumber}-" . ($matches->count() + 1),
                     'tournament_id' => $stage->tournament_id,
                     'event_id' => $stage->event_id,
                     'bracket_stage_id' => $stage->id,
@@ -634,8 +641,9 @@ class BracketService
 
     private function generateThirdPlaceMatch(BracketStage $stage, array $options): BracketMatch
     {
+        $eventPrefix = $stage->event_id ? "E{$stage->event_id}-" : "T{$stage->tournament_id}-";
         return BracketMatch::create([
-            'match_id' => 'TP',
+            'match_id' => "{$eventPrefix}TP",
             'tournament_id' => $stage->tournament_id,
             'event_id' => $stage->event_id,
             'bracket_stage_id' => $stage->id,
@@ -657,8 +665,9 @@ class BracketService
 
         for ($i = 0; $i < $shuffledTeams->count(); $i += 2) {
             if (isset($shuffledTeams[$i + 1])) {
+                $eventPrefix = $stage->event_id ? "E{$stage->event_id}-" : "T{$stage->tournament_id}-";
                 $match = BracketMatch::create([
-                    'match_id' => "SW{$round}-{$matchNumber}",
+                    'match_id' => "{$eventPrefix}SW{$round}-{$matchNumber}",
                     'tournament_id' => $stage->tournament_id,
                     'event_id' => $stage->event_id,
                     'bracket_stage_id' => $stage->id,
@@ -688,8 +697,9 @@ class BracketService
 
         for ($i = 0; $i < $teamsArray->count(); $i++) {
             for ($j = $i + 1; $j < $teamsArray->count(); $j++) {
+                $eventPrefix = $stage->event_id ? "E{$stage->event_id}-" : "T{$stage->tournament_id}-";
                 $match = BracketMatch::create([
-                    'match_id' => "RR-{$matchNumber}",
+                    'match_id' => "{$eventPrefix}RR-{$matchNumber}",
                     'tournament_id' => $stage->tournament_id,
                     'event_id' => $stage->event_id,
                     'bracket_stage_id' => $stage->id,
@@ -711,8 +721,9 @@ class BracketService
         if ($options['double_round_robin']) {
             // Create return matches
             $returnMatches = $matches->map(function ($match) use ($stage, &$matchNumber) {
+                $eventPrefix = $stage->event_id ? "E{$stage->event_id}-" : "T{$stage->tournament_id}-";
                 return BracketMatch::create([
-                    'match_id' => "RR-{$matchNumber}",
+                    'match_id' => "{$eventPrefix}RR-{$matchNumber}",
                     'tournament_id' => $stage->tournament_id,
                     'event_id' => $stage->event_id,
                     'bracket_stage_id' => $stage->id,

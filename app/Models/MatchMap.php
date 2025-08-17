@@ -57,7 +57,7 @@ class MatchMap extends Model
      */
     public function match(): BelongsTo
     {
-        return $this->belongsTo(MatchModel::class, 'match_id');
+        return $this->belongsTo(MvrlMatch::class, 'match_id');
     }
 
     public function winner(): BelongsTo
