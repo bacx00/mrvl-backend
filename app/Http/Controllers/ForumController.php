@@ -308,13 +308,26 @@ class ForumController extends ApiResponseController
                 'category' => 'nullable|string|exists:forum_categories,slug'
             ]);
 
+            $userId = auth('api')->id();
             $thread = DB::table('forum_threads')->insertGetId([
                 'title' => $validated['title'],
                 'content' => $validated['content'],
                 'category' => $validated['category'] ?? 'general',
-                'user_id' => auth('api')->id(),
+                'user_id' => $userId,
+                'upvotes' => 1,  // Auto-upvote own thread
+                'score' => 1,    // Initial score of 1
                 'last_reply_at' => now(),
                 'status' => 'active',
+                'created_at' => now(),
+                'updated_at' => now()
+            ]);
+            
+            // Auto-upvote the user's own thread
+            DB::table('forum_votes')->insert([
+                'thread_id' => $thread,
+                'post_id' => null,
+                'user_id' => $userId,
+                'vote_type' => 'upvote',
                 'created_at' => now(),
                 'updated_at' => now()
             ]);
@@ -369,12 +382,25 @@ class ForumController extends ApiResponseController
                 return response()->json(['success' => false, 'message' => 'Thread is locked'], 403);
             }
 
+            $userId = auth('api')->id();
             $postId = DB::table('forum_posts')->insertGetId([
                 'thread_id' => $threadId,
-                'user_id' => auth('api')->id(),
+                'user_id' => $userId,
                 'content' => $validated['content'],
                 'parent_id' => $validated['parent_id'] ?? null,
                 'status' => 'active',
+                'upvotes' => 1,  // Auto-upvote own post
+                'score' => 1,    // Initial score of 1
+                'created_at' => now(),
+                'updated_at' => now()
+            ]);
+            
+            // Auto-upvote the user's own post
+            DB::table('forum_votes')->insert([
+                'thread_id' => null,  // Don't set thread_id for post votes
+                'post_id' => $postId,
+                'user_id' => $userId,
+                'vote_type' => 'upvote',
                 'created_at' => now(),
                 'updated_at' => now()
             ]);
@@ -419,8 +445,8 @@ class ForumController extends ApiResponseController
                     'roles' => []
                 ],
                 'stats' => [
-                    'score' => 0,
-                    'upvotes' => 0,
+                    'score' => 1,
+                    'upvotes' => 1,
                     'downvotes' => 0
                 ],
                 'meta' => [
@@ -431,7 +457,7 @@ class ForumController extends ApiResponseController
                     'edited' => false
                 ],
                 'mentions' => is_array($mentions) ? $mentions : [],
-                'user_vote' => null,
+                'user_vote' => 'upvote',  // User automatically upvotes their own post
                 'replies' => [],
                 'parent_id' => $createdPost->parent_id ? (int)$createdPost->parent_id : null
             ];
@@ -733,7 +759,7 @@ class ForumController extends ApiResponseController
                     // Create new post vote - handle potential race conditions
                     try {
                         DB::table('forum_votes')->insert([
-                            'thread_id' => $post->thread_id,
+                            'thread_id' => null,  // Don't set thread_id for post votes
                             'post_id' => $postId,
                             'user_id' => $userId,
                             'vote_type' => $voteType,
@@ -2500,5 +2526,6 @@ class ForumController extends ApiResponseController
     {
         return $this->storePost($request, $threadId);
     }
+
 
 }

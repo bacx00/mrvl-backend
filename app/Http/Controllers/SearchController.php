@@ -499,7 +499,7 @@ class SearchController extends Controller
             ->leftJoin('forum_categories as fc', 'ft.category_id', '=', 'fc.id')
             ->select([
                 'ft.id', 'ft.title', 'ft.content', 'ft.upvotes', 'ft.downvotes',
-                'ft.is_pinned', 'ft.is_locked', 'ft.created_at',
+                'ft.pinned', 'ft.locked', 'ft.created_at',
                 'u.name as author_name', 'u.avatar as author_avatar', 'u.hero_flair',
                 'fc.name as category_name', 'fc.color as category_color'
             ])
@@ -509,7 +509,7 @@ class SearchController extends Controller
                   ->orWhere('u.name', 'LIKE', "%{$query}%")
                   ->orWhere('fc.name', 'LIKE', "%{$query}%");
             })
-            ->orderBy('ft.is_pinned', 'desc')
+            ->orderBy('ft.pinned', 'desc')
             ->orderBy('ft.created_at', 'desc')
             ->offset($offset)
             ->limit($limit)
@@ -521,8 +521,8 @@ class SearchController extends Controller
                     'content' => substr($thread->content, 0, 200) . '...',
                     'upvotes' => $thread->upvotes,
                     'downvotes' => $thread->downvotes,
-                    'is_pinned' => $thread->is_pinned,
-                    'is_locked' => $thread->is_locked,
+                    'is_pinned' => $thread->pinned,
+                    'is_locked' => $thread->locked,
                     'author' => [
                         'name' => $thread->author_name,
                         'avatar' => $thread->author_avatar,
@@ -1032,7 +1032,7 @@ class SearchController extends Controller
         }
 
         if (isset($filters['is_pinned'])) {
-            $queryBuilder->where('ft.is_pinned', $filters['is_pinned']);
+            $queryBuilder->where('ft.pinned', $filters['is_pinned']);
         }
 
         if ($dateRange) {

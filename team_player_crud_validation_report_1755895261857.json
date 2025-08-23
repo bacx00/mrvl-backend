@@ -1,0 +1,308 @@
+{
+  "timestamp": "2025-08-22T20:40:58.750Z",
+  "totalTests": 20,
+  "passedTests": 0,
+  "failedTests": 20,
+  "tests": [
+    {
+      "name": "Endpoint Availability - List Players",
+      "status": "PARTIAL",
+      "timestamp": "2025-08-22T20:40:59.206Z",
+      "endpoint": "/admin/players",
+      "method": "GET",
+      "response_status": 500,
+      "note": "Endpoint exists but may have issues"
+    },
+    {
+      "name": "Endpoint Availability - Create Player",
+      "status": "PARTIAL",
+      "timestamp": "2025-08-22T20:40:59.506Z",
+      "endpoint": "/admin/players",
+      "method": "POST",
+      "response_status": 500,
+      "note": "Endpoint exists but may have issues"
+    },
+    {
+      "name": "Endpoint Availability - Get Player",
+      "status": "PARTIAL",
+      "timestamp": "2025-08-22T20:40:59.639Z",
+      "endpoint": "/admin/players/1",
+      "method": "GET",
+      "response_status": 500,
+      "note": "Endpoint exists but may have issues"
+    },
+    {
+      "name": "Endpoint Availability - Update Player",
+      "status": "PARTIAL",
+      "timestamp": "2025-08-22T20:40:59.762Z",
+      "endpoint": "/admin/players/1",
+      "method": "PUT",
+      "response_status": 500,
+      "note": "Endpoint exists but may have issues"
+    },
+    {
+      "name": "Endpoint Availability - Delete Player",
+      "status": "PARTIAL",
+      "timestamp": "2025-08-22T20:40:59.886Z",
+      "endpoint": "/admin/players/1",
+      "method": "DELETE",
+      "response_status": 500,
+      "note": "Endpoint exists but may have issues"
+    },
+    {
+      "name": "Endpoint Availability - List Teams",
+      "status": "PARTIAL",
+      "timestamp": "2025-08-22T20:41:00.010Z",
+      "endpoint": "/admin/teams",
+      "method": "GET",
+      "response_status": 500,
+      "note": "Endpoint exists but may have issues"
+    },
+    {
+      "name": "Endpoint Availability - Create Team",
+      "status": "PARTIAL",
+      "timestamp": "2025-08-22T20:41:00.136Z",
+      "endpoint": "/admin/teams",
+      "method": "POST",
+      "response_status": 500,
+      "note": "Endpoint exists but may have issues"
+    },
+    {
+      "name": "Endpoint Availability - Get Team",
+      "status": "PARTIAL",
+      "timestamp": "2025-08-22T20:41:00.258Z",
+      "endpoint": "/admin/teams/1",
+      "method": "GET",
+      "response_status": 500,
+      "note": "Endpoint exists but may have issues"
+    },
+    {
+      "name": "Endpoint Availability - Update Team",
+      "status": "PARTIAL",
+      "timestamp": "2025-08-22T20:41:00.380Z",
+      "endpoint": "/admin/teams/1",
+      "method": "PUT",
+      "response_status": 500,
+      "note": "Endpoint exists but may have issues"
+    },
+    {
+      "name": "Endpoint Availability - Delete Team",
+      "status": "PARTIAL",
+      "timestamp": "2025-08-22T20:41:00.505Z",
+      "endpoint": "/admin/teams/1",
+      "method": "DELETE",
+      "response_status": 500,
+      "note": "Endpoint exists but may have issues"
+    },
+    {
+      "name": "Player Creation with All Fields",
+      "status": "FAIL",
+      "timestamp": "2025-08-22T20:41:00.649Z",
+      "error": "HTTP 500",
+      "response_data": {
+        "raw_response": "<!DOCTYPE html>\n<html style=\"height:100%\">\n<head>\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, shrink-to-fit=no\" />\n<title> 500 Internal Server Error\r\n</title><style>@media (prefers-color-scheme:dark){body{background-color:#000!important}}</style></head>\n<body style=\"color: #444; margin:0;font: normal 14px/20px Arial, Helvetica, sans-serif; height:100%; background-color: #fff;\">\n<div style=\"height:auto; min-height:100%; \">     <div style=\"text-align: center; width:800px; margin-left: -400px; position:absolute; top: 30%; left:50%;\">\n        <h1 style=\"margin:0; font-size:150px; line-height:150px; font-weight:bold;\">500</h1>\n<h2 style=\"margin-top:20px;font-size: 30px;\">Internal Server Error\r\n</h2>\n<p>An internal server error has occured.</p>\n</div></div></body></html>\n"
+      }
+    },
+    {
+      "name": "Player Field Validation",
+      "status": "FAIL",
+      "timestamp": "2025-08-22T20:41:00.771Z",
+      "error": "Validation should have failed but did not",
+      "response_status": 500,
+      "response_data": {
+        "raw_response": "<!DOCTYPE html>\n<html style=\"height:100%\">\n<head>\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, shrink-to-fit=no\" />\n<title> 500 Internal Server Error\r\n</title><style>@media (prefers-color-scheme:dark){body{background-color:#000!important}}</style></head>\n<body style=\"color: #444; margin:0;font: normal 14px/20px Arial, Helvetica, sans-serif; height:100%; background-color: #fff;\">\n<div style=\"height:auto; min-height:100%; \">     <div style=\"text-align: center; width:800px; margin-left: -400px; position:absolute; top: 30%; left:50%;\">\n        <h1 style=\"margin:0; font-size:150px; line-height:150px; font-weight:bold;\">500</h1>\n<h2 style=\"margin-top:20px;font-size: 30px;\">Internal Server Error\r\n</h2>\n<p>An internal server error has occured.</p>\n</div></div></body></html>\n"
+      }
+    },
+    {
+      "name": "Team Creation with All Fields",
+      "status": "FAIL",
+      "timestamp": "2025-08-22T20:41:00.899Z",
+      "error": "HTTP 500",
+      "response_data": {
+        "raw_response": "<!DOCTYPE html>\n<html style=\"height:100%\">\n<head>\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, shrink-to-fit=no\" />\n<title> 500 Internal Server Error\r\n</title><style>@media (prefers-color-scheme:dark){body{background-color:#000!important}}</style></head>\n<body style=\"color: #444; margin:0;font: normal 14px/20px Arial, Helvetica, sans-serif; height:100%; background-color: #fff;\">\n<div style=\"height:auto; min-height:100%; \">     <div style=\"text-align: center; width:800px; margin-left: -400px; position:absolute; top: 30%; left:50%;\">\n        <h1 style=\"margin:0; font-size:150px; line-height:150px; font-weight:bold;\">500</h1>\n<h2 style=\"margin-top:20px;font-size: 30px;\">Internal Server Error\r\n</h2>\n<p>An internal server error has occured.</p>\n</div></div></body></html>\n"
+      }
+    },
+    {
+      "name": "Team Field Validation",
+      "status": "FAIL",
+      "timestamp": "2025-08-22T20:41:01.022Z",
+      "error": "Validation should have failed but did not",
+      "response_status": 500,
+      "response_data": {
+        "raw_response": "<!DOCTYPE html>\n<html style=\"height:100%\">\n<head>\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, shrink-to-fit=no\" />\n<title> 500 Internal Server Error\r\n</title><style>@media (prefers-color-scheme:dark){body{background-color:#000!important}}</style></head>\n<body style=\"color: #444; margin:0;font: normal 14px/20px Arial, Helvetica, sans-serif; height:100%; background-color: #fff;\">\n<div style=\"height:auto; min-height:100%; \">     <div style=\"text-align: center; width:800px; margin-left: -400px; position:absolute; top: 30%; left:50%;\">\n        <h1 style=\"margin:0; font-size:150px; line-height:150px; font-weight:bold;\">500</h1>\n<h2 style=\"margin-top:20px;font-size: 30px;\">Internal Server Error\r\n</h2>\n<p>An internal server error has occured.</p>\n</div></div></body></html>\n"
+      }
+    },
+    {
+      "name": "Social Media URL Formatting - twitter",
+      "status": "FAIL",
+      "timestamp": "2025-08-22T20:41:01.159Z",
+      "platform": "twitter",
+      "input_url": "https://twitter.com/testuser",
+      "error": "HTTP 500",
+      "response_data": {
+        "raw_response": "<!DOCTYPE html>\n<html style=\"height:100%\">\n<head>\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, shrink-to-fit=no\" />\n<title> 500 Internal Server Error\r\n</title><style>@media (prefers-color-scheme:dark){body{background-color:#000!important}}</style></head>\n<body style=\"color: #444; margin:0;font: normal 14px/20px Arial, Helvetica, sans-serif; height:100%; background-color: #fff;\">\n<div style=\"height:auto; min-height:100%; \">     <div style=\"text-align: center; width:800px; margin-left: -400px; position:absolute; top: 30%; left:50%;\">\n        <h1 style=\"margin:0; font-size:150px; line-height:150px; font-weight:bold;\">500</h1>\n<h2 style=\"margin-top:20px;font-size: 30px;\">Internal Server Error\r\n</h2>\n<p>An internal server error has occured.</p>\n</div></div></body></html>\n"
+      }
+    },
+    {
+      "name": "Social Media URL Formatting - twitter",
+      "status": "FAIL",
+      "timestamp": "2025-08-22T20:41:01.287Z",
+      "platform": "twitter",
+      "input_url": "twitter.com/testuser",
+      "error": "HTTP 500",
+      "response_data": {
+        "raw_response": "<!DOCTYPE html>\n<html style=\"height:100%\">\n<head>\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, shrink-to-fit=no\" />\n<title> 500 Internal Server Error\r\n</title><style>@media (prefers-color-scheme:dark){body{background-color:#000!important}}</style></head>\n<body style=\"color: #444; margin:0;font: normal 14px/20px Arial, Helvetica, sans-serif; height:100%; background-color: #fff;\">\n<div style=\"height:auto; min-height:100%; \">     <div style=\"text-align: center; width:800px; margin-left: -400px; position:absolute; top: 30%; left:50%;\">\n        <h1 style=\"margin:0; font-size:150px; line-height:150px; font-weight:bold;\">500</h1>\n<h2 style=\"margin-top:20px;font-size: 30px;\">Internal Server Error\r\n</h2>\n<p>An internal server error has occured.</p>\n</div></div></body></html>\n"
+      }
+    },
+    {
+      "name": "Social Media URL Formatting - instagram",
+      "status": "FAIL",
+      "timestamp": "2025-08-22T20:41:01.439Z",
+      "platform": "instagram",
+      "input_url": "https://instagram.com/testuser",
+      "error": "HTTP 500",
+      "response_data": {
+        "raw_response": "<!DOCTYPE html>\n<html style=\"height:100%\">\n<head>\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, shrink-to-fit=no\" />\n<title> 500 Internal Server Error\r\n</title><style>@media (prefers-color-scheme:dark){body{background-color:#000!important}}</style></head>\n<body style=\"color: #444; margin:0;font: normal 14px/20px Arial, Helvetica, sans-serif; height:100%; background-color: #fff;\">\n<div style=\"height:auto; min-height:100%; \">     <div style=\"text-align: center; width:800px; margin-left: -400px; position:absolute; top: 30%; left:50%;\">\n        <h1 style=\"margin:0; font-size:150px; line-height:150px; font-weight:bold;\">500</h1>\n<h2 style=\"margin-top:20px;font-size: 30px;\">Internal Server Error\r\n</h2>\n<p>An internal server error has occured.</p>\n</div></div></body></html>\n"
+      }
+    },
+    {
+      "name": "Social Media URL Formatting - youtube",
+      "status": "FAIL",
+      "timestamp": "2025-08-22T20:41:01.572Z",
+      "platform": "youtube",
+      "input_url": "https://youtube.com/c/testuser",
+      "error": "HTTP 500",
+      "response_data": {
+        "raw_response": "<!DOCTYPE html>\n<html style=\"height:100%\">\n<head>\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, shrink-to-fit=no\" />\n<title> 500 Internal Server Error\r\n</title><style>@media (prefers-color-scheme:dark){body{background-color:#000!important}}</style></head>\n<body style=\"color: #444; margin:0;font: normal 14px/20px Arial, Helvetica, sans-serif; height:100%; background-color: #fff;\">\n<div style=\"height:auto; min-height:100%; \">     <div style=\"text-align: center; width:800px; margin-left: -400px; position:absolute; top: 30%; left:50%;\">\n        <h1 style=\"margin:0; font-size:150px; line-height:150px; font-weight:bold;\">500</h1>\n<h2 style=\"margin-top:20px;font-size: 30px;\">Internal Server Error\r\n</h2>\n<p>An internal server error has occured.</p>\n</div></div></body></html>\n"
+      }
+    },
+    {
+      "name": "Social Media URL Formatting - discord",
+      "status": "FAIL",
+      "timestamp": "2025-08-22T20:41:01.733Z",
+      "platform": "discord",
+      "input_url": "TestUser#1234",
+      "error": "HTTP 500",
+      "response_data": {
+        "raw_response": "<!DOCTYPE html>\n<html style=\"height:100%\">\n<head>\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, shrink-to-fit=no\" />\n<title> 500 Internal Server Error\r\n</title><style>@media (prefers-color-scheme:dark){body{background-color:#000!important}}</style></head>\n<body style=\"color: #444; margin:0;font: normal 14px/20px Arial, Helvetica, sans-serif; height:100%; background-color: #fff;\">\n<div style=\"height:auto; min-height:100%; \">     <div style=\"text-align: center; width:800px; margin-left: -400px; position:absolute; top: 30%; left:50%;\">\n        <h1 style=\"margin:0; font-size:150px; line-height:150px; font-weight:bold;\">500</h1>\n<h2 style=\"margin-top:20px;font-size: 30px;\">Internal Server Error\r\n</h2>\n<p>An internal server error has occured.</p>\n</div></div></body></html>\n"
+      }
+    },
+    {
+      "name": "Social Media URL Formatting - website",
+      "status": "FAIL",
+      "timestamp": "2025-08-22T20:41:01.856Z",
+      "platform": "website",
+      "input_url": "testteam.gg",
+      "error": "HTTP 500",
+      "response_data": {
+        "raw_response": "<!DOCTYPE html>\n<html style=\"height:100%\">\n<head>\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, shrink-to-fit=no\" />\n<title> 500 Internal Server Error\r\n</title><style>@media (prefers-color-scheme:dark){body{background-color:#000!important}}</style></head>\n<body style=\"color: #444; margin:0;font: normal 14px/20px Arial, Helvetica, sans-serif; height:100%; background-color: #fff;\">\n<div style=\"height:auto; min-height:100%; \">     <div style=\"text-align: center; width:800px; margin-left: -400px; position:absolute; top: 30%; left:50%;\">\n        <h1 style=\"margin:0; font-size:150px; line-height:150px; font-weight:bold;\">500</h1>\n<h2 style=\"margin-top:20px;font-size: 30px;\">Internal Server Error\r\n</h2>\n<p>An internal server error has occured.</p>\n</div></div></body></html>\n"
+      }
+    }
+  ],
+  "issues": [
+    {
+      "type": "SERVER_ERROR",
+      "description": "Internal server error during player creation",
+      "endpoint": "/admin/players",
+      "field": null,
+      "timestamp": "2025-08-22T20:41:00.650Z"
+    },
+    {
+      "type": "VALIDATION_ERROR",
+      "description": "Player validation rules not working properly",
+      "endpoint": "/admin/players",
+      "field": null,
+      "timestamp": "2025-08-22T20:41:00.772Z"
+    },
+    {
+      "type": "SERVER_ERROR",
+      "description": "Internal server error during team creation",
+      "endpoint": "/admin/teams",
+      "field": null,
+      "timestamp": "2025-08-22T20:41:00.901Z"
+    },
+    {
+      "type": "VALIDATION_ERROR",
+      "description": "Team validation rules not working properly",
+      "endpoint": "/admin/teams",
+      "field": null,
+      "timestamp": "2025-08-22T20:41:01.026Z"
+    }
+  ],
+  "endpoints_tested": [
+    {
+      "method": "GET",
+      "endpoint": "/admin/players",
+      "status": 500,
+      "tested_at": "2025-08-22T20:40:59.206Z"
+    },
+    {
+      "method": "POST",
+      "endpoint": "/admin/players",
+      "status": 500,
+      "tested_at": "2025-08-22T20:40:59.506Z"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/admin/players/1",
+      "status": 500,
+      "tested_at": "2025-08-22T20:40:59.639Z"
+    },
+    {
+      "method": "PUT",
+      "endpoint": "/admin/players/1",
+      "status": 500,
+      "tested_at": "2025-08-22T20:40:59.762Z"
+    },
+    {
+      "method": "DELETE",
+      "endpoint": "/admin/players/1",
+      "status": 500,
+      "tested_at": "2025-08-22T20:40:59.886Z"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/admin/teams",
+      "status": 500,
+      "tested_at": "2025-08-22T20:41:00.010Z"
+    },
+    {
+      "method": "POST",
+      "endpoint": "/admin/teams",
+      "status": 500,
+      "tested_at": "2025-08-22T20:41:00.136Z"
+    },
+    {
+      "method": "GET",
+      "endpoint": "/admin/teams/1",
+      "status": 500,
+      "tested_at": "2025-08-22T20:41:00.258Z"
+    },
+    {
+      "method": "PUT",
+      "endpoint": "/admin/teams/1",
+      "status": 500,
+      "tested_at": "2025-08-22T20:41:00.380Z"
+    },
+    {
+      "method": "DELETE",
+      "endpoint": "/admin/teams/1",
+      "status": 500,
+      "tested_at": "2025-08-22T20:41:00.505Z"
+    },
+    {
+      "method": "POST",
+      "endpoint": "/admin/players",
+      "status": 500,
+      "tested_at": "2025-08-22T20:41:00.649Z"
+    },
+    {
+      "method": "POST",
+      "endpoint": "/admin/teams",
+      "status": 500,
+      "tested_at": "2025-08-22T20:41:00.899Z"
+    }
+  ],
+  "field_mapping_issues": [],
+  "validation_errors": []
+}

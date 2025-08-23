@@ -207,7 +207,7 @@ class PlayerController extends Controller
             'real_name' => 'nullable|string|max:255',
             'name' => 'nullable|string|max:255', // Frontend sends 'name' for real name
             'team_id' => 'nullable|exists:teams,id',
-            'role' => 'required|in:Vanguard,Duelist,Strategist,DPS,Tank,Support,Flex',
+            'role' => 'required|in:Vanguard,Duelist,Strategist,DPS,Tank,Support',
             'main_hero' => 'nullable|string|max:100',
             'alt_heroes' => 'nullable|array',
             'region' => 'nullable|string|max:20',
@@ -270,8 +270,7 @@ class PlayerController extends Controller
             'Support' => 'Strategist',
             'Duelist' => 'Duelist',
             'Vanguard' => 'Vanguard',
-            'Strategist' => 'Strategist',
-            'Flex' => 'Flex'
+            'Strategist' => 'Strategist'
         ];
         $playerData['role'] = $roleMapping[$validated['role']] ?? $validated['role'];
         
@@ -339,7 +338,7 @@ class PlayerController extends Controller
                 'real_name' => 'nullable|string|max:255',
                 'name' => 'nullable|string|max:255', // Frontend sends 'name' for real name
                 'team_id' => 'nullable|exists:teams,id',
-                'role' => 'sometimes|in:Vanguard,Duelist,Strategist,DPS,Tank,Support,Flex',
+                'role' => 'sometimes|in:Vanguard,Duelist,Strategist,DPS,Tank,Support',
                 'main_hero' => 'sometimes|string|max:100',
                 'alt_heroes' => 'nullable|array',
                 'hero_preferences' => 'nullable|array',
@@ -378,7 +377,17 @@ class PlayerController extends Controller
                 'description' => 'nullable|string|max:2000', // Frontend sends 'description'
                 'past_teams' => 'nullable|array',
                 'status' => 'sometimes|in:active,inactive,retired,suspended',
-                'avatar' => 'nullable|string|url|max:500'
+                'avatar' => 'nullable|string|url|max:500',
+                // Missing fields from bug-hunter analysis
+                'wins' => 'nullable|integer|min:0',
+                'losses' => 'nullable|integer|min:0',
+                'total_matches' => 'nullable|integer|min:0',
+                'kda' => 'nullable|numeric|min:0',
+                'kda_ratio' => 'nullable|numeric|min:0',
+                'jersey_number' => 'nullable|string|max:10',
+                'jerseyNumber' => 'nullable|string|max:10', // Frontend variant
+                'hero_pool' => 'nullable|string|max:500',
+                'heroPool' => 'nullable|string|max:500' // Frontend variant
             ]);
 
             // Map frontend field names to database field names
@@ -405,10 +414,25 @@ class PlayerController extends Controller
                     'Support' => 'Strategist',
                     'Duelist' => 'Duelist',
                     'Vanguard' => 'Vanguard',
-                    'Strategist' => 'Strategist',
-                    'Flex' => 'Flex'
+                    'Strategist' => 'Strategist'
                 ];
                 $validated['role'] = $roleMapping[$validated['role']] ?? $validated['role'];
+            }
+            
+            // Map frontend field variants to database columns
+            if (isset($validated['jerseyNumber'])) {
+                $validated['jersey_number'] = $validated['jerseyNumber'];
+                unset($validated['jerseyNumber']);
+            }
+            
+            if (isset($validated['heroPool'])) {
+                $validated['hero_pool'] = $validated['heroPool'];
+                unset($validated['heroPool']);
+            }
+            
+            if (isset($validated['kda_ratio'])) {
+                $validated['kda'] = $validated['kda_ratio'];
+                unset($validated['kda_ratio']);
             }
 
             // Handle team transfer logic
@@ -1804,6 +1828,16 @@ class PlayerController extends Controller
                 $kd = $match->deaths > 0 ? round($match->eliminations / $match->deaths, 2) : $match->eliminations;
                 $kda = $match->deaths > 0 ? round(($match->eliminations + $match->assists) / $match->deaths, 2) : ($match->eliminations + $match->assists);
                 
+                // Fetch map_stats from matches table player_stats column
+                $mapStats = [];
+                $fullMatch = DB::table('matches')->where('id', $match->match_id)->first();
+                if ($fullMatch && $fullMatch->player_stats) {
+                    $playerStatsData = json_decode($fullMatch->player_stats, true);
+                    if (isset($playerStatsData[$player->id]['map_stats'])) {
+                        $mapStats = $playerStatsData[$player->id]['map_stats'];
+                    }
+                }
+                
                 return [
                     'match_id' => $match->match_id,
                     'date' => $match->scheduled_at,
@@ -1816,6 +1850,7 @@ class PlayerController extends Controller
                         'logo' => $match->event_logo
                     ],
                     'hero' => $match->hero,
+                    'map_stats' => $mapStats, // Add map_stats for Player History display
                     'stats' => [
                         'rating' => $match->mvp_score ?? 0,
                         'eliminations' => $match->eliminations,

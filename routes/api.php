@@ -38,7 +38,6 @@ use App\Http\Controllers\{
     MentionController,
     TestDataController,
     VoteController,
-    ImageTestController,
     AchievementController,
     ChallengeController,
     LeaderboardController,
@@ -226,6 +225,10 @@ Route::prefix('public')->group(function () {
     Route::get('/tournaments/{tournamentId}/swiss-standings', [ComprehensiveBracketController::class, 'getSwissStandings']);
     Route::get('/events/{eventId}/swiss-standings', [ComprehensiveBracketController::class, 'getSwissStandings']);
     Route::get('/live-matches', [ComprehensiveBracketController::class, 'getLiveMatches']);
+    
+    // Manual Bracket Public Views
+    Route::get('/manual-bracket/{stageId}', [\App\Http\Controllers\ManualBracketController::class, 'getBracket']);
+    Route::get('/manual-bracket/formats', [\App\Http\Controllers\ManualBracketController::class, 'getFormats']);
 
     // ===================================
     // COMPREHENSIVE TOURNAMENT SYSTEM API
@@ -922,6 +925,10 @@ Route::middleware(['auth:api', 'role:admin|moderator'])->prefix('admin')->group(
     
     // Bracket Match Score Management - Available to admin and moderator
     Route::put('/bracket-matches/{matchId}/score', [AdminEventsController::class, 'updateBracketMatchScore']);
+    
+    // Bracket Management - Clear/Reset bracket
+    Route::delete('/events/{eventId}/bracket', [AdminEventsController::class, 'clearBracket']);
+    Route::post('/events/{eventId}/bracket/clear', [AdminEventsController::class, 'clearBracket']);
 });
 
 Route::middleware(['auth:api', 'role:admin'])->prefix('admin')->group(function () {
@@ -1021,6 +1028,13 @@ Route::middleware(['auth:api', 'role:admin'])->prefix('admin')->group(function (
         Route::post('/{tournament}/generate-bracket', [\App\Http\Controllers\TournamentController::class, 'generateBracket']);
         Route::post('/{tournament}/complete', [\App\Http\Controllers\TournamentProgressionController::class, 'completeTournament']);
         Route::post('/{tournament}/cancel', [\App\Http\Controllers\TournamentController::class, 'cancelTournament']);
+        
+        // Manual Bracket Management (NEW)
+        Route::post('/{tournament}/manual-bracket', [\App\Http\Controllers\ManualBracketController::class, 'createManualBracket']);
+        Route::get('/manual-bracket/formats', [\App\Http\Controllers\ManualBracketController::class, 'getFormats']);
+        Route::get('/manual-bracket/{stageId}', [\App\Http\Controllers\ManualBracketController::class, 'getBracket']);
+        Route::put('/manual-bracket/matches/{matchId}/score', [\App\Http\Controllers\ManualBracketController::class, 'updateMatchScore']);
+        Route::post('/manual-bracket/{stageId}/reset', [\App\Http\Controllers\ManualBracketController::class, 'resetBracket']);
         
         // Registration Management
         Route::get('/{tournament}/registrations', [\App\Http\Controllers\TournamentRegistrationController::class, 'index']);
@@ -1714,7 +1728,7 @@ Route::middleware(['auth:api', 'role:user'])->get('/test-user', function (Reques
 });
 
 // System test route
-Route::get('/system-test', [\App\Http\Controllers\SystemTestController::class, 'testAllSystems']);
+// Route::get('/system-test', [\App\Http\Controllers\SystemTestController::class, 'testAllSystems']);
 
 // Upload route aliases for frontend compatibility
 Route::middleware(['auth:api', 'role:admin'])->group(function () {
@@ -1942,7 +1956,8 @@ Route::prefix('analytics')->group(function () {
 // ===================================
 // IMAGE TESTING ROUTES
 // ===================================
-Route::prefix('images')->group(function () {
-    Route::get('/test-all', [ImageTestController::class, 'testAllImages']);
-    Route::get('/test-url', [ImageTestController::class, 'testImageUrl']);
-});
+// Temporarily removed ImageTestController routes due to missing controller
+// Route::prefix('images')->group(function () {
+//     Route::get('/test-all', [ImageTestController::class, 'testAllImages']);
+//     Route::get('/test-url', [ImageTestController::class, 'testImageUrl']);
+// });

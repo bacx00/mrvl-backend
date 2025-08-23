@@ -4,105 +4,86 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Event;
-use App\Models\Tournament;
 use App\Models\Team;
-use App\Models\User;
 use App\Models\BracketMatch;
-use App\Models\TournamentRegistration;
+use App\Models\BracketStage;
+use App\Models\Tournament;
 use App\Services\BracketService;
+use App\Services\BracketGenerationService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
-use Carbon\Carbon;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Cache;
 
 class AdminEventsController extends Controller
 {
     protected $bracketService;
+    protected $bracketGenerationService;
 
-    public function __construct(BracketService $bracketService)
+    public function __construct(BracketService $bracketService, BracketGenerationService $bracketGenerationService)
     {
         $this->bracketService = $bracketService;
+        $this->bracketGenerationService = $bracketGenerationService;
     }
 
     /**
-     * Display a paginated list of all events with advanced filtering and search
+     * Display a listing of events
      */
     public function index(Request $request): JsonResponse
     {
         try {
-            $perPage = $request->get('per_page', 20);
-            $search = $request->get('search');
-            $status = $request->get('status');
-            $type = $request->get('type');
-            $tier = $request->get('tier');
-            $region = $request->get('region');
-            $format = $request->get('format');
-            $featured = $request->get('featured');
-            $sortBy = $request->get('sort_by', 'created_at');
-            $sortOrder = $request->get('sort_order', 'desc');
-
-            $query = Event::with(['organizer:id,name,email', 'teams:id,name,logo'])
-                ->withCount(['teams', 'matches']);
+            $query = Event::query();
 
             // Apply filters
-            if ($search) {
-                $query->where(function($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%")
-                      ->orWhere('description', 'like', "%{$search}%");
+            if ($request->has('search')) {
+                $search = $request->search;
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'LIKE', "%{$search}%")
+                      ->orWhere('description', 'LIKE', "%{$search}%")
+                      ->orWhere('slug', 'LIKE', "%{$search}%");
                 });
             }
 
-            if ($status) {
-                $query->where('status', $status);
+            if ($request->has('status')) {
+                $query->where('status', $request->status);
             }
 
-            if ($type) {
-                $query->where('type', $type);
+            if ($request->has('type')) {
+                $query->where('type', $request->type);
             }
 
-            if ($tier) {
-                $query->where('tier', $tier);
+            if ($request->has('featured')) {
+                $query->where('featured', $request->boolean('featured'));
             }
 
-            if ($region) {
-                $query->where('region', $region);
-            }
-
-            if ($format) {
-                $query->where('format', $format);
-            }
-
-            if ($featured !== null) {
-                $query->where('featured', $featured === 'true');
-            }
-
-            // Apply sorting
+            // Sorting
+            $sortBy = $request->get('sort_by', 'created_at');
+            $sortOrder = $request->get('sort_order', 'desc');
             $query->orderBy($sortBy, $sortOrder);
 
+            // Pagination
+            $perPage = $request->get('per_page', 20);
             $events = $query->paginate($perPage);
 
             // Add computed fields
-            $events->getCollection()->transform(function ($event) {
-                $event->is_registration_open = $event->registration_open;
-                $event->can_register_teams = $event->canRegisterTeam();
-                $event->progress_percentage = $event->progress_percentage;
-                $event->formatted_prize_pool = $event->formatted_prize_pool;
+            $events->through(function ($event) {
+                $event->teams_count = $event->teams()->count();
+                $event->matches_count = $event->matches()->count();
+                $event->progress_percentage = $this->calculateEventProgress($event);
+                $event->formatted_prize_pool = $this->formatPrizePool($event);
                 return $event;
             });
 
             return response()->json([
                 'success' => true,
-                'data' => $events,
-                'stats' => $this->getEventStats(),
-                'filters' => [
-                    'types' => Event::TYPES,
-                    'tiers' => Event::TIERS,
-                    'formats' => Event::FORMATS,
-                    'statuses' => Event::STATUSES,
-                    'regions' => $this->getAvailableRegions()
+                'data' => $events->items(),
+                'pagination' => [
+                    'current_page' => $events->currentPage(),
+                    'last_page' => $events->lastPage(),
+                    'per_page' => $events->perPage(),
+                    'total' => $events->total()
                 ]
             ]);
 
@@ -117,94 +98,29 @@ class AdminEventsController extends Controller
     }
 
     /**
-     * Show detailed event information for admin management
-     */
-    public function show($id): JsonResponse
-    {
-        try {
-            $event = Event::with([
-                'organizer:id,name,email',
-                'teams:id,name,short_name,logo,region,country,rating',
-                'matches:id,event_id,team1_id,team2_id,status,scheduled_at,completed_at,team1_score,team2_score',
-                'brackets:id,event_id,type,stage,bracket_data,created_at',
-                'standings:id,event_id,team_id,position,points,wins,losses'
-            ])->findOrFail($id);
-
-            // Add computed fields
-            $event->is_registration_open = $event->registration_open;
-            $event->can_register_teams = $event->canRegisterTeam();
-            $event->progress_percentage = $event->progress_percentage;
-            $event->formatted_prize_pool = $event->formatted_prize_pool;
-            $event->has_started = $event->hasStarted();
-            $event->has_ended = $event->hasEnded();
-            $event->is_live = $event->isLive();
-
-            // Add team statistics
-            $event->team_stats = [
-                'registered' => $event->teams()->wherePivot('status', 'registered')->count(),
-                'checked_in' => $event->teams()->wherePivot('status', 'checked_in')->count(),
-                'disqualified' => $event->teams()->wherePivot('status', 'disqualified')->count(),
-                'total' => $event->teams_count
-            ];
-
-            // Add match statistics
-            $event->match_stats = [
-                'total' => $event->matches_count,
-                'completed' => $event->matches()->where('status', 'completed')->count(),
-                'ongoing' => $event->matches()->where('status', 'ongoing')->count(),
-                'scheduled' => $event->matches()->where('status', 'scheduled')->count(),
-                'cancelled' => $event->matches()->where('status', 'cancelled')->count()
-            ];
-
-            return response()->json([
-                'success' => true,
-                'data' => $event
-            ]);
-
-        } catch (\Exception $e) {
-            Log::error('Error fetching event: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Event not found',
-                'error' => $e->getMessage()
-            ], 404);
-        }
-    }
-
-    /**
-     * Create a new event with comprehensive validation
+     * Store a newly created event
      */
     public function store(Request $request): JsonResponse
     {
         try {
             $validator = Validator::make($request->all(), [
-                'name' => 'required|string|max:255|unique:events,name',
-                'description' => 'required|string',
-                'type' => 'required|string|in:' . implode(',', array_keys(Event::TYPES)),
-                'tier' => 'required|string|in:' . implode(',', array_keys(Event::TIERS)),
-                'format' => 'required|string|in:' . implode(',', array_keys(Event::FORMATS)),
-                'region' => 'required|string',
-                'game_mode' => 'nullable|string',
-                'start_date' => 'required|date|after:now',
-                'end_date' => 'required|date|after:start_date',
-                'registration_start' => 'nullable|date|before:start_date',
-                'registration_end' => 'nullable|date|after:registration_start|before_or_equal:start_date',
-                'timezone' => 'required|string',
-                'max_teams' => 'required|integer|min:2|max:1024',
+                'name' => 'required|string|max:255',
+                'slug' => 'required|string|max:255|unique:events',
+                'description' => 'nullable|string',
+                'logo' => 'nullable|string',
+                'type' => 'required|in:tournament,league,qualifier,showmatch',
+                'format' => 'required|in:single_elimination,double_elimination,round_robin,swiss',
+                'status' => 'required|in:upcoming,ongoing,completed,cancelled',
                 'prize_pool' => 'nullable|numeric|min:0',
-                'currency' => 'required|string|size:3',
-                'prize_distribution' => 'nullable|array',
-                'organizer_id' => 'nullable|exists:users,id',
+                'currency' => 'nullable|string|max:3',
+                'start_date' => 'required|date',
+                'end_date' => 'required|date|after_or_equal:start_date',
+                'max_teams' => 'required|integer|min:2|max:256',
+                'region' => 'nullable|string',
+                'tier' => 'nullable|in:S,A,B,C,D',
+                'featured' => 'boolean',
                 'rules' => 'nullable|string',
-                'registration_requirements' => 'nullable|array',
-                'streams' => 'nullable|array',
-                'social_links' => 'nullable|array',
-                'featured' => 'nullable|boolean',
-                'public' => 'nullable|boolean',
-                'logo' => 'nullable|file|image|mimes:jpeg,jpg,png,webp|max:5120',
-                'banner' => 'nullable|string',
-                'sponsors' => 'nullable|array',
-                'partners' => 'nullable|array'
+                'prize_distribution' => 'nullable|array'
             ]);
 
             if ($validator->fails()) {
@@ -217,35 +133,35 @@ class AdminEventsController extends Controller
 
             DB::beginTransaction();
 
-            $eventData = $validator->validated();
-            $eventData['slug'] = $this->generateUniqueSlug($eventData['name']);
-            $eventData['organizer_id'] = $eventData['organizer_id'] ?? auth()->id();
-            $eventData['status'] = 'upcoming';
-
-            // Handle logo file upload
-            if ($request->hasFile('logo')) {
-                $logoPath = $this->handleLogoUpload($request->file('logo'));
-                $eventData['logo'] = $logoPath;
-            }
-
-            // Validate prize distribution if provided
-            if (isset($eventData['prize_distribution']) && $eventData['prize_pool']) {
-                $totalDistribution = array_sum($eventData['prize_distribution']);
-                if ($totalDistribution != 100) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Prize distribution must add up to 100%'
-                    ], 422);
-                }
-            }
-
+            // Create event
+            $eventData = $request->except(['prize_distribution']);
             $event = Event::create($eventData);
+
+            // Handle prize distribution
+            if ($request->has('prize_distribution')) {
+                $event->details = array_merge($event->details ?? [], [
+                    'prize_distribution' => $request->prize_distribution
+                ]);
+                $event->save();
+            }
+
+            // Create associated tournament if needed
+            if ($request->type === 'tournament') {
+                Tournament::create([
+                    'event_id' => $event->id,
+                    'name' => $event->name,
+                    'format' => $event->format,
+                    'status' => $event->status,
+                    'max_teams' => $event->max_teams,
+                    'prize_pool' => $event->prize_pool,
+                    'start_date' => $event->start_date,
+                    'end_date' => $event->end_date
+                ]);
+            }
 
             DB::commit();
 
-            $event->load(['organizer:id,name,email']);
-
-            Log::info('Event created successfully', ['event_id' => $event->id, 'admin_id' => auth()->id()]);
+            Log::info('Event created', ['event_id' => $event->id, 'admin_id' => auth()->id()]);
 
             return response()->json([
                 'success' => true,
@@ -265,49 +181,60 @@ class AdminEventsController extends Controller
     }
 
     /**
-     * Update an existing event with validation
+     * Display the specified event
+     */
+    public function show($id): JsonResponse
+    {
+        try {
+            $event = Event::with(['teams', 'matches', 'organizer'])->findOrFail($id);
+
+            // Add computed fields
+            $event->teams_count = $event->teams->count();
+            $event->matches_count = $event->matches->count();
+            $event->progress_percentage = $this->calculateEventProgress($event);
+            $event->formatted_prize_pool = $this->formatPrizePool($event);
+
+            return response()->json([
+                'success' => true,
+                'data' => $event
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error fetching event: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Event not found',
+                'error' => $e->getMessage()
+            ], 404);
+        }
+    }
+
+    /**
+     * Update the specified event
      */
     public function update(Request $request, $id): JsonResponse
     {
         try {
             $event = Event::findOrFail($id);
 
-            // Check if event can be edited
-            if ($event->status === 'completed') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Cannot edit a completed event'
-                ], 422);
-            }
-
             $validator = Validator::make($request->all(), [
-                'name' => 'sometimes|string|max:255|unique:events,name,' . $id,
-                'description' => 'sometimes|string',
-                'type' => 'sometimes|string|in:' . implode(',', array_keys(Event::TYPES)),
-                'tier' => 'sometimes|string|in:' . implode(',', array_keys(Event::TIERS)),
-                'format' => 'sometimes|string|in:' . implode(',', array_keys(Event::FORMATS)),
-                'region' => 'sometimes|string',
-                'game_mode' => 'nullable|string',
-                'start_date' => 'sometimes|date',
-                'end_date' => 'sometimes|date|after:start_date',
-                'registration_start' => 'sometimes|nullable|date|before:start_date',
-                'registration_end' => 'sometimes|nullable|date|after:registration_start|before_or_equal:start_date',
-                'timezone' => 'sometimes|string',
-                'max_teams' => 'sometimes|integer|min:2|max:1024',
+                'name' => 'string|max:255',
+                'slug' => 'string|max:255|unique:events,slug,' . $id,
+                'description' => 'nullable|string',
+                'logo' => 'nullable|string',
+                'type' => 'in:tournament,league,qualifier,showmatch',
+                'format' => 'in:single_elimination,double_elimination,round_robin,swiss',
+                'status' => 'in:upcoming,ongoing,completed,cancelled',
                 'prize_pool' => 'nullable|numeric|min:0',
-                'currency' => 'sometimes|string|size:3',
-                'prize_distribution' => 'nullable|array',
-                'organizer_id' => 'nullable|exists:users,id',
+                'currency' => 'nullable|string|max:3',
+                'start_date' => 'date',
+                'end_date' => 'date|after_or_equal:start_date',
+                'max_teams' => 'integer|min:2|max:256',
+                'region' => 'nullable|string',
+                'tier' => 'nullable|in:S,A,B,C,D',
+                'featured' => 'boolean',
                 'rules' => 'nullable|string',
-                'registration_requirements' => 'nullable|array',
-                'streams' => 'nullable|array',
-                'social_links' => 'nullable|array',
-                'featured' => 'nullable|boolean',
-                'public' => 'nullable|boolean',
-                'logo' => 'nullable|file|image|mimes:jpeg,jpg,png,webp|max:5120',
-                'banner' => 'nullable|string',
-                'sponsors' => 'nullable|array',
-                'partners' => 'nullable|array'
+                'prize_distribution' => 'nullable|array'
             ]);
 
             if ($validator->fails()) {
@@ -320,37 +247,25 @@ class AdminEventsController extends Controller
 
             DB::beginTransaction();
 
-            $eventData = $validator->validated();
-
-            // Update slug if name changed
-            if (isset($eventData['name']) && $eventData['name'] !== $event->name) {
-                $eventData['slug'] = $this->generateUniqueSlug($eventData['name']);
-            }
-
-            // Handle logo file upload
-            if ($request->hasFile('logo')) {
-                $logoPath = $this->handleLogoUpload($request->file('logo'));
-                $eventData['logo'] = $logoPath;
-            }
-
-            // Validate prize distribution if provided
-            if (isset($eventData['prize_distribution']) && isset($eventData['prize_pool'])) {
-                $totalDistribution = array_sum($eventData['prize_distribution']);
-                if ($totalDistribution != 100) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Prize distribution must add up to 100%'
-                    ], 422);
-                }
-            }
-
+            // Update event
+            $eventData = $request->except(['prize_distribution']);
             $event->update($eventData);
+
+            // Handle prize distribution
+            if ($request->has('prize_distribution')) {
+                $details = $event->details ?? [];
+                $details['prize_distribution'] = $request->prize_distribution;
+                $event->details = $details;
+                $event->save();
+            }
+
+            // Clear cache for this event
+            Cache::forget('event_' . $id);
+            Cache::forget('event_bracket_' . $id);
 
             DB::commit();
 
-            $event->load(['organizer:id,name,email']);
-
-            Log::info('Event updated successfully', ['event_id' => $event->id, 'admin_id' => auth()->id()]);
+            Log::info('Event updated', ['event_id' => $event->id, 'admin_id' => auth()->id()]);
 
             return response()->json([
                 'success' => true,
@@ -370,7 +285,7 @@ class AdminEventsController extends Controller
     }
 
     /**
-     * Delete an event with validation
+     * Remove the specified event
      */
     public function destroy($id): JsonResponse
     {
@@ -382,36 +297,32 @@ class AdminEventsController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'Cannot delete an ongoing event'
-                ], 422);
+                ], 400);
             }
 
-            if ($event->teams_count > 0 && $event->status !== 'cancelled') {
+            if ($event->teams()->count() > 0 || $event->matches()->count() > 0) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Cannot delete event with registered teams unless cancelled'
-                ], 422);
+                    'message' => 'Cannot delete event with associated teams or matches'
+                ], 400);
             }
 
             DB::beginTransaction();
 
-            // Remove team associations
-            $event->teams()->detach();
-
-            // Delete related matches
-            $event->matches()->delete();
-
-            // Delete brackets
-            $event->brackets()->delete();
-
-            // Delete standings
-            $event->standings()->delete();
+            // Delete associated bracket data
+            BracketMatch::where('event_id', $id)->delete();
+            BracketStage::where('event_id', $id)->delete();
 
             // Delete the event
             $event->delete();
 
+            // Clear cache
+            Cache::forget('event_' . $id);
+            Cache::forget('event_bracket_' . $id);
+
             DB::commit();
 
-            Log::info('Event deleted successfully', ['event_id' => $id, 'admin_id' => auth()->id()]);
+            Log::info('Event deleted', ['event_id' => $id, 'admin_id' => auth()->id()]);
 
             return response()->json([
                 'success' => true,
@@ -430,198 +341,64 @@ class AdminEventsController extends Controller
     }
 
     /**
-     * Update event status with validation
+     * Add a team to an event
      */
-    public function updateStatus(Request $request, $id): JsonResponse
+    public function addTeam(Request $request, $eventId): JsonResponse
     {
         try {
-            $validator = Validator::make($request->all(), [
-                'status' => 'required|string|in:' . implode(',', array_keys(Event::STATUSES)),
-                'reason' => 'nullable|string'
-            ]);
-
-            if ($validator->fails()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Validation failed',
-                    'errors' => $validator->errors()
-                ], 422);
-            }
-
-            $event = Event::findOrFail($id);
-            $oldStatus = $event->status;
-            $newStatus = $request->status;
-
-            // Validate status transitions
-            $validTransitions = $this->getValidStatusTransitions($oldStatus);
-            if (!in_array($newStatus, $validTransitions)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => "Cannot transition from {$oldStatus} to {$newStatus}"
-                ], 422);
-            }
-
-            DB::beginTransaction();
-
-            $event->update([
-                'status' => $newStatus,
-                'updated_at' => now()
-            ]);
-
-            // Handle status-specific logic
-            switch ($newStatus) {
-                case 'ongoing':
-                    if ($event->teams_count < 2) {
-                        DB::rollBack();
-                        return response()->json([
-                            'success' => false,
-                            'message' => 'Cannot start event with less than 2 teams'
-                        ], 422);
-                    }
-                    break;
-
-                case 'completed':
-                    // Generate final standings if not exists
-                    $this->generateFinalStandings($event);
-                    break;
-
-                case 'cancelled':
-                    // Handle cancellation logic
-                    $this->handleEventCancellation($event);
-                    break;
-            }
-
-            DB::commit();
-
-            Log::info('Event status updated', [
-                'event_id' => $event->id,
-                'old_status' => $oldStatus,
-                'new_status' => $newStatus,
-                'admin_id' => auth()->id()
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'message' => "Event status updated to {$newStatus}",
-                'data' => $event->fresh()
-            ]);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Error updating event status: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to update event status',
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Get all teams registered for an event
-     */
-    public function getEventTeams($id): JsonResponse
-    {
-        try {
-            $event = Event::findOrFail($id);
-
-            $teams = $event->teams()
-                ->withPivot(['seed', 'status', 'registered_at', 'registration_data'])
-                ->orderBy('pivot_seed')
-                ->get();
-
-            return response()->json([
-                'success' => true,
-                'data' => [
-                    'event' => $event->only(['id', 'name', 'status', 'max_teams']),
-                    'teams' => $teams,
-                    'stats' => [
-                        'total' => $teams->count(),
-                        'registered' => $teams->where('pivot.status', 'registered')->count(),
-                        'checked_in' => $teams->where('pivot.status', 'checked_in')->count(),
-                        'disqualified' => $teams->where('pivot.status', 'disqualified')->count(),
-                        'remaining_slots' => $event->max_teams - $teams->count()
-                    ]
-                ]
-            ]);
-
-        } catch (\Exception $e) {
-            Log::error('Error fetching event teams: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to fetch event teams',
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Add team to event
-     */
-    public function addTeamToEvent(Request $request, $eventId): JsonResponse
-    {
-        try {
-            $validator = Validator::make($request->all(), [
-                'team_id' => 'required|exists:teams,id',
-                'seed' => 'nullable|integer|min:1',
-                'status' => 'nullable|string|in:registered,checked_in,disqualified',
-                'registration_data' => 'nullable|array'
-            ]);
-
-            if ($validator->fails()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Validation failed',
-                    'errors' => $validator->errors()
-                ], 422);
-            }
-
             $event = Event::findOrFail($eventId);
-            $team = Team::findOrFail($request->team_id);
+            
+            $validator = Validator::make($request->all(), [
+                'team_id' => 'required|exists:teams,id'
+            ]);
 
-            // Check if team is already registered
-            if ($event->teams()->where('team_id', $team->id)->exists()) {
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            // Check if team is already in the event
+            if ($event->teams()->where('team_id', $request->team_id)->exists()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Team is already registered for this event'
-                ], 422);
+                ], 400);
             }
 
-            // Check if event has space
-            if ($event->current_team_count >= $event->max_teams) {
+            // Check max teams limit
+            if ($event->teams()->count() >= $event->max_teams) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Event is full'
-                ], 422);
+                    'message' => 'Event has reached maximum team capacity'
+                ], 400);
             }
 
-            DB::beginTransaction();
-
-            $seed = $request->seed ?? ($event->current_team_count + 1);
-            $status = $request->status ?? 'registered';
-
-            $event->teams()->attach($team->id, [
-                'seed' => $seed,
-                'status' => $status,
-                'registered_at' => now(),
-                'registration_data' => json_encode($request->registration_data ?? [])
+            // Add team to event
+            $event->teams()->attach($request->team_id, [
+                'status' => 'confirmed',
+                'seed' => $event->teams()->count() + 1,
+                'created_at' => now(),
+                'updated_at' => now()
             ]);
 
-            DB::commit();
+            // Clear cache
+            Cache::forget('event_' . $eventId);
 
             Log::info('Team added to event', [
-                'event_id' => $event->id,
-                'team_id' => $team->id,
+                'event_id' => $eventId,
+                'team_id' => $request->team_id,
                 'admin_id' => auth()->id()
             ]);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Team added to event successfully'
+                'message' => 'Team added successfully'
             ]);
 
         } catch (\Exception $e) {
-            DB::rollBack();
             Log::error('Error adding team to event: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
@@ -632,56 +409,55 @@ class AdminEventsController extends Controller
     }
 
     /**
-     * Remove team from event
+     * Remove a team from an event
      */
-    public function removeTeamFromEvent($eventId, $teamId): JsonResponse
+    public function removeTeam($eventId, $teamId): JsonResponse
     {
         try {
             $event = Event::findOrFail($eventId);
-            $team = Team::findOrFail($teamId);
 
+            // Check if team is in the event
             if (!$event->teams()->where('team_id', $teamId)->exists()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Team is not registered for this event'
-                ], 422);
+                ], 404);
             }
 
-            // Check if event has started
-            if ($event->status === 'ongoing') {
+            // Check if team has played matches
+            $hasMatches = BracketMatch::where('event_id', $eventId)
+                ->where(function ($q) use ($teamId) {
+                    $q->where('team1_id', $teamId)
+                      ->orWhere('team2_id', $teamId);
+                })
+                ->where('status', '!=', 'pending')
+                ->exists();
+
+            if ($hasMatches) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Cannot remove team from ongoing event'
-                ], 422);
+                    'message' => 'Cannot remove team that has played matches'
+                ], 400);
             }
 
-            DB::beginTransaction();
-
+            // Remove team from event
             $event->teams()->detach($teamId);
 
-            // Remove team from any matches
-            $event->matches()
-                ->where(function($query) use ($teamId) {
-                    $query->where('team1_id', $teamId)
-                          ->orWhere('team2_id', $teamId);
-                })
-                ->delete();
-
-            DB::commit();
+            // Clear cache
+            Cache::forget('event_' . $eventId);
 
             Log::info('Team removed from event', [
-                'event_id' => $event->id,
+                'event_id' => $eventId,
                 'team_id' => $teamId,
                 'admin_id' => auth()->id()
             ]);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Team removed from event successfully'
+                'message' => 'Team removed successfully'
             ]);
 
         } catch (\Exception $e) {
-            DB::rollBack();
             Log::error('Error removing team from event: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
@@ -692,67 +468,17 @@ class AdminEventsController extends Controller
     }
 
     /**
-     * Update team seed in event
+     * Generate bracket for an event
      */
-    public function updateTeamSeed(Request $request, $eventId, $teamId): JsonResponse
+    public function generateBracket(Request $request, $eventId): JsonResponse
     {
         try {
+            $event = Event::with('teams')->findOrFail($eventId);
+
+            // Validate request
             $validator = Validator::make($request->all(), [
-                'seed' => 'required|integer|min:1'
-            ]);
-
-            if ($validator->fails()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Validation failed',
-                    'errors' => $validator->errors()
-                ], 422);
-            }
-
-            $event = Event::findOrFail($eventId);
-
-            if (!$event->teams()->where('team_id', $teamId)->exists()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Team is not registered for this event'
-                ], 422);
-            }
-
-            $event->teams()->updateExistingPivot($teamId, [
-                'seed' => $request->seed
-            ]);
-
-            Log::info('Team seed updated', [
-                'event_id' => $event->id,
-                'team_id' => $teamId,
-                'seed' => $request->seed,
-                'admin_id' => auth()->id()
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Team seed updated successfully'
-            ]);
-
-        } catch (\Exception $e) {
-            Log::error('Error updating team seed: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to update team seed',
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Generate bracket for event
-     */
-    public function generateBracket(Request $request, $id): JsonResponse
-    {
-        try {
-            $validator = Validator::make($request->all(), [
-                'format' => 'required|string|in:' . implode(',', array_keys(Event::FORMATS)),
-                'seeding_method' => 'nullable|string|in:rating,manual,random',
+                'format' => 'required|in:single_elimination,double_elimination,round_robin,swiss',
+                'seeding_method' => 'nullable|in:random,rating,manual',
                 'shuffle_seeds' => 'nullable|boolean'
             ]);
 
@@ -764,91 +490,50 @@ class AdminEventsController extends Controller
                 ], 422);
             }
 
-            $event = Event::with('teams')->findOrFail($id);
-
+            // Check if event has teams
             if ($event->teams->count() < 2) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Need at least 2 teams to generate bracket'
-                ], 422);
+                ], 400);
+            }
+
+            // Check if bracket already exists
+            $existingBracket = BracketStage::where('event_id', $eventId)->exists();
+            if ($existingBracket && !$request->boolean('force')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Bracket already exists. Use force=true to regenerate.'
+                ], 400);
             }
 
             DB::beginTransaction();
 
-            // Clear existing bracket data for this event
-            \App\Models\BracketPosition::whereHas('bracketMatch', function($q) use ($id) {
-                $q->where('event_id', $id);
-            })->delete();
-            \App\Models\BracketSeeding::where('event_id', $id)->delete();
-            \App\Models\BracketMatch::where('event_id', $id)->delete();
-            \App\Models\BracketStage::where('event_id', $id)->delete();
-            \App\Models\BracketStanding::where('event_id', $id)->delete();
-
-            // Generate bracket using the bracket service
-            if (!$this->bracketService) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Bracket generation service is not available'
-                ], 503);
+            // Clear existing bracket if force regeneration
+            if ($existingBracket && $request->boolean('force')) {
+                BracketMatch::where('event_id', $eventId)->delete();
+                BracketStage::where('event_id', $eventId)->delete();
             }
 
-            // Generate bracket based on format
-            $options = [
-                'best_of' => '3',
-                'seeding_method' => $request->seeding_method ?? 'seed',
-                'third_place_match' => false,
-                'bracket_reset' => true
-            ];
+            // Generate the bracket
+            $bracketData = $this->bracketGenerationService->generateBracket(
+                $event,
+                $request->format ?? $event->format,
+                $request->seeding_method ?? 'rating',
+                $request->boolean('shuffle_seeds', false)
+            );
 
-            switch ($request->format) {
-                case 'single_elimination':
-                    $result = $this->bracketService->generateSingleEliminationBracket(
-                        $event, 
-                        $event->teams, 
-                        $options
-                    );
-                    break;
-                case 'double_elimination':
-                    $result = $this->bracketService->generateDoubleEliminationBracket(
-                        $event,
-                        $event->teams,
-                        $options
-                    );
-                    break;
-                case 'swiss':
-                    $result = $this->bracketService->generateSwissBracket(
-                        $event,
-                        $event->teams,
-                        $options
-                    );
-                    break;
-                case 'round_robin':
-                    $result = $this->bracketService->generateRoundRobinBracket(
-                        $event,
-                        $event->teams,
-                        $options
-                    );
-                    break;
-                default:
-                    throw new \Exception("Unsupported bracket format: {$request->format}");
-            }
+            // Update event status
+            $event->update(['status' => 'ongoing']);
 
-            $bracketData = $result;
-
-            $event->update([
-                'format' => $request->format,
-                'bracket_data' => $bracketData,
-                'total_rounds' => $event->calculateTotalRounds(),
-                'current_round' => 1
-            ]);
-
-            // Matches are already created by the BracketService
-            // $this->createMatchesFromBracket($event, $bracketData);
+            // Clear cache
+            Cache::forget('event_' . $eventId);
+            Cache::forget('event_bracket_' . $eventId);
 
             DB::commit();
 
-            Log::info('Bracket generated for event', [
-                'event_id' => $event->id,
+            Log::info('Bracket generated', [
+                'event_id' => $eventId,
                 'format' => $request->format,
                 'admin_id' => auth()->id()
             ]);
@@ -857,9 +542,10 @@ class AdminEventsController extends Controller
                 'success' => true,
                 'message' => 'Bracket generated successfully',
                 'data' => [
-                    'bracket_data' => $bracketData,
-                    'total_rounds' => $event->total_rounds,
-                    'matches_created' => $event->matches()->count()
+                    'event_id' => $eventId,
+                    'format' => $request->format ?? $event->format,
+                    'teams_count' => $event->teams->count(),
+                    'bracket_data' => $bracketData
                 ]
             ]);
 
@@ -869,6 +555,70 @@ class AdminEventsController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to generate bracket',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Clear/Reset bracket for an event
+     */
+    public function clearBracket(Request $request, $eventId): JsonResponse
+    {
+        try {
+            $event = Event::findOrFail($eventId);
+
+            // Allow force clear for manual bracket management
+            $forceClear = $request->boolean('force', true); // Default to true for manual management
+
+            if (!$forceClear) {
+                // Only check for ongoing matches if not forcing
+                $hasOngoingMatches = BracketMatch::where('event_id', $eventId)
+                    ->where('status', 'ongoing')
+                    ->exists();
+
+                if ($hasOngoingMatches) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Cannot clear bracket with ongoing matches. Use force=true to override.'
+                    ], 400);
+                }
+            }
+
+            DB::beginTransaction();
+
+            // Delete all bracket data
+            BracketMatch::where('event_id', $eventId)->delete();
+            BracketStage::where('event_id', $eventId)->delete();
+
+            // Reset event status if needed
+            if ($event->status === 'ongoing' && $event->start_date > now()) {
+                $event->update(['status' => 'upcoming']);
+            }
+
+            // Clear cache
+            Cache::forget('event_' . $eventId);
+            Cache::forget('event_bracket_' . $eventId);
+
+            DB::commit();
+
+            Log::info('Bracket cleared', [
+                'event_id' => $eventId,
+                'forced' => $forceClear,
+                'admin_id' => auth()->id()
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Bracket cleared successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error clearing bracket: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to clear bracket',
                 'error' => $e->getMessage()
             ], 500);
         }
@@ -885,7 +635,9 @@ class AdminEventsController extends Controller
                 'team2_score' => 'required|integer|min:0|max:3'
             ]);
             
-            $match = \App\Models\BracketMatch::findOrFail($matchId);
+            $match = BracketMatch::findOrFail($matchId);
+            
+            DB::beginTransaction();
             
             // Update scores
             $match->team1_score = $request->team1_score;
@@ -900,6 +652,7 @@ class AdminEventsController extends Controller
                 $match->loser_id = $request->team1_score > $request->team2_score 
                     ? $match->team2_id 
                     : $match->team1_id;
+                $match->completed_at = now();
                 
                 // Progress winner to next match if configured
                 if ($match->winner_advances_to) {
@@ -910,19 +663,39 @@ class AdminEventsController extends Controller
                 if ($match->loser_advances_to) {
                     $this->progressLoserToLowerBracket($match);
                 }
-            } else if ($request->team1_score > 0 || $request->team2_score > 0) {
+            } else {
+                // Match is ongoing
                 $match->status = 'ongoing';
+                if (!$match->started_at) {
+                    $match->started_at = now();
+                }
             }
             
             $match->save();
             
+            // Clear cache
+            Cache::forget('event_bracket_' . $match->event_id);
+            Cache::tags(['bracket_match_' . $matchId])->flush();
+            
+            // Broadcast update for real-time sync
+            broadcast(new \App\Events\BracketUpdated($match->event_id, $match));
+            
+            DB::commit();
+            
+            Log::info('Bracket match score updated', [
+                'match_id' => $matchId,
+                'scores' => [$request->team1_score, $request->team2_score],
+                'admin_id' => auth()->id()
+            ]);
+            
             return response()->json([
                 'success' => true,
                 'message' => 'Match score updated successfully',
-                'data' => $match
+                'data' => $match->fresh(['team1', 'team2'])
             ]);
             
         } catch (\Exception $e) {
+            DB::rollBack();
             Log::error('Error updating bracket match score: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
@@ -931,71 +704,116 @@ class AdminEventsController extends Controller
             ], 500);
         }
     }
-    
+
+    /**
+     * Progress winner to next match
+     */
     private function progressWinnerToNextMatch($match)
     {
-        // Find the next match and set the winner as a participant
-        $nextMatch = \App\Models\BracketMatch::where('match_id', $match->winner_advances_to)->first();
+        $nextMatch = BracketMatch::find($match->winner_advances_to);
         if ($nextMatch) {
             // Determine which slot (team1 or team2) based on match position
-            if (strpos($match->match_id, '-1') !== false || strpos($match->match_id, '-3') !== false) {
+            if ($nextMatch->team1_source === "Winner of Match {$match->id}") {
                 $nextMatch->team1_id = $match->winner_id;
             } else {
                 $nextMatch->team2_id = $match->winner_id;
             }
+            
+            // If both teams are set, mark as ready
+            if ($nextMatch->team1_id && $nextMatch->team2_id) {
+                $nextMatch->status = 'ready';
+            }
+            
             $nextMatch->save();
         }
     }
-    
+
+    /**
+     * Progress loser to lower bracket (for double elimination)
+     */
     private function progressLoserToLowerBracket($match)
     {
-        // Find the lower bracket match and set the loser as a participant
-        $lowerMatch = \App\Models\BracketMatch::where('match_id', $match->loser_advances_to)->first();
-        if ($lowerMatch) {
+        $lowerBracketMatch = BracketMatch::find($match->loser_advances_to);
+        if ($lowerBracketMatch) {
             // Determine which slot based on match position
-            if (!$lowerMatch->team1_id) {
-                $lowerMatch->team1_id = $match->loser_id;
+            if ($lowerBracketMatch->team1_source === "Loser of Match {$match->id}") {
+                $lowerBracketMatch->team1_id = $match->loser_id;
             } else {
-                $lowerMatch->team2_id = $match->loser_id;
+                $lowerBracketMatch->team2_id = $match->loser_id;
             }
-            $lowerMatch->save();
+            
+            // If both teams are set, mark as ready
+            if ($lowerBracketMatch->team1_id && $lowerBracketMatch->team2_id) {
+                $lowerBracketMatch->status = 'ready';
+            }
+            
+            $lowerBracketMatch->save();
         }
     }
 
     /**
      * Get bracket data for an event
      */
-    public function getEventBracket($id): JsonResponse
+    public function getBracket($eventId): JsonResponse
     {
         try {
-            $event = Event::findOrFail($id);
+            // Try to get from cache first
+            $cacheKey = 'event_bracket_' . $eventId;
+            $cachedBracket = Cache::get($cacheKey);
             
-            // Get bracket stages and matches
-            $bracketStages = \App\Models\BracketStage::where('event_id', $id)
-                ->with(['matches.team1', 'matches.team2', 'matches.winner', 'matches.loser'])
-                ->orderBy('stage_order')
+            if ($cachedBracket) {
+                return response()->json([
+                    'success' => true,
+                    'data' => $cachedBracket,
+                    'cached' => true
+                ]);
+            }
+            
+            $event = Event::findOrFail($eventId);
+            
+            // Get all bracket stages
+            $bracketStages = BracketStage::where('event_id', $eventId)
+                ->orderBy('order')
                 ->get();
             
-            // Format bracket data for frontend
+            // Get all bracket matches with teams
+            $matches = BracketMatch::where('event_id', $eventId)
+                ->with(['team1', 'team2'])
+                ->get();
+            
+            // Build bracket structure
             $bracketData = [
-                'matches' => [],
-                'upper_bracket' => [],
-                'lower_bracket' => [],
-                'grand_final' => null
+                'type' => $event->format,
+                'status' => $event->status,
+                'rounds' => [],
+                'matches' => []
             ];
             
+            // Group matches by round
             foreach ($bracketStages as $stage) {
-                $stageMatches = $stage->matches->map(function($match) {
+                $stageMatches = $matches->where('bracket_stage_id', $stage->id)->map(function ($match) {
                     return [
                         'id' => $match->id,
                         'match_id' => $match->match_id,
                         'round_name' => $match->round_name,
                         'round_number' => $match->round_number,
-                        'match_number' => $match->match_number,
-                        'team1_id' => $match->team1_id,
-                        'team2_id' => $match->team2_id,
-                        'team1' => $match->team1,
-                        'team2' => $match->team2,
+                        'position' => $match->match_number,
+                        'team1' => $match->team1 ? [
+                            'id' => $match->team1->id,
+                            'name' => $match->team1->name,
+                            'short_name' => $match->team1->short_name,
+                            'logo' => $match->team1->logo,
+                            'score' => $match->team1_score,
+                            'seed' => $match->team1_seed
+                        ] : null,
+                        'team2' => $match->team2 ? [
+                            'id' => $match->team2->id,
+                            'name' => $match->team2->name,
+                            'short_name' => $match->team2->short_name,
+                            'logo' => $match->team2->logo,
+                            'score' => $match->team2_score,
+                            'seed' => $match->team2_seed
+                        ] : null,
                         'team1_score' => $match->team1_score,
                         'team2_score' => $match->team2_score,
                         'winner_id' => $match->winner_id,
@@ -1009,31 +827,31 @@ class AdminEventsController extends Controller
                     ];
                 });
                 
-                // Organize by stage type
-                if ($stage->type === 'upper_bracket') {
-                    $bracketData['upper_bracket'] = $stageMatches->groupBy('round_number');
-                    $bracketData['matches'] = array_merge($bracketData['matches'], $stageMatches->toArray());
-                } elseif ($stage->type === 'lower_bracket') {
-                    $bracketData['lower_bracket'] = $stageMatches->groupBy('round_number');
-                } elseif ($stage->type === 'grand_final') {
-                    $bracketData['grand_final'] = $stageMatches->first();
-                } else {
-                    // Single elimination or other formats
-                    $bracketData['matches'] = array_merge($bracketData['matches'], $stageMatches->toArray());
+                // Organize by round name
+                $roundName = $stage->name;
+                if (!isset($bracketData['rounds'][$roundName])) {
+                    $bracketData['rounds'][$roundName] = [
+                        'round_number' => $stage->order,
+                        'matches' => []
+                    ];
                 }
+                $bracketData['rounds'][$roundName]['matches'] = $stageMatches->values()->toArray();
+                
+                // Also add to flat matches array
+                $bracketData['matches'] = array_merge($bracketData['matches'], $stageMatches->toArray());
             }
+            
+            // Cache the result for 1 minute
+            Cache::put($cacheKey, $bracketData, 60);
             
             return response()->json([
                 'success' => true,
                 'data' => [
-                    'event' => [
-                        'id' => $event->id,
-                        'name' => $event->name,
-                        'format' => $event->format,
-                        'status' => $event->status
-                    ],
-                    'bracket_data' => $bracketData,
-                    'stages' => $bracketStages
+                    'event_id' => $eventId,
+                    'event_name' => $event->name,
+                    'format' => $event->format,
+                    'status' => $event->status,
+                    'bracket' => $bracketData
                 ]
             ]);
             
@@ -1061,9 +879,9 @@ class AdminEventsController extends Controller
                     'total_matches' => $event->matches->count(),
                     'completed_matches' => $event->matches->where('status', 'completed')->count(),
                     'ongoing_matches' => $event->matches->where('status', 'ongoing')->count(),
-                    'progress_percentage' => $event->progress_percentage,
-                    'prize_pool' => $event->formatted_prize_pool,
-                    'views' => $event->views
+                    'progress_percentage' => $this->calculateEventProgress($event),
+                    'prize_pool' => $this->formatPrizePool($event),
+                    'views' => $event->views ?? 0
                 ],
                 'team_distribution' => [
                     'by_region' => $event->teams->groupBy('region')->map->count(),
@@ -1081,7 +899,7 @@ class AdminEventsController extends Controller
                         ->sum(DB::raw('team1_score + team2_score'))
                 ],
                 'engagement' => [
-                    'total_views' => $event->views,
+                    'total_views' => $event->views ?? 0,
                     'peak_concurrent_viewers' => 0, // TODO: Implement if tracking
                     'unique_viewers' => 0, // TODO: Implement if tracking
                 ]
@@ -1146,7 +964,7 @@ class AdminEventsController extends Controller
 
                     switch ($operation) {
                         case 'delete':
-                            if ($event->status !== 'ongoing' && $event->teams_count === 0) {
+                            if ($event->status !== 'ongoing' && $event->teams()->count() === 0) {
                                 $event->delete();
                                 $results['success_count']++;
                             } else {
@@ -1210,139 +1028,25 @@ class AdminEventsController extends Controller
     }
 
     /**
-     * Get comprehensive event analytics dashboard
+     * Helper: Calculate event progress percentage
      */
-    public function getAnalyticsDashboard(): JsonResponse
+    private function calculateEventProgress($event): int
     {
-        try {
-            $stats = [
-                'overview' => $this->getEventStats(),
-                'recent_events' => Event::orderBy('created_at', 'desc')->limit(5)->get(),
-                'upcoming_events' => Event::upcoming()->limit(5)->get(),
-                'ongoing_events' => Event::ongoing()->limit(5)->get(),
-                'top_events_by_teams' => Event::withCount('teams')
-                    ->orderBy('teams_count', 'desc')
-                    ->limit(5)
-                    ->get(),
-                'events_by_region' => Event::select('region', DB::raw('count(*) as count'))
-                    ->groupBy('region')
-                    ->get(),
-                'events_by_format' => Event::select('format', DB::raw('count(*) as count'))
-                    ->groupBy('format')
-                    ->get(),
-                'monthly_events' => Event::select(
-                        DB::raw('YEAR(created_at) as year'),
-                        DB::raw('MONTH(created_at) as month'),
-                        DB::raw('COUNT(*) as count')
-                    )
-                    ->whereYear('created_at', now()->year)
-                    ->groupBy('year', 'month')
-                    ->orderBy('year', 'desc')
-                    ->orderBy('month', 'desc')
-                    ->get(),
-            ];
-
-            return response()->json([
-                'success' => true,
-                'data' => $stats
-            ]);
-
-        } catch (\Exception $e) {
-            Log::error('Error fetching analytics dashboard: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to fetch analytics dashboard',
-                'error' => $e->getMessage()
-            ], 500);
-        }
+        $totalMatches = $event->matches()->count();
+        if ($totalMatches === 0) return 0;
+        
+        $completedMatches = $event->matches()->where('status', 'completed')->count();
+        return round(($completedMatches / $totalMatches) * 100);
     }
 
     /**
-     * Helper Methods
+     * Helper: Format prize pool with currency
      */
-
-    private function generateUniqueSlug(string $name): string
+    private function formatPrizePool($event): string
     {
-        $slug = Str::slug($name);
-        $originalSlug = $slug;
-        $counter = 1;
-
-        while (Event::where('slug', $slug)->exists()) {
-            $slug = $originalSlug . '-' . $counter;
-            $counter++;
-        }
-
-        return $slug;
-    }
-
-    private function getEventStats(): array
-    {
-        return [
-            'total' => Event::count(),
-            'upcoming' => Event::upcoming()->count(),
-            'ongoing' => Event::ongoing()->count(),
-            'completed' => Event::completed()->count(),
-            'featured' => Event::featured()->count(),
-            'total_teams_registered' => DB::table('event_teams')->count(),
-            'total_matches_played' => DB::table('matches')->where('status', 'completed')->count(),
-            'total_prize_pool' => Event::sum('prize_pool')
-        ];
-    }
-
-    private function getAvailableRegions(): array
-    {
-        return Event::distinct()->pluck('region')->filter()->values()->toArray();
-    }
-
-    private function getValidStatusTransitions(string $currentStatus): array
-    {
-        $transitions = [
-            'upcoming' => ['ongoing', 'cancelled'],
-            'ongoing' => ['completed', 'cancelled'],
-            'completed' => [],
-            'cancelled' => ['upcoming'] // Allow reactivation
-        ];
-
-        return $transitions[$currentStatus] ?? [];
-    }
-
-    private function generateFinalStandings(Event $event): void
-    {
-        // Implementation for generating final standings
-        // This would depend on the tournament format and structure
-    }
-
-    private function handleEventCancellation(Event $event): void
-    {
-        // Handle event cancellation logic
-        // Cancel all ongoing matches
-        $event->matches()->where('status', 'scheduled')->update(['status' => 'cancelled']);
-    }
-
-
-    private function createMatchesFromBracket(Event $event, array $bracketData): void
-    {
-        // Implementation for creating matches from bracket data
-        // This would depend on the specific bracket format structure
-    }
-
-    /**
-     * Handle logo file upload for events
-     */
-    private function handleLogoUpload($file): string
-    {
-        try {
-            $extension = $file->getClientOriginalExtension();
-            $filename = 'event_' . time() . '_' . Str::random(10) . '.' . $extension;
-            $directory = 'events/logos';
-            
-            // Store the file
-            $path = $file->storeAs($directory, $filename, 'public');
-            
-            // Return the storage URL
-            return '/storage/' . $path;
-        } catch (\Exception $e) {
-            throw new \Exception('Failed to upload logo: ' . $e->getMessage());
-        }
+        if (!$event->prize_pool) return 'TBD';
+        
+        $currency = $event->currency ?? 'USD';
+        return number_format($event->prize_pool, 0) . ' ' . $currency;
     }
 }

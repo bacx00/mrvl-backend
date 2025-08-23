@@ -386,11 +386,24 @@ class NewsController extends ApiResponseController
                 return response()->json(['success' => false, 'message' => 'News article not found'], 404);
             }
 
+            $userId = auth('api')->id();
             $commentId = DB::table('news_comments')->insertGetId([
                 'news_id' => $newsId,
-                'user_id' => auth('api')->id(),
+                'user_id' => $userId,
                 'content' => $request->content,
                 'parent_id' => $request->parent_id,
+                'upvotes' => 1,  // Auto-upvote own comment
+                'score' => 1,    // Initial score of 1
+                'created_at' => now(),
+                'updated_at' => now()
+            ]);
+            
+            // Auto-upvote the user's own comment
+            DB::table('news_votes')->insert([
+                'news_id' => $newsId,
+                'comment_id' => $commentId,
+                'user_id' => $userId,
+                'vote_type' => 'upvote',
                 'created_at' => now(),
                 'updated_at' => now()
             ]);
