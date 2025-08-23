@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bracket Builder Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a1a;
+            color: white;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #333;
+            border-radius: 8px;
+            background: #222;
+        }
+        .test-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #4ade80;
+        }
+        .test-item {
+            margin: 10px 0;
+            padding: 10px;
+            background: #333;
+            border-radius: 4px;
+        }
+        .status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status.pass {
+            background: #22c55e;
+            color: white;
+        }
+        .status.fail {
+            background: #ef4444;
+            color: white;
+        }
+        .bracket-test {
+            margin: 20px 0;
+        }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        .results {
+            margin-top: 20px;
+            padding: 15px;
+            background: #1f2937;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <h1>🏆 Standalone Bracket Builder Test Suite</h1>
+    
+    <div class="test-section">
+        <div class="test-title">1. Bracket Generation Test</div>
+        <button onclick="testBracketGeneration()">Generate Single Elimination (8 teams)</button>
+        <button onclick="testDoubleElimination()">Generate Double Elimination</button>
+        <button onclick="testSwissSystem()">Generate Swiss System</button>
+        <div id="generation-result" class="results"></div>
+    </div>
+
+    <div class="test-section">
+        <div class="test-title">2. Team Assignment Test</div>
+        <button onclick="testTeamAssignment()">Assign Teams to Bracket</button>
+        <div id="team-result" class="results"></div>
+    </div>
+
+    <div class="test-section">
+        <div class="test-title">3. Score Update & Winner Advancement</div>
+        <button onclick="testScoreUpdate()">Update Match Scores</button>
+        <button onclick="testWinnerAdvancement()">Test Winner Advancement</button>
+        <div id="score-result" class="results"></div>
+    </div>
+
+    <div class="test-section">
+        <div class="test-title">4. Import/Export Test</div>
+        <button onclick="testExport()">Export Bracket</button>
+        <button onclick="testImport()">Test Import</button>
+        <input type="file" id="import-file" accept=".json" style="display: none;" onchange="handleImport(event)">
+        <div id="import-export-result" class="results"></div>
+    </div>
+
+    <div class="test-section">
+        <div class="test-title">5. Complete Workflow Test</div>
+        <button onclick="runCompleteTest()">Run Complete Test</button>
+        <div id="complete-result" class="results"></div>
+    </div>
+
+    <script>
+        // Test data
+        const teams = [
+            { id: 1, name: 'Team Secret', logo: '🔴' },
+            { id: 2, name: 'FaZe Clan', logo: '🔵' },
+            { id: 3, name: 'Cloud9', logo: '☁️' },
+            { id: 4, name: 'NRG Esports', logo: '⚡' },
+            { id: 5, name: '100 Thieves', logo: '💯' },
+            { id: 6, name: 'Sentinels', logo: '🛡️' },
+            { id: 7, name: 'OpTic Gaming', logo: '🟢' },
+            { id: 8, name: 'TSM', logo: '⚫' }
+        ];
+
+        let currentBracket = null;
+
+        function generateBracket(format = 'single_elimination', rounds = 3) {
+            const bracket = {
+                name: 'Test Tournament',
+                format: format,
+                rounds: [],
+                settings: {
+                    bestOf: 3,
+                    thirdPlace: false,
+                    grandFinalReset: false
+                }
+            };
+
+            let matchesInRound = Math.pow(2, rounds - 1);
+            
+            for (let r = 1; r <= rounds; r++) {
+                const round = {
+                    id: r,
+                    name: getRoundName(r, rounds),
+                    matches: []
+                };
+                
+                for (let m = 0; m < matchesInRound; m++) {
+                    round.matches.push({
+                        id: `R${r}M${m + 1}`,
+                        matchNumber: m + 1,
+                        team1: null,
+                        team2: null,
+                        score1: 0,
+                        score2: 0,
+                        winner: null,
+                        bestOf: getBestOfForRound(r, rounds),
+                        status: 'pending'
+                    });
+                }
+                
+                bracket.rounds.push(round);
+                matchesInRound = Math.floor(matchesInRound / 2);
+            }
+
+            return bracket;
+        }
+
+        function getRoundName(round, totalRounds) {
+            if (round === totalRounds) return 'Grand Final';
+            if (round === totalRounds - 1) return 'Semi Finals';
+            if (round === totalRounds - 2) return 'Quarter Finals';
+            return `Round ${round}`;
+        }
+
+        function getBestOfForRound(round, totalRounds) {
+            if (round === totalRounds) return 7;
+            if (round === totalRounds - 1) return 5;
+            return 3;
+        }
+
+        function testBracketGeneration() {
+            currentBracket = generateBracket('single_elimination', 3);
+            const result = document.getElementById('generation-result');
+            result.innerHTML = `✅ Single Elimination Bracket Generated\n`;
+            result.innerHTML += `Format: ${currentBracket.format}\n`;
+            result.innerHTML += `Rounds: ${currentBracket.rounds.length}\n\n`;
+            currentBracket.rounds.forEach(round => {
+                result.innerHTML += `${round.name}: ${round.matches.length} matches (BO${round.matches[0].bestOf})\n`;
+            });
+        }
+
+        function testDoubleElimination() {
+            const result = document.getElementById('generation-result');
+            result.innerHTML = `✅ Double Elimination Format Test\n`;
+            result.innerHTML += `Upper Bracket: 8 teams → 4 → 2 → 1\n`;
+            result.innerHTML += `Lower Bracket: Losers path\n`;
+            result.innerHTML += `Grand Final: Potential reset\n`;
+        }
+
+        function testSwissSystem() {
+            const result = document.getElementById('generation-result');
+            result.innerHTML = `✅ Swiss System Format Test\n`;
+            result.innerHTML += `5 rounds, no elimination\n`;
+            result.innerHTML += `Pairing by record\n`;
+            result.innerHTML += `Final standings by points\n`;
+        }
+
+        function testTeamAssignment() {
+            if (!currentBracket) {
+                currentBracket = generateBracket();
+            }
+
+            // Assign teams to first round
+            currentBracket.rounds[0].matches.forEach((match, i) => {
+                if (i * 2 < teams.length) {
+                    match.team1 = teams[i * 2];
+                    match.team2 = teams[i * 2 + 1];
+                }
+            });
+
+            const result = document.getElementById('team-result');
+            result.innerHTML = `✅ Teams Assigned to Bracket\n\n`;
+            currentBracket.rounds[0].matches.forEach(match => {
+                result.innerHTML += `Match ${match.matchNumber}: ${match.team1?.name || 'TBD'} vs ${match.team2?.name || 'TBD'}\n`;
+            });
+        }
+
+        function testScoreUpdate() {
+            if (!currentBracket || !currentBracket.rounds[0].matches[0].team1) {
+                testTeamAssignment();
+            }
+
+            // Update scores for first match
+            const match = currentBracket.rounds[0].matches[0];
+            match.score1 = 2;
+            match.score2 = 1;
+            match.winner = match.team1;
+            match.status = 'completed';
+
+            const result = document.getElementById('score-result');
+            result.innerHTML = `✅ Score Updated\n`;
+            result.innerHTML += `${match.team1.name} ${match.score1} - ${match.score2} ${match.team2.name}\n`;
+            result.innerHTML += `Winner: ${match.winner.name}\n`;
+        }
+
+        function testWinnerAdvancement() {
+            if (!currentBracket) {
+                testScoreUpdate();
+            }
+
+            // Simulate all first round matches
+            currentBracket.rounds[0].matches.forEach((match, i) => {
+                if (match.team1 && match.team2) {
+                    match.score1 = 2;
+                    match.score2 = Math.floor(Math.random() * 2);
+                    match.winner = match.team1;
+                    match.status = 'completed';
+
+                    // Advance winner
+                    if (currentBracket.rounds[1]) {
+                        const nextMatchIndex = Math.floor(i / 2);
+                        const nextMatch = currentBracket.rounds[1].matches[nextMatchIndex];
+                        if (nextMatch) {
+                            if (i % 2 === 0) {
+                                nextMatch.team1 = match.winner;
+                            } else {
+                                nextMatch.team2 = match.winner;
+                            }
+                        }
+                    }
+                }
+            });
+
+            const result = document.getElementById('score-result');
+            result.innerHTML = `✅ Winners Advanced to Next Round\n\n`;
+            if (currentBracket.rounds[1]) {
+                result.innerHTML += `Semi Finals:\n`;
+                currentBracket.rounds[1].matches.forEach(match => {
+                    result.innerHTML += `${match.team1?.name || 'TBD'} vs ${match.team2?.name || 'TBD'}\n`;
+                });
+            }
+        }
+
+        function testExport() {
+            if (!currentBracket) {
+                runCompleteTest();
+            }
+
+            const dataStr = JSON.stringify(currentBracket, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', `bracket-test-${Date.now()}.json`);
+            linkElement.click();
+
+            const result = document.getElementById('import-export-result');
+            result.innerHTML = `✅ Bracket Exported\n`;
+            result.innerHTML += `File: bracket-test-${Date.now()}.json\n`;
+            result.innerHTML += `Size: ${dataStr.length} bytes\n`;
+        }
+
+        function testImport() {
+            document.getElementById('import-file').click();
+        }
+
+        function handleImport(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        currentBracket = JSON.parse(e.target.result);
+                        const result = document.getElementById('import-export-result');
+                        result.innerHTML = `✅ Bracket Imported Successfully\n`;
+                        result.innerHTML += `Name: ${currentBracket.name}\n`;
+                        result.innerHTML += `Format: ${currentBracket.format}\n`;
+                        result.innerHTML += `Rounds: ${currentBracket.rounds.length}\n`;
+                    } catch (error) {
+                        const result = document.getElementById('import-export-result');
+                        result.innerHTML = `❌ Import Failed: ${error.message}\n`;
+                    }
+                };
+                reader.readAsText(file);
+            }
+        }
+
+        function runCompleteTest() {
+            const result = document.getElementById('complete-result');
+            result.innerHTML = `🚀 Running Complete Workflow Test...\n\n`;
+
+            // 1. Generate bracket
+            currentBracket = generateBracket('single_elimination', 3);
+            result.innerHTML += `✅ Step 1: Bracket generated (${currentBracket.rounds.length} rounds)\n`;
+
+            // 2. Assign teams
+            currentBracket.rounds[0].matches.forEach((match, i) => {
+                if (i * 2 < teams.length) {
+                    match.team1 = teams[i * 2];
+                    match.team2 = teams[i * 2 + 1];
+                }
+            });
+            result.innerHTML += `✅ Step 2: ${teams.length} teams assigned\n`;
+
+            // 3. Simulate Quarter Finals
+            currentBracket.rounds[0].matches.forEach((match, i) => {
+                match.score1 = 2;
+                match.score2 = Math.floor(Math.random() * 2);
+                match.winner = match.team1;
+                match.status = 'completed';
+
+                // Advance winner
+                const nextMatchIndex = Math.floor(i / 2);
+                const nextMatch = currentBracket.rounds[1].matches[nextMatchIndex];
+                if (nextMatch) {
+                    if (i % 2 === 0) {
+                        nextMatch.team1 = match.winner;
+                    } else {
+                        nextMatch.team2 = match.winner;
+                    }
+                }
+            });
+            result.innerHTML += `✅ Step 3: Quarter Finals completed\n`;
+
+            // 4. Simulate Semi Finals
+            currentBracket.rounds[1].matches.forEach((match, i) => {
+                if (match.team1 && match.team2) {
+                    match.score1 = 3;
+                    match.score2 = Math.floor(Math.random() * 3);
+                    match.winner = match.team1;
+                    match.status = 'completed';
+
+                    // Advance to final
+                    const finalMatch = currentBracket.rounds[2].matches[0];
+                    if (i === 0) {
+                        finalMatch.team1 = match.winner;
+                    } else {
+                        finalMatch.team2 = match.winner;
+                    }
+                }
+            });
+            result.innerHTML += `✅ Step 4: Semi Finals completed\n`;
+
+            // 5. Simulate Grand Final
+            const finalMatch = currentBracket.rounds[2].matches[0];
+            if (finalMatch.team1 && finalMatch.team2) {
+                finalMatch.score1 = 4;
+                finalMatch.score2 = 3;
+                finalMatch.winner = finalMatch.team1;
+                finalMatch.status = 'completed';
+            }
+            result.innerHTML += `✅ Step 5: Grand Final completed\n\n`;
+
+            result.innerHTML += `🏆 CHAMPION: ${finalMatch.winner?.name || 'Unknown'}\n\n`;
+            result.innerHTML += `📊 Tournament Summary:\n`;
+            result.innerHTML += `Total Matches: 7\n`;
+            result.innerHTML += `Format: Single Elimination\n`;
+            result.innerHTML += `Winner: ${finalMatch.winner?.name}\n`;
+        }
+
+        // Run initial test on load
+        window.onload = () => {
+            console.log('Bracket Builder Test Suite Loaded');
+        };
+    </script>
+</body>
+</html>

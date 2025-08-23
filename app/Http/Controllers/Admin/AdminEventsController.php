@@ -675,7 +675,7 @@ class AdminEventsController extends Controller
             
             // Clear cache
             Cache::forget('event_bracket_' . $match->event_id);
-            Cache::tags(['bracket_match_' . $matchId])->flush();
+            Cache::forget('bracket_match_' . $matchId);
             
             // Broadcast update for real-time sync
             broadcast(new \App\Events\BracketUpdated($match->event_id, $match));

@@ -95,6 +95,181 @@ class BracketGenerationService
     }
 
     /**
+     * Generate bracket for an Event (not Tournament)
+     */
+    public function generateBracket($event, $format, $seedingMethod = 'rating', $shuffleSeeds = false)
+    {
+        try {
+            $teams = $event->teams;
+            
+            if ($teams->count() < 2) {
+                throw new \Exception("Need at least 2 teams to generate bracket");
+            }
+
+            // Create bracket stages based on format
+            switch ($format) {
+                case 'single_elimination':
+                    return $this->generateEventSingleElimination($event, $teams, $seedingMethod, $shuffleSeeds);
+                case 'double_elimination':
+                    return $this->generateEventDoubleElimination($event, $teams, $seedingMethod, $shuffleSeeds);
+                case 'round_robin':
+                    return $this->generateEventRoundRobin($event, $teams, $seedingMethod, $shuffleSeeds);
+                case 'swiss':
+                    return $this->generateEventSwiss($event, $teams, $seedingMethod, $shuffleSeeds);
+                default:
+                    throw new \Exception("Unsupported format: {$format}");
+            }
+        } catch (\Exception $e) {
+            Log::error("Event bracket generation failed: " . $e->getMessage(), [
+                'event_id' => $event->id,
+                'format' => $format
+            ]);
+            throw $e;
+        }
+    }
+
+    /**
+     * Generate Single Elimination for Event
+     */
+    private function generateEventSingleElimination($event, $teams, $seedingMethod, $shuffleSeeds)
+    {
+        // Seed teams
+        $seededTeams = $this->seedTeams($teams, $seedingMethod, $shuffleSeeds);
+        
+        // Calculate rounds
+        $rounds = ceil(log($teams->count(), 2));
+        
+        // Create bracket stage
+        $stage = \App\Models\BracketStage::create([
+            'tournament_id' => null,  // For events, tournament_id is null
+            'event_id' => $event->id,
+            'name' => 'Elimination Bracket',
+            'type' => 'upper_bracket',  // Use 'type' instead of 'stage_type'
+            'stage_order' => 1,
+            'status' => 'pending',
+            'max_teams' => $teams->count(),  // Use 'max_teams' instead of 'team_count'
+            'current_round' => 1,
+            'total_rounds' => $rounds,  // Use 'total_rounds' instead of 'round_count'
+            'settings' => [
+                'seeding_method' => $seedingMethod,
+                'shuffled' => $shuffleSeeds
+            ]
+        ]);
+
+        // Generate matches for first round
+        $matches = [];
+        $matchNumber = 1;
+        
+        for ($i = 0; $i < count($seededTeams); $i += 2) {
+            if (isset($seededTeams[$i + 1])) {
+                $match = \App\Models\BracketMatch::create([
+                    'match_id' => "E{$event->id}_R1_M{$matchNumber}",  // Generate unique match ID
+                    'tournament_id' => null,  // For events, tournament_id is null
+                    'event_id' => $event->id,
+                    'bracket_stage_id' => $stage->id,  // Use 'bracket_stage_id' instead of 'stage_id'
+                    'round_name' => 'Round 1',
+                    'round_number' => 1,  // Use 'round_number' instead of 'round'
+                    'match_number' => $matchNumber++,
+                    'team1_id' => $seededTeams[$i]['id'],  // Access as array, not object
+                    'team2_id' => $seededTeams[$i + 1]['id'],  // Access as array, not object
+                    'status' => 'pending',
+                    'best_of' => 3,
+                    'scheduled_at' => null
+                ]);
+                $matches[] = $match;
+            }
+        }
+
+        // Generate placeholder matches for subsequent rounds
+        for ($round = 2; $round <= $rounds; $round++) {
+            $matchesInRound = pow(2, $rounds - $round);
+            for ($i = 0; $i < $matchesInRound; $i++) {
+                $currentMatchNumber = $matchNumber++;
+                \App\Models\BracketMatch::create([
+                    'match_id' => "E{$event->id}_R{$round}_M{$currentMatchNumber}",  // Generate unique match ID
+                    'tournament_id' => null,  // For events, tournament_id is null
+                    'event_id' => $event->id,
+                    'bracket_stage_id' => $stage->id,  // Use 'bracket_stage_id' instead of 'stage_id'
+                    'round_name' => $round === $rounds ? 'Final' : "Round {$round}",
+                    'round_number' => $round,  // Use 'round_number' instead of 'round'
+                    'match_number' => $currentMatchNumber,
+                    'team1_id' => null,
+                    'team2_id' => null,
+                    'status' => 'pending',
+                    'best_of' => $round === $rounds ? 5 : 3, // Finals BO5
+                    'scheduled_at' => null
+                ]);
+            }
+        }
+
+        return [
+            'stage' => $stage,
+            'matches' => $matches,
+            'rounds' => $rounds
+        ];
+    }
+
+    /**
+     * Seed teams based on method
+     */
+    private function seedTeams($teams, $method, $shuffle = false)
+    {
+        $teamsArray = $teams->toArray();
+        
+        switch ($method) {
+            case 'rating':
+                usort($teamsArray, function($a, $b) {
+                    return ($b['rating'] ?? 1000) - ($a['rating'] ?? 1000);
+                });
+                break;
+            case 'random':
+                shuffle($teamsArray);
+                break;
+            case 'manual':
+                // Keep existing order
+                break;
+        }
+        
+        if ($shuffle && $method !== 'random') {
+            // Shuffle within seed groups
+            $groups = array_chunk($teamsArray, 4);
+            foreach ($groups as &$group) {
+                shuffle($group);
+            }
+            $teamsArray = array_merge(...$groups);
+        }
+        
+        return collect($teamsArray);
+    }
+
+    /**
+     * Generate Double Elimination for Event  
+     */
+    private function generateEventDoubleElimination($event, $teams, $seedingMethod, $shuffleSeeds)
+    {
+        // TODO: Implement double elimination
+        throw new \Exception("Double elimination not yet implemented");
+    }
+
+    /**
+     * Generate Round Robin for Event
+     */
+    private function generateEventRoundRobin($event, $teams, $seedingMethod, $shuffleSeeds)
+    {
+        // TODO: Implement round robin
+        throw new \Exception("Round robin not yet implemented");
+    }
+
+    /**
+     * Generate Swiss for Event
+     */
+    private function generateEventSwiss($event, $teams, $seedingMethod, $shuffleSeeds)
+    {
+        // TODO: Implement swiss
+        throw new \Exception("Swiss not yet implemented");
+    }
+
+    /**
      * Generate Double Elimination Tournament
      */
     private function generateDoubleEliminationTournament(Tournament $tournament, Collection $teams): Collection

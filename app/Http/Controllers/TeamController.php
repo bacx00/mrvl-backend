@@ -129,6 +129,11 @@ class TeamController extends Controller
 
             // Get ALL team data for complete VLR.gg-style profile
             
+            // Calculate team's actual rank based on rating
+            $teamRank = DB::table('teams')
+                ->where('rating', '>', $team->rating ?? 1000)
+                ->count() + 1;
+            
             // Current roster (active players)
             $currentRoster = DB::table('players')
                 ->where('team_id', $teamId)
@@ -236,12 +241,21 @@ class TeamController extends Controller
                 'founded' => $team->founded,
                 'captain' => $team->captain,
                 'coach' => $team->coach,
+                'coach_name' => $team->coach_name,
+                'coach_nationality' => $team->coach_nationality,
+                'coach_data' => [
+                    'name' => $team->coach_name ?? $team->coach ?? null,
+                    'nationality' => $team->coach_nationality ?? null,
+                    'avatar' => $team->coach_image ?? $team->coach_picture ?? null,
+                    'social_media' => isset($team->coach_social_media) && $team->coach_social_media ? 
+                        (is_string($team->coach_social_media) ? json_decode($team->coach_social_media, true) : $team->coach_social_media) : []
+                ],
                 'website' => $team->website,
                 'social_media' => $team->social_media ? json_decode($team->social_media, true) : [],
                 
                 // Performance metrics
                 'rating' => $team->rating ?? 1000,
-                'rank' => $team->rank ?? 999,
+                'rank' => $teamRank,
                 'peak_rating' => $team->peak ?? $team->rating ?? 1000,
                 'division' => $this->getDivisionByRating($team->rating ?? 1000),
                 'earnings' => $team->earnings ?? '$0',
@@ -2984,11 +2998,14 @@ class TeamController extends Controller
                 ], 404);
             }
 
+            // Accept both coach_image and coach_avatar field names
+            $fieldName = $request->hasFile('coach_image') ? 'coach_image' : 'coach_avatar';
+            
             $request->validate([
-                'coach_image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048'
+                $fieldName => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048'
             ]);
 
-            $image = $request->file('coach_image');
+            $image = $request->file($fieldName);
             $imageName = 'coach_' . time() . '.' . $image->extension();
             
             // Store in public/teams/coaches directory

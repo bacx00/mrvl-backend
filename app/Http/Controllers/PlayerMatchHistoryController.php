@@ -23,20 +23,44 @@ class PlayerMatchHistoryController extends Controller
         // Calculate overall statistics
         $stats = $this->calculatePlayerStats($playerId);
         
+        // Calculate player rank based on ELO rating
+        $playerRank = \DB::table('players')
+            ->where('elo_rating', '>', $player->elo_rating ?? 1000)
+            ->count() + 1;
+        
         return response()->json([
-            'id' => $player->id,
-            'name' => $player->name,
-            'real_name' => $player->real_name,
-            'country' => $player->country,
-            'team' => $player->team,
-            'team_id' => $player->team_id,
-            'role' => $player->role,
-            'main_hero' => $player->main_hero,
-            'avatar' => $player->avatar,
-            'total_matches' => $stats['total_matches'],
-            'win_rate' => $stats['win_rate'],
-            'overall_kda' => $stats['overall_kda'],
-            'hero_stats' => $stats['hero_stats']
+            'data' => [
+                'id' => $player->id,
+                'username' => $player->username,
+                'name' => $player->name,
+                'real_name' => $player->real_name,
+                'country' => $player->country,
+                'team' => $player->team,
+                'current_team' => $player->team, // Add current_team for frontend compatibility
+                'team_id' => $player->team_id,
+                'role' => $player->role,
+                'main_hero' => $player->main_hero,
+                'avatar' => $player->avatar,
+                'region' => $player->region,
+                'rating' => $player->rating,
+                'elo_rating' => $player->elo_rating,
+                'rank' => $playerRank,
+                'age' => $player->age,
+                'status' => $player->status,
+                'earnings' => $player->earnings,
+                'total_earnings' => $player->earnings,
+                'total_matches' => $stats['total_matches'],
+                'win_rate' => $stats['win_rate'],
+                'overall_kda' => $stats['overall_kda'],
+                'hero_stats' => $stats['hero_stats'],
+                'social_media' => is_string($player->social_media) ? json_decode($player->social_media, true) : ($player->social_media ?? []),
+                'twitter' => $player->twitter,
+                'twitch' => $player->twitch,
+                'instagram' => $player->instagram,
+                'youtube' => $player->youtube,
+                'discord' => $player->discord,
+                'tiktok' => $player->tiktok
+            ]
         ]);
     }
 

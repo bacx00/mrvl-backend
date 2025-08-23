@@ -526,7 +526,12 @@ class PlayerController extends Controller
                 DB::table('players')->where('id', $playerId)->update($validated);
                 
                 // Clear relevant caches for immediate updates
-                \Cache::tags(['players', 'teams', 'profiles'])->flush();
+                try {
+                    \Cache::tags(['players', 'teams', 'profiles'])->flush();
+                } catch (\Exception $e) {
+                    // If cache driver doesn't support tags, clear individual caches
+                    \Log::info('Cache driver does not support tagging, clearing individual caches');
+                }
                 \Cache::forget("player_{$playerId}");
                 \Cache::forget("player_admin_{$playerId}");
                 if (isset($validated['team_id'])) {
@@ -3463,7 +3468,12 @@ class PlayerController extends Controller
                 DB::table('players')->whereIn('id', $playerIds)->delete();
 
                 // Clear caches
-                \Cache::tags(['players', 'teams', 'profiles'])->flush();
+                try {
+                    \Cache::tags(['players', 'teams', 'profiles'])->flush();
+                } catch (\Exception $e) {
+                    // If cache driver doesn't support tags, clear individual caches
+                    \Log::info('Cache driver does not support tagging, clearing individual caches');
+                }
                 foreach ($playerIds as $playerId) {
                     \Cache::forget("player_{$playerId}");
                     \Cache::forget("player_admin_{$playerId}");

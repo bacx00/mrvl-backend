@@ -1158,6 +1158,16 @@ Route::post('/teams/{teamId}/coach/upload', [TeamController::class, 'uploadCoach
         Route::post('/{id}/generate-bracket', [AdminEventsController::class, 'generateBracket']);
         Route::get('/{id}/bracket', [AdminEventsController::class, 'getEventBracket']);
         
+        // Manual Bracket Management System
+        Route::post('/{eventId}/bracket/manual/stage', [\App\Http\Controllers\Admin\ManualBracketController::class, 'createBracketStage']);
+        Route::post('/{eventId}/bracket/manual/match', [\App\Http\Controllers\Admin\ManualBracketController::class, 'createMatch']);
+        Route::put('/{eventId}/bracket/manual/match/{matchId}', [\App\Http\Controllers\Admin\ManualBracketController::class, 'updateMatch']);
+        Route::post('/{eventId}/bracket/manual/match/{matchId}/scores', [\App\Http\Controllers\Admin\ManualBracketController::class, 'setMatchScores']);
+        Route::delete('/{eventId}/bracket/manual/match/{matchId}', [\App\Http\Controllers\Admin\ManualBracketController::class, 'deleteMatch']);
+        Route::get('/{eventId}/bracket/manual/matches', [\App\Http\Controllers\Admin\ManualBracketController::class, 'getMatches']);
+        Route::post('/{eventId}/bracket/manual/matches/bulk', [\App\Http\Controllers\Admin\ManualBracketController::class, 'bulkCreateMatches']);
+        Route::post('/{eventId}/bracket/manual/reset', [\App\Http\Controllers\Admin\ManualBracketController::class, 'resetBracket']);
+        
         // Event Statistics and Analytics
         Route::get('/{id}/statistics', [AdminEventsController::class, 'getEventStatistics']);
         
@@ -1734,6 +1744,7 @@ Route::middleware(['auth:api', 'role:user'])->get('/test-user', function (Reques
 Route::middleware(['auth:api', 'role:admin'])->group(function () {
     Route::post('/upload/team/{teamId}/logo', [ImageUploadController::class, 'uploadTeamLogo']);
     Route::post('/upload/team/{teamId}/banner', [ImageUploadController::class, 'uploadTeamBanner']);
+    Route::post('/upload/team/{teamId}/coach-avatar', [TeamController::class, 'uploadCoachImage']);
     Route::post('/upload/player/{playerId}/avatar', [ImageUploadController::class, 'uploadPlayerAvatar']);
 });
 

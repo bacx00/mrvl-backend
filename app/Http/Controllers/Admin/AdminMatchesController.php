@@ -51,10 +51,13 @@ class AdminMatchesController extends Controller
                 });
             }
 
-            // Status filter
+            // Status filter - map frontend status to backend
             if ($request->filled('status')) {
                 $status = $request->input('status');
-                if (in_array($status, ['upcoming', 'live', 'completed'])) {
+                // Map 'scheduled' from frontend to 'upcoming' in database
+                if ($status === 'scheduled') {
+                    $query->where('status', 'upcoming');
+                } elseif (in_array($status, ['upcoming', 'live', 'completed'])) {
                     $query->where('status', $status);
                 }
             }
@@ -101,16 +104,46 @@ class AdminMatchesController extends Controller
             $perPage = min($request->input('per_page', 25), 100);
             $matches = $query->paginate($perPage);
 
-            // Add additional data for each match
+            // Add additional data for each match and flatten the structure
             $matches->getCollection()->transform(function ($match) {
-                $match->live_viewers = $match->viewers ?? 0;
-                $match->has_vods = !empty($match->vod_urls);
-                $match->has_streams = !empty($match->stream_urls);
-                $match->duration_minutes = $match->started_at && $match->ended_at 
-                    ? $match->started_at->diffInMinutes($match->ended_at) 
-                    : null;
+                // Flatten team and event data for frontend compatibility
+                $transformedMatch = [
+                    'id' => $match->id,
+                    'team1_id' => $match->team1_id,
+                    'team2_id' => $match->team2_id,
+                    'team1_name' => $match->team1 ? $match->team1->name : 'TBD',
+                    'team2_name' => $match->team2 ? $match->team2->name : 'TBD',
+                    'team1_logo' => $match->team1 ? $match->team1->logo : null,
+                    'team2_logo' => $match->team2 ? $match->team2->logo : null,
+                    'team1_short' => $match->team1 ? $match->team1->short_name : null,
+                    'team2_short' => $match->team2 ? $match->team2->short_name : null,
+                    'team1_region' => $match->team1 ? $match->team1->region : null,
+                    'team2_region' => $match->team2 ? $match->team2->region : null,
+                    'team1_score' => $match->team1_score ?? 0,
+                    'team2_score' => $match->team2_score ?? 0,
+                    'event_id' => $match->event_id,
+                    'event_name' => $match->event ? $match->event->name : 'No Event',
+                    'event_logo' => $match->event ? $match->event->logo : null,
+                    'status' => $match->status === 'upcoming' ? 'scheduled' : ($match->status ?? 'scheduled'),
+                    'format' => $match->format,
+                    'scheduled_at' => $match->scheduled_at,
+                    'started_at' => $match->started_at,
+                    'ended_at' => $match->ended_at,
+                    'created_at' => $match->created_at,
+                    'winner_id' => $match->winner_id,
+                    'live_viewers' => $match->viewers ?? 0,
+                    'has_vods' => !empty($match->vod_urls),
+                    'has_streams' => !empty($match->stream_urls),
+                    'duration_minutes' => $match->started_at && $match->ended_at 
+                        ? $match->started_at->diffInMinutes($match->ended_at) 
+                        : null,
+                    // Include nested objects for components that might need them
+                    'team1' => $match->team1,
+                    'team2' => $match->team2,
+                    'event' => $match->event
+                ];
                 
-                return $match;
+                return (object) $transformedMatch;
             });
 
             return response()->json([
@@ -203,7 +236,7 @@ class AdminMatchesController extends Controller
                 'event_id' => $request->event_id,
                 'scheduled_at' => $request->scheduled_at,
                 'format' => $request->format,
-                'status' => $request->status ?? 'upcoming',
+                'status' => ($request->status === 'scheduled' ? 'upcoming' : $request->status) ?? 'upcoming',
                 'team1_score' => 0,
                 'team2_score' => 0,
                 'series_score_team1' => 0,
@@ -237,10 +270,36 @@ class AdminMatchesController extends Controller
 
             $match->load(['team1', 'team2', 'event']);
 
+            // Flatten the match data for frontend compatibility
+            $flattenedMatch = [
+                'id' => $match->id,
+                'team1_id' => $match->team1_id,
+                'team2_id' => $match->team2_id,
+                'team1_name' => $match->team1 ? $match->team1->name : 'TBD',
+                'team2_name' => $match->team2 ? $match->team2->name : 'TBD',
+                'team1_logo' => $match->team1 ? $match->team1->logo : null,
+                'team2_logo' => $match->team2 ? $match->team2->logo : null,
+                'team1_score' => $match->team1_score ?? 0,
+                'team2_score' => $match->team2_score ?? 0,
+                'event_id' => $match->event_id,
+                'event_name' => $match->event ? $match->event->name : 'No Event',
+                'event_logo' => $match->event ? $match->event->logo : null,
+                'status' => $match->status ?? 'scheduled',
+                'format' => $match->format,
+                'scheduled_at' => $match->scheduled_at,
+                'started_at' => $match->started_at,
+                'ended_at' => $match->ended_at,
+                'winner_id' => $match->winner_id,
+                // Include nested objects for components that might need them
+                'team1' => $match->team1,
+                'team2' => $match->team2,
+                'event' => $match->event
+            ];
+
             return response()->json([
                 'success' => true,
                 'message' => 'Match created successfully',
-                'data' => $match
+                'data' => $flattenedMatch
             ], 201);
 
         } catch (\Exception $e) {
@@ -340,7 +399,7 @@ class AdminMatchesController extends Controller
             'event_id' => 'sometimes|nullable|exists:events,id',
             'scheduled_at' => 'sometimes|date',
             'format' => 'sometimes|in:BO1,BO3,BO5,BO7,BO9',
-            'status' => 'sometimes|in:upcoming,live,completed',
+            'status' => 'sometimes|in:upcoming,scheduled,live,completed',
             'team1_score' => 'sometimes|integer|min:0',
             'team2_score' => 'sometimes|integer|min:0',
             'winner_id' => 'sometimes|nullable|exists:teams,id',
@@ -368,6 +427,11 @@ class AdminMatchesController extends Controller
                 'team1_id', 'team2_id', 'event_id', 'scheduled_at', 'format',
                 'status', 'team1_score', 'team2_score', 'winner_id', 'viewers'
             ]);
+
+            // Map 'scheduled' from frontend to 'upcoming' for database
+            if (isset($updateData['status']) && $updateData['status'] === 'scheduled') {
+                $updateData['status'] = 'upcoming';
+            }
 
             // Handle JSON fields
             if ($request->has('stream_urls')) {
@@ -421,10 +485,36 @@ class AdminMatchesController extends Controller
 
             $match->load(['team1', 'team2', 'event']);
 
+            // Flatten the match data for frontend compatibility
+            $flattenedMatch = [
+                'id' => $match->id,
+                'team1_id' => $match->team1_id,
+                'team2_id' => $match->team2_id,
+                'team1_name' => $match->team1 ? $match->team1->name : 'TBD',
+                'team2_name' => $match->team2 ? $match->team2->name : 'TBD',
+                'team1_logo' => $match->team1 ? $match->team1->logo : null,
+                'team2_logo' => $match->team2 ? $match->team2->logo : null,
+                'team1_score' => $match->team1_score ?? 0,
+                'team2_score' => $match->team2_score ?? 0,
+                'event_id' => $match->event_id,
+                'event_name' => $match->event ? $match->event->name : 'No Event',
+                'event_logo' => $match->event ? $match->event->logo : null,
+                'status' => $match->status ?? 'scheduled',
+                'format' => $match->format,
+                'scheduled_at' => $match->scheduled_at,
+                'started_at' => $match->started_at,
+                'ended_at' => $match->ended_at,
+                'winner_id' => $match->winner_id,
+                // Include nested objects for components that might need them
+                'team1' => $match->team1,
+                'team2' => $match->team2,
+                'event' => $match->event
+            ];
+
             return response()->json([
                 'success' => true,
                 'message' => 'Match updated successfully',
-                'data' => $match
+                'data' => $flattenedMatch
             ]);
 
         } catch (\Exception $e) {
@@ -571,7 +661,7 @@ class AdminMatchesController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'status' => 'sometimes|in:upcoming,live,completed',
+            'status' => 'sometimes|in:upcoming,scheduled,live,completed',
             'current_map' => 'sometimes|integer|min:1',
             'series_score' => 'sometimes|array',
             'series_score.team1' => 'sometimes|integer|min:0',
@@ -1446,7 +1536,7 @@ class AdminMatchesController extends Controller
             'format' => 'sometimes|in:json,csv',
             'date_from' => 'sometimes|date',
             'date_to' => 'sometimes|date',
-            'status' => 'sometimes|in:upcoming,live,completed',
+            'status' => 'sometimes|in:upcoming,scheduled,live,completed',
             'event_id' => 'sometimes|exists:events,id'
         ]);
 
