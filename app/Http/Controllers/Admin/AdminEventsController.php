@@ -234,7 +234,8 @@ class AdminEventsController extends Controller
                 'tier' => 'nullable|in:S,A,B,C,D',
                 'featured' => 'boolean',
                 'rules' => 'nullable|string',
-                'prize_distribution' => 'nullable|array'
+                'prize_distribution' => 'nullable|array',
+                'bracket_data' => 'nullable|array'
             ]);
 
             if ($validator->fails()) {

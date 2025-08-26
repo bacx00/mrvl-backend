@@ -292,9 +292,16 @@ class Event extends Model
         'round_robin' => 'Round Robin',
         'swiss' => 'Swiss System',
         'group_stage' => 'Group Stage',
+        'gsl' => 'GSL Format',
+        'king_of_the_hill' => 'King of the Hill',
+        'ladder' => 'Ladder',
+        'gauntlet' => 'Gauntlet',
+        'battle_royale' => 'Battle Royale',
         'bo1' => 'Best of 1',
         'bo3' => 'Best of 3',
-        'bo5' => 'Best of 5'
+        'bo5' => 'Best of 5',
+        'bo7' => 'Best of 7',
+        'bo9' => 'Best of 9'
     ];
 
     public const STATUSES = [
@@ -302,5 +309,15 @@ class Event extends Model
         'ongoing' => 'Ongoing',
         'completed' => 'Completed',
         'cancelled' => 'Cancelled'
+    ];
+
+    public const GAME_MODES = [
+        'convoy' => 'Convoy',
+        'domination' => 'Domination',
+        'convergence' => 'Convergence',
+        'clash' => 'Clash',
+        'custom' => 'Custom',
+        'competitive' => 'Competitive',
+        'tournament' => 'Tournament'
     ];
 }

@@ -1972,3 +1972,17 @@ Route::prefix('analytics')->group(function () {
 //     Route::get('/test-all', [ImageTestController::class, 'testAllImages']);
 //     Route::get('/test-url', [ImageTestController::class, 'testImageUrl']);
 // });
+
+
+// ===================================
+// STATUS MONITORING API ROUTES
+// ===================================
+Route::prefix('status')->group(function () {
+    Route::get('/health', [\App\Http\Controllers\StatusController::class, 'health']);
+    Route::get('/metrics', [\App\Http\Controllers\StatusController::class, 'metrics']);
+    Route::get('/uptime', [\App\Http\Controllers\StatusController::class, 'uptime']);
+    Route::get('/incidents', [\App\Http\Controllers\StatusController::class, 'incidents']);
+    Route::get('/response-times', [\App\Http\Controllers\StatusController::class, 'responseTimes']);
+    Route::get('/maintenance', [\App\Http\Controllers\StatusController::class, 'maintenance']);
+    Route::post('/report', [\App\Http\Controllers\StatusController::class, 'reportIssue']);
+});

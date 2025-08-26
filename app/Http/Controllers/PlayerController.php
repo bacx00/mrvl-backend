@@ -1802,25 +1802,72 @@ class PlayerController extends Controller
                 $query->whereJsonContains('m.maps_data', ['map_name' => $request->map]);
             }
 
-            // Order by date descending
-            $query->orderBy('m.scheduled_at', 'desc');
+            // Order by date descending and hero to group them properly
+            $query->orderBy('m.scheduled_at', 'desc')
+                  ->orderBy('mps.hero');
 
-            // Paginate results
-            $perPage = $request->get('per_page', 20);
+            // Get all records without pagination first to group by match
+            $allRecords = $query->get();
             
             // Debug: Get the raw query
             \Log::info('Query SQL: ' . $query->toSql());
             \Log::info('Query Bindings: ' . json_encode($query->getBindings()));
             
-            $matchHistory = $query->paginate($perPage);
+            // Group records by match_id
+            $groupedByMatch = $allRecords->groupBy('match_id');
+            
+            // Format matches with all heroes
+            $formattedMatches = collect();
+            foreach ($groupedByMatch as $matchId => $matchRecords) {
+                $firstRecord = $matchRecords->first();
+                $formattedMatches->push((object)[
+                    'match_id' => $matchId,
+                    'scheduled_at' => $firstRecord->scheduled_at,
+                    'team1_id' => $firstRecord->team1_id,
+                    'team2_id' => $firstRecord->team2_id,
+                    'team1_name' => $firstRecord->team1_name,
+                    'team2_name' => $firstRecord->team2_name,
+                    'team1_short' => $firstRecord->team1_short,
+                    'team2_short' => $firstRecord->team2_short,
+                    'team1_logo' => $firstRecord->team1_logo,
+                    'team2_logo' => $firstRecord->team2_logo,
+                    'team1_score' => $firstRecord->team1_score,
+                    'team2_score' => $firstRecord->team2_score,
+                    'event_name' => $firstRecord->event_name,
+                    'event_type' => $firstRecord->event_type,
+                    'event_logo' => $firstRecord->event_logo,
+                    'format' => $firstRecord->format,
+                    'maps_data' => $firstRecord->maps_data,
+                    'hero_stats' => $matchRecords
+                ]);
+            }
+            
+            // Sort by date descending
+            $formattedMatches = $formattedMatches->sortByDesc('scheduled_at')->values();
+            
+            // Manual pagination
+            $perPage = $request->get('per_page', 20);
+            $currentPage = $request->get('page', 1);
+            $total = $formattedMatches->count();
+            $matchHistory = new \Illuminate\Pagination\LengthAwarePaginator(
+                $formattedMatches->forPage($currentPage, $perPage),
+                $total,
+                $perPage,
+                $currentPage,
+                ['path' => $request->url()]
+            );
             
             \Log::info('Match history count: ' . $matchHistory->count());
 
             // Format the match history data
             $formattedMatches = $matchHistory->getCollection()->map(function($match) use ($player) {
-                // Since team_id is null, determine team by checking player's current team
-                $playerTeamId = $player->team_id;
-                $isTeam1 = $playerTeamId ? ($playerTeamId == $match->team1_id) : true; // Default to team1 if no team_id
+                // Determine team based on hero_stats records
+                $heroStats = $match->hero_stats ?? collect();
+                $firstHeroStat = $heroStats->first();
+                
+                $playerTeamId = $firstHeroStat ? $firstHeroStat->team_id : $player->team_id;
+                $isTeam1 = $playerTeamId == $match->team1_id;
+                
                 $opponent = $isTeam1 ? 
                     ['id' => $match->team2_id, 'name' => $match->team2_name, 'short_name' => $match->team2_short, 'logo' => $match->team2_logo] :
                     ['id' => $match->team1_id, 'name' => $match->team1_name, 'short_name' => $match->team1_short, 'logo' => $match->team1_logo];
@@ -1829,19 +1876,98 @@ class PlayerController extends Controller
                 $opponentScore = $isTeam1 ? $match->team2_score : $match->team1_score;
                 $won = $teamScore > $opponentScore;
 
-                // Calculate advanced stats
-                $kd = $match->deaths > 0 ? round($match->eliminations / $match->deaths, 2) : $match->eliminations;
-                $kda = $match->deaths > 0 ? round(($match->eliminations + $match->assists) / $match->deaths, 2) : ($match->eliminations + $match->assists);
-                
-                // Fetch map_stats from matches table player_stats column
-                $mapStats = [];
-                $fullMatch = DB::table('matches')->where('id', $match->match_id)->first();
-                if ($fullMatch && $fullMatch->player_stats) {
-                    $playerStatsData = json_decode($fullMatch->player_stats, true);
-                    if (isset($playerStatsData[$player->id]['map_stats'])) {
-                        $mapStats = $playerStatsData[$player->id]['map_stats'];
+                // Get map names from match data
+                $mapsData = is_string($match->maps_data) ? json_decode($match->maps_data, true) : json_decode($match->maps_data, true);
+                $mapNames = [];
+                if ($mapsData && is_array($mapsData)) {
+                    foreach ($mapsData as $idx => $map) {
+                        $mapNames[$idx + 1] = $map['map_name'] ?? 'Map ' . ($idx + 1);
                     }
                 }
+                
+                // Format map_stats from hero_stats collection
+                // Group heroes by actual map based on maps_data structure
+                $mapStats = [];
+                
+                // Determine which map each hero belongs to based on the match format
+                // For BO3, we have 3 maps max, need to distribute heroes correctly
+                $heroCount = $heroStats->count();
+                $mapsInMatch = count($mapsData);
+                
+                // Group heroes back to their correct maps
+                // We'll check the actual maps_data to determine correct map assignment
+                foreach ($heroStats as $heroStat) {
+                    // Default to map 1 if we can't determine
+                    $heroMapNumber = 1;
+                    
+                    // Try to find which map this hero was played on
+                    foreach ($mapsData as $mapIdx => $mapData) {
+                        // Check team1_composition
+                        if (isset($mapData['team1_composition'])) {
+                            foreach ($mapData['team1_composition'] as $playerData) {
+                                if ($playerData['player_id'] == $player->id) {
+                                    if ($playerData['hero'] == $heroStat->hero) {
+                                        $heroMapNumber = $mapIdx + 1;
+                                        break 2;
+                                    }
+                                    // Check hero_changes
+                                    if (isset($playerData['hero_changes'])) {
+                                        foreach ($playerData['hero_changes'] as $change) {
+                                            if ($change['hero'] == $heroStat->hero) {
+                                                $heroMapNumber = $mapIdx + 1;
+                                                break 3;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        // Check team2_composition
+                        if (isset($mapData['team2_composition'])) {
+                            foreach ($mapData['team2_composition'] as $playerData) {
+                                if ($playerData['player_id'] == $player->id) {
+                                    if ($playerData['hero'] == $heroStat->hero) {
+                                        $heroMapNumber = $mapIdx + 1;
+                                        break 2;
+                                    }
+                                    // Check hero_changes
+                                    if (isset($playerData['hero_changes'])) {
+                                        foreach ($playerData['hero_changes'] as $change) {
+                                            if ($change['hero'] == $heroStat->hero) {
+                                                $heroMapNumber = $mapIdx + 1;
+                                                break 3;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
+                    $mapStats[] = [
+                        'map_number' => $heroMapNumber,
+                        'map_name' => $mapNames[$heroMapNumber] ?? 'Map ' . $heroMapNumber,
+                        'hero' => $heroStat->hero,
+                        'eliminations' => (int)$heroStat->eliminations,
+                        'deaths' => (int)$heroStat->deaths,
+                        'assists' => (int)$heroStat->assists,
+                        'damage' => (int)$heroStat->damage_dealt,
+                        'healing' => (int)$heroStat->healing_done,
+                        'damage_blocked' => (int)$heroStat->damage_blocked,
+                        'kda' => (float)$heroStat->kda_ratio
+                    ];
+                }
+                
+                // Calculate aggregated stats
+                $totalElims = $heroStats->sum('eliminations');
+                $totalDeaths = $heroStats->sum('deaths');
+                $totalAssists = $heroStats->sum('assists');
+                $totalDamage = $heroStats->sum('damage_dealt');
+                $totalHealing = $heroStats->sum('healing_done');
+                $totalBlocked = $heroStats->sum('damage_blocked');
+                
+                $kd = $totalDeaths > 0 ? round($totalElims / $totalDeaths, 2) : $totalElims;
+                $kda = $totalDeaths > 0 ? round(($totalElims + $totalAssists) / $totalDeaths, 2) : ($totalElims + $totalAssists);
                 
                 return [
                     'match_id' => $match->match_id,
@@ -1854,20 +1980,20 @@ class PlayerController extends Controller
                         'type' => $match->event_type,
                         'logo' => $match->event_logo
                     ],
-                    'hero' => $match->hero,
+                    'hero' => $heroStats->count() > 1 ? 'Multiple' : ($heroStats->first() ? $heroStats->first()->hero : 'Unknown'),
                     'map_stats' => $mapStats, // Add map_stats for Player History display
                     'stats' => [
-                        'rating' => $match->mvp_score ?? 0,
-                        'eliminations' => $match->eliminations,
-                        'deaths' => $match->deaths,
-                        'assists' => $match->assists,
-                        'kd' => $kd,
-                        'kda' => $match->kda_ratio ?? $kda,
-                        'damage_dealt' => $match->damage_dealt ?? 0,
-                        'damage_taken' => $match->damage_taken,
-                        'healing_done' => $match->healing_done ?? 0,
-                        'damage_blocked' => $match->damage_blocked ?? 0,
-                        'ultimates_used' => $match->ultimates_used ?? 0
+                        'rating' => (float)($heroStats->avg('mvp_score') ?? 0),
+                        'eliminations' => (int)$totalElims,
+                        'deaths' => (int)$totalDeaths,
+                        'assists' => (int)$totalAssists,
+                        'kd' => (float)$kd,
+                        'kda' => (float)$kda,
+                        'damage_dealt' => (int)$totalDamage,
+                        'damage_taken' => (int)$heroStats->sum('damage_taken'),
+                        'healing_done' => (int)$totalHealing,
+                        'damage_blocked' => (int)$totalBlocked,
+                        'ultimates_used' => (int)$heroStats->sum('ultimates_used')
                     ],
                     'team' => [
                         'id' => $playerTeamId,
@@ -1875,7 +2001,7 @@ class PlayerController extends Controller
                         'short_name' => $isTeam1 ? $match->team1_short : $match->team2_short,
                         'logo' => $isTeam1 ? $match->team1_logo : $match->team2_logo
                     ],
-                    'time_played_seconds' => 0
+                    'time_played_seconds' => $heroStats->sum('time_played')
                 ];
             });
 

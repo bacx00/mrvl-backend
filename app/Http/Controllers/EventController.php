@@ -53,7 +53,7 @@ class EventController extends Controller
             }
 
             // Sort options
-            $sortBy = $request->get('sort', 'upcoming');
+            $sortBy = $request->get('sort', 'all');
             switch ($sortBy) {
                 case 'prize_pool':
                     $query->orderBy('e.prize_pool', 'desc');
@@ -67,9 +67,22 @@ class EventController extends Controller
                 case 'oldest':
                     $query->orderBy('e.start_date', 'asc');
                     break;
-                default: // upcoming
+                case 'upcoming':
                     $query->where('e.start_date', '>=', now())
                           ->orderBy('e.start_date', 'asc');
+                    break;
+                default: // all - show all events, prioritize ongoing and upcoming
+                    $query->orderByRaw("
+                        CASE 
+                            WHEN e.status = 'ongoing' THEN 1
+                            WHEN e.status = 'live' THEN 2
+                            WHEN e.status = 'upcoming' THEN 3
+                            WHEN e.status = 'scheduled' THEN 4
+                            WHEN e.status = 'completed' THEN 5
+                            ELSE 6
+                        END
+                    ")
+                    ->orderBy('e.start_date', 'desc');
             }
 
             $events = $query->paginate(12);

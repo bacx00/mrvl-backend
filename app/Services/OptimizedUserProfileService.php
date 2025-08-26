@@ -5,6 +5,7 @@ namespace App\Services;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 use App\Models\User;
+use Carbon\Carbon;
 
 class OptimizedUserProfileService
 {
@@ -135,7 +136,49 @@ class OptimizedUserProfileService
                     return $this->getEmptyStats();
                 }
                 
+                // Calculate days active
+                $user = User::find($userId);
+                $daysActive = 0;
+                if ($user && $user->created_at) {
+                    $daysActive = $user->created_at->diffInDays(now());
+                }
+                
+                // Calculate mentions
+                $mentionsReceived = DB::table('mentions')
+                    ->where('mentioned_type', 'user')
+                    ->where('mentioned_id', $userId)
+                    ->count();
+                    
+                $mentionsGiven = DB::table('mentions')
+                    ->where('mentioned_by', $userId)
+                    ->count();
+                
+                // Return both nested (for compatibility) and flat structure
                 return [
+                    // Flat structure for frontend
+                    'news_comments' => (int) $stats->news_comments,
+                    'match_comments' => (int) $stats->match_comments,
+                    'forum_threads' => (int) $stats->forum_threads,
+                    'forum_posts' => (int) $stats->forum_posts,
+                    'total_comments' => (int) ($stats->news_comments + $stats->match_comments),
+                    'total_forum' => (int) ($stats->forum_threads + $stats->forum_posts),
+                    'upvotes_given' => (int) $stats->upvotes_given,
+                    'downvotes_given' => (int) $stats->downvotes_given,
+                    'upvotes_received' => (int) $stats->upvotes_received,
+                    'downvotes_received' => (int) $stats->downvotes_received,
+                    'reputation_score' => (int) ($stats->upvotes_received - $stats->downvotes_received),
+                    'mentions_received' => (int) $mentionsReceived,
+                    'mentions_given' => (int) $mentionsGiven,
+                    'activity_score' => (int) ($stats->news_comments + $stats->match_comments + 
+                                              $stats->forum_threads + $stats->forum_posts),
+                    'total_actions' => (int) ($stats->news_comments + $stats->match_comments + 
+                                             $stats->forum_threads + $stats->forum_posts + 
+                                             $stats->upvotes_given + $stats->downvotes_given),
+                    'days_active' => (int) $daysActive,
+                    'last_activity' => $stats->last_activity,
+                    'join_date' => $user ? $user->created_at : null,
+                    
+                    // Nested structure for backward compatibility
                     'comments' => [
                         'news' => (int) $stats->news_comments,
                         'matches' => (int) $stats->match_comments,
@@ -153,11 +196,22 @@ class OptimizedUserProfileService
                         'downvotes_received' => (int) $stats->downvotes_received,
                         'reputation_score' => (int) ($stats->upvotes_received - $stats->downvotes_received)
                     ],
+                    'mentions' => [
+                        'given' => (int) $mentionsGiven,
+                        'received' => (int) $mentionsReceived
+                    ],
                     'activity' => [
                         'last_activity' => $stats->last_activity,
                         'total_actions' => (int) ($stats->news_comments + $stats->match_comments + 
                                                  $stats->forum_threads + $stats->forum_posts + 
-                                                 $stats->upvotes_given + $stats->downvotes_given)
+                                                 $stats->upvotes_given + $stats->downvotes_given),
+                        'activity_score' => (int) ($stats->news_comments + $stats->match_comments + 
+                                                  $stats->forum_threads + $stats->forum_posts),
+                        'days_active' => (int) $daysActive
+                    ],
+                    'account' => [
+                        'days_active' => (int) $daysActive,
+                        'join_date' => $user ? $user->created_at : null
                     ]
                 ];
             }
@@ -335,6 +389,27 @@ class OptimizedUserProfileService
     private function getEmptyStats()
     {
         return [
+            // Flat structure for frontend
+            'news_comments' => 0,
+            'match_comments' => 0,
+            'forum_threads' => 0,
+            'forum_posts' => 0,
+            'total_comments' => 0,
+            'total_forum' => 0,
+            'upvotes_given' => 0,
+            'downvotes_given' => 0,
+            'upvotes_received' => 0,
+            'downvotes_received' => 0,
+            'reputation_score' => 0,
+            'mentions_received' => 0,
+            'mentions_given' => 0,
+            'activity_score' => 0,
+            'total_actions' => 0,
+            'days_active' => 0,
+            'last_activity' => null,
+            'join_date' => null,
+            
+            // Nested structure for backward compatibility
             'comments' => ['news' => 0, 'matches' => 0, 'total' => 0],
             'forum' => ['threads' => 0, 'posts' => 0, 'total' => 0],
             'votes' => [
@@ -342,7 +417,17 @@ class OptimizedUserProfileService
                 'upvotes_received' => 0, 'downvotes_received' => 0,
                 'reputation_score' => 0
             ],
-            'activity' => ['last_activity' => null, 'total_actions' => 0]
+            'mentions' => ['given' => 0, 'received' => 0],
+            'activity' => [
+                'last_activity' => null, 
+                'total_actions' => 0,
+                'activity_score' => 0,
+                'days_active' => 0
+            ],
+            'account' => [
+                'days_active' => 0,
+                'join_date' => null
+            ]
         ];
     }
     
