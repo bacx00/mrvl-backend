@@ -96,6 +96,8 @@ class MatchController extends Controller
     public function show($matchId)
     {
         try {
+            // Sync live scoring data to player profiles for this match
+            $this->syncLiveScoringToPlayerProfiles($matchId);
             $match = DB::table('matches as m')
                 ->leftJoin('teams as t1', 'm.team1_id', '=', 't1.id')
                 ->leftJoin('teams as t2', 'm.team2_id', '=', 't2.id')
@@ -1840,6 +1842,9 @@ class MatchController extends Controller
 
     private function getMapPlayerStats($matchId, $mapNumber)
     {
+        // Sync live scoring data to player profiles table first
+        $this->syncLiveScoringToPlayerProfiles($matchId);
+        
         // Get all stats for this match (since stats aren't map-specific in current structure)
         $stats = DB::table('match_player_stats as mps')
             ->leftJoin('players as p', 'mps.player_id', '=', 'p.id')
@@ -1904,6 +1909,195 @@ class MatchController extends Controller
         }
 
         return $stats->groupBy('team_id')->toArray();
+    }
+    
+    /**
+     * Sync data from player_match_stats (live scoring) to match_player_stats (player profiles)
+     * This ensures player history shows live scoring data without breaking live scoring
+     * Supports ALL match formats: BO1, BO3, BO5, BO7, BO9
+     */
+    private function syncLiveScoringToPlayerProfiles($matchId)
+    {
+        try {
+            // First, get ALL players from both teams in this match
+            $match = DB::table('matches')->where('id', $matchId)->first();
+            if (!$match) return;
+            
+            // Get all players from both teams
+            $team1Players = DB::table('players')
+                ->where('team_id', $match->team1_id)
+                ->where('status', 'active')
+                ->get();
+            
+            $team2Players = DB::table('players')
+                ->where('team_id', $match->team2_id)
+                ->where('status', 'active')
+                ->get();
+            
+            $allPlayers = $team1Players->merge($team2Players);
+            
+            // Get the latest stats from player_match_stats (live scoring table)
+            $liveStats = DB::table('player_match_stats as pms')
+                ->select([
+                    'pms.player_id',
+                    'pms.match_id',
+                    'pms.hero_played as hero',
+                    DB::raw('SUM(pms.eliminations) as eliminations'),
+                    DB::raw('SUM(pms.deaths) as deaths'),
+                    DB::raw('SUM(pms.assists) as assists'),
+                    DB::raw('SUM(pms.damage) as damage_dealt'),
+                    DB::raw('SUM(pms.healing) as healing_done'),
+                    DB::raw('SUM(pms.damage_blocked) as damage_blocked')
+                ])
+                ->where('pms.match_id', $matchId)
+                ->groupBy('pms.player_id', 'pms.match_id', 'pms.hero_played')
+                ->get();
+            
+            // Also check maps_data for stats - handle all formats
+            $mapsData = json_decode($match->maps_data, true) ?? [];
+            $compositionStats = [];
+            
+            // Determine expected number of maps based on format
+            $formatMaps = [
+                'BO1' => 1,
+                'BO3' => 3,
+                'BO5' => 5,
+                'BO7' => 7,
+                'BO9' => 9
+            ];
+            $expectedMaps = $formatMaps[$match->format] ?? 3;
+            
+            // Process each map (up to the format's maximum)
+            foreach ($mapsData as $mapIndex => $mapData) {
+                // Stop if we've processed the expected number of maps
+                if ($mapIndex >= $expectedMaps) break;
+                // Extract stats from team1_composition
+                if (isset($mapData['team1_composition'])) {
+                    foreach ($mapData['team1_composition'] as $player) {
+                        if (isset($player['player_id']) && $player['player_id']) {
+                            $playerId = $player['player_id'];
+                            if (!isset($compositionStats[$playerId])) {
+                                $compositionStats[$playerId] = [
+                                    'player_id' => $playerId,
+                                    'match_id' => $matchId,
+                                    'hero' => $player['hero'] ?? 'Spider-Man',
+                                    'eliminations' => 0,
+                                    'deaths' => 0,
+                                    'assists' => 0,
+                                    'damage_dealt' => 0,
+                                    'healing_done' => 0,
+                                    'damage_blocked' => 0
+                                ];
+                            }
+                            $compositionStats[$playerId]['eliminations'] += $player['eliminations'] ?? 0;
+                            $compositionStats[$playerId]['deaths'] += $player['deaths'] ?? 0;
+                            $compositionStats[$playerId]['assists'] += $player['assists'] ?? 0;
+                            $compositionStats[$playerId]['damage_dealt'] += $player['damage'] ?? 0;
+                            $compositionStats[$playerId]['healing_done'] += $player['healing'] ?? 0;
+                            $compositionStats[$playerId]['damage_blocked'] += $player['damage_blocked'] ?? 0;
+                        }
+                    }
+                }
+                
+                // Extract stats from team2_composition
+                if (isset($mapData['team2_composition'])) {
+                    foreach ($mapData['team2_composition'] as $player) {
+                        if (isset($player['player_id']) && $player['player_id']) {
+                            $playerId = $player['player_id'];
+                            if (!isset($compositionStats[$playerId])) {
+                                $compositionStats[$playerId] = [
+                                    'player_id' => $playerId,
+                                    'match_id' => $matchId,
+                                    'hero' => $player['hero'] ?? 'Spider-Man',
+                                    'eliminations' => 0,
+                                    'deaths' => 0,
+                                    'assists' => 0,
+                                    'damage_dealt' => 0,
+                                    'healing_done' => 0,
+                                    'damage_blocked' => 0
+                                ];
+                            }
+                            $compositionStats[$playerId]['eliminations'] += $player['eliminations'] ?? 0;
+                            $compositionStats[$playerId]['deaths'] += $player['deaths'] ?? 0;
+                            $compositionStats[$playerId]['assists'] += $player['assists'] ?? 0;
+                            $compositionStats[$playerId]['damage_dealt'] += $player['damage'] ?? 0;
+                            $compositionStats[$playerId]['healing_done'] += $player['healing'] ?? 0;
+                            $compositionStats[$playerId]['damage_blocked'] += $player['damage_blocked'] ?? 0;
+                        }
+                    }
+                }
+            }
+            
+            // Process ALL players - sync from live stats OR composition data
+            // This ensures EVERY player in EVERY match format gets proper stats
+            foreach ($allPlayers as $player) {
+                // Check if we have live stats for this player
+                $liveStat = $liveStats->firstWhere('player_id', $player->id);
+                
+                // Check if we have composition stats for this player
+                $compStat = $compositionStats[$player->id] ?? null;
+                
+                // Use live stats first, then composition stats, then default zeros
+                if ($liveStat) {
+                    // Use live scoring data
+                    $eliminations = $liveStat->eliminations ?? 0;
+                    $deaths = $liveStat->deaths ?? 0;
+                    $assists = $liveStat->assists ?? 0;
+                    $damage = $liveStat->damage_dealt ?? 0;
+                    $healing = $liveStat->healing_done ?? 0;
+                    $blocked = $liveStat->damage_blocked ?? 0;
+                    $hero = $liveStat->hero ?? 'Spider-Man';
+                } elseif ($compStat && ($compStat['eliminations'] > 0 || $compStat['deaths'] > 0 || $compStat['assists'] > 0)) {
+                    // Use composition data if it has actual stats
+                    $eliminations = $compStat['eliminations'];
+                    $deaths = $compStat['deaths'];
+                    $assists = $compStat['assists'];
+                    $damage = $compStat['damage_dealt'];
+                    $healing = $compStat['healing_done'];
+                    $blocked = $compStat['damage_blocked'];
+                    $hero = $compStat['hero'];
+                } else {
+                    // Player participated but no stats - create zero entry
+                    // This ensures even inactive players appear in match history
+                    $eliminations = 0;
+                    $deaths = 0;
+                    $assists = 0;
+                    $damage = 0;
+                    $healing = 0;
+                    $blocked = 0;
+                    $hero = 'Spider-Man';
+                }
+                
+                // Calculate KDA
+                $kda = $deaths > 0 
+                    ? round(($eliminations + $assists) / $deaths, 2)
+                    : ($eliminations + $assists);
+                
+                // Update or create in match_player_stats (player profile table)
+                DB::table('match_player_stats')->updateOrInsert(
+                    [
+                        'match_id' => $matchId,
+                        'player_id' => $player->id
+                    ],
+                    [
+                        'team_id' => $player->team_id,
+                        'hero' => $hero,
+                        'eliminations' => $eliminations,
+                        'deaths' => $deaths,
+                        'assists' => $assists,
+                        'damage_dealt' => $damage,
+                        'healing_done' => $healing,
+                        'damage_blocked' => $blocked,
+                        'kda_ratio' => $kda,
+                        'created_at' => now(),
+                        'updated_at' => now()
+                    ]
+                );
+            }
+        } catch (\Exception $e) {
+            // Log but don't fail - this is a background sync
+            \Log::warning('Failed to sync live scoring to player profiles: ' . $e->getMessage());
+        }
     }
 
     private function getMatchTimelineEvents($matchId)

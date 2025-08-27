@@ -63,6 +63,7 @@ use App\Http\Controllers\Admin\AdminForumsController;
 use App\Http\Controllers\Admin\AdminUsersController;
 use App\Http\Controllers\Admin\AdminMatchesController;
 use App\Http\Controllers\Admin\AdminEventsController;
+use App\Http\Controllers\Api\TwoFactorController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -97,6 +98,23 @@ Route::prefix('auth')->group(function () {
     Route::middleware('auth:api')->get('/me', [AuthController::class, 'me']);
     Route::middleware('auth:api')->get('/user', [AuthController::class, 'user']);
     Route::middleware('auth:api')->post('/refresh', [AuthController::class, 'refresh']);
+    
+    // 2FA Login Flow routes (no auth required - use temp tokens)
+    Route::post('/2fa/verify-login', [AuthController::class, 'verify2FALogin']);
+    Route::post('/2fa/setup-login', [AuthController::class, 'setup2FALogin']);
+    Route::post('/2fa/enable-login', [AuthController::class, 'enable2FALogin']);
+    
+    // Two-Factor Authentication routes (authenticated users)
+    Route::middleware('auth:api')->prefix('2fa')->group(function () {
+        Route::get('/status', [TwoFactorController::class, 'status']);
+        Route::get('/needs-verification', [TwoFactorController::class, 'needsVerification']);
+        Route::post('/setup', [TwoFactorController::class, 'setup']);
+        Route::post('/enable', [TwoFactorController::class, 'enable']);
+        Route::post('/disable', [TwoFactorController::class, 'disable']);
+        Route::post('/verify', [TwoFactorController::class, 'verify']);
+        Route::get('/recovery-codes', [TwoFactorController::class, 'getRecoveryCodes']);
+        Route::post('/recovery-codes/regenerate', [TwoFactorController::class, 'regenerateRecoveryCodes']);
+    });
 });
 
 // ===================================
@@ -931,7 +949,7 @@ Route::middleware(['auth:api', 'role:admin|moderator'])->prefix('admin')->group(
     Route::post('/events/{eventId}/bracket/clear', [AdminEventsController::class, 'clearBracket']);
 });
 
-Route::middleware(['auth:api', 'role:admin'])->prefix('admin')->group(function () {
+Route::middleware(['auth:api', 'role:admin', 'require.2fa'])->prefix('admin')->group(function () {
     
     // Bulk Operations
     Route::prefix('bulk')->group(function () {
@@ -1286,6 +1304,7 @@ Route::post('/teams/{teamId}/coach/upload', [TeamController::class, 'uploadCoach
         
         // Player Statistics Management
         Route::put('/{id}/player-stats', [\App\Http\Controllers\Admin\AdminMatchesController::class, 'updatePlayerStats']);
+        Route::put('/{matchId}/player/{playerId}/stats', [\App\Http\Controllers\Admin\AdminMatchesController::class, 'updateSinglePlayerStats']);
         
         // Bulk Operations
         Route::post('/bulk-operation', [\App\Http\Controllers\Admin\AdminMatchesController::class, 'bulkOperation']);
@@ -1710,7 +1729,7 @@ if (!app()->environment('production')) {
 }
 
 // Test routes for role verification
-Route::middleware(['auth:api', 'role:admin'])->get('/test-admin', function (Request $request) {
+Route::middleware(['auth:api', 'role:admin', 'require.2fa'])->get('/test-admin', function (Request $request) {
     return response()->json([
         'success' => true,
         'message' => 'Admin access confirmed',
@@ -1741,7 +1760,7 @@ Route::middleware(['auth:api', 'role:user'])->get('/test-user', function (Reques
 // Route::get('/system-test', [\App\Http\Controllers\SystemTestController::class, 'testAllSystems']);
 
 // Upload route aliases for frontend compatibility
-Route::middleware(['auth:api', 'role:admin'])->group(function () {
+Route::middleware(['auth:api', 'role:admin', 'require.2fa'])->group(function () {
     Route::post('/upload/team/{teamId}/logo', [ImageUploadController::class, 'uploadTeamLogo']);
     Route::post('/upload/team/{teamId}/banner', [ImageUploadController::class, 'uploadTeamBanner']);
     Route::post('/upload/team/{teamId}/coach-avatar', [TeamController::class, 'uploadCoachImage']);

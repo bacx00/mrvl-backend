@@ -1100,7 +1100,7 @@ class PlayerController extends Controller
                 'm.scheduled_at', 'm.format', 'm.maps_data',
                 't1.name as team1_name', 't1.short_name as team1_short', 't1.logo as team1_logo',
                 't2.name as team2_name', 't2.short_name as team2_short', 't2.logo as team2_logo',
-                'e.name as event_name', 'e.type as event_type', 'e.logo as event_logo', 'e.banner as event_banner'
+                'e.id as event_id', 'e.name as event_name', 'e.type as event_type', 'e.logo as event_logo', 'e.banner as event_banner'
             ])
             ->orderBy('m.scheduled_at', 'desc')
             ->limit($limit)
@@ -1609,7 +1609,7 @@ class PlayerController extends Controller
 
             $query = DB::table('mentions as m')
                 ->leftJoin('users as u', 'm.mentioned_by', '=', 'u.id')
-                ->where('m.mentioned_type', 'player')
+                ->where('m.mentioned_type', 'App\\Models\\Player')
                 ->where('m.mentioned_id', $playerId)
                 ->where('m.is_active', true)
                 ->select([
@@ -1752,6 +1752,9 @@ class PlayerController extends Controller
                 ], 404);
             }
             
+            // Sync all matches for this player's team to ensure latest data
+            $this->syncPlayerTeamMatches($player);
+            
             \Log::info('getMatchHistory for player ' . $playerId . ', team_id: ' . ($player->team_id ?? 'NULL'));
 
             // Base query to get match player stats
@@ -1779,6 +1782,7 @@ class PlayerController extends Controller
                     't2.name as team2_name',
                     't2.short_name as team2_short',
                     't2.logo as team2_logo',
+                    'e.id as event_id',
                     'e.name as event_name',
                     'e.type as event_type',
                     'e.logo as event_logo'
@@ -1915,9 +1919,16 @@ class PlayerController extends Controller
                     'team2_logo' => $firstRecord->team2_logo,
                     'team1_score' => $firstRecord->team1_score,
                     'team2_score' => $firstRecord->team2_score,
+                    'event' => [
+                        'id' => $firstRecord->event_id,
+                        'name' => $firstRecord->event_name,
+                        'type' => $firstRecord->event_type,
+                        'logo' => $firstRecord->event_logo
+                    ],
                     'event_name' => $firstRecord->event_name,
                     'event_type' => $firstRecord->event_type,
                     'event_logo' => $firstRecord->event_logo,
+                    'event_id' => $firstRecord->event_id,
                     'format' => $firstRecord->format,
                     'maps_data' => $firstRecord->maps_data,
                     'hero_stats' => $matchRecords
@@ -1943,6 +1954,11 @@ class PlayerController extends Controller
 
             // Format the match history data
             $formattedMatches = $matchHistory->getCollection()->map(function($match) use ($player) {
+                \Log::info('Processing match: ' . json_encode([
+                    'match_id' => $match->match_id,
+                    'event_id' => $match->event_id,
+                    'event_name' => $match->event_name
+                ]));
                 // Determine team based on hero_stats records
                 $heroStats = $match->hero_stats ?? collect();
                 $firstHeroStat = $heroStats->first();
@@ -2058,6 +2074,7 @@ class PlayerController extends Controller
                     'result' => $won ? 'W' : 'L',
                     'score' => "{$teamScore}-{$opponentScore}",
                     'event' => [
+                        'id' => $match->event_id,
                         'name' => $match->event_name,
                         'type' => $match->event_type,
                         'logo' => $match->event_logo
@@ -3886,6 +3903,7 @@ class PlayerController extends Controller
                     'result' => $won ? 'W' : 'L',
                     'score' => $playerTeam['score'] . '-' . $opponentTeam['score'],
                     'event' => [
+                        'id' => $match->event_id,
                         'name' => $match->event_name,
                         'type' => $match->event_type,
                         'logo' => $match->event_logo
@@ -3918,6 +3936,154 @@ class PlayerController extends Controller
                 'success' => false,
                 'message' => 'Error fetching match history: ' . $e->getMessage()
             ], 500);
+        }
+    }
+    
+    /**
+     * Sync all matches for a player's team to ensure latest data
+     * This handles ALL match formats: BO1, BO3, BO5, BO7, BO9
+     */
+    private function syncPlayerTeamMatches($player)
+    {
+        if (!$player || !$player->team_id) {
+            return;
+        }
+        
+        // Get all completed matches for this player's team
+        $matches = DB::table('matches')
+            ->where(function($q) use ($player) {
+                $q->where('team1_id', $player->team_id)
+                  ->orWhere('team2_id', $player->team_id);
+            })
+            ->where('status', 'completed')
+            ->pluck('id');
+        
+        // Sync each match directly using our own sync logic
+        foreach ($matches as $matchId) {
+            try {
+                $this->syncMatchData($matchId);
+            } catch (\Exception $e) {
+                \Log::warning('Failed to sync match ' . $matchId . ' for player ' . $player->id . ': ' . $e->getMessage());
+            }
+        }
+    }
+    
+    /**
+     * Sync match data for all formats (BO1-BO9)
+     * Same logic as MatchController but without dependencies
+     */
+    private function syncMatchData($matchId)
+    {
+        $match = DB::table('matches')->where('id', $matchId)->first();
+        if (!$match) return;
+        
+        // Get all players from both teams
+        $team1Players = DB::table('players')
+            ->where('team_id', $match->team1_id)
+            ->where('status', 'active')
+            ->get();
+        
+        $team2Players = DB::table('players')
+            ->where('team_id', $match->team2_id)
+            ->where('status', 'active')
+            ->get();
+        
+        $allPlayers = $team1Players->merge($team2Players);
+        
+        // Get live stats from player_match_stats
+        $liveStats = DB::table('player_match_stats as pms')
+            ->select([
+                'pms.player_id',
+                'pms.match_id',
+                'pms.hero_played as hero',
+                DB::raw('SUM(pms.eliminations) as eliminations'),
+                DB::raw('SUM(pms.deaths) as deaths'),
+                DB::raw('SUM(pms.assists) as assists'),
+                DB::raw('SUM(pms.damage) as damage_dealt'),
+                DB::raw('SUM(pms.healing) as healing_done'),
+                DB::raw('SUM(pms.damage_blocked) as damage_blocked')
+            ])
+            ->where('pms.match_id', $matchId)
+            ->groupBy('pms.player_id', 'pms.match_id', 'pms.hero_played')
+            ->get();
+        
+        // Get composition stats from maps_data
+        $mapsData = json_decode($match->maps_data, true) ?? [];
+        $compositionStats = [];
+        
+        // Handle all formats (BO1-BO9)
+        $formatMaps = [
+            'BO1' => 1, 'BO3' => 3, 'BO5' => 5, 'BO7' => 7, 'BO9' => 9
+        ];
+        $expectedMaps = $formatMaps[$match->format] ?? 3;
+        
+        foreach ($mapsData as $mapIndex => $mapData) {
+            if ($mapIndex >= $expectedMaps) break;
+            
+            foreach (['team1_composition', 'team2_composition'] as $teamKey) {
+                if (!isset($mapData[$teamKey])) continue;
+                
+                foreach ($mapData[$teamKey] as $player) {
+                    if (empty($player['player_id'])) continue;
+                    
+                    $playerId = $player['player_id'];
+                    if (!isset($compositionStats[$playerId])) {
+                        $compositionStats[$playerId] = [
+                            'player_id' => $playerId,
+                            'match_id' => $matchId,
+                            'hero' => $player['hero'] ?? 'Spider-Man',
+                            'eliminations' => 0, 'deaths' => 0, 'assists' => 0,
+                            'damage_dealt' => 0, 'healing_done' => 0, 'damage_blocked' => 0
+                        ];
+                    }
+                    $compositionStats[$playerId]['eliminations'] += $player['eliminations'] ?? 0;
+                    $compositionStats[$playerId]['deaths'] += $player['deaths'] ?? 0;
+                    $compositionStats[$playerId]['assists'] += $player['assists'] ?? 0;
+                    $compositionStats[$playerId]['damage_dealt'] += $player['damage'] ?? 0;
+                    $compositionStats[$playerId]['healing_done'] += $player['healing'] ?? 0;
+                    $compositionStats[$playerId]['damage_blocked'] += $player['damage_blocked'] ?? 0;
+                }
+            }
+        }
+        
+        // Process all players
+        foreach ($allPlayers as $player) {
+            $liveStat = $liveStats->firstWhere('player_id', $player->id);
+            $compStat = $compositionStats[$player->id] ?? null;
+            
+            if ($liveStat) {
+                $eliminations = $liveStat->eliminations ?? 0;
+                $deaths = $liveStat->deaths ?? 0;
+                $assists = $liveStat->assists ?? 0;
+                $damage = $liveStat->damage_dealt ?? 0;
+                $healing = $liveStat->healing_done ?? 0;
+                $blocked = $liveStat->damage_blocked ?? 0;
+                $hero = $liveStat->hero ?? 'Spider-Man';
+            } elseif ($compStat && ($compStat['eliminations'] > 0 || $compStat['deaths'] > 0 || $compStat['assists'] > 0)) {
+                $eliminations = $compStat['eliminations'];
+                $deaths = $compStat['deaths'];
+                $assists = $compStat['assists'];
+                $damage = $compStat['damage_dealt'];
+                $healing = $compStat['healing_done'];
+                $blocked = $compStat['damage_blocked'];
+                $hero = $compStat['hero'];
+            } else {
+                $eliminations = 0; $deaths = 0; $assists = 0;
+                $damage = 0; $healing = 0; $blocked = 0;
+                $hero = 'Spider-Man';
+            }
+            
+            $kda = $deaths > 0 ? round(($eliminations + $assists) / $deaths, 2) : ($eliminations + $assists);
+            
+            DB::table('match_player_stats')->updateOrInsert(
+                ['match_id' => $matchId, 'player_id' => $player->id],
+                [
+                    'team_id' => $player->team_id, 'hero' => $hero,
+                    'eliminations' => $eliminations, 'deaths' => $deaths, 'assists' => $assists,
+                    'damage_dealt' => $damage, 'healing_done' => $healing, 'damage_blocked' => $blocked,
+                    'kda_ratio' => $kda, 'created_at' => now(), 'updated_at' => now()
+                ]
+            );
         }
     }
 }

@@ -3,12 +3,14 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Rules\StrongPassword;
+use App\Services\TwoFactorService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Support\Str;
 
@@ -55,39 +57,80 @@ class AuthController extends Controller
             // Clear rate limit on successful login
             \Illuminate\Support\Facades\RateLimiter::clear($key);
 
-            // Update last login
-            try {
-                $user->update(['last_login' => now()]);
-            } catch (\Exception $e) {
-                // Log but don't fail the login
-                \Log::warning('Failed to update last_login: ' . $e->getMessage());
+            // Check if user requires 2FA
+            if ($user->mustUseTwoFactor()) {
+                // Admin user - must have 2FA enabled
+                if (!$user->hasTwoFactorEnabled()) {
+                    // Store login session temporarily for 2FA setup
+                    $tempToken = Str::random(60);
+                    Cache::put("temp_login_{$tempToken}", [
+                        'user_id' => $user->id,
+                        'email' => $user->email,
+                        'requires_setup' => true
+                    ], now()->addMinutes(10));
+
+                    return response()->json([
+                        'success' => false,
+                        'requires_2fa_setup' => true,
+                        'message' => '2FA setup required for admin accounts',
+                        'temp_token' => $tempToken,
+                        'user' => [
+                            'id' => $user->id,
+                            'name' => $user->name,
+                            'email' => $user->email,
+                            'role' => $user->role
+                        ]
+                    ], 200);
+                }
+
+                // Admin user with 2FA enabled - require verification
+                $tempToken = Str::random(60);
+                Cache::put("temp_login_{$tempToken}", [
+                    'user_id' => $user->id,
+                    'email' => $user->email,
+                    'requires_verification' => true
+                ], now()->addMinutes(10));
+
+                return response()->json([
+                    'success' => false,
+                    'requires_2fa_verification' => true,
+                    'message' => '2FA verification required',
+                    'temp_token' => $tempToken,
+                    'user' => [
+                        'id' => $user->id,
+                        'name' => $user->name,
+                        'email' => $user->email,
+                        'role' => $user->role
+                    ]
+                ], 200);
             }
 
-            $token = $user->createToken('auth-token')->accessToken;
-            
-            // Load team flair relationship
-            $user->load('teamFlair');
-
-            return response()->json([
-                'success' => true,
-                'token' => $token,
-                'user' => [
-                    'id' => $user->id,
-                    'name' => $user->name,
+            // For non-admin users or users without 2FA, proceed with normal login
+            if ($user->hasTwoFactorEnabled()) {
+                // Optional 2FA for non-admin users
+                $tempToken = Str::random(60);
+                Cache::put("temp_login_{$tempToken}", [
+                    'user_id' => $user->id,
                     'email' => $user->email,
-                    'role' => $user->role ?? 'user',
-                    'roles' => [$user->role ?? 'user'], // For frontend compatibility
-                    'role_display_name' => $user->getRoleDisplayName(),
-                    'avatar' => $user->avatar,
-                    'hero_flair' => $user->hero_flair,
-                    'team_flair' => $user->teamFlair,
-                    'team_flair_id' => $user->team_flair_id,
-                    'show_hero_flair' => (bool)$user->show_hero_flair,
-                    'show_team_flair' => (bool)$user->show_team_flair,
-                    'use_hero_as_avatar' => (bool)$user->use_hero_as_avatar,
-                    'created_at' => $user->created_at->toISOString()
-                ]
-            ]);
+                    'requires_verification' => true
+                ], now()->addMinutes(10));
+
+                return response()->json([
+                    'success' => false,
+                    'requires_2fa_verification' => true,
+                    'message' => '2FA verification required',
+                    'temp_token' => $tempToken,
+                    'user' => [
+                        'id' => $user->id,
+                        'name' => $user->name,
+                        'email' => $user->email,
+                        'role' => $user->role
+                    ]
+                ], 200);
+            }
+
+            // Complete login without 2FA
+            return $this->completeLogin($user);
         } catch (\Exception $e) {
             \Log::error('Login error: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
             return response()->json([
@@ -96,6 +139,187 @@ class AuthController extends Controller
                 'error' => app()->environment('local') ? $e->getMessage() : 'An error occurred during login'
             ], 500);
         }
+    }
+
+    /**
+     * Complete the login process and return token
+     */
+    private function completeLogin(User $user)
+    {
+        // Update last login
+        try {
+            $user->update(['last_login' => now()]);
+        } catch (\Exception $e) {
+            // Log but don't fail the login
+            \Log::warning('Failed to update last_login: ' . $e->getMessage());
+        }
+
+        $token = $user->createToken('auth-token')->accessToken;
+        
+        // Load team flair relationship
+        $user->load('teamFlair');
+
+        return response()->json([
+            'success' => true,
+            'token' => $token,
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $user->role ?? 'user',
+                'roles' => [$user->role ?? 'user'], // For frontend compatibility
+                'role_display_name' => $user->getRoleDisplayName(),
+                'avatar' => $user->avatar,
+                'hero_flair' => $user->hero_flair,
+                'team_flair' => $user->teamFlair,
+                'team_flair_id' => $user->team_flair_id,
+                'show_hero_flair' => (bool)$user->show_hero_flair,
+                'show_team_flair' => (bool)$user->show_team_flair,
+                'use_hero_as_avatar' => (bool)$user->use_hero_as_avatar,
+                'created_at' => $user->created_at->toISOString(),
+                'two_factor_enabled' => $user->hasTwoFactorEnabled()
+            ]
+        ]);
+    }
+
+    /**
+     * Verify 2FA code and complete login
+     */
+    public function verify2FALogin(Request $request)
+    {
+        $request->validate([
+            'temp_token' => 'required|string',
+            'code' => 'required|string'
+        ]);
+
+        // Get temporary login data
+        $loginData = Cache::get("temp_login_{$request->temp_token}");
+        
+        if (!$loginData) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid or expired verification token'
+            ], 400);
+        }
+
+        $user = User::find($loginData['user_id']);
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User not found'
+            ], 400);
+        }
+
+        // Verify the 2FA code
+        $twoFactorService = app(TwoFactorService::class);
+        
+        if (!$twoFactorService->verifyLoginCode($user, $request->code)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid verification code'
+            ], 400);
+        }
+
+        // Clear temporary login data
+        Cache::forget("temp_login_{$request->temp_token}");
+
+        // Complete the login
+        return $this->completeLogin($user);
+    }
+
+    /**
+     * Setup 2FA during login flow
+     */
+    public function setup2FALogin(Request $request)
+    {
+        $request->validate([
+            'temp_token' => 'required|string'
+        ]);
+
+        // Get temporary login data
+        $loginData = Cache::get("temp_login_{$request->temp_token}");
+        
+        if (!$loginData || !isset($loginData['requires_setup'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid or expired setup token'
+            ], 400);
+        }
+
+        $user = User::find($loginData['user_id']);
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User not found'
+            ], 400);
+        }
+
+        // Setup 2FA
+        $twoFactorService = app(TwoFactorService::class);
+        $setupData = $twoFactorService->setupTwoFactor($user);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Scan the QR code with your authenticator app',
+            'data' => [
+                'secret' => $setupData['secret'],
+                'qr_code_url' => $setupData['qr_code_url'],
+                'qr_code_image' => $setupData['qr_code_image'],
+                'temp_token' => $request->temp_token
+            ]
+        ]);
+    }
+
+    /**
+     * Enable 2FA and complete login
+     */
+    public function enable2FALogin(Request $request)
+    {
+        $request->validate([
+            'temp_token' => 'required|string',
+            'code' => 'required|string|min:6|max:6'
+        ]);
+
+        // Get temporary login data
+        $loginData = Cache::get("temp_login_{$request->temp_token}");
+        
+        if (!$loginData) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid or expired token'
+            ], 400);
+        }
+
+        $user = User::find($loginData['user_id']);
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User not found'
+            ], 400);
+        }
+
+        // Enable 2FA
+        $twoFactorService = app(TwoFactorService::class);
+        $success = $twoFactorService->enableTwoFactor($user, $request->code);
+
+        if (!$success) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid verification code'
+            ], 400);
+        }
+
+        // Clear temporary login data
+        Cache::forget("temp_login_{$request->temp_token}");
+
+        // Complete the login
+        $response = $this->completeLogin($user);
+        $responseData = $response->getData(true);
+        
+        // Add recovery codes to response
+        $responseData['recovery_codes'] = $user->two_factor_recovery_codes;
+        
+        return response()->json($responseData);
     }
 
     public function register(Request $request)

@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
+    <title>MRVL Mobile Optimizations Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f3f4f6;
+            padding-bottom: 80px;
+        }
+        
+        .test-header {
+            background: white;
+            padding: 16px;
+            border-bottom: 1px solid #e5e7eb;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .test-container {
+            padding: 16px;
+            max-width: 1024px;
+            margin: 0 auto;
+        }
+        
+        .test-section {
+            margin-bottom: 24px;
+        }
+        
+        .test-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #111827;
+        }
+        
+        .device-info {
+            background: white;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+        }
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        
+        .info-row:last-child {
+            border-bottom: none;
+        }
+        
+        .viewport-sizes {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+        }
+        
+        .size-card {
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+        
+        .size-card:hover {
+            border-color: #ef4444;
+            transform: translateY(-2px);
+        }
+        
+        .size-card.active {
+            background: #fee2e2;
+            border-color: #ef4444;
+        }
+        
+        .test-iframe {
+            width: 100%;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            background: white;
+            transition: all 0.3s;
+        }
+        
+        .orientation-toggle {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        
+        .orientation-btn {
+            flex: 1;
+            padding: 12px;
+            background: white;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        
+        .orientation-btn.active {
+            background: #ef4444;
+            color: white;
+            border-color: #ef4444;
+        }
+        
+        .test-status {
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 12px;
+            font-size: 14px;
+        }
+        
+        .status-success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .status-warning {
+            background: #fed7aa;
+            color: #92400e;
+        }
+        
+        .status-error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        
+        @media (max-width: 768px) {
+            .test-iframe {
+                min-height: 500px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="test-header">
+        <h1 style="font-size: 24px; font-weight: bold; color: #ef4444;">MRVL Mobile & Tablet Test Suite</h1>
+        <p style="color: #6b7280; margin-top: 4px;">VLR.gg-inspired responsive design testing</p>
+    </div>
+
+    <div class="test-container">
+        <!-- Device Information -->
+        <div class="test-section">
+            <h2 class="test-title">Current Device Information</h2>
+            <div class="device-info">
+                <div class="info-row">
+                    <span>Screen Size:</span>
+                    <strong id="screen-size">-</strong>
+                </div>
+                <div class="info-row">
+                    <span>Viewport Size:</span>
+                    <strong id="viewport-size">-</strong>
+                </div>
+                <div class="info-row">
+                    <span>Device Type:</span>
+                    <strong id="device-type">-</strong>
+                </div>
+                <div class="info-row">
+                    <span>Pixel Ratio:</span>
+                    <strong id="pixel-ratio">-</strong>
+                </div>
+                <div class="info-row">
+                    <span>Touch Support:</span>
+                    <strong id="touch-support">-</strong>
+                </div>
+                <div class="info-row">
+                    <span>Orientation:</span>
+                    <strong id="orientation">-</strong>
+                </div>
+            </div>
+        </div>
+
+        <!-- Device Size Simulator -->
+        <div class="test-section">
+            <h2 class="test-title">Test Different Device Sizes</h2>
+            <div class="viewport-sizes">
+                <div class="size-card" data-width="375" data-height="667">
+                    <div style="font-weight: 600;">iPhone SE</div>
+                    <div style="color: #6b7280; font-size: 14px;">375 × 667</div>
+                </div>
+                <div class="size-card" data-width="390" data-height="844">
+                    <div style="font-weight: 600;">iPhone 12/13</div>
+                    <div style="color: #6b7280; font-size: 14px;">390 × 844</div>
+                </div>
+                <div class="size-card" data-width="428" data-height="926">
+                    <div style="font-weight: 600;">iPhone 14 Pro Max</div>
+                    <div style="color: #6b7280; font-size: 14px;">428 × 926</div>
+                </div>
+                <div class="size-card" data-width="768" data-height="1024">
+                    <div style="font-weight: 600;">iPad Mini</div>
+                    <div style="color: #6b7280; font-size: 14px;">768 × 1024</div>
+                </div>
+                <div class="size-card" data-width="820" data-height="1180">
+                    <div style="font-weight: 600;">iPad Air</div>
+                    <div style="color: #6b7280; font-size: 14px;">820 × 1180</div>
+                </div>
+                <div class="size-card" data-width="1024" data-height="1366">
+                    <div style="font-weight: 600;">iPad Pro 12.9"</div>
+                    <div style="color: #6b7280; font-size: 14px;">1024 × 1366</div>
+                </div>
+                <div class="size-card" data-width="360" data-height="800">
+                    <div style="font-weight: 600;">Android Phone</div>
+                    <div style="color: #6b7280; font-size: 14px;">360 × 800</div>
+                </div>
+                <div class="size-card" data-width="100" data-height="100" data-percent="true">
+                    <div style="font-weight: 600;">Full Width</div>
+                    <div style="color: #6b7280; font-size: 14px;">100%</div>
+                </div>
+            </div>
+
+            <div class="orientation-toggle" style="margin-top: 16px;">
+                <button class="orientation-btn active" data-orientation="portrait">📱 Portrait</button>
+                <button class="orientation-btn" data-orientation="landscape">📱 Landscape</button>
+            </div>
+        </div>
+
+        <!-- Feature Tests -->
+        <div class="test-section">
+            <h2 class="test-title">Mobile Features Test Results</h2>
+            <div id="test-results"></div>
+        </div>
+
+        <!-- Live Preview -->
+        <div class="test-section">
+            <h2 class="test-title">Live Preview</h2>
+            <div style="background: white; padding: 16px; border-radius: 8px;">
+                <iframe 
+                    id="preview-frame"
+                    class="test-iframe"
+                    src="/"
+                    style="height: 600px;"
+                ></iframe>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Update device information
+        function updateDeviceInfo() {
+            document.getElementById('screen-size').textContent = `${window.screen.width} × ${window.screen.height}`;
+            document.getElementById('viewport-size').textContent = `${window.innerWidth} × ${window.innerHeight}`;
+            
+            let deviceType = 'Desktop';
+            if (window.innerWidth <= 480) deviceType = 'Mobile';
+            else if (window.innerWidth <= 768) deviceType = 'Tablet (Portrait)';
+            else if (window.innerWidth <= 1024) deviceType = 'Tablet (Landscape)';
+            document.getElementById('device-type').textContent = deviceType;
+            
+            document.getElementById('pixel-ratio').textContent = window.devicePixelRatio || 1;
+            document.getElementById('touch-support').textContent = 'ontouchstart' in window ? 'Yes' : 'No';
+            document.getElementById('orientation').textContent = window.innerWidth > window.innerHeight ? 'Landscape' : 'Portrait';
+        }
+
+        // Run feature tests
+        function runFeatureTests() {
+            const tests = [
+                {
+                    name: 'Viewport Meta Tag',
+                    test: () => {
+                        const viewport = document.querySelector('meta[name="viewport"]');
+                        return viewport && viewport.content.includes('width=device-width');
+                    }
+                },
+                {
+                    name: 'Touch Events Support',
+                    test: () => 'ontouchstart' in window
+                },
+                {
+                    name: 'Mobile Navigation',
+                    test: () => window.innerWidth < 1024
+                },
+                {
+                    name: 'Safe Area Support',
+                    test: () => {
+                        const style = getComputedStyle(document.documentElement);
+                        return style.getPropertyValue('--safe-area-top') !== '';
+                    }
+                },
+                {
+                    name: 'Service Worker Support',
+                    test: () => 'serviceWorker' in navigator
+                },
+                {
+                    name: 'Responsive Images',
+                    test: () => 'loading' in HTMLImageElement.prototype
+                },
+                {
+                    name: 'Dark Mode Support',
+                    test: () => window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches !== undefined
+                },
+                {
+                    name: 'CSS Grid Support',
+                    test: () => CSS.supports('display', 'grid')
+                },
+                {
+                    name: 'Flexbox Support',
+                    test: () => CSS.supports('display', 'flex')
+                },
+                {
+                    name: 'Local Storage',
+                    test: () => {
+                        try {
+                            localStorage.setItem('test', 'test');
+                            localStorage.removeItem('test');
+                            return true;
+                        } catch {
+                            return false;
+                        }
+                    }
+                }
+            ];
+
+            const resultsContainer = document.getElementById('test-results');
+            resultsContainer.innerHTML = '';
+
+            tests.forEach(test => {
+                const passed = test.test();
+                const status = document.createElement('div');
+                status.className = `test-status ${passed ? 'status-success' : 'status-warning'}`;
+                status.innerHTML = `
+                    <strong>${test.name}:</strong> ${passed ? '✅ Passed' : '⚠️ Not Available'}
+                `;
+                resultsContainer.appendChild(status);
+            });
+        }
+
+        // Device size simulator
+        document.querySelectorAll('.size-card').forEach(card => {
+            card.addEventListener('click', function() {
+                document.querySelectorAll('.size-card').forEach(c => c.classList.remove('active'));
+                this.classList.add('active');
+                
+                const iframe = document.getElementById('preview-frame');
+                const isPercent = this.dataset.percent === 'true';
+                
+                if (isPercent) {
+                    iframe.style.width = '100%';
+                    iframe.style.height = '600px';
+                } else {
+                    const orientation = document.querySelector('.orientation-btn.active').dataset.orientation;
+                    const width = orientation === 'portrait' ? this.dataset.width : this.dataset.height;
+                    const height = orientation === 'portrait' ? this.dataset.height : this.dataset.width;
+                    
+                    iframe.style.width = width + 'px';
+                    iframe.style.height = height + 'px';
+                }
+            });
+        });
+
+        // Orientation toggle
+        document.querySelectorAll('.orientation-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.orientation-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                
+                const activeCard = document.querySelector('.size-card.active');
+                if (activeCard && activeCard.dataset.percent !== 'true') {
+                    activeCard.click();
+                }
+            });
+        });
+
+        // Initialize
+        updateDeviceInfo();
+        runFeatureTests();
+        window.addEventListener('resize', updateDeviceInfo);
+
+        // Auto-refresh tests
+        setInterval(runFeatureTests, 5000);
+    </script>
+</body>
+</html>

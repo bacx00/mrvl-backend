@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>MRVL Mobile Optimization Test - VLR.gg Standards</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #ef4444;
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border: #334155;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding-bottom: 80px;
+        }
+
+        .header {
+            background: var(--bg-secondary);
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .container {
+            max-width: 100%;
+            padding: 16px;
+        }
+
+        .test-section {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .test-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .test-status {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--text-secondary);
+        }
+
+        .test-status.success { background: var(--success); }
+        .test-status.warning { background: var(--warning); }
+        .test-status.error { background: var(--error); }
+
+        .test-item {
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .test-item:last-child {
+            border-bottom: none;
+        }
+
+        .badge {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .badge.success { background: var(--success); color: white; }
+        .badge.warning { background: var(--warning); color: white; }
+        .badge.error { background: var(--error); color: white; }
+
+        /* VLR.gg-style match card */
+        .match-card {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            touch-action: manipulation;
+            transition: transform 0.2s;
+        }
+
+        .match-card:active {
+            transform: scale(0.98);
+        }
+
+        .match-card.live {
+            border-left: 3px solid var(--error);
+        }
+
+        .match-time {
+            font-size: 11px;
+            color: var(--text-secondary);
+            min-width: 45px;
+        }
+
+        .match-teams {
+            flex: 1;
+        }
+
+        .match-team {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 2px 0;
+        }
+
+        .team-name {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .team-score {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        /* Bottom navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0;
+            z-index: 1000;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: 8px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 10px;
+        }
+
+        .nav-item.active {
+            color: var(--primary);
+        }
+
+        .nav-icon {
+            width: 24px;
+            height: 24px;
+        }
+
+        /* Performance metrics */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .metric-card {
+            background: var(--bg-primary);
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .metric-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        /* Touch test area */
+        .touch-test {
+            height: 200px;
+            background: var(--bg-primary);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            touch-action: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .touch-indicator {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary);
+            opacity: 0.5;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+        }
+
+        @media (min-width: 768px) {
+            .container {
+                max-width: 768px;
+                margin: 0 auto;
+            }
+        }
+
+        /* Loading skeleton */
+        .skeleton {
+            background: linear-gradient(90deg, var(--bg-secondary) 25%, var(--border) 50%, var(--bg-secondary) 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+        }
+
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1 style="font-size: 20px; font-weight: 600;">MRVL Mobile Test Suite</h1>
+        <p style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">VLR.gg-standard optimization testing</p>
+    </div>
+
+    <div class="container">
+        <!-- Device Detection -->
+        <div class="test-section">
+            <h2 class="test-title">
+                <span class="test-status" id="device-status"></span>
+                Device & Network Detection
+            </h2>
+            <div id="device-tests"></div>
+        </div>
+
+        <!-- Performance Metrics -->
+        <div class="test-section">
+            <h2 class="test-title">
+                <span class="test-status" id="perf-status"></span>
+                Performance Metrics
+            </h2>
+            <div class="metrics-grid" id="perf-metrics">
+                <div class="metric-card">
+                    <div class="metric-value" id="lcp-value">--</div>
+                    <div class="metric-label">LCP (ms)</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="fid-value">--</div>
+                    <div class="metric-label">FID (ms)</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="cls-value">--</div>
+                    <div class="metric-label">CLS</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="ttfb-value">--</div>
+                    <div class="metric-label">TTFB (ms)</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Touch Gestures Test -->
+        <div class="test-section">
+            <h2 class="test-title">
+                <span class="test-status success"></span>
+                Touch Gestures & Interactions
+            </h2>
+            <div class="touch-test" id="touch-area">
+                <p>Touch or swipe here</p>
+            </div>
+            <div id="touch-info" style="margin-top: 8px; font-size: 12px; color: var(--text-secondary);"></div>
+        </div>
+
+        <!-- VLR.gg Style Match Cards -->
+        <div class="test-section">
+            <h2 class="test-title">
+                <span class="test-status success"></span>
+                VLR.gg Style Components
+            </h2>
+            
+            <div class="match-card live">
+                <div class="match-time">LIVE</div>
+                <div class="match-teams">
+                    <div class="match-team">
+                        <span class="team-name">Team Alpha</span>
+                        <span class="team-score">13</span>
+                    </div>
+                    <div class="match-team">
+                        <span class="team-name">Team Beta</span>
+                        <span class="team-score">11</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="match-card">
+                <div class="match-time">18:00</div>
+                <div class="match-teams">
+                    <div class="match-team">
+                        <span class="team-name">Team Gamma</span>
+                        <span class="team-score">-</span>
+                    </div>
+                    <div class="match-team">
+                        <span class="team-name">Team Delta</span>
+                        <span class="team-score">-</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading States -->
+        <div class="test-section">
+            <h2 class="test-title">
+                <span class="test-status success"></span>
+                Loading Optimizations
+            </h2>
+            <div class="skeleton" style="height: 60px; border-radius: 8px; margin-bottom: 8px;"></div>
+            <div class="skeleton" style="height: 60px; border-radius: 8px;"></div>
+        </div>
+
+        <!-- API & Bundle Tests -->
+        <div class="test-section">
+            <h2 class="test-title">
+                <span class="test-status" id="bundle-status"></span>
+                Bundle & API Optimization
+            </h2>
+            <div id="bundle-tests"></div>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <a href="#" class="nav-item active">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+            </svg>
+            <span>Home</span>
+        </a>
+        <a href="#" class="nav-item">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+            </svg>
+            <span>Matches</span>
+        </a>
+        <a href="#" class="nav-item">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M7 14l5-5 5 5z"/>
+            </svg>
+            <span>Rankings</span>
+        </a>
+        <a href="#" class="nav-item">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+            </svg>
+            <span>Profile</span>
+        </a>
+    </nav>
+
+    <script>
+        // Device detection tests
+        function runDeviceTests() {
+            const tests = [];
+            
+            // Screen size
+            tests.push({
+                name: 'Screen Size',
+                value: `${window.innerWidth}x${window.innerHeight}`,
+                status: window.innerWidth < 768 ? 'success' : 'warning'
+            });
+            
+            // Device pixel ratio
+            tests.push({
+                name: 'Pixel Ratio',
+                value: window.devicePixelRatio.toFixed(2),
+                status: window.devicePixelRatio >= 2 ? 'success' : 'warning'
+            });
+            
+            // Touch support
+            const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+            tests.push({
+                name: 'Touch Support',
+                value: hasTouch ? 'Yes' : 'No',
+                status: hasTouch ? 'success' : 'error'
+            });
+            
+            // Network type
+            const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+            tests.push({
+                name: 'Network Type',
+                value: connection ? connection.effectiveType : 'Unknown',
+                status: connection && ['4g', '3g'].includes(connection.effectiveType) ? 'success' : 'warning'
+            });
+            
+            // Device memory
+            tests.push({
+                name: 'Device Memory',
+                value: navigator.deviceMemory ? `${navigator.deviceMemory}GB` : 'Unknown',
+                status: navigator.deviceMemory >= 4 ? 'success' : 'warning'
+            });
+            
+            // Service Worker
+            tests.push({
+                name: 'Service Worker',
+                value: 'serviceWorker' in navigator ? 'Supported' : 'Not Supported',
+                status: 'serviceWorker' in navigator ? 'success' : 'error'
+            });
+            
+            // Render tests
+            const container = document.getElementById('device-tests');
+            container.innerHTML = tests.map(test => `
+                <div class="test-item">
+                    <span>${test.name}</span>
+                    <span class="badge ${test.status}">${test.value}</span>
+                </div>
+            `).join('');
+            
+            // Update status indicator
+            const hasErrors = tests.some(t => t.status === 'error');
+            const hasWarnings = tests.some(t => t.status === 'warning');
+            document.getElementById('device-status').className = 
+                `test-status ${hasErrors ? 'error' : hasWarnings ? 'warning' : 'success'}`;
+        }
+        
+        // Performance monitoring
+        function monitorPerformance() {
+            if ('PerformanceObserver' in window) {
+                // LCP
+                try {
+                    new PerformanceObserver((list) => {
+                        const entries = list.getEntries();
+                        const lastEntry = entries[entries.length - 1];
+                        document.getElementById('lcp-value').textContent = Math.round(lastEntry.startTime);
+                    }).observe({ entryTypes: ['largest-contentful-paint'] });
+                } catch (e) {}
+                
+                // FID
+                try {
+                    new PerformanceObserver((list) => {
+                        const entries = list.getEntries();
+                        entries.forEach((entry) => {
+                            document.getElementById('fid-value').textContent = 
+                                Math.round(entry.processingStart - entry.startTime);
+                        });
+                    }).observe({ entryTypes: ['first-input'] });
+                } catch (e) {}
+                
+                // CLS
+                let clsValue = 0;
+                try {
+                    new PerformanceObserver((list) => {
+                        for (const entry of list.getEntries()) {
+                            if (!entry.hadRecentInput) {
+                                clsValue += entry.value;
+                                document.getElementById('cls-value').textContent = clsValue.toFixed(3);
+                            }
+                        }
+                    }).observe({ entryTypes: ['layout-shift'] });
+                } catch (e) {}
+                
+                // TTFB
+                if (performance.timing) {
+                    const ttfb = performance.timing.responseStart - performance.timing.fetchStart;
+                    document.getElementById('ttfb-value').textContent = ttfb;
+                }
+            }
+            
+            document.getElementById('perf-status').className = 'test-status success';
+        }
+        
+        // Touch gesture testing
+        function setupTouchTest() {
+            const touchArea = document.getElementById('touch-area');
+            const touchInfo = document.getElementById('touch-info');
+            let touchStartX = 0;
+            let touchStartY = 0;
+            
+            touchArea.addEventListener('touchstart', (e) => {
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+                
+                // Show touch indicator
+                const indicator = document.createElement('div');
+                indicator.className = 'touch-indicator';
+                indicator.style.left = touchStartX + 'px';
+                indicator.style.top = touchStartY - touchArea.offsetTop + 'px';
+                touchArea.appendChild(indicator);
+                
+                setTimeout(() => indicator.remove(), 500);
+            });
+            
+            touchArea.addEventListener('touchmove', (e) => {
+                const touchX = e.touches[0].clientX;
+                const touchY = e.touches[0].clientY;
+                const deltaX = touchX - touchStartX;
+                const deltaY = touchY - touchStartY;
+                
+                touchInfo.textContent = `Swipe: X:${Math.round(deltaX)}, Y:${Math.round(deltaY)}`;
+            });
+            
+            touchArea.addEventListener('touchend', (e) => {
+                const touchEndX = e.changedTouches[0].clientX;
+                const touchEndY = e.changedTouches[0].clientY;
+                const deltaX = touchEndX - touchStartX;
+                const deltaY = touchEndY - touchStartY;
+                
+                let gesture = 'Tap';
+                if (Math.abs(deltaX) > 50) {
+                    gesture = deltaX > 0 ? 'Swipe Right' : 'Swipe Left';
+                } else if (Math.abs(deltaY) > 50) {
+                    gesture = deltaY > 0 ? 'Swipe Down' : 'Swipe Up';
+                }
+                
+                touchInfo.textContent = `Gesture detected: ${gesture}`;
+            });
+        }
+        
+        // Bundle optimization tests
+        function runBundleTests() {
+            const tests = [];
+            
+            // Check lazy loading support
+            tests.push({
+                name: 'Lazy Loading',
+                value: 'loading' in HTMLImageElement.prototype ? 'Native' : 'Polyfill Required',
+                status: 'loading' in HTMLImageElement.prototype ? 'success' : 'warning'
+            });
+            
+            // Check WebP support
+            const webpSupport = document.createElement('canvas').toDataURL('image/webp').indexOf('data:image/webp') === 0;
+            tests.push({
+                name: 'WebP Support',
+                value: webpSupport ? 'Yes' : 'No',
+                status: webpSupport ? 'success' : 'warning'
+            });
+            
+            // Check intersection observer
+            tests.push({
+                name: 'Intersection Observer',
+                value: 'IntersectionObserver' in window ? 'Supported' : 'Not Supported',
+                status: 'IntersectionObserver' in window ? 'success' : 'error'
+            });
+            
+            // Check requestIdleCallback
+            tests.push({
+                name: 'Idle Callback',
+                value: 'requestIdleCallback' in window ? 'Supported' : 'Polyfill',
+                status: 'requestIdleCallback' in window ? 'success' : 'warning'
+            });
+            
+            // Render tests
+            const container = document.getElementById('bundle-tests');
+            container.innerHTML = tests.map(test => `
+                <div class="test-item">
+                    <span>${test.name}</span>
+                    <span class="badge ${test.status}">${test.value}</span>
+                </div>
+            `).join('');
+            
+            // Update status
+            const hasErrors = tests.some(t => t.status === 'error');
+            document.getElementById('bundle-status').className = 
+                `test-status ${hasErrors ? 'error' : 'success'}`;
+        }
+        
+        // Initialize all tests
+        document.addEventListener('DOMContentLoaded', () => {
+            runDeviceTests();
+            monitorPerformance();
+            setupTouchTest();
+            runBundleTests();
+            
+            // Simulate API response time
+            fetch('/api/status')
+                .then(res => res.json())
+                .then(data => {
+                    console.log('API Status:', data);
+                })
+                .catch(err => {
+                    console.log('API test skipped:', err.message);
+                });
+        });
+        
+        // Monitor orientation changes
+        window.addEventListener('orientationchange', () => {
+            console.log('Orientation changed:', window.orientation);
+            runDeviceTests();
+        });
+        
+        // Monitor network changes
+        if (navigator.connection) {
+            navigator.connection.addEventListener('change', () => {
+                console.log('Network changed:', navigator.connection.effectiveType);
+                runDeviceTests();
+            });
+        }
+    </script>
+</body>
+</html>

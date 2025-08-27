@@ -71,5 +71,6 @@ class Kernel extends HttpKernel
         'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
         'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
         'sensitive.rate' => \App\Http\Middleware\SensitiveOperationRateLimit::class,
+        'require.2fa' => \App\Http\Middleware\RequireTwoFactor::class,
     ];
 }

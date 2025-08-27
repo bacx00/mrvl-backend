@@ -32,7 +32,8 @@ class User extends Authenticatable
         'hero_flair', 'team_flair_id', 'show_hero_flair', 'show_team_flair',
         'profile_picture_type', 'use_hero_as_avatar', 'banned_at', 'ban_reason',
         'ban_expires_at', 'muted_until', 'last_activity',
-        'mention_count', 'last_mentioned_at'
+        'mention_count', 'last_mentioned_at',
+        'two_factor_enabled', 'two_factor_secret', 'two_factor_recovery_codes', 'two_factor_confirmed_at'
     ];
 
     /**
@@ -50,7 +51,7 @@ class User extends Authenticatable
     ];
 
     protected $hidden = [
-        'password', 'remember_token',
+        'password', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes',
     ];
 
     protected function casts(): array
@@ -68,7 +69,10 @@ class User extends Authenticatable
             'last_activity' => 'datetime',
             'last_mentioned_at' => 'datetime',
             'warning_count' => 'integer',
-            'mention_count' => 'integer'
+            'mention_count' => 'integer',
+            'two_factor_enabled' => 'boolean',
+            'two_factor_recovery_codes' => 'array',
+            'two_factor_confirmed_at' => 'datetime'
         ];
     }
 
@@ -927,5 +931,71 @@ class User extends Authenticatable
         foreach ($patterns as $pattern) {
             Cache::tags(['user_mentions', "user_{$this->id}"])->flush();
         }
+    }
+
+    // ===================================
+    // TWO-FACTOR AUTHENTICATION METHODS
+    // ===================================
+
+    /**
+     * Check if the user has 2FA enabled
+     */
+    public function hasTwoFactorEnabled(): bool
+    {
+        return $this->two_factor_enabled && !empty($this->two_factor_secret);
+    }
+
+    /**
+     * Check if 2FA is confirmed
+     */
+    public function isTwoFactorConfirmed(): bool
+    {
+        return $this->two_factor_confirmed_at !== null;
+    }
+
+    /**
+     * Generate recovery codes
+     */
+    public function generateRecoveryCodes(): array
+    {
+        $codes = [];
+        for ($i = 0; $i < 10; $i++) {
+            $codes[] = strtoupper(substr(str_shuffle('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'), 0, 8));
+        }
+        
+        $this->two_factor_recovery_codes = $codes;
+        $this->save();
+        
+        return $codes;
+    }
+
+    /**
+     * Use a recovery code
+     */
+    public function useRecoveryCode(string $code): bool
+    {
+        if (!$this->two_factor_recovery_codes) {
+            return false;
+        }
+
+        $codes = $this->two_factor_recovery_codes;
+        $codeIndex = array_search(strtoupper($code), $codes);
+
+        if ($codeIndex !== false) {
+            unset($codes[$codeIndex]);
+            $this->two_factor_recovery_codes = array_values($codes);
+            $this->save();
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if user must use 2FA (admin only)
+     */
+    public function mustUseTwoFactor(): bool
+    {
+        return $this->isAdmin();
     }
 }

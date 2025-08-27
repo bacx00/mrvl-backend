@@ -1,0 +1,181 @@
+{
+    "status": "PRODUCTION READY",
+    "passed": 114,
+    "failed": 0,
+    "warnings": [],
+    "execution_time": 0.2200000000000000011102230246251565404236316680908203125,
+    "results": {
+        "tournament_hierarchy": {
+            "parent_tournament_id": 10,
+            "child_tournament_id": 11,
+            "relationship_valid": true,
+            "hierarchy_check": "passed"
+        },
+        "team_registration": {
+            "total_teams": 98,
+            "qualified_teams": 7,
+            "open_qualifier_teams": 91,
+            "registration_records": 98,
+            "seeding_errors": 0,
+            "registration_check": "passed"
+        },
+        "swiss_rounds": {
+            "stage_id": 24,
+            "total_matches": 245,
+            "rounds": 5,
+            "matches_per_round": 49,
+            "format": "bo1",
+            "scheduled_matches": 245,
+            "swiss_check": "passed"
+        },
+        "single_elimination": {
+            "stage_id": 25,
+            "total_matches": 15,
+            "round_of_16": 8,
+            "quarterfinals": 4,
+            "semifinals": 2,
+            "finals": 1,
+            "bo3_matches": 14,
+            "bo5_matches": 1,
+            "advancement_errors": 0,
+            "bracket_check": "passed"
+        },
+        "progression_logic": {
+            "swiss_advancement": {
+                "swiss_rounds": 5,
+                "bracket_teams": 16,
+                "advancement_spots": 8,
+                "prize_distribution": {
+                    "1": 5000,
+                    "2": 3000,
+                    "3": 2000,
+                    "4": 1500,
+                    "5-8": 1000
+                },
+                "swiss_wins_required": 3,
+                "swiss_losses_eliminated": 3
+            },
+            "phase_progression": {
+                "phase_1": {
+                    "name": "Swiss Rounds",
+                    "type": "swiss",
+                    "teams": 98,
+                    "format": "bo1",
+                    "rounds": 5,
+                    "advancement": 16
+                },
+                "phase_2": {
+                    "name": "Single Elimination Bracket",
+                    "type": "single_elimination",
+                    "teams": 16,
+                    "format": "bo3",
+                    "advancement": 8
+                }
+            },
+            "valid_states": [
+                "pending",
+                "in_progress",
+                "completed",
+                "cancelled"
+            ],
+            "progression_check": "passed"
+        },
+        "prize_pool": {
+            "total_pool": 15000,
+            "currency": "USD",
+            "distribution": {
+                "1": 5000,
+                "2": 3000,
+                "3": 2000,
+                "4": 1500,
+                "5-8": 1000
+            },
+            "total_distributed": 15500,
+            "prize_check": "passed"
+        },
+        "tournament_settings": {
+            "settings": {
+                "swiss_rounds": 5,
+                "qualifier_type": "open_qualifier_split_2",
+                "replay_required": true,
+                "swiss_advancement": 16,
+                "allow_substitutions": true,
+                "anti_cheat_required": true,
+                "bracket_advancement": 8,
+                "parent_tournament_id": 10,
+                "technical_pause_limit": 3,
+                "max_substitutions_per_match": 1
+            },
+            "map_pool_size": 8,
+            "format_settings": {
+                "default": "bo1",
+                "swiss_round_1": "bo1",
+                "swiss_round_2": "bo1",
+                "swiss_round_3": "bo1",
+                "swiss_round_4": "bo1",
+                "swiss_round_5": "bo1",
+                "bracket_finals": "bo5",
+                "bracket_round_1": "bo3",
+                "bracket_semifinals": "bo3",
+                "bracket_quarterfinals": "bo3"
+            },
+            "rules_defined": [
+                "advancement",
+                "roster_lock",
+                "forfeit_time",
+                "swiss_format",
+                "swiss_pairing",
+                "bracket_format",
+                "swiss_advancement",
+                "map_selection_swiss",
+                "map_selection_bracket"
+            ],
+            "settings_check": "passed"
+        },
+        "database_integrity": {
+            "tournament_team_relations": 98,
+            "registrations": 98,
+            "bracket_stages": 2,
+            "bracket_matches": 260,
+            "orphaned_matches": 0,
+            "invalid_seeds": 0,
+            "integrity_check": "passed"
+        },
+        "api_endpoints": {
+            "endpoints_defined": [
+                "tournament_detail",
+                "tournament_teams",
+                "tournament_matches",
+                "tournament_bracket",
+                "tournament_standings"
+            ],
+            "tournament_accessible": true,
+            "api_check": "passed"
+        },
+        "match_scheduling": {
+            "total_matches": 260,
+            "scheduled_matches": 260,
+            "unscheduled_matches": 0,
+            "format_distribution": {
+                "bo1": 245,
+                "bo3": 14,
+                "bo5": 1
+            },
+            "tournament_duration_days": 3,
+            "scheduling_conflicts": 0,
+            "scheduling_check": "passed"
+        }
+    },
+    "errors": [],
+    "production_ready": true,
+    "tournament_details": {
+        "id": 11,
+        "name": "Marvel Rivals Ignite 2025 Stage 2 Americas - Open Qualifier Split 2",
+        "parent_id": 10,
+        "parent_name": "Marvel Rivals Ignite 2025 Stage 2 Americas",
+        "teams": 98,
+        "prize_pool": "15,000 USD",
+        "status": "registration_open",
+        "audit_timestamp": "2025-08-27T16:22:45+00:00"
+    }
+}

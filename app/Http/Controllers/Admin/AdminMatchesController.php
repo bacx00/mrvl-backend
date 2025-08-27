@@ -1609,4 +1609,83 @@ class AdminMatchesController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Update individual player statistics for a match
+     * This is called when editing stats on the match detail page
+     *
+     * @param Request $request
+     * @param int $matchId
+     * @param int $playerId
+     * @return JsonResponse
+     */
+    public function updateSinglePlayerStats(Request $request, int $matchId, int $playerId): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'hero' => 'required|string|max:50',
+            'eliminations' => 'required|integer|min:0',
+            'deaths' => 'required|integer|min:0',
+            'assists' => 'required|integer|min:0',
+            'damage_dealt' => 'nullable|integer|min:0',
+            'healing_done' => 'nullable|integer|min:0',
+            'damage_blocked' => 'nullable|integer|min:0',
+            'team_id' => 'required|exists:teams,id'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            $match = MvrlMatch::find($matchId);
+            if (!$match) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Match not found'
+                ], 404);
+            }
+
+            // Calculate KDA
+            $kills = $request->eliminations;
+            $deaths = $request->deaths;
+            $assists = $request->assists;
+            $kda = $deaths > 0 ? round(($kills + $assists) / $deaths, 2) : ($kills + $assists);
+
+            // Update or create the stat record
+            $stat = MatchPlayerStat::updateOrCreate(
+                [
+                    'match_id' => $matchId,
+                    'player_id' => $playerId
+                ],
+                [
+                    'team_id' => $request->team_id,
+                    'hero' => $request->hero,
+                    'eliminations' => $request->eliminations,
+                    'deaths' => $request->deaths,
+                    'assists' => $request->assists,
+                    'damage_dealt' => $request->damage_dealt ?? 0,
+                    'healing_done' => $request->healing_done ?? 0,
+                    'damage_blocked' => $request->damage_blocked ?? 0,
+                    'kda_ratio' => $kda
+                ]
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Player statistics updated successfully',
+                'data' => $stat
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update player statistics',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 }
