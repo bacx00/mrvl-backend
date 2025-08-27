@@ -251,7 +251,7 @@ class TeamController extends Controller
                         (is_string($team->coach_social_media) ? json_decode($team->coach_social_media, true) : $team->coach_social_media) : []
                 ],
                 'website' => $team->website,
-                'social_media' => $team->social_media ? json_decode($team->social_media, true) : [],
+                'social_media' => $this->parseSocialMedia($team->social_media),
                 
                 // Performance metrics
                 'rating' => $team->rating ?? 1000,
@@ -1356,7 +1356,7 @@ class TeamController extends Controller
 
             $query = DB::table('mentions as m')
                 ->leftJoin('users as u', 'm.mentioned_by', '=', 'u.id')
-                ->where('m.mentioned_type', 'team')
+                ->where('m.mentioned_type', 'App\Models\Team')
                 ->where('m.mentioned_id', $teamId)
                 ->where('m.is_active', true)
                 ->select([
@@ -3087,6 +3087,31 @@ class TeamController extends Controller
                 'message' => 'Error deleting teams: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    private function parseSocialMedia($socialMedia)
+    {
+        if (!$socialMedia) {
+            return [];
+        }
+
+        if (is_string($socialMedia)) {
+            // First decode
+            $decoded = json_decode($socialMedia, true);
+            
+            // If the result is still a string, try decoding again (handle double-encoded JSON)
+            if (is_string($decoded)) {
+                $decoded = json_decode($decoded, true);
+            }
+            
+            return (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) ? $decoded : [];
+        }
+
+        if (is_array($socialMedia)) {
+            return $socialMedia;
+        }
+
+        return [];
     }
 
 }

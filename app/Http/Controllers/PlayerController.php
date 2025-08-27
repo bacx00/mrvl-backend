@@ -251,6 +251,9 @@ class PlayerController extends Controller
         // Handle IGN/username mapping
         $playerData['username'] = $validated['ign'] ?? $validated['username'];
         
+        // Handle real_name/name mapping
+        $playerData['real_name'] = $validated['real_name'] ?? $validated['name'] ?? null;
+        
         // Check for unique username
         if (DB::table('players')->where('username', $playerData['username'])->exists()) {
             return response()->json([
@@ -275,7 +278,7 @@ class PlayerController extends Controller
         $playerData['role'] = $roleMapping[$validated['role']] ?? $validated['role'];
         
         // Handle description/biography mapping
-        $playerData['biography'] = $validated['description'] ?? $validated['biography'];
+        $playerData['biography'] = $validated['description'] ?? $validated['biography'] ?? null;
         
         // Copy other fields
         $otherFields = [
@@ -295,7 +298,7 @@ class PlayerController extends Controller
         // Set defaults for missing fields
         $playerData['main_hero'] = $playerData['main_hero'] ?? 'Spider-Man';
         $playerData['region'] = $playerData['region'] ?? 'NA';
-        $playerData['country'] = $playerData['country'] ?? 'US';
+        $playerData['country'] = $playerData['country'] ?? 'United States';  // Ensure country is always set
         $playerData['rating'] = $playerData['rating'] ?? 1000;
         $playerData['status'] = $playerData['status'] ?? 'active';
 
@@ -1809,9 +1812,88 @@ class PlayerController extends Controller
             // Get all records without pagination first to group by match
             $allRecords = $query->get();
             
+            // Also get matches where player is in roster but has no stats
+            $matchesWithoutStats = DB::table('matches as m')
+                ->leftJoin('teams as t1', 'm.team1_id', '=', 't1.id')
+                ->leftJoin('teams as t2', 'm.team2_id', '=', 't2.id')
+                ->leftJoin('events as e', 'm.event_id', '=', 'e.id')
+                ->where('m.status', 'completed')
+                ->where(function($q) use ($playerId) {
+                    // Check if player is in team1 or team2 composition in maps_data
+                    // Using JSON_OVERLAPS to check if our player ID array overlaps with extracted player IDs
+                    $q->whereRaw("JSON_OVERLAPS(JSON_EXTRACT(maps_data, '$[*].team1_composition[*].player_id'), ?)", [json_encode([(int)$playerId])])
+                      ->orWhereRaw("JSON_OVERLAPS(JSON_EXTRACT(maps_data, '$[*].team2_composition[*].player_id'), ?)", [json_encode([(int)$playerId])]);
+                })
+                ->whereNotExists(function($q) use ($playerId) {
+                    $q->select(DB::raw(1))
+                      ->from('match_player_stats')
+                      ->whereColumn('match_player_stats.match_id', 'm.id')
+                      ->where('match_player_stats.player_id', $playerId);
+                })
+                ->select([
+                    'm.id as match_id',
+                    'm.team1_id',
+                    'm.team2_id',
+                    'm.team1_score',
+                    'm.team2_score',
+                    'm.scheduled_at',
+                    'm.format',
+                    'm.maps_data',
+                    't1.name as team1_name',
+                    't1.short_name as team1_short',
+                    't1.logo as team1_logo',
+                    't2.name as team2_name',
+                    't2.short_name as team2_short',
+                    't2.logo as team2_logo',
+                    'e.name as event_name',
+                    'e.type as event_type',
+                    'e.logo as event_logo'
+                ])
+                ->get();
+            
+            // Add zero stats for matches without stats
+            foreach ($matchesWithoutStats as $match) {
+                // Create a zero stat record
+                $zeroStat = (object)[
+                    'player_id' => $playerId,
+                    'team_id' => $player->team_id,
+                    'hero' => 'Spider-Man', // Default hero
+                    'eliminations' => 0,
+                    'deaths' => 0,
+                    'assists' => 0,
+                    'damage_dealt' => 0,
+                    'healing_done' => 0,
+                    'damage_blocked' => 0,
+                    'kda_ratio' => 0.0,
+                    'rating' => 0,
+                    'acs' => 0,
+                    'adr' => 0,
+                    'kast' => 0,
+                    'match_id' => $match->match_id,
+                    'team1_id' => $match->team1_id,
+                    'team2_id' => $match->team2_id,
+                    'team1_name' => $match->team1_name,
+                    'team2_name' => $match->team2_name,
+                    'team1_short' => $match->team1_short,
+                    'team2_short' => $match->team2_short,
+                    'team1_logo' => $match->team1_logo,
+                    'team2_logo' => $match->team2_logo,
+                    'team1_score' => $match->team1_score,
+                    'team2_score' => $match->team2_score,
+                    'scheduled_at' => $match->scheduled_at,
+                    'format' => $match->format,
+                    'maps_data' => $match->maps_data,
+                    'event_name' => $match->event_name,
+                    'event_type' => $match->event_type,
+                    'event_logo' => $match->event_logo
+                ];
+                $allRecords->push($zeroStat);
+            }
+            
             // Debug: Get the raw query
             \Log::info('Query SQL: ' . $query->toSql());
             \Log::info('Query Bindings: ' . json_encode($query->getBindings()));
+            \Log::info('Matches without stats count: ' . $matchesWithoutStats->count());
             
             // Group records by match_id
             $groupedByMatch = $allRecords->groupBy('match_id');
@@ -2642,11 +2724,11 @@ class PlayerController extends Controller
             'matches' => $totalMatches,
             'wins' => $wins,
             'win_rate' => $totalMatches > 0 ? round(($wins / $totalMatches) * 100, 1) : 0,
-            'avg_rating' => round($avgRating, 2),
-            'avg_acs' => round($avgAcs, 1),
+            'avg_rating' => round($avgRating ?? 0, 2),
+            'avg_acs' => round($avgAcs ?? 0, 1),
             'avg_kd' => $totalDeaths > 0 ? round($totalElims / $totalDeaths, 2) : $totalElims,
-            'avg_adr' => round($avgAdr, 1),
-            'avg_kast' => round($avgKast, 1)
+            'avg_adr' => round($avgAdr ?? 0, 1),
+            'avg_kast' => round($avgKast ?? 0, 1)
         ];
     }
 

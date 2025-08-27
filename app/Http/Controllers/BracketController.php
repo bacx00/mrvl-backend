@@ -219,7 +219,53 @@ class BracketController extends Controller
 
     private function generateSingleEliminationBracket($eventId)
     {
-        // Use bracket_matches table instead of matches table
+        // First check if bracket_data exists in events table
+        $event = DB::table('events')->where('id', $eventId)->first();
+        if ($event && $event->bracket_data) {
+            $bracketData = json_decode($event->bracket_data, true);
+            
+            // Return the bracket data in the expected format
+            $bracket = [
+                'type' => $bracketData['format'] ?? 'single_elimination',
+                'rounds' => [],
+                'matches' => []
+            ];
+            
+            // Process rounds from bracket_data
+            if (isset($bracketData['rounds']) && is_array($bracketData['rounds'])) {
+                foreach ($bracketData['rounds'] as $roundIndex => $round) {
+                    $roundData = [
+                        'round_number' => $round['id'] ?? ($roundIndex + 1),
+                        'round_name' => $round['name'] ?? 'Round ' . ($roundIndex + 1),
+                        'matches' => []
+                    ];
+                    
+                    if (isset($round['matches']) && is_array($round['matches'])) {
+                        foreach ($round['matches'] as $match) {
+                            $matchData = [
+                                'id' => $match['id'] ?? null,
+                                'position' => $match['matchNumber'] ?? 0,
+                                'team1' => $match['team1'] ?? null,
+                                'team2' => $match['team2'] ?? null,
+                                'score1' => $match['score1'] ?? 0,
+                                'score2' => $match['score2'] ?? 0,
+                                'status' => $match['status'] ?? 'pending',
+                                'bestOf' => $match['bestOf'] ?? 3,
+                                'winner' => $match['winner'] ?? null
+                            ];
+                            $roundData['matches'][] = $matchData;
+                            $bracket['matches'][] = $matchData;
+                        }
+                    }
+                    
+                    $bracket['rounds'][] = $roundData;
+                }
+            }
+            
+            return $bracket;
+        }
+        
+        // Fallback to bracket_matches table if no bracket_data
         $matches = DB::table('bracket_matches as m')
             ->leftJoin('teams as t1', 'm.team1_id', '=', 't1.id')
             ->leftJoin('teams as t2', 'm.team2_id', '=', 't2.id')
@@ -233,26 +279,44 @@ class BracketController extends Controller
             ->orderBy('m.match_number')
             ->get();
 
+        // If no matches found in bracket_matches, try regular matches table
+        if ($matches->isEmpty()) {
+            $matches = DB::table('matches as m')
+                ->leftJoin('teams as t1', 'm.team1_id', '=', 't1.id')
+                ->leftJoin('teams as t2', 'm.team2_id', '=', 't2.id')
+                ->where('m.event_id', $eventId)
+                ->select([
+                    'm.*',
+                    't1.name as team1_name', 't1.short_name as team1_short', 't1.logo as team1_logo',
+                    't2.name as team2_name', 't2.short_name as team2_short', 't2.logo as team2_logo'
+                ])
+                ->orderBy('m.round')
+                ->orderBy('m.bracket_position')
+                ->get();
+        }
+
         // Group by rounds
         $bracket = [
             'type' => 'single_elimination',
-            'rounds' => []
+            'rounds' => [],
+            'matches' => []
         ];
 
         foreach ($matches as $match) {
-            $roundName = $match->round_name ?: $this->getRoundName($match->round_number, $this->getEventTeamCount($eventId));
+            $roundName = isset($match->round_name) ? $match->round_name : $this->getRoundName($match->round ?? 1, $this->getEventTeamCount($eventId));
+            $roundNumber = $match->round_number ?? $match->round ?? 1;
             
             if (!isset($bracket['rounds'][$roundName])) {
                 $bracket['rounds'][$roundName] = [
-                    'round_number' => $match->round_number,
+                    'round_number' => $roundNumber,
                     'matches' => []
                 ];
             }
 
-            $bracket['rounds'][$roundName]['matches'][] = [
+            $matchData = [
                 'id' => $match->id,
-                'match_id' => $match->match_id,
-                'position' => $match->match_number,
+                'match_id' => $match->match_id ?? $match->id,
+                'position' => $match->match_number ?? $match->bracket_position ?? 1,
                 'team1' => [
                     'id' => $match->team1_id,
                     'name' => $match->team1_name,
@@ -270,20 +334,16 @@ class BracketController extends Controller
                     'seed' => $this->getTeamSeed($eventId, $match->team2_id)
                 ],
                 'status' => $match->status,
-                'best_of' => $match->best_of,
-                'winner_id' => $match->winner_id,
-                'team1_source' => $match->team1_source,
-                'team2_source' => $match->team2_source,
-                'winner_advances_to' => $match->winner_advances_to,
-                'loser_advances_to' => $match->loser_advances_to
+                'best_of' => $match->best_of ?? 3,
+                'winner_id' => $match->winner_id ?? null
             ];
+            
+            $bracket['rounds'][$roundName]['matches'][] = $matchData;
+            $bracket['matches'][] = $matchData;
         }
 
-        // Convert to array format expected by frontend
-        $bracket['matches'] = [];
-        foreach ($bracket['rounds'] as $round) {
-            $bracket['matches'] = array_merge($bracket['matches'], $round['matches']);
-        }
+        // Convert rounds to indexed array
+        $bracket['rounds'] = array_values($bracket['rounds']);
 
         return $bracket;
     }

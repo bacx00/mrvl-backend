@@ -1640,49 +1640,65 @@ class MatchController extends Controller
             $map['index'] = $index + 1;
             $map['player_stats'] = $this->getMapPlayerStats($match->id, $index + 1);
             
-            // ENSURE CONSISTENT TEAM COMPOSITION STRUCTURE
+            // MERGE ACTUAL PLAYER STATS WITH TEAM COMPOSITION
+            $playerStats = $map['player_stats'];
+            
+            // Merge team1 composition with actual stats
             if (isset($map['team1_composition'])) {
-                $map['team1_composition'] = array_map(function($player) {
+                $team1Stats = $playerStats[$match->team1_id] ?? [];
+                $map['team1_composition'] = array_map(function($player) use ($team1Stats) {
+                    // Find matching player stats
+                    $matchingStats = collect($team1Stats)->firstWhere('player_id', $player['player_id']);
+                    
                     return [
                         'player_id' => $player['player_id'] ?? $player['id'] ?? null,
-                        'player_name' => $player['player_name'] ?? $player['name'] ?? $player['username'] ?? 'Unknown Player',
-                        'name' => $player['player_name'] ?? $player['name'] ?? $player['username'] ?? 'Unknown Player',
-                        'username' => $player['username'] ?? $player['player_name'] ?? $player['name'] ?? 'Unknown Player',
-                        'hero' => $player['hero'] ?? 'Captain America',
-                        'role' => $player['role'] ?? 'Vanguard',
+                        'player_name' => $player['player_name'] ?? $player['name'] ?? $player['username'] ?? ($matchingStats->username ?? 'Unknown Player'),
+                        'name' => $player['player_name'] ?? $player['name'] ?? $player['username'] ?? ($matchingStats->username ?? 'Unknown Player'),
+                        'username' => $player['username'] ?? $player['player_name'] ?? $player['name'] ?? ($matchingStats->username ?? 'Unknown Player'),
+                        // Use actual hero from stats if available, fallback to composition hero
+                        'hero' => $matchingStats->hero ?? $player['hero'] ?? 'Spider-Man',
+                        'role' => $player['role'] ?? 'Duelist',
                         'country' => $player['country'] ?? $player['nationality'] ?? 'US',
                         'nationality' => $player['country'] ?? $player['nationality'] ?? 'US',
-                        // Stats structure
-                        'eliminations' => $player['eliminations'] ?? 0,
-                        'deaths' => $player['deaths'] ?? 0,
-                        'assists' => $player['assists'] ?? 0,
-                        'damage' => $player['damage'] ?? 0,
-                        'healing' => $player['healing'] ?? 0,
-                        'damage_blocked' => $player['damage_blocked'] ?? 0,
+                        // Use actual stats if available
+                        'eliminations' => $matchingStats->eliminations ?? 0,
+                        'deaths' => $matchingStats->deaths ?? 0,
+                        'assists' => $matchingStats->assists ?? 0,
+                        'damage' => $matchingStats->damage ?? 0,
+                        'healing' => $matchingStats->healing ?? 0,
+                        'damage_blocked' => $matchingStats->damage_blocked ?? 0,
+                        'kda_ratio' => $matchingStats->kda_ratio ?? 0.0,
                         'ultimate_usage' => $player['ultimate_usage'] ?? 0,
                         'objective_time' => $player['objective_time'] ?? 0
                     ];
                 }, $map['team1_composition']);
             }
             
+            // Merge team2 composition with actual stats  
             if (isset($map['team2_composition'])) {
-                $map['team2_composition'] = array_map(function($player) {
+                $team2Stats = $playerStats[$match->team2_id] ?? [];
+                $map['team2_composition'] = array_map(function($player) use ($team2Stats) {
+                    // Find matching player stats
+                    $matchingStats = collect($team2Stats)->firstWhere('player_id', $player['player_id']);
+                    
                     return [
                         'player_id' => $player['player_id'] ?? $player['id'] ?? null,
-                        'player_name' => $player['player_name'] ?? $player['name'] ?? $player['username'] ?? 'Unknown Player',
-                        'name' => $player['player_name'] ?? $player['name'] ?? $player['username'] ?? 'Unknown Player',
-                        'username' => $player['username'] ?? $player['player_name'] ?? $player['name'] ?? 'Unknown Player',
-                        'hero' => $player['hero'] ?? 'Captain America',
-                        'role' => $player['role'] ?? 'Vanguard',
+                        'player_name' => $player['player_name'] ?? $player['name'] ?? $player['username'] ?? ($matchingStats->username ?? 'Unknown Player'),
+                        'name' => $player['player_name'] ?? $player['name'] ?? $player['username'] ?? ($matchingStats->username ?? 'Unknown Player'),
+                        'username' => $player['username'] ?? $player['player_name'] ?? $player['name'] ?? ($matchingStats->username ?? 'Unknown Player'),
+                        // Use actual hero from stats if available, fallback to composition hero
+                        'hero' => $matchingStats->hero ?? $player['hero'] ?? 'Spider-Man',
+                        'role' => $player['role'] ?? 'Duelist',
                         'country' => $player['country'] ?? $player['nationality'] ?? 'US',
                         'nationality' => $player['country'] ?? $player['nationality'] ?? 'US',
-                        // Stats structure
-                        'eliminations' => $player['eliminations'] ?? 0,
-                        'deaths' => $player['deaths'] ?? 0,
-                        'assists' => $player['assists'] ?? 0,
-                        'damage' => $player['damage'] ?? 0,
-                        'healing' => $player['healing'] ?? 0,
-                        'damage_blocked' => $player['damage_blocked'] ?? 0,
+                        // Use actual stats if available
+                        'eliminations' => $matchingStats->eliminations ?? 0,
+                        'deaths' => $matchingStats->deaths ?? 0,
+                        'assists' => $matchingStats->assists ?? 0,
+                        'damage' => $matchingStats->damage ?? 0,
+                        'healing' => $matchingStats->healing ?? 0,
+                        'damage_blocked' => $matchingStats->damage_blocked ?? 0,
+                        'kda_ratio' => $matchingStats->kda_ratio ?? 0.0,
                         'ultimate_usage' => $player['ultimate_usage'] ?? 0,
                         'objective_time' => $player['objective_time'] ?? 0
                     ];
@@ -1824,29 +1840,70 @@ class MatchController extends Controller
 
     private function getMapPlayerStats($matchId, $mapNumber)
     {
-        // First get the round_id from match_rounds table
-        $mapRound = DB::table('match_rounds')
-            ->where('match_id', $matchId)
-            ->where('round_number', $mapNumber)
-            ->first();
-            
-        if (!$mapRound) {
-            return [];
-        }
-        
-        return DB::table('player_match_stats as mps')
+        // Get all stats for this match (since stats aren't map-specific in current structure)
+        $stats = DB::table('match_player_stats as mps')
             ->leftJoin('players as p', 'mps.player_id', '=', 'p.id')
             ->where('mps.match_id', $matchId)
-            ->where('mps.round_id', $mapRound->id)
             ->select([
-                'p.id', 'p.username', 'p.team_id',
-                'mps.hero_played', 'mps.eliminations as kills', 'mps.deaths', 'mps.assists',
-                'mps.damage', 'mps.healing', 'mps.damage_blocked',
-                'mps.ultimate_usage', 'mps.final_blows', 'mps.objective_time'
+                'p.id as player_id', 'p.username', 'p.team_id',
+                'mps.hero', 'mps.eliminations', 'mps.deaths', 'mps.assists',
+                'mps.damage_dealt as damage', 'mps.healing_done as healing', 
+                'mps.damage_blocked', 'mps.kda_ratio'
             ])
-            ->get()
-            ->groupBy('team_id')
-            ->toArray();
+            ->get();
+
+        // Also get players from maps_data who don't have stats and add zero stats
+        $match = DB::table('matches')->where('id', $matchId)->first();
+        if ($match && $match->maps_data) {
+            $mapsData = json_decode($match->maps_data, true);
+            if (isset($mapsData[$mapNumber - 1])) {
+                $mapData = $mapsData[$mapNumber - 1];
+                
+                // Get all players from team compositions for this specific map
+                $allPlayers = collect();
+                if (isset($mapData['team1_composition'])) {
+                    foreach ($mapData['team1_composition'] as $player) {
+                        $allPlayers->push((object)[
+                            'player_id' => $player['player_id'] ?? null,
+                            'team_id' => $match->team1_id,
+                            'hero' => $player['hero'] ?? 'Spider-Man'
+                        ]);
+                    }
+                }
+                if (isset($mapData['team2_composition'])) {
+                    foreach ($mapData['team2_composition'] as $player) {
+                        $allPlayers->push((object)[
+                            'player_id' => $player['player_id'] ?? null,
+                            'team_id' => $match->team2_id,
+                            'hero' => $player['hero'] ?? 'Spider-Man'
+                        ]);
+                    }
+                }
+                
+                // Add zero stats for players not in match_player_stats but in this map's composition
+                $existingPlayerIds = $stats->pluck('player_id')->toArray();
+                foreach ($allPlayers as $player) {
+                    if (!in_array($player->player_id, $existingPlayerIds)) {
+                        $playerInfo = DB::table('players')->where('id', $player->player_id)->first();
+                        $stats->push((object)[
+                            'player_id' => $player->player_id,
+                            'username' => $playerInfo->username ?? 'Unknown',
+                            'team_id' => $player->team_id,
+                            'hero' => $player->hero,
+                            'eliminations' => 0,
+                            'deaths' => 0,
+                            'assists' => 0,
+                            'damage' => 0,
+                            'healing' => 0,
+                            'damage_blocked' => 0,
+                            'kda_ratio' => 0.0
+                        ]);
+                    }
+                }
+            }
+        }
+
+        return $stats->groupBy('team_id')->toArray();
     }
 
     private function getMatchTimelineEvents($matchId)

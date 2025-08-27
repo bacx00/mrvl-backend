@@ -178,16 +178,26 @@ class AdminTeamController extends Controller
                 'coach' => 'nullable|string|max:255',
                 'coach_name' => 'nullable|string|max:255',
                 'coach_nationality' => 'nullable|string|max:255',
+                'coach_country' => 'nullable|string|max:255', // Support both field names
                 'manager' => 'nullable|string|max:255',
                 'owner' => 'nullable|string|max:255',
                 'founded' => 'nullable|date',
                 'description' => 'nullable|string|max:1000',
                 'website' => 'nullable|url|max:255',
-                'social_media' => 'nullable|string' // JSON string
+                'social_media' => 'nullable|string', // JSON string
+                'social_links' => 'nullable' // Support both field names
             ]);
 
-            // Parse social media JSON if provided
-            if ($validatedData['social_media']) {
+            // Handle social media/social_links field (frontend may send either)
+            if (isset($request['social_links'])) {
+                // Convert social_links to social_media format
+                if (is_string($request['social_links'])) {
+                    $validatedData['social_media'] = $request['social_links'];
+                } else {
+                    $validatedData['social_media'] = json_encode($request['social_links']);
+                }
+            } elseif (isset($validatedData['social_media']) && $validatedData['social_media']) {
+                // Parse social media JSON if provided
                 $socialMedia = json_decode($validatedData['social_media'], true);
                 if (json_last_error() !== JSON_ERROR_NONE) {
                     throw new ValidationException('Invalid social media JSON format');
@@ -195,8 +205,18 @@ class AdminTeamController extends Controller
                 $validatedData['social_media'] = json_encode($socialMedia);
             }
 
+            // Map coach_country to coach_nationality if provided
+            if (isset($validatedData['coach_country'])) {
+                $validatedData['coach_nationality'] = $validatedData['coach_country'];
+                unset($validatedData['coach_country']);
+            }
+
+            // Remove social_links from validated data (already converted to social_media)
+            unset($validatedData['social_links']);
+
             // Set defaults
             $validatedData['rating'] = $validatedData['rating'] ?? 1500;
+            $validatedData['peak_elo'] = $validatedData['peak_elo'] ?? $validatedData['elo_rating'] ?? $validatedData['rating'] ?? 1500;
             $validatedData['game'] = 'Marvel Rivals';
             $validatedData['platform'] = 'PC';
             $validatedData['status'] = 'active';
@@ -289,21 +309,44 @@ class AdminTeamController extends Controller
                 'coach' => 'nullable|string|max:255',
                 'coach_name' => 'nullable|string|max:255',
                 'coach_nationality' => 'nullable|string|max:255',
+                'coach_country' => 'nullable|string|max:255', // Support both field names
                 'manager' => 'nullable|string|max:255',
                 'owner' => 'nullable|string|max:255',
                 'founded' => 'nullable|date',
                 'description' => 'nullable|string|max:1000',
                 'website' => 'nullable|url|max:255',
-                'social_media' => 'nullable|string' // JSON string
+                'social_media' => 'nullable|string', // JSON string
+                'social_links' => 'nullable' // Support both field names
             ]);
 
-            // Parse social media JSON if provided
-            if (isset($validatedData['social_media'])) {
+            // Handle social media/social_links field (frontend may send either)
+            if (isset($request['social_links'])) {
+                // Convert social_links to social_media format
+                if (is_string($request['social_links'])) {
+                    $validatedData['social_media'] = $request['social_links'];
+                } else {
+                    $validatedData['social_media'] = json_encode($request['social_links']);
+                }
+            } elseif (isset($validatedData['social_media'])) {
                 $socialMedia = json_decode($validatedData['social_media'], true);
                 if (json_last_error() !== JSON_ERROR_NONE) {
                     throw new ValidationException('Invalid social media JSON format');
                 }
                 $validatedData['social_media'] = json_encode($socialMedia);
+            }
+
+            // Map coach_country to coach_nationality if provided
+            if (isset($validatedData['coach_country'])) {
+                $validatedData['coach_nationality'] = $validatedData['coach_country'];
+                unset($validatedData['coach_country']);
+            }
+
+            // Remove social_links from validated data (already converted to social_media)
+            unset($validatedData['social_links']);
+
+            // Ensure peak_elo is not null for update
+            if (array_key_exists('peak_elo', $validatedData) && is_null($validatedData['peak_elo'])) {
+                $validatedData['peak_elo'] = $validatedData['elo_rating'] ?? $validatedData['rating'] ?? $team->rating ?? 1500;
             }
 
             $team->update($validatedData);
