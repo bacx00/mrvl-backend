@@ -98,6 +98,10 @@ class MatchController extends Controller
         try {
             // Sync live scoring data to player profiles for this match
             $this->syncLiveScoringToPlayerProfiles($matchId);
+            
+            // Sync player stats back to maps_data for proper hero display
+            $this->syncPlayerStatsToMapsData($matchId);
+            
             $match = DB::table('matches as m')
                 ->leftJoin('teams as t1', 'm.team1_id', '=', 't1.id')
                 ->leftJoin('teams as t2', 'm.team2_id', '=', 't2.id')
@@ -2125,6 +2129,147 @@ class MatchController extends Controller
         } catch (\Exception $e) {
             // Log but don't fail - this is a background sync
             \Log::warning('Failed to sync live scoring to player profiles: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Sync player stats from match_player_stats table back to maps_data
+     * This ensures heroes are properly displayed per map
+     */
+    private function syncPlayerStatsToMapsData($matchId)
+    {
+        try {
+            $match = DB::table('matches')->where('id', $matchId)->first();
+            if (!$match) return;
+            
+            // Get existing maps_data to preserve map info
+            $mapsData = json_decode($match->maps_data, true) ?? [];
+            
+            // Get all player stats for this match grouped by map
+            $playerStats = DB::table('match_player_stats')
+                ->where('match_id', $matchId)
+                ->orderBy('map_number')
+                ->orderBy('player_id')
+                ->orderBy('eliminations', 'desc')
+                ->get();
+            
+            // Group by map and player
+            $statsByMap = [];
+            foreach ($playerStats as $stat) {
+                $mapNum = $stat->map_number ?? 1;
+                $playerId = $stat->player_id;
+                
+                if (!isset($statsByMap[$mapNum])) {
+                    $statsByMap[$mapNum] = [];
+                }
+                
+                if (!isset($statsByMap[$mapNum][$playerId])) {
+                    $statsByMap[$mapNum][$playerId] = [];
+                }
+                
+                $statsByMap[$mapNum][$playerId][] = $stat;
+            }
+            
+            // Update each map's composition with correct hero data
+            foreach ($mapsData as $mapIdx => &$map) {
+                $mapNumber = $mapIdx + 1;
+                
+                // Update team1 composition
+                if (isset($map['team1_composition'])) {
+                    foreach ($map['team1_composition'] as &$player) {
+                        $playerId = $player['player_id'];
+                        
+                        // Get this player's stats for this map
+                        if (isset($statsByMap[$mapNumber][$playerId])) {
+                            $playerMapStats = $statsByMap[$mapNumber][$playerId];
+                            
+                            // Use the primary hero (most elims or first)
+                            $primaryStat = $playerMapStats[0];
+                            
+                            // Update player data with correct hero and aggregated stats
+                            $totalElims = array_sum(array_column($playerMapStats, 'eliminations'));
+                            $totalDeaths = array_sum(array_column($playerMapStats, 'deaths'));
+                            $totalAssists = array_sum(array_column($playerMapStats, 'assists'));
+                            $totalDamage = array_sum(array_column($playerMapStats, 'damage_dealt'));
+                            $totalHealing = array_sum(array_column($playerMapStats, 'healing_done'));
+                            $totalBlocked = array_sum(array_column($playerMapStats, 'damage_blocked'));
+                            
+                            $player['hero'] = $primaryStat->hero;
+                            $player['eliminations'] = $totalElims;
+                            $player['deaths'] = $totalDeaths;
+                            $player['assists'] = $totalAssists;
+                            $player['damage'] = $totalDamage;
+                            $player['healing'] = $totalHealing;
+                            $player['damage_blocked'] = $totalBlocked;
+                            $player['kda_ratio'] = $totalDeaths > 0 ? 
+                                number_format(($totalElims + $totalAssists) / $totalDeaths, 2) :
+                                number_format($totalElims + $totalAssists, 2);
+                            
+                            // Track all heroes played on this map
+                            $player['heroes_played'] = array_map(function($stat) {
+                                return [
+                                    'hero' => $stat->hero,
+                                    'eliminations' => $stat->eliminations,
+                                    'deaths' => $stat->deaths,
+                                    'assists' => $stat->assists
+                                ];
+                            }, $playerMapStats);
+                        }
+                    }
+                }
+                
+                // Update team2 composition
+                if (isset($map['team2_composition'])) {
+                    foreach ($map['team2_composition'] as &$player) {
+                        $playerId = $player['player_id'];
+                        
+                        // Get this player's stats for this map
+                        if (isset($statsByMap[$mapNumber][$playerId])) {
+                            $playerMapStats = $statsByMap[$mapNumber][$playerId];
+                            
+                            // Use the primary hero (most elims or first)
+                            $primaryStat = $playerMapStats[0];
+                            
+                            // Update player data with correct hero and aggregated stats
+                            $totalElims = array_sum(array_column($playerMapStats, 'eliminations'));
+                            $totalDeaths = array_sum(array_column($playerMapStats, 'deaths'));
+                            $totalAssists = array_sum(array_column($playerMapStats, 'assists'));
+                            $totalDamage = array_sum(array_column($playerMapStats, 'damage_dealt'));
+                            $totalHealing = array_sum(array_column($playerMapStats, 'healing_done'));
+                            $totalBlocked = array_sum(array_column($playerMapStats, 'damage_blocked'));
+                            
+                            $player['hero'] = $primaryStat->hero;
+                            $player['eliminations'] = $totalElims;
+                            $player['deaths'] = $totalDeaths;
+                            $player['assists'] = $totalAssists;
+                            $player['damage'] = $totalDamage;
+                            $player['healing'] = $totalHealing;
+                            $player['damage_blocked'] = $totalBlocked;
+                            $player['kda_ratio'] = $totalDeaths > 0 ? 
+                                number_format(($totalElims + $totalAssists) / $totalDeaths, 2) :
+                                number_format($totalElims + $totalAssists, 2);
+                            
+                            // Track all heroes played on this map
+                            $player['heroes_played'] = array_map(function($stat) {
+                                return [
+                                    'hero' => $stat->hero,
+                                    'eliminations' => $stat->eliminations,
+                                    'deaths' => $stat->deaths,
+                                    'assists' => $stat->assists
+                                ];
+                            }, $playerMapStats);
+                        }
+                    }
+                }
+            }
+            
+            // Update the match with corrected maps_data
+            DB::table('matches')->where('id', $matchId)->update([
+                'maps_data' => json_encode($mapsData)
+            ]);
+            
+        } catch (\Exception $e) {
+            \Log::warning('Failed to sync player stats to maps data: ' . $e->getMessage());
         }
     }
 
