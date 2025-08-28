@@ -1768,6 +1768,7 @@ class PlayerController extends Controller
                 ->select([
                     'mps.*',
                     'mps.hero as hero',
+                    'mps.map_number',
                     'm.id as match_id',
                     'm.team1_id',
                     'm.team2_id',
@@ -1984,62 +1985,16 @@ class PlayerController extends Controller
                 }
                 
                 // Format map_stats from hero_stats collection
-                // Group heroes by actual map based on maps_data structure
+                // Use the map_number field from match_player_stats
                 $mapStats = [];
                 
-                // Determine which map each hero belongs to based on the match format
-                // For BO3, we have 3 maps max, need to distribute heroes correctly
-                $heroCount = $heroStats->count();
-                $mapsInMatch = count($mapsData);
-                
-                // Group heroes back to their correct maps
-                // We'll check the actual maps_data to determine correct map assignment
                 foreach ($heroStats as $heroStat) {
-                    // Default to map 1 if we can't determine
-                    $heroMapNumber = 1;
+                    // Use the map_number from the database if available, otherwise default to 1
+                    $heroMapNumber = isset($heroStat->map_number) ? (int)$heroStat->map_number : 1;
                     
-                    // Try to find which map this hero was played on
-                    foreach ($mapsData as $mapIdx => $mapData) {
-                        // Check team1_composition
-                        if (isset($mapData['team1_composition'])) {
-                            foreach ($mapData['team1_composition'] as $playerData) {
-                                if ($playerData['player_id'] == $player->id) {
-                                    if ($playerData['hero'] == $heroStat->hero) {
-                                        $heroMapNumber = $mapIdx + 1;
-                                        break 2;
-                                    }
-                                    // Check hero_changes
-                                    if (isset($playerData['hero_changes'])) {
-                                        foreach ($playerData['hero_changes'] as $change) {
-                                            if ($change['hero'] == $heroStat->hero) {
-                                                $heroMapNumber = $mapIdx + 1;
-                                                break 3;
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        // Check team2_composition
-                        if (isset($mapData['team2_composition'])) {
-                            foreach ($mapData['team2_composition'] as $playerData) {
-                                if ($playerData['player_id'] == $player->id) {
-                                    if ($playerData['hero'] == $heroStat->hero) {
-                                        $heroMapNumber = $mapIdx + 1;
-                                        break 2;
-                                    }
-                                    // Check hero_changes
-                                    if (isset($playerData['hero_changes'])) {
-                                        foreach ($playerData['hero_changes'] as $change) {
-                                            if ($change['hero'] == $heroStat->hero) {
-                                                $heroMapNumber = $mapIdx + 1;
-                                                break 3;
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                    // Make sure we have valid map number
+                    if ($heroMapNumber < 1 || $heroMapNumber > count($mapNames)) {
+                        $heroMapNumber = 1;
                     }
                     
                     $mapStats[] = [
