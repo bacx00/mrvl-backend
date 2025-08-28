@@ -9,7 +9,6 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
-use App\Notifications\ResetPasswordNotification;
 use App\Services\OptimizedUserProfileService;
 
 class User extends Authenticatable
@@ -404,7 +403,7 @@ class User extends Authenticatable
      */
     public function sendPasswordResetNotification($token)
     {
-        $this->notify(new ResetPasswordNotification($token));
+        \Mail::to($this->email)->send(new \App\Mail\ResetPasswordMail($this, $token));
     }
 
     /**

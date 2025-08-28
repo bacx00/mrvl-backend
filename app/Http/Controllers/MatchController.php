@@ -1535,27 +1535,55 @@ class MatchController extends Controller
         $mapsData = $match->maps_data ? json_decode($match->maps_data, true) : [];
         $liveData = $match->live_data ? json_decode($match->live_data, true) : [];
         
-        // Get team players
+        // Get team players with all heroes they played
         $team1Players = [];
         $team2Players = [];
         
         if ($match->team1_id) {
-            $team1Players = DB::table('players')
-                ->where('team_id', $match->team1_id)
-                ->where('status', 'active')
-                ->select('id', 'username as name', 'real_name', 'role', 'avatar', 'country', 'nationality', 'main_hero as hero')
+            $team1Players = DB::table('players as p')
+                ->where('p.team_id', $match->team1_id)
+                ->where('p.status', 'active')
+                ->select('p.id', 'p.username as name', 'p.real_name', 'p.role', 'p.avatar', 'p.country', 'p.nationality', 'p.main_hero as hero')
                 ->limit(6)
                 ->get()
+                ->map(function($player) use ($match) {
+                    // Get all heroes this player used in this match
+                    $playerHeroes = DB::table('match_player_stats')
+                        ->where('player_id', $player->id)
+                        ->where('match_id', $match->id)
+                        ->select('hero', 'eliminations', 'deaths', 'assists', 'damage_dealt', 'healing_done', 'damage_blocked', 'kda_ratio')
+                        ->get();
+                    
+                    $playerArray = (array)$player;
+                    $playerArray['heroes'] = $playerHeroes->toArray();
+                    // Set primary hero to first hero played or main_hero
+                    $playerArray['hero'] = $playerHeroes->first()->hero ?? $player->hero;
+                    return $playerArray;
+                })
                 ->toArray();
         }
         
         if ($match->team2_id) {
-            $team2Players = DB::table('players')
-                ->where('team_id', $match->team2_id)
-                ->where('status', 'active')
-                ->select('id', 'username as name', 'real_name', 'role', 'avatar', 'country', 'nationality', 'main_hero as hero')
+            $team2Players = DB::table('players as p')
+                ->where('p.team_id', $match->team2_id)
+                ->where('p.status', 'active')
+                ->select('p.id', 'p.username as name', 'p.real_name', 'p.role', 'p.avatar', 'p.country', 'p.nationality', 'p.main_hero as hero')
                 ->limit(6)
                 ->get()
+                ->map(function($player) use ($match) {
+                    // Get all heroes this player used in this match
+                    $playerHeroes = DB::table('match_player_stats')
+                        ->where('player_id', $player->id)
+                        ->where('match_id', $match->id)
+                        ->select('hero', 'eliminations', 'deaths', 'assists', 'damage_dealt', 'healing_done', 'damage_blocked', 'kda_ratio')
+                        ->get();
+                    
+                    $playerArray = (array)$player;
+                    $playerArray['heroes'] = $playerHeroes->toArray();
+                    // Set primary hero to first hero played or main_hero
+                    $playerArray['hero'] = $playerHeroes->first()->hero ?? $player->hero;
+                    return $playerArray;
+                })
                 ->toArray();
         }
 

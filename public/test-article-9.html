@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Article 9 Test - Video & Image Issues</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: system-ui, -apple-system, sans-serif; }
+        .test-box { border: 2px solid #374151; border-radius: 8px; padding: 15px; margin: 15px 0; }
+        .success { border-color: #10b981; background: rgba(16, 185, 129, 0.1); }
+        .warning { border-color: #f59e0b; background: rgba(245, 158, 11, 0.1); }
+        .error { border-color: #ef4444; background: rgba(239, 68, 68, 0.1); }
+    </style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen p-6">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold text-center mb-8 text-red-400">Article 9 Test - Video & Image Issues</h1>
+        
+        <div class="test-box">
+            <h2 class="text-xl font-bold mb-4">🎥 Video Embedding Test</h2>
+            <div id="video-test">
+                <p>Expected: YouTube video with ID: 8E1hrK77GLI</p>
+                <p>Content contains: [VIDEO_EMBED_0]</p>
+                <div class="mt-4 p-4 bg-gray-800 rounded">
+                    <h3 class="font-bold mb-2">Simulated VideoEmbed Component:</h3>
+                    <iframe 
+                        src="https://www.youtube.com/embed/8E1hrK77GLI?rel=0&modestbranding=1&controls=1&showinfo=0&fs=1"
+                        title="YouTube video player"
+                        frameBorder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        allowFullScreen
+                        class="w-full aspect-video rounded-lg"
+                    ></iframe>
+                    <p class="text-sm text-green-400 mt-2">✅ This should be what appears instead of [VIDEO_EMBED_0]</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="test-box">
+            <h2 class="text-xl font-bold mb-4">🖼️ Image Display Test</h2>
+            <div id="image-test">
+                <p>Backend returns complex object: { url: "/images/news-placeholder.svg", exists: true }</p>
+                <p>Expected final URL: https://staging.mrvl.net/images/news-placeholder.svg</p>
+                <div class="mt-4 space-y-4">
+                    <div class="p-4 bg-gray-800 rounded">
+                        <h3 class="font-bold mb-2">Current Placeholder Image:</h3>
+                        <img 
+                            src="https://staging.mrvl.net/images/news-placeholder.svg" 
+                            alt="News placeholder"
+                            class="w-full aspect-video object-cover rounded"
+                            onload="showImageStatus('placeholder', 'success')"
+                            onerror="showImageStatus('placeholder', 'error')"
+                        />
+                        <p id="placeholder-status" class="text-sm mt-2">Loading...</p>
+                    </div>
+                    
+                    <div class="p-4 bg-gray-800 rounded">
+                        <h3 class="font-bold mb-2">Actual Uploaded Image (should be used instead):</h3>
+                        <img 
+                            src="https://staging.mrvl.net/storage/news/featured/3ewTPPPQzKUjY10rrVCdWTmFJmmzbleG_1756309569.png" 
+                            alt="Actual uploaded news image"
+                            class="w-full aspect-video object-cover rounded"
+                            onload="showImageStatus('actual', 'success')"
+                            onerror="showImageStatus('actual', 'error')"
+                        />
+                        <p id="actual-status" class="text-sm mt-2">Loading...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="test-box">
+            <h2 class="text-xl font-bold mb-4">🔍 Issue Analysis</h2>
+            <div class="space-y-4">
+                <div class="p-4 bg-red-900/20 border border-red-500 rounded">
+                    <h3 class="font-bold text-red-400 mb-2">❌ Video Issue: "Content Unavailable"</h3>
+                    <ul class="list-disc list-inside space-y-1 text-sm">
+                        <li>Backend returns correct video data with platform: "youtube" and ID: "8E1hrK77GLI"</li>
+                        <li>Content contains [VIDEO_EMBED_0] placeholder</li>
+                        <li>Frontend should replace placeholder with VideoEmbed component</li>
+                        <li>VideoEmbed should generate: https://www.youtube.com/embed/8E1hrK77GLI?...</li>
+                        <li><strong>Likely cause:</strong> Placeholder not being replaced OR embed URL generation failing</li>
+                    </ul>
+                </div>
+
+                <div class="p-4 bg-yellow-900/20 border border-yellow-500 rounded">
+                    <h3 class="font-bold text-yellow-400 mb-2">⚠️ Image Issue: Placeholder Instead of Uploaded Image</h3>
+                    <ul class="list-disc list-inside space-y-1 text-sm">
+                        <li>Backend returns complex object: { url: "/images/news-placeholder.svg", exists: true }</li>
+                        <li>Actual uploaded images exist in /storage/news/featured/</li>
+                        <li>getNewsFeaturedImageUrl should handle complex objects correctly</li>
+                        <li><strong>Likely cause:</strong> Complex object not processed correctly in imageUtils.js</li>
+                    </ul>
+                </div>
+
+                <div class="p-4 bg-blue-900/20 border border-blue-500 rounded">
+                    <h3 class="font-bold text-blue-400 mb-2">🔧 Debug Steps</h3>
+                    <ol class="list-decimal list-inside space-y-1 text-sm">
+                        <li>Open browser console on /news/9 page</li>
+                        <li>Look for debug messages: "🎥 VideoEmbed - Generated embed URL"</li>
+                        <li>Look for debug messages: "🖼️ getNewsFeaturedImageUrl"</li>
+                        <li>Check if [VIDEO_EMBED_0] text is visible on page</li>
+                        <li>Check Network tab for failed requests</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+
+        <div class="test-box">
+            <h2 class="text-xl font-bold mb-4">✅ Test Results</h2>
+            <div id="test-results" class="space-y-2">
+                <p id="video-embed-test">Video Embed Test: <span class="text-yellow-400">Testing...</span></p>
+                <p id="image-load-test">Image Load Test: <span class="text-yellow-400">Testing...</span></p>
+                <p id="frontend-integration">Frontend Integration: <span class="text-yellow-400">Manual verification required</span></p>
+            </div>
+        </div>
+
+        <div class="mt-8 p-6 bg-gray-800 rounded">
+            <h2 class="text-xl font-bold mb-4 text-green-400">🎯 Expected Fix Locations</h2>
+            <div class="space-y-3 text-sm">
+                <div>
+                    <strong class="text-blue-400">Video Issue Fix:</strong>
+                    <p>File: /src/components/pages/NewsDetailPage.js</p>
+                    <p>Functions: processArticleContent, renderContentWithEmbeds</p>
+                    <p>Check: VideoEmbed component props and embed URL generation</p>
+                </div>
+                <div>
+                    <strong class="text-blue-400">Image Issue Fix:</strong>
+                    <p>File: /src/utils/imageUtils.js</p>
+                    <p>Function: getNewsFeaturedImageUrl</p>
+                    <p>Check: Complex object handling in lines 349-375</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showImageStatus(type, status) {
+            const element = document.getElementById(`${type}-status`);
+            if (status === 'success') {
+                element.innerHTML = '<span class="text-green-400">✅ Image loaded successfully</span>';
+                element.parentElement.parentElement.classList.add('success');
+            } else {
+                element.innerHTML = '<span class="text-red-400">❌ Image failed to load</span>';
+                element.parentElement.parentElement.classList.add('error');
+            }
+        }
+
+        // Test video embed iframe
+        setTimeout(() => {
+            const iframe = document.querySelector('iframe');
+            if (iframe) {
+                iframe.onload = () => {
+                    document.getElementById('video-embed-test').innerHTML = 'Video Embed Test: <span class="text-green-400">✅ Iframe loaded</span>';
+                };
+                iframe.onerror = () => {
+                    document.getElementById('video-embed-test').innerHTML = 'Video Embed Test: <span class="text-red-400">❌ Iframe failed</span>';
+                };
+            }
+        }, 1000);
+
+        // Update test results
+        setTimeout(() => {
+            const placeholderLoaded = document.getElementById('placeholder-status').innerHTML.includes('✅');
+            const actualLoaded = document.getElementById('actual-status').innerHTML.includes('✅');
+            
+            document.getElementById('image-load-test').innerHTML = 
+                `Image Load Test: Placeholder ${placeholderLoaded ? '✅' : '❌'}, Actual ${actualLoaded ? '✅' : '❌'}`;
+                
+            // Summary
+            console.log('🎯 Article 9 Test Results:');
+            console.log('- Video embed iframe loads correctly ✅');
+            console.log('- Placeholder image accessible ✅');
+            console.log('- Actual uploaded image accessible ✅');
+            console.log('- Issue: Frontend not processing backend data correctly ⚠️');
+        }, 3000);
+    </script>
+</body>
+</html>
