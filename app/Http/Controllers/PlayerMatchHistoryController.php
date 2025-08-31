@@ -221,6 +221,11 @@ class PlayerMatchHistoryController extends Controller
             'date' => $match->scheduled_at,
             'format' => $match->format,
             'status' => $match->status,
+            'event' => $match->event ? [
+                'id' => $match->event->id,
+                'name' => $match->event->name,
+                'logo' => $match->event->logo
+            ] : null,
             'team' => $match->team1_id == $this->getPlayerTeamId($match, $playerId) ? $match->team1 : $match->team2,
             'opponent' => $match->team1_id == $this->getPlayerTeamId($match, $playerId) ? $match->team2 : $match->team1,
             'score' => $match->team1_score . '-' . $match->team2_score,
