@@ -360,19 +360,8 @@ Route::get('/live-updates/status/{matchId}', [LiveUpdateController::class, 'stat
 // Live Updates POST endpoint (No auth required for live scoring)
 Route::post('/matches/{matchId}/live-update', [LiveUpdateController::class, 'update']);
 
-Route::get('/news', [NewsController::class, 'index']);
-Route::get('/news/categories', [NewsController::class, 'getCategories']);
-Route::get('/news/{news}', [NewsController::class, 'show']);
+// News comments route (public viewing)
 Route::get('/news/{newsId}/comments', [NewsController::class, 'getCommentsWithNesting']);
-
-// Missing direct news comment routes for frontend compatibility
-Route::middleware('auth:api')->group(function () {
-    Route::post('/news/{newsId}/comments', [NewsController::class, 'comment']);
-    Route::put('/news/comments/{commentId}', [NewsController::class, 'updateComment']);
-    Route::delete('/news/comments/{commentId}', [NewsController::class, 'destroyComment']);
-    Route::post('/news/comments/{commentId}/vote', [NewsController::class, 'voteComment']);
-    Route::post('/news/{newsId}/vote', [NewsController::class, 'vote']);
-});
 
 // ===================================
 // STANDARDIZED API ENDPOINTS FOR FRONTEND COMPATIBILITY
@@ -469,21 +458,7 @@ Route::middleware(['auth:api', 'admin'])->prefix('tournaments/{tournament}/admin
     Route::post('/matches/{match}/live-score', [\App\Http\Controllers\TournamentBroadcastController::class, 'triggerLiveScoreUpdate']);
 });
 
-// Heroes routes (for frontend compatibility with direct /api/heroes path)
-Route::get('/heroes', [HeroController::class, 'index']);
-Route::get('/heroes/roles', [HeroController::class, 'getRoles']);
-Route::get('/heroes/season-2', [HeroController::class, 'getSeasonTwoHeroes']);
-Route::get('/heroes/images', [HeroController::class, 'getHeroImages']);
-Route::get('/heroes/images/all', [HeroController::class, 'getAllHeroImages']);
-Route::get('/heroes/images/{slug}', [HeroController::class, 'getHeroImageBySlug']);
-Route::get('/heroes/{slug}', [HeroController::class, 'show']);
-
-// Forum routes (for frontend compatibility)
-Route::get('/forums/categories', [ForumController::class, 'getCategories']);
-Route::get('/forums/threads', [ForumController::class, 'index']);
-Route::get('/forums/threads/{id}', [ForumController::class, 'show']);
-Route::get('/forums/threads/{id}/posts', [ForumController::class, 'getPosts']);
-Route::get('/forums/overview', [ForumController::class, 'getForumOverview']);
+// Heroes routes already defined in public group above - removed duplicates
 
 // Mention routes (for frontend compatibility - matches expected API calls)
 Route::get('/mentions/search', [MentionController::class, 'searchMentions']);
@@ -868,7 +843,6 @@ Route::middleware(['auth:api', 'role:admin|moderator'])->prefix('admin')->group(
     Route::get('/players', [PlayerController::class, 'index']);
     Route::get('/matches', [MatchController::class, 'index']);
     Route::get('/events', [EventController::class, 'index']);
-    Route::get('/news', [NewsController::class, 'index']);
     
     // News moderation routes for frontend compatibility (handling double /api/api/ path)
     Route::prefix('news-moderation')->group(function () {
@@ -950,7 +924,7 @@ Route::middleware(['auth:api', 'role:admin|moderator'])->prefix('admin')->group(
     Route::post('/events/{eventId}/bracket/clear', [AdminEventsController::class, 'clearBracket']);
 });
 
-Route::middleware(['auth:api', 'role:admin', 'require.2fa'])->prefix('admin')->group(function () {
+Route::middleware(['auth:api', 'role:admin'])->prefix('admin')->group(function () {
     
     // Bulk Operations
     Route::prefix('bulk')->group(function () {
@@ -1730,7 +1704,7 @@ if (!app()->environment('production')) {
 }
 
 // Test routes for role verification
-Route::middleware(['auth:api', 'role:admin', 'require.2fa'])->get('/test-admin', function (Request $request) {
+Route::middleware(['auth:api', 'role:admin'])->get('/test-admin', function (Request $request) {
     return response()->json([
         'success' => true,
         'message' => 'Admin access confirmed',
@@ -1761,7 +1735,7 @@ Route::middleware(['auth:api', 'role:user'])->get('/test-user', function (Reques
 // Route::get('/system-test', [\App\Http\Controllers\SystemTestController::class, 'testAllSystems']);
 
 // Upload route aliases for frontend compatibility
-Route::middleware(['auth:api', 'role:admin', 'require.2fa'])->group(function () {
+Route::middleware(['auth:api', 'role:admin'])->group(function () {
     Route::post('/upload/team/{teamId}/logo', [ImageUploadController::class, 'uploadTeamLogo']);
     Route::post('/upload/team/{teamId}/banner', [ImageUploadController::class, 'uploadTeamBanner']);
     Route::post('/upload/team/{teamId}/coach-avatar', [TeamController::class, 'uploadCoachImage']);

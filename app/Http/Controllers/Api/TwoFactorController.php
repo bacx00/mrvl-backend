@@ -45,6 +45,14 @@ class TwoFactorController extends Controller
     {
         $user = Auth::user();
 
+        // Only admins can setup 2FA
+        if (!$user->isAdmin()) {
+            return response()->json([
+                'success' => false,
+                'message' => '2FA is only available for admin accounts'
+            ], 403);
+        }
+
         if ($user->hasTwoFactorEnabled()) {
             return response()->json([
                 'success' => false,
@@ -75,6 +83,14 @@ class TwoFactorController extends Controller
         ]);
 
         $user = Auth::user();
+
+        // Only admins can enable 2FA
+        if (!$user->isAdmin()) {
+            return response()->json([
+                'success' => false,
+                'message' => '2FA is only available for admin accounts'
+            ], 403);
+        }
 
         if ($user->hasTwoFactorEnabled()) {
             return response()->json([
@@ -133,14 +149,7 @@ class TwoFactorController extends Controller
             ]);
         }
 
-        // Check if admin user is trying to disable 2FA
-        if ($user->mustUseTwoFactor()) {
-            return response()->json([
-                'success' => false,
-                'message' => '2FA cannot be disabled for admin accounts'
-            ], 403);
-        }
-
+        // Allow admins to disable 2FA (removed restriction)
         $this->twoFactorService->disableTwoFactor($user);
 
         return response()->json([

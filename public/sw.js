@@ -1,15 +1,15 @@
 // MRVL Platform Service Worker
 // Optimized for mobile performance and offline support
 
-const CACHE_NAME = 'mrvl-v1.0.0';
-const STATIC_CACHE = 'mrvl-static-v1.0.0';
-const API_CACHE = 'mrvl-api-v1.0.0';
+const CACHE_NAME = 'mrvl-v1.0.1';
+const STATIC_CACHE = 'mrvl-static-v1.0.1';
+const API_CACHE = 'mrvl-api-v1.0.1';
 
 // Resources to cache immediately
 const STATIC_ASSETS = [
   '/',
-  '/static/css/main.198bb181.css',
-  '/static/js/main.d193e36b.js',
+  '/static/css/main.dd3e51a9.css',
+  '/static/js/main.cb4673c7.js',
   '/favicon.ico',
   '/favicon.svg',
   '/manifest.json'

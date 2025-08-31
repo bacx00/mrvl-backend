@@ -27,6 +27,9 @@ class PlayerMatchHistoryController extends Controller
         $playerRank = \DB::table('players')
             ->where('elo_rating', '>', $player->elo_rating ?? 1000)
             ->count() + 1;
+            
+        // Get match history for player profile
+        $matchHistory = $this->getPlayerMatchHistoryForProfile($playerId);
         
         return response()->json([
             'data' => [
@@ -59,7 +62,8 @@ class PlayerMatchHistoryController extends Controller
                 'instagram' => $player->instagram,
                 'youtube' => $player->youtube,
                 'discord' => $player->discord,
-                'tiktok' => $player->tiktok
+                'tiktok' => $player->tiktok,
+                'match_history' => $matchHistory
             ]
         ]);
     }
@@ -156,6 +160,169 @@ class PlayerMatchHistoryController extends Controller
             'total_healing' => $totalHealing,
             'total_blocked' => $totalBlocked
         ];
+    }
+
+    /**
+     * Get player match history for profile (with heroes_played data)
+     */
+    private function getPlayerMatchHistoryForProfile($playerId)
+    {
+        // Get all matches and filter programmatically (more reliable for complex JSON queries)
+        $allMatches = MvrlMatch::with(['team1', 'team2', 'event'])
+            ->orderBy('scheduled_at', 'desc')
+            ->get();
+            
+        $matches = $allMatches->filter(function($match) use ($playerId) {
+            if (!$match->maps_data) return false;
+            
+            foreach ($match->maps_data as $map) {
+                // Check team1_composition
+                $team1Players = $map['team1_composition'] ?? [];
+                foreach ($team1Players as $player) {
+                    if (($player['player_id'] ?? $player['id'] ?? null) == $playerId) {
+                        return true;
+                    }
+                }
+                
+                // Check team2_composition
+                $team2Players = $map['team2_composition'] ?? [];
+                foreach ($team2Players as $player) {
+                    if (($player['player_id'] ?? $player['id'] ?? null) == $playerId) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        })->take(20);
+
+        return $matches->map(function($match) use ($playerId) {
+            return $this->transformMatchForPlayerProfile($match, $playerId);
+        });
+    }
+
+    /**
+     * Transform match for player profile with all heroes_played data
+     */
+    private function transformMatchForPlayerProfile($match, $playerId)
+    {
+        $mapStats = [];
+        
+        if ($match->maps_data) {
+            foreach ($match->maps_data as $mapIndex => $map) {
+                $playerMapData = $this->extractAllPlayerHeroesFromMap($map, $playerId, $mapIndex + 1);
+                if ($playerMapData) {
+                    $mapStats = array_merge($mapStats, $playerMapData);
+                }
+            }
+        }
+
+        return [
+            'match_id' => $match->id,
+            'date' => $match->scheduled_at,
+            'format' => $match->format,
+            'status' => $match->status,
+            'team' => $match->team1_id == $this->getPlayerTeamId($match, $playerId) ? $match->team1 : $match->team2,
+            'opponent' => $match->team1_id == $this->getPlayerTeamId($match, $playerId) ? $match->team2 : $match->team1,
+            'score' => $match->team1_score . '-' . $match->team2_score,
+            'result' => $this->getPlayerMatchResult($match, $playerId),
+            'map_stats' => $mapStats
+        ];
+    }
+
+    /**
+     * Extract all heroes played by player from a map
+     */
+    private function extractAllPlayerHeroesFromMap($map, $playerId, $mapNumber)
+    {
+        $playerData = [];
+        
+        // Check team1_composition
+        $team1Players = $map['team1_composition'] ?? [];
+        foreach ($team1Players as $player) {
+            if (($player['player_id'] ?? $player['id'] ?? null) == $playerId) {
+                // Extract all heroes from heroes_played array
+                $heroesPlayed = $player['heroes_played'] ?? [['hero' => $player['hero'] ?? 'Unknown']];
+                foreach ($heroesPlayed as $heroData) {
+                    $playerData[] = [
+                        'map_name' => $map['map_name'] ?? "Map {$mapNumber}",
+                        'map_number' => $mapNumber,
+                        'hero' => $heroData['hero'],
+                        'eliminations' => $heroData['eliminations'] ?? 0,
+                        'deaths' => $heroData['deaths'] ?? 0,
+                        'assists' => $heroData['assists'] ?? 0,
+                        'damage' => $heroData['damage'] ?? 0,
+                        'healing' => $heroData['healing'] ?? 0,
+                        'damage_blocked' => $heroData['damage_blocked'] ?? 0,
+                        'kda' => $this->calculateKDA($heroData['eliminations'] ?? 0, $heroData['deaths'] ?? 1, $heroData['assists'] ?? 0)
+                    ];
+                }
+                break;
+            }
+        }
+        
+        // Check team2_composition  
+        if (empty($playerData)) {
+            $team2Players = $map['team2_composition'] ?? [];
+            foreach ($team2Players as $player) {
+                if (($player['player_id'] ?? $player['id'] ?? null) == $playerId) {
+                    // Extract all heroes from heroes_played array
+                    $heroesPlayed = $player['heroes_played'] ?? [['hero' => $player['hero'] ?? 'Unknown']];
+                    foreach ($heroesPlayed as $heroData) {
+                        $playerData[] = [
+                            'map_name' => $map['map_name'] ?? "Map {$mapNumber}",
+                            'map_number' => $mapNumber,
+                            'hero' => $heroData['hero'],
+                            'eliminations' => $heroData['eliminations'] ?? 0,
+                            'deaths' => $heroData['deaths'] ?? 0,
+                            'assists' => $heroData['assists'] ?? 0,
+                            'damage' => $heroData['damage'] ?? 0,
+                            'healing' => $heroData['healing'] ?? 0,
+                            'damage_blocked' => $heroData['damage_blocked'] ?? 0,
+                            'kda' => $this->calculateKDA($heroData['eliminations'] ?? 0, $heroData['deaths'] ?? 1, $heroData['assists'] ?? 0)
+                        ];
+                    }
+                    break;
+                }
+            }
+        }
+        
+        return $playerData;
+    }
+
+    /**
+     * Helper methods
+     */
+    private function getPlayerTeamId($match, $playerId)
+    {
+        if ($match->maps_data) {
+            foreach ($match->maps_data as $map) {
+                $team1Players = $map['team1_composition'] ?? [];
+                foreach ($team1Players as $player) {
+                    if (($player['player_id'] ?? $player['id'] ?? null) == $playerId) {
+                        return $match->team1_id;
+                    }
+                }
+            }
+        }
+        return $match->team2_id;
+    }
+
+    private function getPlayerMatchResult($match, $playerId)
+    {
+        $playerTeamId = $this->getPlayerTeamId($match, $playerId);
+        if ($playerTeamId == $match->team1_id) {
+            return $match->team1_score > $match->team2_score ? 'W' : 'L';
+        } else {
+            return $match->team2_score > $match->team1_score ? 'W' : 'L';
+        }
+    }
+
+    private function calculateKDA($kills, $deaths, $assists)
+    {
+        if ($deaths == 0) {
+            return ($kills + $assists) * 1.0;
+        }
+        return round(($kills + $assists) / $deaths, 2);
     }
 
     /**
