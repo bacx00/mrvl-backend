@@ -271,10 +271,6 @@
                 </ul>
             </div>
             
-            <p class="message">
-                <strong>Need help?</strong> If you're having trouble with your account or didn't request this reset, 
-                please contact our support team at <a href="mailto:support@mrvl.net" style="color: #dc2626;">support@mrvl.net</a>.
-            </p>
         </div>
         
         <!-- Footer -->

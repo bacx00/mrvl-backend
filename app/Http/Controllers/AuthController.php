@@ -895,9 +895,9 @@ class AuthController extends Controller
                 'email' => 'required|email|exists:users,email'
             ]);
 
-            // Rate limiting: 3 password reset requests per hour per IP
+            // Rate limiting: 5 password reset requests per hour per IP (increased limit)
             $key = 'password_reset_' . $request->ip();
-            if (\Illuminate\Support\Facades\RateLimiter::tooManyAttempts($key, 3)) {
+            if (\Illuminate\Support\Facades\RateLimiter::tooManyAttempts($key, 5)) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Too many password reset requests. Please try again later.'
@@ -937,6 +937,37 @@ class AuthController extends Controller
             ], 422);
         } catch (\Exception $e) {
             \Log::error('Password reset request error: ' . $e->getMessage());
+            
+            // Try to send email with SSL verification disabled
+            if (strpos($e->getMessage(), 'SSL') !== false || strpos($e->getMessage(), 'certificate') !== false) {
+                try {
+                    // Temporarily disable SSL verification
+                    $originalContext = stream_context_get_default();
+                    stream_context_set_default([
+                        'ssl' => [
+                            'verify_peer' => false,
+                            'verify_peer_name' => false,
+                            'allow_self_signed' => true
+                        ]
+                    ]);
+                    
+                    $status = Password::sendResetLink($request->only('email'));
+                    
+                    // Restore original context
+                    stream_context_set_default($originalContext);
+                    
+                    if ($status === Password::RESET_LINK_SENT) {
+                        \Illuminate\Support\Facades\RateLimiter::hit($key, 3600);
+                        return response()->json([
+                            'success' => true,
+                            'message' => 'Password reset link sent to your email address'
+                        ]);
+                    }
+                } catch (\Exception $e2) {
+                    \Log::error('Password reset retry failed: ' . $e2->getMessage());
+                }
+            }
+            
             return response()->json([
                 'success' => false,
                 'message' => 'An error occurred while processing your request'

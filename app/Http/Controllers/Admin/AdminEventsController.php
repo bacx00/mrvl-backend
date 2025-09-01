@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
 
 class AdminEventsController extends Controller
 {
@@ -103,25 +104,47 @@ class AdminEventsController extends Controller
     public function store(Request $request): JsonResponse
     {
         try {
-            $validator = Validator::make($request->all(), [
+            // Prepare validation rules
+            $rules = [
                 'name' => 'required|string|max:255',
-                'slug' => 'required|string|max:255|unique:events',
                 'description' => 'nullable|string',
-                'logo' => 'nullable|string',
-                'type' => 'required|in:tournament,league,qualifier,showmatch',
-                'format' => 'required|in:single_elimination,double_elimination,round_robin,swiss',
-                'status' => 'required|in:upcoming,ongoing,completed,cancelled',
+                'type' => 'nullable|in:tournament,league,qualifier,showmatch,championship,scrim,regional,international,invitational,community,friendly,practice,exhibition',
+                'format' => 'nullable|in:single_elimination,double_elimination,round_robin,swiss,group_stage,bo1,bo3,bo5',
+                'status' => 'nullable|in:upcoming,ongoing,completed,cancelled',
                 'prize_pool' => 'nullable|numeric|min:0',
                 'currency' => 'nullable|string|max:3',
                 'start_date' => 'required|date',
                 'end_date' => 'required|date|after_or_equal:start_date',
-                'max_teams' => 'required|integer|min:2|max:256',
+                'registration_start' => 'nullable|date',
+                'registration_end' => 'nullable|date',
+                'max_teams' => 'nullable|integer|min:2|max:256',
                 'region' => 'nullable|string',
+                'game_mode' => 'nullable|string',
+                'timezone' => 'nullable|string',
                 'tier' => 'nullable|in:S,A,B,C,D',
-                'featured' => 'boolean',
+                'featured' => 'nullable|boolean',
+                'public' => 'nullable|boolean',
                 'rules' => 'nullable|string',
-                'prize_distribution' => 'nullable|array'
-            ]);
+                'prize_distribution' => 'nullable|json',
+                'registration_requirements' => 'nullable|json',
+                'streams' => 'nullable|json',
+                'social_links' => 'nullable|json'
+            ];
+
+            // Check if logo is a file or string
+            if ($request->hasFile('logo')) {
+                $rules['logo'] = 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:5120';
+            } else {
+                $rules['logo'] = 'nullable|string';
+            }
+
+            // Generate slug from name if not provided
+            if (!$request->has('slug')) {
+                $request->merge(['slug' => Str::slug($request->name)]);
+            }
+            $rules['slug'] = 'required|string|max:255|unique:events';
+
+            $validator = Validator::make($request->all(), $rules);
 
             if ($validator->fails()) {
                 return response()->json([
@@ -133,17 +156,59 @@ class AdminEventsController extends Controller
 
             DB::beginTransaction();
 
-            // Create event
-            $eventData = $request->except(['prize_distribution']);
-            $event = Event::create($eventData);
-
-            // Handle prize distribution
-            if ($request->has('prize_distribution')) {
-                $event->details = array_merge($event->details ?? [], [
-                    'prize_distribution' => $request->prize_distribution
-                ]);
-                $event->save();
+            // Prepare event data
+            $eventData = $request->except(['logo', 'prize_distribution', 'registration_requirements', 'streams', 'social_links']);
+            
+            // Set defaults for required fields
+            $eventData['type'] = $eventData['type'] ?? 'tournament';
+            $eventData['format'] = $eventData['format'] ?? 'single_elimination';
+            $eventData['status'] = $eventData['status'] ?? 'upcoming';
+            $eventData['max_teams'] = $eventData['max_teams'] ?? 16;
+            
+            // Handle logo file upload
+            if ($request->hasFile('logo')) {
+                $logoFile = $request->file('logo');
+                $logoPath = $logoFile->store('events/logos', 'public');
+                $eventData['logo'] = '/storage/' . $logoPath;
+            } elseif ($request->has('logo') && !empty($request->logo)) {
+                $eventData['logo'] = $request->logo;
             }
+
+            // Parse JSON fields if they come as strings from FormData
+            $jsonFields = ['prize_distribution', 'registration_requirements', 'streams', 'social_links'];
+            $details = [];
+            
+            foreach ($jsonFields as $field) {
+                if ($request->has($field)) {
+                    $value = $request->input($field);
+                    if (is_string($value) && !empty($value)) {
+                        try {
+                            $details[$field] = json_decode($value, true);
+                        } catch (\Exception $e) {
+                            // If JSON parsing fails, treat as empty
+                            $details[$field] = [];
+                        }
+                    } elseif (is_array($value)) {
+                        $details[$field] = $value;
+                    }
+                }
+            }
+            
+            // Save details if any were set
+            if (!empty($details)) {
+                $eventData['details'] = $details;
+            }
+
+            // Convert featured and public from "1"/"0" strings to booleans
+            if ($request->has('featured')) {
+                $eventData['featured'] = filter_var($request->featured, FILTER_VALIDATE_BOOLEAN);
+            }
+            if ($request->has('public')) {
+                $eventData['public'] = filter_var($request->public, FILTER_VALIDATE_BOOLEAN);
+            }
+
+            // Create event
+            $event = Event::create($eventData);
 
             // Create associated tournament if needed
             if ($request->type === 'tournament') {
@@ -217,26 +282,52 @@ class AdminEventsController extends Controller
         try {
             $event = Event::findOrFail($id);
 
-            $validator = Validator::make($request->all(), [
+            // Handle both file upload and string logo
+            $rules = [
                 'name' => 'string|max:255',
-                'slug' => 'string|max:255|unique:events,slug,' . $id,
                 'description' => 'nullable|string',
-                'logo' => 'nullable|string',
-                'type' => 'in:tournament,league,qualifier,showmatch',
-                'format' => 'in:single_elimination,double_elimination,round_robin,swiss',
-                'status' => 'in:upcoming,ongoing,completed,cancelled',
+                'type' => 'nullable|in:tournament,league,qualifier,showmatch,championship,scrim,regional,international,invitational,community,friendly,practice,exhibition',
+                'format' => 'nullable|in:single_elimination,double_elimination,round_robin,swiss,group_stage,bo1,bo3,bo5',
+                'status' => 'nullable|in:upcoming,ongoing,completed,cancelled',
                 'prize_pool' => 'nullable|numeric|min:0',
                 'currency' => 'nullable|string|max:3',
-                'start_date' => 'date',
-                'end_date' => 'date|after_or_equal:start_date',
-                'max_teams' => 'integer|min:2|max:256',
+                'start_date' => 'nullable|date',
+                'end_date' => 'nullable|date|after_or_equal:start_date',
+                'registration_start' => 'nullable|date',
+                'registration_end' => 'nullable|date',
+                'max_teams' => 'nullable|integer|min:2|max:256',
                 'region' => 'nullable|string',
+                'game_mode' => 'nullable|string',
+                'timezone' => 'nullable|string',
                 'tier' => 'nullable|in:S,A,B,C,D',
-                'featured' => 'boolean',
+                'featured' => 'nullable|boolean',
+                'public' => 'nullable|boolean',
                 'rules' => 'nullable|string',
-                'prize_distribution' => 'nullable|array',
+                'prize_distribution' => 'nullable|json',
+                'registration_requirements' => 'nullable|json',
+                'streams' => 'nullable|json',
+                'social_links' => 'nullable|json',
                 'bracket_data' => 'nullable|array'
-            ]);
+            ];
+
+            // Check if logo is a file or string
+            if ($request->hasFile('logo')) {
+                $rules['logo'] = 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:5120';
+            } else {
+                $rules['logo'] = 'nullable|string';
+            }
+
+            // If no slug provided, generate one from name
+            if (!$request->has('slug') && $request->has('name')) {
+                $request->merge(['slug' => \Str::slug($request->name)]);
+            }
+            
+            // Add slug validation only if provided
+            if ($request->has('slug')) {
+                $rules['slug'] = 'string|max:255|unique:events,slug,' . $id;
+            }
+
+            $validator = Validator::make($request->all(), $rules);
 
             if ($validator->fails()) {
                 return response()->json([
@@ -248,17 +339,54 @@ class AdminEventsController extends Controller
 
             DB::beginTransaction();
 
-            // Update event
-            $eventData = $request->except(['prize_distribution']);
-            $event->update($eventData);
-
-            // Handle prize distribution
-            if ($request->has('prize_distribution')) {
-                $details = $event->details ?? [];
-                $details['prize_distribution'] = $request->prize_distribution;
-                $event->details = $details;
-                $event->save();
+            // Prepare event data
+            $eventData = $request->except(['logo', 'prize_distribution', 'registration_requirements', 'streams', 'social_links']);
+            
+            // Handle logo file upload
+            if ($request->hasFile('logo')) {
+                $logoFile = $request->file('logo');
+                $logoPath = $logoFile->store('events/logos', 'public');
+                $eventData['logo'] = '/storage/' . $logoPath;
+            } elseif ($request->has('logo') && !empty($request->logo)) {
+                // Keep existing logo if it's a string URL
+                $eventData['logo'] = $request->logo;
             }
+
+            // Parse JSON fields if they come as strings from FormData
+            $jsonFields = ['prize_distribution', 'registration_requirements', 'streams', 'social_links'];
+            $details = $event->details ?? [];
+            
+            foreach ($jsonFields as $field) {
+                if ($request->has($field)) {
+                    $value = $request->input($field);
+                    if (is_string($value) && !empty($value)) {
+                        try {
+                            $details[$field] = json_decode($value, true);
+                        } catch (\Exception $e) {
+                            // If JSON parsing fails, treat as empty
+                            $details[$field] = [];
+                        }
+                    } elseif (is_array($value)) {
+                        $details[$field] = $value;
+                    }
+                }
+            }
+            
+            // Save details if any were set
+            if (!empty($details)) {
+                $eventData['details'] = $details;
+            }
+
+            // Convert featured and public from "1"/"0" strings to booleans
+            if ($request->has('featured')) {
+                $eventData['featured'] = filter_var($request->featured, FILTER_VALIDATE_BOOLEAN);
+            }
+            if ($request->has('public')) {
+                $eventData['public'] = filter_var($request->public, FILTER_VALIDATE_BOOLEAN);
+            }
+
+            // Update the event
+            $event->update($eventData);
 
             // Clear cache for this event
             Cache::forget('event_' . $id);
@@ -342,6 +470,59 @@ class AdminEventsController extends Controller
     }
 
     /**
+     * Get teams for an event
+     */
+    public function getEventTeams($eventId): JsonResponse
+    {
+        try {
+            $event = Event::findOrFail($eventId);
+            
+            $teams = $event->teams()
+                ->with(['players', 'captain'])
+                ->get()
+                ->map(function ($team) {
+                    return [
+                        'id' => $team->id,
+                        'name' => $team->name,
+                        'short_name' => $team->short_name,
+                        'logo' => $team->logo,
+                        'region' => $team->region,
+                        'rating' => $team->rating,
+                        'seed' => $team->pivot->seed ?? null,
+                        'registered_at' => $team->pivot->created_at ?? null,
+                        'players_count' => $team->players->count(),
+                        'captain' => $team->captain ? [
+                            'id' => $team->captain->id,
+                            'name' => $team->captain->name,
+                            'tag' => $team->captain->tag
+                        ] : null
+                    ];
+                });
+            
+            return response()->json([
+                'success' => true,
+                'data' => $teams
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Error fetching event teams: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch event teams',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Add a team to an event (route alias)
+     */
+    public function addTeamToEvent(Request $request, $eventId): JsonResponse
+    {
+        return $this->addTeam($request, $eventId);
+    }
+
+    /**
      * Add a team to an event
      */
     public function addTeam(Request $request, $eventId): JsonResponse
@@ -407,6 +588,14 @@ class AdminEventsController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Remove a team from an event (route alias)
+     */
+    public function removeTeamFromEvent($eventId, $teamId): JsonResponse
+    {
+        return $this->removeTeam($eventId, $teamId);
     }
 
     /**

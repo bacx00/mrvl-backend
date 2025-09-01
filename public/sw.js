@@ -1,18 +1,13 @@
 // MRVL Platform Service Worker
 // Optimized for mobile performance and offline support
 
-const CACHE_NAME = 'mrvl-v1.0.1';
-const STATIC_CACHE = 'mrvl-static-v1.0.1';
-const API_CACHE = 'mrvl-api-v1.0.1';
+const CACHE_NAME = 'mrvl-v1.0.3';
+const STATIC_CACHE = 'mrvl-static-v1.0.3';
+const API_CACHE = 'mrvl-api-v1.0.3';
 
-// Resources to cache immediately
+// Resources to cache immediately - only cache files that exist
 const STATIC_ASSETS = [
-  '/',
-  '/static/css/main.dd3e51a9.css',
-  '/static/js/main.cb4673c7.js',
-  '/favicon.ico',
-  '/favicon.svg',
-  '/manifest.json'
+  '/'
 ];
 
 // API endpoints to cache with network-first strategy
@@ -34,7 +29,12 @@ self.addEventListener('install', event => {
     Promise.all([
       caches.open(STATIC_CACHE).then(cache => {
         console.log('📦 Caching static assets');
-        return cache.addAll(STATIC_ASSETS.map(url => new Request(url, { cache: 'no-cache' })));
+        // Try to cache each asset individually to avoid failures
+        return Promise.allSettled(
+          STATIC_ASSETS.map(url => 
+            cache.add(url).catch(err => console.log('Could not cache:', url, err))
+          )
+        );
       }),
       self.skipWaiting()
     ])
