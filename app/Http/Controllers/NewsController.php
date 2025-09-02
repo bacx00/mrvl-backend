@@ -83,7 +83,7 @@ class NewsController extends ApiResponseController
                     'title' => $article->title,
                     'slug' => $article->slug,
                     'excerpt' => $article->excerpt,
-                    'featured_image' => ImageHelper::getNewsImage($article->featured_image, $article->title, $article->videos),
+                    'featured_image' => ImageHelper::getNewsImage($article->featured_image, $article->title),
                     'author' => $author,
                     'category' => [
                         'name' => $article->category_name,

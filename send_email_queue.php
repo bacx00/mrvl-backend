@@ -47,6 +47,12 @@ foreach ($emails as $email) {
         $mail->isHTML(true);
         $mail->Subject = $email->subject;
         $mail->Body    = $email->body;
+        $mail->CharSet = 'UTF-8';
+        $mail->Encoding = 'base64';
+        
+        // Add plain text alternative for maximum compatibility
+        $plainText = strip_tags(str_replace(['<br>', '<br/>', '<br />', '</p>'], "\n", $email->body));
+        $mail->AltBody = $plainText;
         
         $mail->send();
         

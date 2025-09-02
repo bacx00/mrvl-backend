@@ -844,6 +844,12 @@ Route::middleware(['auth:api', 'role:admin|moderator'])->prefix('admin')->group(
     Route::get('/matches', [MatchController::class, 'index']);
     Route::get('/events', [EventController::class, 'index']);
     
+    // Player Management Routes
+    Route::get('/players/{id}', [PlayerController::class, 'show']);
+    Route::post('/players', [PlayerController::class, 'store']);
+    Route::put('/players/{id}', [PlayerController::class, 'update']);
+    Route::delete('/players/{id}', [PlayerController::class, 'destroy']);
+    
     // News moderation routes for frontend compatibility (handling double /api/api/ path)
     Route::prefix('news-moderation')->group(function () {
         // Categories endpoint that frontend expects - MUST come before {newsId} routes

@@ -478,7 +478,7 @@ class AdminEventsController extends Controller
             $event = Event::findOrFail($eventId);
             
             $teams = $event->teams()
-                ->with(['players', 'captain'])
+                ->with(['players'])
                 ->get()
                 ->map(function ($team) {
                     return [
@@ -491,11 +491,7 @@ class AdminEventsController extends Controller
                         'seed' => $team->pivot->seed ?? null,
                         'registered_at' => $team->pivot->created_at ?? null,
                         'players_count' => $team->players->count(),
-                        'captain' => $team->captain ? [
-                            'id' => $team->captain->id,
-                            'name' => $team->captain->name,
-                            'tag' => $team->captain->tag
-                        ] : null
+                        'captain' => $team->captain // captain is a string field, not a relationship
                     ];
                 });
             
