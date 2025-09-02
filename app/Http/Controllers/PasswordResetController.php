@@ -75,21 +75,11 @@ class PasswordResetController extends Controller
                 \Log::warning('Email could not be sent, but reset link was generated for: ' . $request->email);
             }
 
-            // Check if email was sent successfully
-            if ($emailSent) {
-                $response = [
-                    'success' => true,
-                    'message' => 'Password reset link sent to your email address. Please check your inbox.'
-                ];
-            } else {
-                // If email failed, include the link
-                $response = [
-                    'success' => true,
-                    'message' => 'Email delivery failed. Please use the link below to reset your password:',
-                    'reset_link' => $resetUrl,
-                    'note' => 'Copy this link to reset your password. Link expires in 60 minutes.'
-                ];
-            }
+            // Email is queued and will be sent within 1 minute
+            $response = [
+                'success' => true,
+                'message' => 'Password reset link sent to your email address. Please check your inbox in a moment.'
+            ];
             
             return response()->json($response);
 
