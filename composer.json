@@ -11,6 +11,7 @@
         "laravel/passport": "^12.0",
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.10",
+        "phpmailer/phpmailer": "^6.10",
         "pragmarx/google2fa-laravel": "^2.3",
         "pragmarx/google2fa-qrcode": "^3.0",
         "spatie/laravel-permission": "^6.11"

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Rules\StrongPassword;
 use App\Services\TwoFactorService;
+use App\Services\MailService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
@@ -904,9 +905,8 @@ class AuthController extends Controller
                 ], 429);
             }
 
-            $status = Password::sendResetLink(
-                $request->only('email')
-            );
+            // Use our custom mail service with SSL bypass
+            $status = MailService::sendPasswordResetLink($request->email);
 
             if ($status === Password::RESET_LINK_SENT) {
                 \Illuminate\Support\Facades\RateLimiter::hit($key, 3600); // 1 hour decay
@@ -941,8 +941,16 @@ class AuthController extends Controller
             // Try to send email with SSL verification disabled
             if (strpos($e->getMessage(), 'SSL') !== false || strpos($e->getMessage(), 'certificate') !== false) {
                 try {
-                    // Temporarily disable SSL verification
-                    $originalContext = stream_context_get_default();
+                    // Create a custom stream context with SSL verification disabled
+                    $context = stream_context_create([
+                        'ssl' => [
+                            'verify_peer' => false,
+                            'verify_peer_name' => false,
+                            'allow_self_signed' => true
+                        ]
+                    ]);
+                    
+                    // Set default stream context for this operation
                     stream_context_set_default([
                         'ssl' => [
                             'verify_peer' => false,
@@ -951,10 +959,7 @@ class AuthController extends Controller
                         ]
                     ]);
                     
-                    $status = Password::sendResetLink($request->only('email'));
-                    
-                    // Restore original context
-                    stream_context_set_default($originalContext);
+                    $status = MailService::sendPasswordResetLink($request->email);
                     
                     if ($status === Password::RESET_LINK_SENT) {
                         \Illuminate\Support\Facades\RateLimiter::hit($key, 3600);

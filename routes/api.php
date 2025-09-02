@@ -93,8 +93,8 @@ Route::prefix('auth')->group(function () {
     Route::post('/login', [AuthController::class, 'login']);
     Route::post('/register', [AuthController::class, 'register']);
     // Temporarily removed middleware for testing - TODO: Fix middleware registration
-    Route::post('/forgot-password', [AuthController::class, 'sendPasswordResetLinkEmail']);
-    Route::post('/reset-password', [AuthController::class, 'resetPassword']);
+    Route::post('/forgot-password', [\App\Http\Controllers\PasswordResetController::class, 'sendResetLink']);
+    Route::post('/reset-password', [\App\Http\Controllers\PasswordResetController::class, 'resetPassword']);
     Route::middleware('auth:api')->post('/logout', [AuthController::class, 'logout']);
     Route::middleware('auth:api')->get('/me', [AuthController::class, 'me']);
     Route::middleware('auth:api')->get('/user', [AuthController::class, 'user']);

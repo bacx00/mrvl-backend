@@ -314,10 +314,38 @@ class ImageHelper
      * 
      * @param string $imagePath The image path from database
      * @param string $title The news title for fallback
+     * @param array|string $videos The videos array or JSON string
      * @return array Array with url, exists, and fallback info
      */
-    public static function getNewsImage($imagePath, $title = null)
+    public static function getNewsImage($imagePath, $title = null, $videos = null)
     {
+        // If no featured image but has videos, use YouTube thumbnail
+        if (!$imagePath && $videos) {
+            // Parse videos if it's a JSON string
+            if (is_string($videos)) {
+                $videos = json_decode($videos, true);
+            }
+            
+            // Check if we have a YouTube video
+            if (is_array($videos) && !empty($videos)) {
+                foreach ($videos as $video) {
+                    if (isset($video['platform']) && $video['platform'] === 'youtube' && isset($video['video_id'])) {
+                        // Return YouTube thumbnail URL
+                        return [
+                            'url' => "https://img.youtube.com/vi/{$video['video_id']}/maxresdefault.jpg",
+                            'exists' => true,
+                            'fallback' => [
+                                'url' => "https://img.youtube.com/vi/{$video['video_id']}/hqdefault.jpg",
+                                'text' => $title ?? 'Video',
+                                'color' => '#ef4444',
+                                'type' => 'video-thumbnail'
+                            ]
+                        ];
+                    }
+                }
+            }
+        }
+        
         if (!$imagePath) {
             return [
                 'url' => '/images/news-placeholder.svg',

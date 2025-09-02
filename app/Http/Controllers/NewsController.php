@@ -83,7 +83,7 @@ class NewsController extends ApiResponseController
                     'title' => $article->title,
                     'slug' => $article->slug,
                     'excerpt' => $article->excerpt,
-                    'featured_image' => ImageHelper::getNewsImage($article->featured_image, $article->title),
+                    'featured_image' => ImageHelper::getNewsImage($article->featured_image, $article->title, $article->videos),
                     'author' => $author,
                     'category' => [
                         'name' => $article->category_name,
@@ -189,7 +189,7 @@ class NewsController extends ApiResponseController
                 'slug' => $article->slug,
                 'content' => $article->content,
                 'excerpt' => $article->excerpt,
-                'featured_image' => ImageHelper::getNewsImage($article->featured_image, $article->title),
+                'featured_image' => ImageHelper::getNewsImage($article->featured_image, $article->title, $article->videos),
                 'author' => $this->getUserWithFlairs($article->author_id),
                 'category' => [
                     'name' => $article->category_name,
