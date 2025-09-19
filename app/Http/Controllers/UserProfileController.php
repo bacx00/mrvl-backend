@@ -507,10 +507,8 @@ class UserProfileController extends Controller
         try {
             $request->validate([
                 'current_password' => 'required|string|min:1',
-                'new_password' => 'required|string|min:8|max:255|confirmed|different:current_password|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/',
+                'new_password' => 'required|string|min:8|max:255|confirmed|different:current_password',
                 'new_password_confirmation' => 'required|string'
-            ], [
-                'new_password.regex' => 'New password must contain at least one lowercase letter, one uppercase letter, one digit, and one special character.'
             ]);
 
             $user = auth('api')->user();
@@ -631,12 +629,11 @@ class UserProfileController extends Controller
     public function changeUsername(Request $request)
     {
         try {
+            $user = auth('api')->user();
             $request->validate([
                 'password' => 'required|string',
-                'new_name' => 'required|string|min:3|max:255|unique:users,name,' . Auth::id() . '|regex:/^[a-zA-Z0-9_-]+$/',
+                'new_name' => 'required|string|min:3|max:255|unique:users,name,' . $user->id . '|regex:/^[a-zA-Z0-9\s_-]+$/',
             ]);
-
-            $user = auth('api')->user();
 
             if (!Hash::check($request->password, $user->password)) {
                 return response()->json([

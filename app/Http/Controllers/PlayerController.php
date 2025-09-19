@@ -47,6 +47,7 @@ class PlayerController extends Controller
                     'username' => $player->username,
                     'real_name' => $player->real_name,
                     'avatar' => $avatarInfo['url'],
+                    'avatar_url' => $avatarInfo['url'],
                     'avatar_exists' => $avatarInfo['exists'],
                     'avatar_fallback' => $avatarInfo['fallback'],
                     'role' => $player->role,
@@ -132,6 +133,7 @@ class PlayerController extends Controller
                     'username' => $player->username,
                     'real_name' => $player->real_name,
                     'avatar' => $avatarInfo['url'],
+                    'avatar_url' => $avatarInfo['url'],
                     'avatar_exists' => $avatarInfo['exists'],
                     'avatar_fallback' => $avatarInfo['fallback'],
                     
@@ -220,7 +222,7 @@ class PlayerController extends Controller
             'birth_date' => 'nullable|date|before:today',
             'earnings' => 'nullable|numeric|min:0',
             'total_earnings' => 'nullable|numeric|min:0',
-            'social_media' => 'nullable|array',
+            'social_media' => 'nullable',
             'twitter' => 'nullable|string|max:50',
             'instagram' => 'nullable|string|max:50',
             'youtube' => 'nullable|string|max:100',
@@ -340,14 +342,14 @@ class PlayerController extends Controller
                 'ign' => 'sometimes|string|max:255', // Frontend sends 'ign'
                 'real_name' => 'nullable|string|max:255',
                 'name' => 'nullable|string|max:255', // Frontend sends 'name' for real name
-                'team_id' => 'nullable|exists:teams,id',
-                'role' => 'sometimes|in:Vanguard,Duelist,Strategist,DPS,Tank,Support',
-                'main_hero' => 'sometimes|string|max:100',
+                'team_id' => 'nullable|integer',
+                'role' => 'nullable|string|max:100',
+                'main_hero' => 'nullable|string|max:100',
                 'alt_heroes' => 'nullable|array',
                 'hero_preferences' => 'nullable|array',
-                'region' => 'sometimes|string|max:20',
-                'country' => 'sometimes|string|max:100',
-                'country_code' => 'sometimes|string|max:5',
+                'region' => 'nullable|string|max:50',
+                'country' => 'nullable|string|max:100',
+                'country_code' => 'nullable|string|max:5',
                 'nationality' => 'nullable|string|max:100',
                 'rating' => 'nullable|numeric|min:0|max:5000',
                 'skill_rating' => 'nullable|numeric|min:0|max:5000',
@@ -360,27 +362,27 @@ class PlayerController extends Controller
                 'total_earnings' => 'nullable|numeric|min:0',
                 'earnings_amount' => 'nullable|numeric|min:0',
                 'earnings_currency' => 'nullable|string|max:10',
-                'social_media' => 'nullable|array',
+                'social_media' => 'nullable',
                 'social_links' => 'nullable|array',
                 'twitter' => 'nullable|string|max:50',
-                'twitter_url' => 'nullable|string|url|max:255',
+                'twitter_url' => 'nullable|string|max:500',
                 'instagram' => 'nullable|string|max:50',
-                'instagram_url' => 'nullable|string|url|max:255',
+                'instagram_url' => 'nullable|string|max:500',
                 'youtube' => 'nullable|string|max:100',
-                'youtube_url' => 'nullable|string|url|max:255',
+                'youtube_url' => 'nullable|string|max:500',
                 'twitch' => 'nullable|string|max:50',
-                'twitch_url' => 'nullable|string|url|max:255',
+                'twitch_url' => 'nullable|string|max:500',
                 'tiktok' => 'nullable|string|max:50',
                 'discord' => 'nullable|string|max:100',
-                'discord_url' => 'nullable|string|max:255',
-                'facebook' => 'nullable|string|url|max:255',
-                'liquipedia_url' => 'nullable|string|url|max:255',
-                'vlr_url' => 'nullable|string|url|max:255',
+                'discord_url' => 'nullable|string|max:500',
+                'facebook' => 'nullable|string|max:500',
+                'liquipedia_url' => 'nullable|string|max:500',
+                'vlr_url' => 'nullable|string|max:500',
                 'biography' => 'nullable|string|max:2000',
                 'description' => 'nullable|string|max:2000', // Frontend sends 'description'
                 'past_teams' => 'nullable|array',
-                'status' => 'sometimes|in:active,inactive,retired,suspended',
-                'avatar' => 'nullable|string|url|max:500',
+                'status' => 'nullable|string|max:50',
+                'avatar' => 'nullable|string|max:500',
                 // Missing fields from bug-hunter analysis
                 'wins' => 'nullable|integer|min:0',
                 'losses' => 'nullable|integer|min:0',
@@ -503,7 +505,8 @@ class PlayerController extends Controller
                 $currentSocialMedia = array_merge($currentSocialMedia, $validated['social_media']);
             }
             
-            $validated['social_media'] = json_encode($currentSocialMedia);
+            // Ensure social_media is stored as JSON string
+            $validated['social_media'] = json_encode($currentSocialMedia ?: new \stdClass());
 
             // Process other array fields to JSON
             $arrayFields = ['alt_heroes', 'hero_preferences', 'past_teams'];
@@ -905,6 +908,7 @@ class PlayerController extends Controller
                     'username' => $player->username,
                     'real_name' => $player->real_name,
                     'avatar' => $avatarInfo['url'],
+                    'avatar_url' => $avatarInfo['url'],
                     'role' => $player->role,
                     'main_hero' => $player->main_hero,
                     'rating' => $player->rating ?? 1000,

@@ -163,16 +163,14 @@ class ImageUploadController extends Controller
     {
         try {
             $player = Player::findOrFail($playerId);
-            
-            if (!$request->hasFile('avatar')) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'No avatar file provided'
-                ], 400);
-            }
+
+            // Add proper validation with 50MB limit
+            $request->validate([
+                'avatar' => 'required|image|mimes:jpeg,png,jpg,gif,svg,webp|max:51200' // 50MB limit
+            ]);
 
             $file = $request->file('avatar');
-            
+
             if (!$file->isValid()) {
                 return response()->json([
                     'success' => false,
@@ -185,35 +183,32 @@ class ImageUploadController extends Controller
                 Storage::disk('public')->delete($player->avatar);
             }
 
-            // Simple file storage without processing
+            // Use Storage facade for consistent file handling
             $extension = $file->getClientOriginalExtension();
-            $filename = uniqid() . '.' . $extension;
+            $filename = 'player_' . $playerId . '_' . time() . '.' . $extension;
             $directory = 'players/avatars';
-            
-            // Use manual file move approach
+
             try {
                 $finalPath = $directory . '/' . $filename;
-                $destinationPath = storage_path('app/public/' . $finalPath);
-                
-                // Ensure directory exists
-                $destinationDir = dirname($destinationPath);
-                if (!is_dir($destinationDir)) {
-                    mkdir($destinationDir, 0775, true);
-                }
-                
-                // Move uploaded file
-                if (!move_uploaded_file($file->path(), $destinationPath)) {
+                $stored = Storage::disk('public')->put($finalPath, file_get_contents($file->path()));
+
+                if (!$stored) {
                     return response()->json([
                         'success' => false,
-                        'message' => 'Failed to move uploaded file'
+                        'message' => 'Failed to store file to disk'
                     ], 500);
                 }
-                
-                // Set proper permissions
-                chmod($destinationPath, 0644);
-                
+
+                // Verify file was written and set proper permissions
+                $fullPath = storage_path('app/public/' . $finalPath);
+                if (file_exists($fullPath)) {
+                    chmod($fullPath, 0664);
+                    chown($fullPath, 'www-data');
+                    chgrp($fullPath, 'www-data');
+                }
+
                 $path = $finalPath;
-                
+
             } catch (\Exception $e) {
                 return response()->json([
                     'success' => false,

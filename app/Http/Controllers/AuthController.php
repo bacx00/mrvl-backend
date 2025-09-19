@@ -58,17 +58,25 @@ class AuthController extends Controller
             // Clear rate limit on successful login
             \Illuminate\Support\Facades\RateLimiter::clear($key);
 
-            // Check if user requires 2FA
+            // Check if user requires 2FA (admin only)
             if ($user->mustUseTwoFactor()) {
                 // Admin user - must have 2FA enabled
                 if (!$user->hasTwoFactorEnabled()) {
+                    // Check if user already has a pending 2FA setup
+                    $existingToken = Cache::get("user_pending_2fa_{$user->id}");
+                    if ($existingToken) {
+                        $tempToken = $existingToken;
+                    } else {
+                        $tempToken = Str::random(60);
+                        Cache::put("user_pending_2fa_{$user->id}", $tempToken, now()->addMinutes(15));
+                    }
+
                     // Store login session temporarily for 2FA setup
-                    $tempToken = Str::random(60);
                     Cache::put("temp_login_{$tempToken}", [
                         'user_id' => $user->id,
                         'email' => $user->email,
                         'requires_setup' => true
-                    ], now()->addMinutes(10));
+                    ], now()->addMinutes(15));
 
                     return response()->json([
                         'success' => false,
@@ -239,7 +247,7 @@ class AuthController extends Controller
 
         // Get temporary login data
         $loginData = Cache::get("temp_login_{$request->temp_token}");
-        
+
         if (!$loginData || !isset($loginData['requires_setup'])) {
             return response()->json([
                 'success' => false,
@@ -258,6 +266,9 @@ class AuthController extends Controller
         // Setup 2FA
         $twoFactorService = app(TwoFactorService::class);
         $setupData = $twoFactorService->setupTwoFactor($user);
+
+        // Extend the cache duration for the temp token during setup
+        Cache::put("temp_login_{$request->temp_token}", $loginData, now()->addMinutes(15));
 
         return response()->json([
             'success' => true,
@@ -304,22 +315,30 @@ class AuthController extends Controller
         $success = $twoFactorService->enableTwoFactor($user, $request->code);
 
         if (!$success) {
+            // Log the failure for debugging
+            \Log::warning('2FA enable failed', [
+                'user_id' => $user->id,
+                'temp_token' => substr($request->temp_token, 0, 10) . '...',
+                'has_secret' => !empty($user->two_factor_secret)
+            ]);
+
             return response()->json([
                 'success' => false,
-                'message' => 'Invalid verification code'
+                'message' => 'Invalid verification code. Please ensure your device time is synchronized.'
             ], 400);
         }
 
-        // Clear temporary login data
+        // Clear temporary login data and user pending token
         Cache::forget("temp_login_{$request->temp_token}");
+        Cache::forget("user_pending_2fa_{$user->id}");
 
         // Complete the login
         $response = $this->completeLogin($user);
         $responseData = $response->getData(true);
-        
+
         // Add recovery codes to response
         $responseData['recovery_codes'] = $user->two_factor_recovery_codes;
-        
+
         return response()->json($responseData);
     }
 
@@ -749,10 +768,8 @@ class AuthController extends Controller
 
             $validated = $request->validate([
                 'current_password' => 'required|string|min:1',
-                'new_password' => 'required|string|min:8|max:255|confirmed|different:current_password|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/',
+                'new_password' => 'required|string|min:8|max:255|confirmed|different:current_password',
                 'new_password_confirmation' => 'required|string'
-            ], [
-                'new_password.regex' => 'New password must contain at least one lowercase letter, one uppercase letter, one digit, and one special character.'
             ]);
 
             if (!Hash::check($validated['current_password'], $user->password)) {

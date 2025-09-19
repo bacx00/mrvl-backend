@@ -26,6 +26,14 @@ class TwoFactorController extends Controller
     {
         $user = Auth::user();
 
+        // Only admins can access 2FA status
+        if ($user->role !== 'admin') {
+            return response()->json([
+                'success' => false,
+                'message' => '2FA is only available for admin users'
+            ], 403);
+        }
+
         return response()->json([
             'success' => true,
             'data' => [
@@ -135,6 +143,14 @@ class TwoFactorController extends Controller
 
         $user = Auth::user();
 
+        // Only admins can disable 2FA
+        if (!$user->isAdmin()) {
+            return response()->json([
+                'success' => false,
+                'message' => '2FA is only available for admin accounts'
+            ], 403);
+        }
+
         if (!$user->hasTwoFactorEnabled()) {
             return response()->json([
                 'success' => false,
@@ -149,7 +165,6 @@ class TwoFactorController extends Controller
             ]);
         }
 
-        // Allow admins to disable 2FA (removed restriction)
         $this->twoFactorService->disableTwoFactor($user);
 
         return response()->json([
@@ -201,6 +216,14 @@ class TwoFactorController extends Controller
     {
         $user = Auth::user();
 
+        // Only admins can access 2FA recovery codes
+        if ($user->role !== 'admin') {
+            return response()->json([
+                'success' => false,
+                'message' => '2FA is only available for admin users'
+            ], 403);
+        }
+
         if (!$user->hasTwoFactorEnabled()) {
             return response()->json([
                 'success' => false,
@@ -227,6 +250,14 @@ class TwoFactorController extends Controller
         ]);
 
         $user = Auth::user();
+
+        // Only admins can regenerate 2FA recovery codes
+        if ($user->role !== 'admin') {
+            return response()->json([
+                'success' => false,
+                'message' => '2FA is only available for admin users'
+            ], 403);
+        }
 
         if (!$user->hasTwoFactorEnabled()) {
             return response()->json([
@@ -260,6 +291,14 @@ class TwoFactorController extends Controller
     public function needsVerification(): JsonResponse
     {
         $user = Auth::user();
+
+        // Only admins can check 2FA verification status
+        if ($user->role !== 'admin') {
+            return response()->json([
+                'success' => false,
+                'message' => '2FA is only available for admin users'
+            ], 403);
+        }
 
         $needsVerification = $this->twoFactorService->needsVerification($user);
 

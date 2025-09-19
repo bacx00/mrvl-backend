@@ -575,13 +575,13 @@ class EventController extends Controller
 
     private function getEventMatches($eventId)
     {
-        return DB::table('matches as m')
+        $rawMatches = DB::table('matches as m')
             ->leftJoin('teams as t1', 'm.team1_id', '=', 't1.id')
             ->leftJoin('teams as t2', 'm.team2_id', '=', 't2.id')
             ->where('m.event_id', $eventId)
             ->select([
                 'm.id', 'm.round', 'm.bracket_position', 'm.status', 'm.format',
-                'm.team1_id', 'm.team2_id', 'm.team1_score', 'm.team2_score', 
+                'm.team1_id', 'm.team2_id', 'm.team1_score', 'm.team2_score',
                 'm.scheduled_at', 'm.completed_at',
                 't1.name as team1_name', 't1.short_name as team1_short', 't1.logo as team1_logo',
                 't2.name as team2_name', 't2.short_name as team2_short', 't2.logo as team2_logo',
@@ -589,8 +589,39 @@ class EventController extends Controller
             ])
             ->orderBy('m.round')
             ->orderBy('m.bracket_position')
-            ->get()
-            ->toArray();
+            ->get();
+
+        // Transform flat data into nested structure for frontend
+        return $rawMatches->map(function($match) {
+            return [
+                'id' => $match->id,
+                'round' => $match->round,
+                'bracket_position' => $match->bracket_position,
+                'status' => $match->status,
+                'format' => $match->format,
+                'team1_id' => $match->team1_id,
+                'team2_id' => $match->team2_id,
+                'team1_score' => $match->team1_score,
+                'team2_score' => $match->team2_score,
+                'scheduled_at' => $match->scheduled_at,
+                'completed_at' => $match->completed_at,
+                'maps_data' => $match->maps_data,
+                'stream_url' => $match->stream_url,
+                // Nested team objects for frontend
+                'team1' => $match->team1_id ? [
+                    'id' => $match->team1_id,
+                    'name' => $match->team1_name,
+                    'short_name' => $match->team1_short,
+                    'logo' => $match->team1_logo
+                ] : null,
+                'team2' => $match->team2_id ? [
+                    'id' => $match->team2_id,
+                    'name' => $match->team2_name,
+                    'short_name' => $match->team2_short,
+                    'logo' => $match->team2_logo
+                ] : null
+            ];
+        })->toArray();
     }
 
     private function getEventBracket($eventId)
@@ -613,40 +644,40 @@ class EventController extends Controller
 
         foreach ($matches as $match) {
             // Use the round name directly since it's already a string
-            $roundName = $match->round ?: 'Round';
-            
-            if (!isset($roundsData[$match->round])) {
-                $roundsData[$match->round] = [
+            $roundName = $match['round'] ?: 'Round';
+
+            if (!isset($roundsData[$match['round']])) {
+                $roundsData[$match['round']] = [
                     'name' => $roundName,
                     'matches' => []
                 ];
             }
 
-            $roundsData[$match->round]['matches'][] = [
-                'id' => $match->id,
-                'position' => $match->bracket_position,
+            $roundsData[$match['round']]['matches'][] = [
+                'id' => $match['id'],
+                'position' => $match['bracket_position'],
                 'team1' => [
-                    'id' => $match->team1_id,
-                    'name' => $match->team1_name ?? null,
-                    'short_name' => $match->team1_short ?? null,
-                    'logo' => $match->team1_logo ?? null,
-                    'score' => $match->team1_score ?? null,
-                    'seed' => $this->getTeamSeed($eventId, $match->team1_id)
+                    'id' => $match['team1_id'],
+                    'name' => $match['team1_name'] ?? null,
+                    'short_name' => $match['team1_short'] ?? null,
+                    'logo' => $match['team1_logo'] ?? null,
+                    'score' => $match['team1_score'] ?? null,
+                    'seed' => $this->getTeamSeed($eventId, $match['team1_id'])
                 ],
                 'team2' => [
-                    'id' => $match->team2_id,
-                    'name' => $match->team2_name ?? null,
-                    'short_name' => $match->team2_short ?? null,
-                    'logo' => $match->team2_logo ?? null,
-                    'score' => $match->team2_score ?? null,
-                    'seed' => $this->getTeamSeed($eventId, $match->team2_id)
+                    'id' => $match['team2_id'],
+                    'name' => $match['team2_name'] ?? null,
+                    'short_name' => $match['team2_short'] ?? null,
+                    'logo' => $match['team2_logo'] ?? null,
+                    'score' => $match['team2_score'] ?? null,
+                    'seed' => $this->getTeamSeed($eventId, $match['team2_id'])
                 ],
-                'status' => $match->status ?? 'pending',
-                'scheduled_at' => $match->scheduled_at ?? null,
-                'stream_url' => $match->stream_url ?? null,
-                'format' => $match->format ?? 'bo3',
+                'status' => $match['status'] ?? 'pending',
+                'scheduled_at' => $match['scheduled_at'] ?? null,
+                'stream_url' => $match['stream_url'] ?? null,
+                'format' => $match['format'] ?? 'bo3',
                 'winner_id' => $this->getMatchWinner($match),
-                'finished' => ($match->status ?? 'pending') === 'completed'
+                'finished' => ($match['status'] ?? 'pending') === 'completed'
             ];
         }
 
@@ -702,17 +733,17 @@ class EventController extends Controller
 
     private function getMatchWinner($match)
     {
-        if (($match->status ?? 'pending') !== 'completed') {
+        if (($match['status'] ?? 'pending') !== 'completed') {
             return null;
         }
-        
-        $score1 = $match->team1_score ?? 0;
-        $score2 = $match->team2_score ?? 0;
-        
+
+        $score1 = $match['team1_score'] ?? 0;
+        $score2 = $match['team2_score'] ?? 0;
+
         if ($score1 > $score2) {
-            return $match->team1_id;
+            return $match['team1_id'];
         } elseif ($score2 > $score1) {
-            return $match->team2_id;
+            return $match['team2_id'];
         }
         
         return null; // Draw
@@ -1523,7 +1554,7 @@ class EventController extends Controller
             'streams' => 'nullable|array',
             'social_links' => 'nullable|array',
             'timezone' => 'nullable|string|max:50',
-            'status' => 'sometimes|in:upcoming,ongoing,completed,cancelled',
+            'status' => 'sometimes|in:upcoming,ongoing,completed',
             'featured' => 'boolean',
             'public' => 'boolean'
         ]);
@@ -1725,7 +1756,7 @@ class EventController extends Controller
         }
         
         $request->validate([
-            'status' => 'required|in:upcoming,ongoing,completed,cancelled'
+            'status' => 'required|in:upcoming,ongoing,completed'
         ]);
         
         try {

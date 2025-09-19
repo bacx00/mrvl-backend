@@ -246,8 +246,8 @@ Route::prefix('public')->group(function () {
     Route::get('/live-matches', [ComprehensiveBracketController::class, 'getLiveMatches']);
     
     // Manual Bracket Public Views
-    Route::get('/manual-bracket/{stageId}', [\App\Http\Controllers\ManualBracketController::class, 'getBracket']);
     Route::get('/manual-bracket/formats', [\App\Http\Controllers\ManualBracketController::class, 'getFormats']);
+    Route::get('/manual-bracket/{stageId}', [\App\Http\Controllers\ManualBracketController::class, 'getBracket']);
 
     // ===================================
     // COMPREHENSIVE TOURNAMENT SYSTEM API
@@ -491,9 +491,9 @@ Route::middleware(['auth:api', 'role:user|moderator|admin'])->prefix('user')->gr
     Route::post('/profile/set-hero-avatar', [UserProfileController::class, 'setHeroAsAvatar']);
     Route::get('/profile/display/{userId}', [UserProfileController::class, 'getUserWithAvatarAndFlairs']);
     Route::get('/profile/activity', [UserProfileController::class, 'getUserActivity']);
-    Route::middleware('sensitive.rate:profile_password_change,5,60')->post('/profile/change-password', [UserProfileController::class, 'changePassword']);
-    Route::middleware('sensitive.rate:profile_email_change,3,60')->post('/profile/change-email', [UserProfileController::class, 'changeEmail']);
-    Route::middleware('sensitive.rate:profile_username_change,3,60')->post('/profile/change-username', [UserProfileController::class, 'changeUsername']);
+    Route::post('/profile/change-password', [UserProfileController::class, 'changePassword']);
+    Route::post('/profile/change-email', [UserProfileController::class, 'changeEmail']);
+    Route::post('/profile/change-username', [UserProfileController::class, 'changeUsername']);
     Route::post('/profile/upload-avatar', [UserProfileController::class, 'uploadAvatar']);
     Route::delete('/profile/delete-avatar', [UserProfileController::class, 'deleteAvatar']);
     
@@ -502,9 +502,9 @@ Route::middleware(['auth:api', 'role:user|moderator|admin'])->prefix('user')->gr
     Route::get('/activity', [AuthController::class, 'getUserProfileActivity']);
     
     // Authentication Management (with enhanced rate limiting)
-    Route::middleware('sensitive.rate:password_change,5,60')->post('/change-password', [AuthController::class, 'changePassword']);
-    Route::middleware('sensitive.rate:email_change,3,60')->post('/change-email', [AuthController::class, 'changeEmail']);
-    Route::middleware('sensitive.rate:username_change,3,60')->post('/change-username', [AuthController::class, 'changeUsername']);
+    Route::post('/change-password', [AuthController::class, 'changePassword']);
+    Route::post('/change-email', [AuthController::class, 'changeEmail']);
+    Route::post('/change-username', [AuthController::class, 'changeUsername']);
     
     // Voting System
     Route::prefix('votes')->group(function () {
@@ -1076,6 +1076,18 @@ Route::middleware(['auth:api', 'role:admin'])->prefix('admin')->group(function (
         Route::get('/{tournament}/analytics', [\App\Http\Controllers\TournamentAnalyticsController::class, 'index']);
         Route::get('/{tournament}/reports', [\App\Http\Controllers\TournamentAnalyticsController::class, 'generateReport']);
     });
+
+    // ===================================================================
+    // COMPREHENSIVE MANUAL BRACKET SYSTEM
+    // ===================================================================
+    Route::prefix('comprehensive-brackets')->group(function () {
+        Route::get('/templates', [\App\Http\Controllers\ManualBracketController::class, 'getFormats']);
+        Route::post('/create', [\App\Http\Controllers\ManualBracketController::class, 'createManualBracket']);
+        Route::get('/{bracketId}', [\App\Http\Controllers\ManualBracketController::class, 'getBracket']);
+        Route::put('/matches/{matchId}', [\App\Http\Controllers\ManualBracketController::class, 'updateMatchScore']);
+        Route::post('/{bracketId}/reset', [\App\Http\Controllers\ManualBracketController::class, 'resetBracket']);
+    });
+
     
     // Tournament System Settings
     Route::prefix('tournament-settings')->group(function () {

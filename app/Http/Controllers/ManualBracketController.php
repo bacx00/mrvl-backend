@@ -18,6 +18,159 @@ class ManualBracketController extends Controller
      * Marvel Rivals Tournament Formats based on official competitive rules
      */
     const MARVEL_RIVALS_FORMATS = [
+        // ===================================================================
+        // MARVEL RIVALS IGNITE 2025 OFFICIAL TOURNAMENT FORMATS
+        // ===================================================================
+
+        // Stage 1 - Regional Competition
+        'ignite_stage1_open_qualifier' => [
+            'name' => 'Ignite Stage 1: Open Qualifiers',
+            'description' => 'Single elimination qualifiers (First to 3 maps)',
+            'team_count' => [16, 32, 64, 128],
+            'format' => 'single_elimination',
+            'best_of' => 'ft3', // First to 3
+            'stages' => [
+                'open_qualifiers' => 'Single elimination bracket'
+            ]
+        ],
+        'ignite_stage1_groups' => [
+            'name' => 'Ignite Stage 1: Groups',
+            'description' => 'Group stage format',
+            'team_count' => 16,
+            'format' => 'round_robin',
+            'best_of' => 'ft3',
+            'stages' => [
+                'group_stage' => 'Round robin within groups'
+            ]
+        ],
+        'ignite_stage1_playoffs' => [
+            'name' => 'Ignite Stage 1: Playoffs',
+            'description' => 'Single elimination playoffs (FT3, Grand Final FT4)',
+            'team_count' => 6,
+            'format' => 'single_elimination',
+            'best_of' => 'ft3', // FT4 for Grand Final
+            'stages' => [
+                'playoffs' => 'Single elimination',
+                'grand_final' => 'First to 4 maps'
+            ]
+        ],
+
+        // Stage 2 - Continuation
+        'ignite_stage2' => [
+            'name' => 'Ignite Stage 2',
+            'description' => 'Stage 2 regional competition',
+            'team_count' => [16, 32],
+            'format' => 'single_elimination',
+            'best_of' => 'ft3',
+            'stages' => [
+                'qualifiers' => 'Regional qualification',
+                'main_event' => 'Single elimination'
+            ]
+        ],
+
+        // Mid-Season Finals - International
+        'ignite_mid_season_play_in' => [
+            'name' => 'Mid-Season Finals: Play-in Stage',
+            'description' => '4 teams in GSL Bracket, top 2 advance',
+            'team_count' => 4,
+            'format' => 'gsl',
+            'best_of' => 3,
+            'prize_pool' => '$500,000',
+            'stages' => [
+                'play_in' => 'GSL format with 4 teams'
+            ]
+        ],
+        'ignite_mid_season_main' => [
+            'name' => 'Mid-Season Finals: Main Stage',
+            'description' => '8 teams Double Elimination (BO3, Finals BO5)',
+            'team_count' => 8,
+            'format' => 'double_elimination',
+            'best_of' => 3, // BO5 for Finals
+            'prize_pool' => '$500,000',
+            'stages' => [
+                'main_stage' => 'Double elimination bracket',
+                'finals' => 'Best of 5'
+            ]
+        ],
+
+        // Grand Finals - World Championship
+        'ignite_grand_finals_play_in' => [
+            'name' => 'Grand Finals: Play-in Stage',
+            'description' => 'World Championship Play-in',
+            'team_count' => 4,
+            'format' => 'gsl',
+            'best_of' => 3,
+            'prize_pool' => '$1,000,000',
+            'stages' => [
+                'play_in' => 'GSL qualification'
+            ]
+        ],
+        'ignite_grand_finals_main' => [
+            'name' => 'Grand Finals: Main Stage',
+            'description' => 'World Championship Main (12 teams total)',
+            'team_count' => 12,
+            'format' => 'double_elimination',
+            'best_of' => 3, // BO5 for key matches
+            'prize_pool' => '$1,000,000',
+            'stages' => [
+                'group_stage' => 'Initial groups',
+                'playoffs' => 'Double elimination',
+                'grand_final' => 'Best of 5'
+            ]
+        ],
+
+        // ===================================================================
+        // REGIONAL TOURNAMENT FORMATS
+        // ===================================================================
+        'regional_americas' => [
+            'name' => 'Ignite 2025: Americas',
+            'description' => '16 teams, $250,000 prize pool',
+            'team_count' => 16,
+            'format' => 'mixed',
+            'best_of' => 'ft3',
+            'prize_pool' => '$250,000',
+            'region' => 'Americas'
+        ],
+        'regional_emea' => [
+            'name' => 'Ignite 2025: EMEA',
+            'description' => '16 teams, $250,000 prize pool',
+            'team_count' => 16,
+            'format' => 'mixed',
+            'best_of' => 'ft3',
+            'prize_pool' => '$250,000',
+            'region' => 'EMEA'
+        ],
+        'regional_china' => [
+            'name' => 'Ignite 2025: China',
+            'description' => '16 teams, $250,000 prize pool',
+            'team_count' => 16,
+            'format' => 'mixed',
+            'best_of' => 'ft3',
+            'prize_pool' => '$250,000',
+            'region' => 'China'
+        ],
+        'regional_asia' => [
+            'name' => 'Ignite 2025: Asia',
+            'description' => '16 teams, $250,000 prize pool',
+            'team_count' => 16,
+            'format' => 'mixed',
+            'best_of' => 'ft3',
+            'prize_pool' => '$250,000',
+            'region' => 'Asia'
+        ],
+        'regional_oceania' => [
+            'name' => 'Ignite 2025: Oceania',
+            'description' => '16 teams, $250,000 prize pool',
+            'team_count' => 16,
+            'format' => 'mixed',
+            'best_of' => 'ft3',
+            'prize_pool' => '$250,000',
+            'region' => 'Oceania'
+        ],
+
+        // ===================================================================
+        // CLASSIC FORMATS (Pre-2025)
+        // ===================================================================
         'play_in' => [
             'name' => 'Play-in Stage (GSL Bracket)',
             'description' => '4 teams compete in GSL format, top 2 advance',
@@ -53,6 +206,10 @@ class ManualBracketController extends Controller
             'format' => 'double_elimination',
             'best_of' => 5
         ],
+
+        // ===================================================================
+        // FLEXIBLE FORMATS
+        // ===================================================================
         'custom' => [
             'name' => 'Custom Tournament',
             'description' => 'Manually configure bracket settings',
@@ -84,7 +241,7 @@ class ManualBracketController extends Controller
     }
 
     /**
-     * Create a manual bracket with selected teams and format
+     * Create a manual bracket with selected teams and format - SEPARATE STAGES
      */
     public function createManualBracket(Request $request, $tournamentId)
     {
@@ -93,26 +250,28 @@ class ManualBracketController extends Controller
             'team_ids' => 'required|array|min:2',
             'team_ids.*' => 'exists:teams,id',
             'best_of' => 'integer|in:1,3,5,7',
-            'bracket_type' => 'string|in:single_elimination,double_elimination,gsl,round_robin',
+            'bracket_type' => 'string|in:single_elimination,double_elimination,gsl,round_robin,swiss',
             'name' => 'required|string',
+            'stage_type' => 'string|in:standalone,group_stage,playoffs,play_in,main_stage,grand_final',
             'start_date' => 'date'
         ]);
 
         DB::beginTransaction();
-        
+
         try {
             // Get tournament or event
             $tournament = Tournament::findOrFail($tournamentId);
-            
+
             // Get selected format
             $formatKey = $request->format_key;
             $format = self::MARVEL_RIVALS_FORMATS[$formatKey] ?? self::MARVEL_RIVALS_FORMATS['custom'];
-            
+
             // Override with custom settings if provided
             $bracketType = $request->bracket_type ?? $format['format'];
             $bestOf = $request->best_of ?? $format['best_of'];
-            
-            // Create bracket stage
+            $stageType = $request->stage_type ?? 'standalone';
+
+            // Create SEPARATE bracket stage (not linked to other stages)
             $stage = BracketStage::create([
                 'tournament_id' => $tournament->id,
                 'name' => $request->name,
@@ -120,11 +279,14 @@ class ManualBracketController extends Controller
                 'stage_order' => BracketStage::where('tournament_id', $tournament->id)->max('stage_order') + 1 ?? 1,
                 'status' => 'pending',
                 'max_teams' => count($request->team_ids),
-                'format_key' => $formatKey,
                 'settings' => [
+                    'format_key' => $formatKey,
                     'best_of' => $bestOf,
                     'game_modes' => self::GAME_MODES,
-                    'manual_bracket' => true
+                    'manual_bracket' => true,
+                    'stage_type' => $stageType,
+                    'standalone' => true, // Mark as separate bracket
+                    'linked_stages' => [] // No linked stages initially
                 ]
             ]);
 
@@ -142,17 +304,18 @@ class ManualBracketController extends Controller
                 ]);
             }
 
-            // Generate initial bracket matches based on format
-            $matches = $this->generateInitialMatches($stage, $teams, $bracketType, $bestOf);
+            // Generate INDEPENDENT bracket matches (no cross-stage references)
+            $matches = $this->generateIndependentMatches($stage, $teams, $bracketType, $bestOf);
 
             DB::commit();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Manual bracket created successfully',
+                'message' => 'Separate bracket stage created successfully',
                 'stage' => $stage->load('seedings.team'),
                 'matches' => $matches,
-                'bracket_id' => $stage->id
+                'bracket_id' => $stage->id,
+                'standalone' => true
             ]);
 
         } catch (\Exception $e) {
@@ -165,7 +328,40 @@ class ManualBracketController extends Controller
     }
 
     /**
-     * Generate initial matches based on bracket type
+     * Generate INDEPENDENT matches for a separate bracket stage
+     */
+    private function generateIndependentMatches($stage, $teams, $bracketType, $bestOf)
+    {
+        $matches = collect();
+        $teamCount = $teams->count();
+
+        switch ($bracketType) {
+            case 'single_elimination':
+                $matches = $this->generateSingleEliminationMatches($stage, $teams, $bestOf);
+                break;
+
+            case 'double_elimination':
+                $matches = $this->generateDoubleEliminationMatches($stage, $teams, $bestOf);
+                break;
+
+            case 'gsl':
+                $matches = $this->generateGSLMatches($stage, $teams, $bestOf);
+                break;
+
+            case 'swiss':
+                $matches = $this->generateSwissMatches($stage, $teams, $bestOf);
+                break;
+
+            case 'round_robin':
+                $matches = $this->generateRoundRobinMatches($stage, $teams, $bestOf);
+                break;
+        }
+
+        return $matches;
+    }
+
+    /**
+     * Generate initial matches based on bracket type (legacy)
      */
     private function generateInitialMatches($stage, $teams, $bracketType, $bestOf)
     {
@@ -453,6 +649,7 @@ class ManualBracketController extends Controller
         $request->validate([
             'team1_score' => 'required|integer|min:0',
             'team2_score' => 'required|integer|min:0',
+            'best_of' => 'integer|in:1,3,5,7,9',  // Allow editing BO value
             'game_details' => 'array',
             'game_details.*.mode' => 'string|in:domination,convoy,convergence',
             'game_details.*.winner_id' => 'integer',
@@ -464,9 +661,14 @@ class ManualBracketController extends Controller
         try {
             $match = BracketMatch::findOrFail($matchId);
             
-            // Update scores
+            // Update scores and BO value if provided
             $match->team1_score = $request->team1_score;
             $match->team2_score = $request->team2_score;
+
+            // Allow editing the Best Of value for individual matches
+            if ($request->has('best_of')) {
+                $match->best_of = $request->best_of;
+            }
             
             // Check if match should be completed
             $requiredWins = ceil($match->best_of / 2);
@@ -621,14 +823,51 @@ class ManualBracketController extends Controller
      */
     public function getBracket($stageId)
     {
-        $bracket = $this->getBracketState($stageId);
-        
-        return response()->json([
-            'success' => true,
-            'bracket' => $bracket,
-            'formats' => self::MARVEL_RIVALS_FORMATS,
-            'game_modes' => self::GAME_MODES
-        ]);
+        try {
+            // Get the bracket stage with all relationships
+            $stage = BracketStage::with(['seedings.team', 'tournament', 'event'])
+                                 ->findOrFail($stageId);
+
+            // Get all matches for this SEPARATE stage only
+            $matches = BracketMatch::where('bracket_stage_id', $stageId)
+                                   ->with(['team1', 'team2', 'winner', 'loser'])
+                                   ->orderBy('round_number')
+                                   ->orderBy('match_number')
+                                   ->get();
+
+            // Group matches by round for visualization
+            $rounds = [];
+            foreach ($matches as $match) {
+                $roundName = $this->getRoundName($match->round_number, $matches->max('round_number'), $stage->type);
+                $rounds[$roundName][] = $match;
+            }
+
+            // Get stage-specific settings
+            $settings = $stage->settings ?? [];
+            $isStandalone = $settings['standalone'] ?? true;
+
+            return response()->json([
+                'success' => true,
+                'bracket' => [
+                    'stage' => $stage,
+                    'rounds' => $rounds,
+                    'matches' => $matches,
+                    'teams' => $stage->seedings->sortBy('seed')->values(),
+                    'completed_matches' => $matches->where('status', 'completed')->count(),
+                    'total_matches' => $matches->count(),
+                    'champion' => $this->determineChampion($matches),
+                    'is_standalone' => $isStandalone,
+                    'stage_type' => $settings['stage_type'] ?? 'standalone'
+                ],
+                'format_info' => self::MARVEL_RIVALS_FORMATS[$settings['format_key'] ?? 'custom'] ?? null,
+                'game_modes' => self::GAME_MODES
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to get bracket: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     /**

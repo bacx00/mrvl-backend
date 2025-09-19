@@ -54,22 +54,32 @@ class MentionService
         foreach ($userMatches[1] as $match) {
             $username = trim($match[0]);
             $position = $match[1] - 1; // Account for @ symbol
-            
-            $user = User::where('name', $username)->where('status', 'active')->first();
-            if ($user) {
-                $mentionText = "@{$username}";
-                $mentions[] = [
-                    'type' => 'user',
-                    'id' => $user->id,
-                    'name' => $user->name,
-                    'display_name' => $user->name,
-                    'mention_text' => $mentionText,
-                    'url' => "/users/{$user->id}",
-                    'avatar' => $user->avatar,
-                    'position_start' => $position,
-                    'position_end' => $position + strlen($mentionText),
-                    'clickable' => true
-                ];
+
+            // Skip if this looks like it should be a player mention
+            if (strpos($content, "@player:{$username}") !== false) {
+                continue;
+            }
+
+            try {
+                $user = User::where('name', $username)->where('status', 'active')->first();
+                if ($user) {
+                    $mentionText = "@{$username}";
+                    $mentions[] = [
+                        'type' => 'user',
+                        'id' => $user->id,
+                        'name' => $user->name,
+                        'display_name' => $user->name,
+                        'mention_text' => $mentionText,
+                        'url' => "/users/{$user->id}",
+                        'avatar' => $user->avatar,
+                        'position_start' => $position,
+                        'position_end' => $position + strlen($mentionText),
+                        'clickable' => true
+                    ];
+                }
+            } catch (\Exception $e) {
+                // Log the error but continue processing other mentions
+                \Log::error('Error processing user mention: ' . $e->getMessage());
             }
         }
 
@@ -102,22 +112,31 @@ class MentionService
         foreach ($playerMatches[1] as $match) {
             $playerName = $match[0];
             $position = $match[1] - 8; // Account for @player: prefix
-            
-            $player = Player::where('username', $playerName)->orWhere('real_name', $playerName)->first();
-            if ($player) {
-                $mentionText = "@player:{$playerName}";
-                $mentions[] = [
-                    'type' => 'player',
-                    'id' => $player->id,
-                    'name' => $player->username,
-                    'display_name' => $player->real_name ?: $player->username,
-                    'mention_text' => $mentionText,
-                    'url' => "/players/{$player->id}",
-                    'avatar' => $player->avatar,
-                    'position_start' => $position,
-                    'position_end' => $position + strlen($mentionText),
-                    'clickable' => true
-                ];
+
+            try {
+                // Try to find player by name fields that actually exist
+                $player = Player::where('name', $playerName)
+                    ->orWhere('username', $playerName)
+                    ->orWhere('real_name', $playerName)
+                    ->first();
+                if ($player) {
+                    $mentionText = "@player:{$playerName}";
+                    $mentions[] = [
+                        'type' => 'player',
+                        'id' => $player->id,
+                        'name' => $player->name ?: $player->username,
+                        'display_name' => $player->real_name ?: $player->name ?: $player->username,
+                        'mention_text' => $mentionText,
+                        'url' => "/players/{$player->id}",
+                        'avatar' => $player->avatar,
+                        'position_start' => $position,
+                        'position_end' => $position + strlen($mentionText),
+                        'clickable' => true
+                    ];
+                }
+            } catch (\Exception $e) {
+                // Log the error but continue processing other mentions
+                \Log::error('Error processing player mention: ' . $e->getMessage());
             }
         }
 
@@ -135,54 +154,59 @@ class MentionService
      */
     public function storeMentions($content, $contentType, $contentId, $parentId = null)
     {
-        $mentions = $this->extractMentions($content);
-        $mentionCount = 0;
-        
-        foreach ($mentions as $mention) {
-            try {
-                // Extract context for the mention
-                $context = $this->extractMentionContext($content, $mention['mention_text']);
-                
-                // Convert mention type to full class name for checking duplicates
-                $mentionedType = $this->getMentionedTypeClass($mention['type']);
-                
-                // Check for duplicates
-                $existingMention = Mention::where([
-                    'mentionable_type' => $contentType,
-                    'mentionable_id' => $contentId,
-                    'mentioned_type' => $mentionedType,
-                    'mentioned_id' => $mention['id'],
-                    'mention_text' => $mention['mention_text']
-                ])->first();
-                
-                if (!$existingMention) {
-                    $createdMention = Mention::create([
+        try {
+            $mentions = $this->extractMentions($content);
+            $mentionCount = 0;
+
+            foreach ($mentions as $mention) {
+                try {
+                    // Extract context for the mention
+                    $context = $this->extractMentionContext($content, $mention['mention_text']);
+
+                    // Convert mention type to full class name for checking duplicates
+                    $mentionedType = $this->getMentionedTypeClass($mention['type']);
+
+                    // Check for duplicates
+                    $existingMention = Mention::where([
                         'mentionable_type' => $contentType,
                         'mentionable_id' => $contentId,
                         'mentioned_type' => $mentionedType,
                         'mentioned_id' => $mention['id'],
-                        'mention_text' => $mention['mention_text'],
-                        'position_start' => $mention['position_start'] ?? null,
-                        'position_end' => $mention['position_end'] ?? null,
-                        'context' => $context,
-                        'mentioned_by' => Auth::id(),
-                        'mentioned_at' => now(),
-                        'is_active' => true
-                    ]);
-                    
-                    // Trigger notifications and events for user mentions
-                    if ($mention['type'] === 'user') {
-                        $this->triggerMentionNotification($createdMention, $mention, $contentType, $contentId);
+                        'mention_text' => $mention['mention_text']
+                    ])->first();
+
+                    if (!$existingMention) {
+                        $createdMention = Mention::create([
+                            'mentionable_type' => $contentType,
+                            'mentionable_id' => $contentId,
+                            'mentioned_type' => $mentionedType,
+                            'mentioned_id' => $mention['id'],
+                            'mention_text' => $mention['mention_text'],
+                            'position_start' => $mention['position_start'] ?? null,
+                            'position_end' => $mention['position_end'] ?? null,
+                            'context' => $context,
+                            'mentioned_by' => Auth::id(),
+                            'mentioned_at' => now(),
+                            'is_active' => true
+                        ]);
+
+                        // Trigger notifications and events for user mentions
+                        if ($mention['type'] === 'user') {
+                            $this->triggerMentionNotification($createdMention, $mention, $contentType, $contentId);
+                        }
+
+                        $mentionCount++;
                     }
-                    
-                    $mentionCount++;
+                } catch (\Exception $e) {
+                    \Log::error('Error storing mention: ' . $e->getMessage());
                 }
-            } catch (\Exception $e) {
-                \Log::error('Error storing mention: ' . $e->getMessage());
             }
+
+            return $mentionCount;
+        } catch (\Exception $e) {
+            \Log::error('Error processing mentions for content: ' . $e->getMessage());
+            return 0; // Return 0 mentions if processing fails
         }
-        
-        return $mentionCount;
     }
 
     /**

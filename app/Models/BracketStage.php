@@ -12,8 +12,8 @@ class BracketStage extends Model
     use HasFactory;
 
     protected $fillable = [
-        'tournament_id', 'event_id', 'name', 'type', 'stage_order', 'status', 'settings',
-        'max_teams', 'current_round', 'total_rounds'
+        'tournament_id', 'event_id', 'name', 'type', 'format_key', 'stage_order', 'status', 'settings',
+        'max_teams', 'current_round', 'total_rounds', 'advance_count'
     ];
 
     protected $casts = [

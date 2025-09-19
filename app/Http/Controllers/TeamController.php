@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use App\Models\Mention;
 use App\Helpers\ImageHelper;
 use Exception;
@@ -818,7 +819,7 @@ class TeamController extends Controller
             $validated = $request->validate([
                 'name' => 'sometimes|string|max:255|unique:teams,name,' . $teamId,
                 'short_name' => 'sometimes|string|max:20|unique:teams,short_name,' . $teamId,
-                'region' => 'sometimes|string|max:20',
+                'region' => 'nullable|string|max:50',
                 'platform' => 'nullable|string|max:50',
                 'country' => 'nullable|string|max:100',
                 'country_code' => 'nullable|string|max:5',
@@ -834,36 +835,36 @@ class TeamController extends Controller
                 'social_links' => 'nullable|array',
                 'social_media' => 'nullable|array',
                 'twitter' => 'nullable|string|max:50',
-                'twitter_url' => 'nullable|string|url|max:255',
+                'twitter_url' => 'nullable|string|max:500',
                 'instagram' => 'nullable|string|max:50',
-                'instagram_url' => 'nullable|string|url|max:255',
+                'instagram_url' => 'nullable|string|max:500',
                 'youtube' => 'nullable|string|max:100',
-                'youtube_url' => 'nullable|string|url|max:255',
+                'youtube_url' => 'nullable|string|max:500',
                 'twitch' => 'nullable|string|max:50',
-                'twitch_url' => 'nullable|string|url|max:255',
+                'twitch_url' => 'nullable|string|max:500',
                 'tiktok' => 'nullable|string|max:50',
                 'coach_name' => 'nullable|string|max:255',
                 'coach_nationality' => 'nullable|string|max:255',
                 'coach_social_media' => 'nullable|array',
                 'discord' => 'nullable|string|max:100',
-                'discord_url' => 'nullable|string|max:255',
-                'facebook' => 'nullable|string|url|max:255',
-                'website' => 'nullable|string|url|max:255',
-                'website_url' => 'nullable|string|url|max:255',
-                'liquipedia_url' => 'nullable|string|url|max:255',
-                'vlr_url' => 'nullable|string|url|max:255',
-                'logo' => 'nullable|string|url|max:500',
-                'flag' => 'nullable|string|url|max:500',
-                'country_flag' => 'nullable|string|url|max:500',
+                'discord_url' => 'nullable|string|max:500',
+                'facebook' => 'nullable|string|max:500',
+                'website' => 'nullable|string|max:500',
+                'website_url' => 'nullable|string|max:500',
+                'liquipedia_url' => 'nullable|string|max:500',
+                'vlr_url' => 'nullable|string|max:500',
+                'logo' => 'nullable|string|max:500',
+                'flag' => 'nullable|string|max:500',
+                'country_flag' => 'nullable|string|max:500',
                 'coach' => 'nullable|string|max:255',
-                'coach_picture' => 'nullable|string|url|max:500',
-                'coach_image' => 'nullable|string|url|max:500',
+                'coach_picture' => 'nullable|string|max:500',
+                'coach_image' => 'nullable|string|max:500',
                 'captain' => 'nullable|string|max:255',
                 'manager' => 'nullable|string|max:255',
                 'owner' => 'nullable|string|max:255',
                 'founded' => 'nullable|string|max:50',
                 'founded_date' => 'nullable|date|before:today',
-                'status' => 'sometimes|in:active,inactive,disbanded,suspended',
+                'status' => 'nullable|string|max:50',
                 'achievements' => 'nullable|array'
             ]);
             
@@ -933,9 +934,22 @@ class TeamController extends Controller
                 $validated['peak_elo'] = $validated['elo_rating'];
             }
             
+            // Sync coach and coach_name fields - keep both in sync
+            if (isset($validated['coach_name']) && !isset($validated['coach'])) {
+                $validated['coach'] = $validated['coach_name'];
+            }
+            if (isset($validated['coach']) && !isset($validated['coach_name'])) {
+                $validated['coach_name'] = $validated['coach'];
+            }
+
+            // Update flag if country was changed
+            if (isset($validated['country'])) {
+                $validated['flag'] = $this->getCountryFlag($validated['country']);
+            }
+
             // Set updated timestamp
             $validated['updated_at'] = now();
-            
+
             // Update the team with transaction for data integrity
             DB::transaction(function() use ($validated, $teamId) {
                 DB::table('teams')->where('id', $teamId)->update($validated);
@@ -2990,7 +3004,7 @@ class TeamController extends Controller
     {
         try {
             $team = DB::table('teams')->where('id', $teamId)->first();
-            
+
             if (!$team) {
                 return response()->json([
                     'success' => false,
@@ -3000,19 +3014,46 @@ class TeamController extends Controller
 
             // Accept both coach_image and coach_avatar field names
             $fieldName = $request->hasFile('coach_image') ? 'coach_image' : 'coach_avatar';
-            
+
             $request->validate([
-                $fieldName => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048'
+                $fieldName => 'required|image|mimes:jpeg,png,jpg,gif,svg,webp|max:51200' // 50MB limit
             ]);
 
             $image = $request->file($fieldName);
-            $imageName = 'coach_' . time() . '.' . $image->extension();
-            
-            // Store in public/teams/coaches directory
-            $image->move(public_path('teams/coaches'), $imageName);
-            
-            $imagePath = '/teams/coaches/' . $imageName;
-            
+            $imageName = 'coach_' . $teamId . '_' . time() . '.' . $image->extension();
+
+            // Use Storage facade for proper permissions and error handling
+            try {
+                $storagePath = 'teams/coaches/' . $imageName;
+                $stored = Storage::disk('public')->put($storagePath, file_get_contents($image->path()));
+
+                if (!$stored) {
+                    throw new \Exception('Failed to store file to disk');
+                }
+
+                // Verify file was written and set proper permissions
+                $fullPath = storage_path('app/public/' . $storagePath);
+                if (file_exists($fullPath)) {
+                    chmod($fullPath, 0664);
+                    chown($fullPath, 'www-data');
+                    chgrp($fullPath, 'www-data');
+                }
+
+            } catch (\Exception $storageError) {
+                Log::error('Coach image storage failed', [
+                    'error' => $storageError->getMessage(),
+                    'team_id' => $teamId,
+                    'file_name' => $imageName
+                ]);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to store coach image: ' . $storageError->getMessage()
+                ], 500);
+            }
+
+            $imagePath = '/storage/teams/coaches/' . $imageName;
+
             // Update team with coach image path
             DB::table('teams')->where('id', $teamId)->update([
                 'coach_image' => $imagePath,
@@ -3028,6 +3069,12 @@ class TeamController extends Controller
             ]);
 
         } catch (\Exception $e) {
+            Log::error('Coach image upload failed', [
+                'error' => $e->getMessage(),
+                'team_id' => $teamId,
+                'trace' => $e->getTraceAsString()
+            ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Error uploading coach image: ' . $e->getMessage()

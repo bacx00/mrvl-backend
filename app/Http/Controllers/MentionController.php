@@ -200,7 +200,7 @@ class MentionController extends Controller
                 ->orderBy('created_at', 'desc')
                 ->limit(3)
                 ->get();
-            
+
             foreach ($users as $user) {
                 $results[] = [
                     'id' => $user->id,
@@ -219,7 +219,7 @@ class MentionController extends Controller
                 ->orderBy('created_at', 'desc')
                 ->limit(3)
                 ->get();
-            
+
             foreach ($teams as $team) {
                 $results[] = [
                     'id' => $team->id,
@@ -230,6 +230,35 @@ class MentionController extends Controller
                     'avatar' => $team->logo,
                     'subtitle' => "Team • {$team->region}",
                     'icon' => 'team'
+                ];
+            }
+
+            // Get some recent players
+            $players = DB::table('players as p')
+                ->leftJoin('teams as t', 'p.team_id', '=', 't.id')
+                ->orderBy('p.created_at', 'desc')
+                ->select([
+                    'p.id', 'p.username', 'p.real_name', 'p.avatar', 'p.role',
+                    't.name as team_name', 't.short_name as team_short'
+                ])
+                ->limit($limit - count($results)) // Fill remaining slots
+                ->get();
+
+            foreach ($players as $player) {
+                $subtitle = $player->role;
+                if ($player->team_name) {
+                    $subtitle .= " • {$player->team_name}";
+                }
+
+                $results[] = [
+                    'id' => $player->id,
+                    'type' => 'player',
+                    'name' => $player->username,
+                    'display_name' => $player->real_name ?: $player->username,
+                    'mention_text' => "@player:{$player->username}",
+                    'avatar' => $player->avatar,
+                    'subtitle' => $subtitle,
+                    'icon' => 'player'
                 ];
             }
         }

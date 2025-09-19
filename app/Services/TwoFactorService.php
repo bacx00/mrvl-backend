@@ -59,11 +59,12 @@ class TwoFactorService
     /**
      * Verify a 2FA code
      */
-    public function verifyCode(string $secret, string $code, int $window = 1): bool
+    public function verifyCode(string $secret, string $code, int $window = 4): bool
     {
         // Remove any spaces or formatting from the code
         $code = preg_replace('/\s+/', '', $code);
-        
+
+        // Use a wider window (4 = ±2 minutes) to account for clock drift and user delay
         return $this->google2fa->verifyKey($secret, $code, $window);
     }
 

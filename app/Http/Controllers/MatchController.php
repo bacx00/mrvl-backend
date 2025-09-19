@@ -355,7 +355,7 @@ class MatchController extends Controller
             'event_id' => 'nullable|exists:events,id',
             'scheduled_at' => 'required|date',
             'format' => 'required|in:BO1,BO3,BO5,BO7,BO9',
-            'status' => 'sometimes|in:upcoming,live,completed,cancelled,postponed',
+            'status' => 'sometimes|in:upcoming,live,completed',
             
             // Enhanced maps data validation
             'maps_data' => 'required|array|min:1',
@@ -1066,7 +1066,7 @@ class MatchController extends Controller
                 'title' => 'nullable|string|max:255',
                 'description' => 'nullable|string',
                 'format' => 'required|in:BO1,BO3,BO5,BO7,BO9',
-                'status' => 'required|in:upcoming,live,completed,cancelled,postponed',
+                'status' => 'required|in:upcoming,live,completed',
                 'scheduled_at' => 'nullable|date',
                 'event_id' => 'nullable|integer|exists:events,id'
             ]);
@@ -4416,7 +4416,7 @@ class MatchController extends Controller
                 'series_score_team1' => 'sometimes|integer|min:0',
                 'series_score_team2' => 'sometimes|integer|min:0',
                 'current_map' => 'sometimes|integer|min:1',
-                'status' => 'sometimes|string|in:upcoming,live,completed,cancelled,postponed',
+                'status' => 'sometimes|string|in:upcoming,live,completed',
                 'timer' => 'sometimes|string',
                 'viewers' => 'sometimes|integer|min:0',
                 'maps' => 'sometimes|array',
@@ -5319,7 +5319,7 @@ class MatchController extends Controller
                 'team2_score' => 'integer|min:0',
                 'series_score_team1' => 'integer|min:0',
                 'series_score_team2' => 'integer|min:0',
-                'status' => 'string|in:upcoming,live,completed,cancelled'
+                'status' => 'string|in:upcoming,live,completed'
             ]);
 
             DB::transaction(function () use ($matchId, $validatedData, $match) {

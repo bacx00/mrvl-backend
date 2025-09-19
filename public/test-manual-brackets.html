@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual Bracket System Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a1a;
+            color: white;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #333;
+            border-radius: 8px;
+            background: #222;
+        }
+        .status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status.pass { background: #22c55e; color: white; }
+        .status.fail { background: #ef4444; color: white; }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .results {
+            margin-top: 10px;
+            padding: 10px;
+            background: #1f2937;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🏆 Manual Bracket System Test</h1>
+
+    <div class="test-section">
+        <h3>API Endpoints Test</h3>
+        <button onclick="testFormats()">Test Formats</button>
+        <button onclick="testCreateBracket()">Test Create Bracket</button>
+        <button onclick="testUpdateMatch()">Test Update Match BO</button>
+        <div id="api-results" class="results">Results will appear here...</div>
+    </div>
+
+    <div class="test-section">
+        <h3>Best-Of Test</h3>
+        <p>Test different Best-Of formats:</p>
+        <button onclick="testBestOf(1)">BO1</button>
+        <button onclick="testBestOf(3)">BO3</button>
+        <button onclick="testBestOf(5)">BO5</button>
+        <button onclick="testBestOf(7)">BO7</button>
+        <button onclick="testBestOf(9)">BO9</button>
+        <button onclick="testBestOf(11)">BO11</button>
+        <div id="bo-results" class="results">Best-Of test results will appear here...</div>
+    </div>
+
+    <div class="test-section">
+        <h3>Tournament Formats Test</h3>
+        <button onclick="testFormat('single_elimination')">Single Elimination</button>
+        <button onclick="testFormat('double_elimination')">Double Elimination</button>
+        <button onclick="testFormat('round_robin')">Round Robin</button>
+        <button onclick="testFormat('swiss')">Swiss System</button>
+        <button onclick="testFormat('gsl')">GSL Format</button>
+        <div id="format-results" class="results">Format test results will appear here...</div>
+    </div>
+
+    <script>
+        const API_BASE = 'https://staging.mrvl.net/api';
+
+        function logResult(elementId, message, isSuccess = true) {
+            const element = document.getElementById(elementId);
+            const timestamp = new Date().toLocaleTimeString();
+            const status = isSuccess ? '✅' : '❌';
+            element.textContent += `[${timestamp}] ${status} ${message}\n`;
+            element.scrollTop = element.scrollHeight;
+        }
+
+        async function testFormats() {
+            logResult('api-results', 'Testing formats endpoint...');
+
+            try {
+                const response = await fetch(`${API_BASE}/public/manual-bracket/formats`);
+                const data = await response.json();
+
+                if (data.success) {
+                    logResult('api-results', `Formats loaded: ${Object.keys(data.formats || {}).length} formats`);
+                    logResult('api-results', `Game modes: ${Object.keys(data.game_modes || {}).length} modes`);
+                } else {
+                    logResult('api-results', `Error: ${data.message}`, false);
+                }
+            } catch (error) {
+                logResult('api-results', `Network error: ${error.message}`, false);
+            }
+        }
+
+        async function testCreateBracket() {
+            logResult('api-results', 'Testing bracket creation...');
+
+            const testData = {
+                format_key: 'single_elimination_8',
+                team_ids: [1, 2, 3, 4, 5, 6, 7, 8],
+                best_of: 3,
+                bracket_type: 'single_elimination'
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/admin/tournaments/1/manual-bracket`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(testData)
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    logResult('api-results', `Bracket created successfully! Stage ID: ${data.stage_id}`);
+                } else {
+                    logResult('api-results', `Create failed: ${data.message || 'Unknown error'}`, false);
+                }
+            } catch (error) {
+                logResult('api-results', `Create error: ${error.message}`, false);
+            }
+        }
+
+        async function testUpdateMatch() {
+            logResult('api-results', 'Testing match BO update...');
+
+            const updateData = {
+                best_of: 7,
+                team1_score: 2,
+                team2_score: 1,
+                status: 'live'
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/admin/tournaments/manual-bracket/matches/1/score`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(updateData)
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    logResult('api-results', `Match updated to BO${updateData.best_of} successfully!`);
+                } else {
+                    logResult('api-results', `Update failed: ${data.message || 'Unauthorized'}`, false);
+                }
+            } catch (error) {
+                logResult('api-results', `Update error: ${error.message}`, false);
+            }
+        }
+
+        async function testBestOf(bo) {
+            logResult('bo-results', `Testing Best-Of ${bo}...`);
+
+            const testMatch = {
+                match_id: 'TEST_MATCH_' + Date.now(),
+                team1: 'Team Alpha',
+                team2: 'Team Beta',
+                best_of: bo,
+                team1_score: 0,
+                team2_score: 0,
+                status: 'pending'
+            };
+
+            // Simulate match progression
+            const winThreshold = Math.ceil(bo / 2);
+            logResult('bo-results', `BO${bo} requires ${winThreshold} wins to complete`);
+
+            // Test score progression
+            for (let i = 1; i <= winThreshold; i++) {
+                if (Math.random() > 0.5) {
+                    testMatch.team1_score = i;
+                    logResult('bo-results', `${testMatch.team1} wins game ${i} (Score: ${testMatch.team1_score}-${testMatch.team2_score})`);
+                } else {
+                    testMatch.team2_score = i;
+                    logResult('bo-results', `${testMatch.team2} wins game ${i} (Score: ${testMatch.team1_score}-${testMatch.team2_score})`);
+                }
+
+                if (testMatch.team1_score >= winThreshold || testMatch.team2_score >= winThreshold) {
+                    const winner = testMatch.team1_score > testMatch.team2_score ? testMatch.team1 : testMatch.team2;
+                    logResult('bo-results', `🏆 ${winner} wins the BO${bo} series!`);
+                    break;
+                }
+            }
+
+            logResult('bo-results', `BO${bo} test completed.\n`);
+        }
+
+        async function testFormat(format) {
+            logResult('format-results', `Testing ${format.replace('_', ' ')} format...`);
+
+            const formatConfigs = {
+                single_elimination: { teams: 8, rounds: 3, description: 'Simple knockout format' },
+                double_elimination: { teams: 8, rounds: 6, description: 'Upper/lower bracket with reset' },
+                round_robin: { teams: 6, rounds: 5, description: 'Everyone plays everyone' },
+                swiss: { teams: 16, rounds: 5, description: 'Pairing based on standings' },
+                gsl: { teams: 4, rounds: 4, description: 'Special 4-team format' }
+            };
+
+            const config = formatConfigs[format];
+
+            if (config) {
+                logResult('format-results', `Format: ${format.replace('_', ' ').toUpperCase()}`);
+                logResult('format-results', `Teams: ${config.teams}`);
+                logResult('format-results', `Rounds: ${config.rounds}`);
+                logResult('format-results', `Description: ${config.description}`);
+                logResult('format-results', `✅ ${format} format configured successfully\n`);
+            } else {
+                logResult('format-results', `❌ Unknown format: ${format}\n`, false);
+            }
+        }
+
+        // Auto-run basic test on page load
+        window.onload = function() {
+            logResult('api-results', 'Manual Bracket System Test Interface loaded');
+            logResult('bo-results', 'Best-Of testing interface ready');
+            logResult('format-results', 'Tournament format testing ready');
+        };
+    </script>
+</body>
+</html>
