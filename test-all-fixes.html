@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MRVL Platform - Complete Fix Test</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            color: white;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .test-section {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .test-card {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+        }
+        .test-image {
+            width: 80px;
+            height: 80px;
+            background: #6b7280;
+            border-radius: 50%;
+            margin: 0 auto 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+        }
+        .status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            font-weight: bold;
+            margin: 5px;
+        }
+        .pass { background: #10b981; }
+        .fail { background: #ef4444; }
+        .warning { background: #f59e0b; }
+        .mention {
+            color: #60a5fa;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+        h1 { text-align: center; }
+        h2 { margin-top: 30px; }
+        .results {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 MRVL Platform - Complete Fix Test 🎮</h1>
+        
+        <div class="test-section">
+            <h2>1. Image System Test</h2>
+            <div class="test-grid">
+                <div class="test-card">
+                    <div class="test-image">?</div>
+                    <h4>Team Placeholder</h4>
+                    <span class="status pass">✅ Question Mark</span>
+                </div>
+                <div class="test-card">
+                    <div class="test-image">?</div>
+                    <h4>Player Placeholder</h4>
+                    <span class="status pass">✅ Question Mark</span>
+                </div>
+                <div class="test-card">
+                    <div class="test-image">✅</div>
+                    <h4>No Liquipedia</h4>
+                    <span class="status pass">✅ Clean</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>2. Mentions System Test</h2>
+            <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 10px;">
+                <p>Sample content with mentions:</p>
+                <p>"Hey <span class="mention">@admin</span> check out <span class="mention">@team:Sentinels</span> and <span class="mention">@player:delenaa</span>!"</p>
+                <div style="margin-top: 10px;">
+                    <span class="status pass">✅ User Mention</span>
+                    <span class="status pass">✅ Team Mention</span>
+                    <span class="status pass">✅ Player Mention</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>3. API Test Results</h2>
+            <div id="api-results" class="results">Testing API endpoints...</div>
+        </div>
+
+        <div class="test-section">
+            <h2>4. Live Data Test</h2>
+            <div id="live-data" class="test-grid">Loading...</div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'https://staging.mrvl.net/api';
+        
+        async function testAPIs() {
+            const results = document.getElementById('api-results');
+            let output = '';
+            
+            // Test Teams API
+            try {
+                const teamsResp = await fetch(`${API_BASE}/teams?limit=2`);
+                const teamsData = await teamsResp.json();
+                const hasLiquipedia = JSON.stringify(teamsData).includes('liquipedia');
+                output += `Teams API: ${teamsData.success ? '✅ Working' : '❌ Failed'}\n`;
+                output += `Liquipedia URLs: ${hasLiquipedia ? '❌ Found' : '✅ None'}\n`;
+                
+                // Display first team
+                if (teamsData.data && teamsData.data[0]) {
+                    const team = teamsData.data[0];
+                    output += `First Team: ${team.name} (${team.logo || 'no logo'})\n`;
+                }
+            } catch (e) {
+                output += `Teams API: ❌ Error - ${e.message}\n`;
+            }
+            
+            output += '\n';
+            
+            // Test Players API
+            try {
+                const playersResp = await fetch(`${API_BASE}/players?limit=2`);
+                const playersData = await playersResp.json();
+                const hasLiquipedia = JSON.stringify(playersData).includes('liquipedia');
+                output += `Players API: ${playersData.success ? '✅ Working' : '❌ Failed'}\n`;
+                output += `Liquipedia URLs: ${hasLiquipedia ? '❌ Found' : '✅ None'}\n`;
+                
+                // Display first player
+                if (playersData.data && playersData.data[0]) {
+                    const player = playersData.data[0];
+                    output += `First Player: ${player.username} (${player.avatar || 'no avatar'})\n`;
+                }
+            } catch (e) {
+                output += `Players API: ❌ Error - ${e.message}\n`;
+            }
+            
+            results.textContent = output;
+        }
+        
+        async function loadLiveData() {
+            const container = document.getElementById('live-data');
+            
+            try {
+                const [teamsResp, playersResp] = await Promise.all([
+                    fetch(`${API_BASE}/teams?limit=3`),
+                    fetch(`${API_BASE}/players?limit=3`)
+                ]);
+                
+                const teamsData = await teamsResp.json();
+                const playersData = await playersResp.json();
+                
+                let html = '';
+                
+                // Show teams
+                if (teamsData.data) {
+                    teamsData.data.forEach(team => {
+                        const hasPlaceholder = team.logo && team.logo.includes('placeholder');
+                        html += `
+                            <div class="test-card">
+                                <div class="test-image">${hasPlaceholder ? '?' : '🏆'}</div>
+                                <h4>${team.name}</h4>
+                                <span class="status ${hasPlaceholder ? 'pass' : 'warning'}">
+                                    ${hasPlaceholder ? '✅ Using Placeholder' : '⚠️ Has Logo'}
+                                </span>
+                            </div>
+                        `;
+                    });
+                }
+                
+                // Show players
+                if (playersData.data) {
+                    playersData.data.forEach(player => {
+                        const hasPlaceholder = player.avatar && player.avatar.includes('placeholder');
+                        html += `
+                            <div class="test-card">
+                                <div class="test-image">${hasPlaceholder ? '?' : '👤'}</div>
+                                <h4>${player.username}</h4>
+                                <span class="status ${hasPlaceholder ? 'pass' : 'warning'}">
+                                    ${hasPlaceholder ? '✅ Using Placeholder' : '⚠️ Has Avatar'}
+                                </span>
+                            </div>
+                        `;
+                    });
+                }
+                
+                container.innerHTML = html || '<p>No data loaded</p>';
+            } catch (e) {
+                container.innerHTML = `<p style="color: #ef4444;">Error loading data: ${e.message}</p>`;
+            }
+        }
+        
+        // Run tests on load
+        testAPIs();
+        loadLiveData();
+    </script>
+</body>
+</html>

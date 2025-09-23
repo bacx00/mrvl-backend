@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comments & Voting Test - Marvel Rivals</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e, #0f0f23);
+            color: #fff;
+            padding: 20px;
+            margin: 0;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            background: linear-gradient(90deg, #ff6b6b, #4ecdc4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .comment {
+            background: rgba(0,0,0,0.3);
+            border-left: 3px solid #4ecdc4;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+        .comment:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(78,205,196,0.2);
+        }
+        .comment-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .author {
+            color: #4ecdc4;
+            font-weight: bold;
+        }
+        .time {
+            color: #888;
+            font-size: 0.9em;
+        }
+        .comment-text {
+            margin: 10px 0;
+            line-height: 1.5;
+        }
+        .mention {
+            color: #ffd700;
+            font-weight: bold;
+        }
+        .vote-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-top: 10px;
+        }
+        .vote-button {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: #fff;
+            padding: 5px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .vote-button:hover {
+            transform: scale(1.05);
+        }
+        .vote-button.upvote:hover {
+            background: rgba(39,174,96,0.3);
+            border-color: #27ae60;
+        }
+        .vote-button.downvote:hover {
+            background: rgba(231,76,60,0.3);
+            border-color: #e74c3c;
+        }
+        .vote-button.active.upvote {
+            background: #27ae60;
+            border-color: #27ae60;
+        }
+        .vote-button.active.downvote {
+            background: #e74c3c;
+            border-color: #e74c3c;
+        }
+        .vote-count {
+            font-weight: bold;
+            margin: 0 5px;
+        }
+        .score {
+            color: #ffd700;
+            font-weight: bold;
+        }
+        .reply {
+            margin-left: 30px;
+            border-left: 2px solid rgba(255,255,255,0.1);
+            padding-left: 15px;
+        }
+        .input-container {
+            margin: 20px 0;
+        }
+        textarea {
+            width: 100%;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: #fff;
+            padding: 10px;
+            border-radius: 8px;
+            font-family: inherit;
+            resize: vertical;
+        }
+        button {
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 5px;
+            transition: all 0.3s;
+        }
+        button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 20px rgba(102,126,234,0.4);
+        }
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            animation: slideIn 0.5s;
+            display: none;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(400px); }
+            to { transform: translateX(0); }
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .stat-card {
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #4ecdc4;
+        }
+        .stat-label {
+            color: #888;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>💬 Comments & Voting System Test</h1>
+        
+        <div class="test-section">
+            <h2>📊 Live Statistics</h2>
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-value" id="total-comments">0</div>
+                    <div class="stat-label">Total Comments</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="total-upvotes">0</div>
+                    <div class="stat-label">Total Upvotes</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="total-downvotes">0</div>
+                    <div class="stat-label">Total Downvotes</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="active-users">1</div>
+                    <div class="stat-label">Active Users</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>✍️ Post a Comment</h2>
+            <div class="input-container">
+                <textarea id="comment-input" rows="3" placeholder="Share your thoughts about the match... Use @username to mention someone"></textarea>
+                <button onclick="postComment()">Post Comment</button>
+                <button onclick="postWithMention()">Post with @mention</button>
+                <button onclick="postControversial()">Post Controversial</button>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>💬 Comments Feed</h2>
+            <div id="comments-container">
+                <!-- Comments will be added here -->
+            </div>
+        </div>
+
+        <div class="notification" id="notification"></div>
+    </div>
+
+    <script>
+        let comments = [];
+        let totalUpvotes = 0;
+        let totalDownvotes = 0;
+        let userVotes = {}; // Track user's votes
+        let activeUsers = 1;
+
+        function showNotification(message) {
+            const notif = document.getElementById('notification');
+            notif.textContent = message;
+            notif.style.display = 'block';
+            setTimeout(() => {
+                notif.style.display = 'none';
+            }, 3000);
+        }
+
+        function updateStats() {
+            document.getElementById('total-comments').textContent = comments.length;
+            document.getElementById('total-upvotes').textContent = totalUpvotes;
+            document.getElementById('total-downvotes').textContent = totalDownvotes;
+            document.getElementById('active-users').textContent = activeUsers;
+        }
+
+        function postComment() {
+            const input = document.getElementById('comment-input');
+            const text = input.value.trim();
+            if (!text) return;
+
+            const comment = {
+                id: Date.now(),
+                author: 'You',
+                text: text,
+                time: 'Just now',
+                upvotes: 0,
+                downvotes: 0,
+                replies: []
+            };
+
+            comments.unshift(comment);
+            input.value = '';
+            renderComments();
+            showNotification('✅ Comment posted successfully!');
+            updateStats();
+        }
+
+        function postWithMention() {
+            const comment = {
+                id: Date.now(),
+                author: 'User' + Math.floor(Math.random() * 100),
+                text: '@genius19 That Hela play was incredible! 18-3 is insane KDA',
+                time: 'Just now',
+                upvotes: 0,
+                downvotes: 0,
+                replies: []
+            };
+
+            comments.unshift(comment);
+            renderComments();
+            showNotification('🔔 genius19 has been mentioned!');
+            updateStats();
+        }
+
+        function postControversial() {
+            const controversial = [
+                'Hela is completely broken and needs immediate nerfs',
+                'Soniqs threw the match, terrible hero swaps',
+                'Jeff the Shark is overrated, Luna Snow is better',
+                'This match was clearly scripted',
+                'Psylocke takes no skill to play'
+            ];
+
+            const comment = {
+                id: Date.now(),
+                author: 'HotTakeUser',
+                text: controversial[Math.floor(Math.random() * controversial.length)],
+                time: 'Just now',
+                upvotes: Math.floor(Math.random() * 5),
+                downvotes: Math.floor(Math.random() * 10) + 5,
+                replies: []
+            };
+
+            comments.unshift(comment);
+            renderComments();
+            showNotification('🔥 Controversial comment posted!');
+            
+            // Simulate immediate reactions
+            setTimeout(() => {
+                comment.downvotes += 2;
+                renderComments();
+                showNotification('👎 2 users disagreed!');
+            }, 1500);
+
+            updateStats();
+        }
+
+        function vote(commentId, voteType) {
+            const comment = comments.find(c => c.id === commentId);
+            if (!comment) return;
+
+            const voteKey = `${commentId}_vote`;
+            const previousVote = userVotes[voteKey];
+
+            // Remove previous vote
+            if (previousVote === 'up') {
+                comment.upvotes--;
+                totalUpvotes--;
+            } else if (previousVote === 'down') {
+                comment.downvotes--;
+                totalDownvotes--;
+            }
+
+            // Add new vote
+            if (previousVote === voteType) {
+                // Clicking same vote = remove vote
+                delete userVotes[voteKey];
+                showNotification('Vote removed');
+            } else {
+                // New vote or changing vote
+                userVotes[voteKey] = voteType;
+                if (voteType === 'up') {
+                    comment.upvotes++;
+                    totalUpvotes++;
+                    showNotification('⬆️ Upvoted!');
+                } else {
+                    comment.downvotes++;
+                    totalDownvotes++;
+                    showNotification('⬇️ Downvoted!');
+                }
+            }
+
+            renderComments();
+            updateStats();
+
+            // Simulate other users voting
+            if (Math.random() > 0.5) {
+                setTimeout(() => {
+                    activeUsers++;
+                    if (Math.random() > 0.3) {
+                        comment.upvotes++;
+                        totalUpvotes++;
+                        showNotification(`Another user upvoted!`);
+                    } else {
+                        comment.downvotes++;
+                        totalDownvotes++;
+                        showNotification(`Another user downvoted!`);
+                    }
+                    renderComments();
+                    updateStats();
+                }, 2000);
+            }
+        }
+
+        function renderComments() {
+            const container = document.getElementById('comments-container');
+            
+            if (comments.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #888;">No comments yet. Be the first to comment!</p>';
+                return;
+            }
+
+            container.innerHTML = comments.map(comment => {
+                const score = comment.upvotes - comment.downvotes;
+                const voteKey = `${comment.id}_vote`;
+                const userVote = userVotes[voteKey];
+
+                // Highlight mentions
+                let text = comment.text.replace(/@(\w+)/g, '<span class="mention">@$1</span>');
+
+                return `
+                    <div class="comment">
+                        <div class="comment-header">
+                            <span class="author">${comment.author}</span>
+                            <span class="time">${comment.time}</span>
+                        </div>
+                        <div class="comment-text">${text}</div>
+                        <div class="vote-container">
+                            <button class="vote-button upvote ${userVote === 'up' ? 'active' : ''}" onclick="vote(${comment.id}, 'up')">
+                                ⬆️ <span class="vote-count">${comment.upvotes}</span>
+                            </button>
+                            <button class="vote-button downvote ${userVote === 'down' ? 'active' : ''}" onclick="vote(${comment.id}, 'down')">
+                                ⬇️ <span class="vote-count">${comment.downvotes}</span>
+                            </button>
+                            <span class="score">Score: ${score >= 0 ? '+' : ''}${score}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Add some initial comments
+        function loadSampleComments() {
+            comments = [
+                {
+                    id: 1,
+                    author: 'ProGamer123',
+                    text: 'That Hela quadra kill was absolutely insane! Best play of the tournament',
+                    time: '5 minutes ago',
+                    upvotes: 12,
+                    downvotes: 1,
+                    replies: []
+                },
+                {
+                    id: 2,
+                    author: 'EsportsFan',
+                    text: '@genius19 your Hela mechanics are on another level! GG',
+                    time: '8 minutes ago',
+                    upvotes: 8,
+                    downvotes: 0,
+                    replies: []
+                },
+                {
+                    id: 3,
+                    author: 'CriticalThinker',
+                    text: 'Soniqs should have kept Winter Soldier for Map 3. Bad coaching decision',
+                    time: '10 minutes ago',
+                    upvotes: 3,
+                    downvotes: 7,
+                    replies: []
+                }
+            ];
+            
+            totalUpvotes = comments.reduce((sum, c) => sum + c.upvotes, 0);
+            totalDownvotes = comments.reduce((sum, c) => sum + c.downvotes, 0);
+            
+            renderComments();
+            updateStats();
+        }
+
+        // Simulate live activity
+        function simulateLiveActivity() {
+            const actions = [
+                () => {
+                    // Random upvote
+                    if (comments.length > 0) {
+                        const randomComment = comments[Math.floor(Math.random() * comments.length)];
+                        randomComment.upvotes++;
+                        totalUpvotes++;
+                        showNotification(`Someone upvoted a comment!`);
+                        renderComments();
+                        updateStats();
+                    }
+                },
+                () => {
+                    // New user joins
+                    activeUsers++;
+                    showNotification(`New user joined the discussion!`);
+                    updateStats();
+                },
+                () => {
+                    // Auto comment
+                    const autoComments = [
+                        'Great match! Well played both teams',
+                        'Marvel Rivals esports is getting so good',
+                        'When is the next tournament?',
+                        'That was an incredible series'
+                    ];
+                    
+                    const comment = {
+                        id: Date.now(),
+                        author: 'Viewer' + Math.floor(Math.random() * 1000),
+                        text: autoComments[Math.floor(Math.random() * autoComments.length)],
+                        time: 'Just now',
+                        upvotes: 0,
+                        downvotes: 0,
+                        replies: []
+                    };
+                    
+                    comments.unshift(comment);
+                    showNotification('New comment posted!');
+                    renderComments();
+                    updateStats();
+                }
+            ];
+
+            // Random activity every 5-10 seconds
+            setInterval(() => {
+                if (Math.random() > 0.5) {
+                    const action = actions[Math.floor(Math.random() * actions.length)];
+                    action();
+                }
+            }, 7000);
+        }
+
+        // Initialize
+        loadSampleComments();
+        simulateLiveActivity();
+    </script>
+</body>
+</html>

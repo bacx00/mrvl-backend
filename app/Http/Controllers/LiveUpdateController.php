@@ -455,6 +455,21 @@ class LiveUpdateController extends Controller
                 if ($player['player_id'] == $playerId) {
                     $player['hero'] = $data['hero'];
                     $player['role'] = $data['role'] ?? 'Unknown';
+
+                    // CRITICAL: Update heroes_played and hero_changes arrays if provided
+                    if (isset($data['heroes_played'])) {
+                        $player['heroes_played'] = $data['heroes_played'];
+                        \Log::info('Setting heroes_played for player ' . $playerId, ['heroes_played' => $data['heroes_played']]);
+                    } else {
+                        \Log::info('No heroes_played data provided for player ' . $playerId);
+                    }
+                    if (isset($data['hero_changes'])) {
+                        $player['hero_changes'] = $data['hero_changes'];
+                        \Log::info('Setting hero_changes for player ' . $playerId, ['hero_changes' => $data['hero_changes']]);
+                    } else {
+                        \Log::info('No hero_changes data provided for player ' . $playerId);
+                    }
+
                     $playerFound = true;
                     break;
                 }
@@ -473,7 +488,9 @@ class LiveUpdateController extends Controller
                 'damage' => 0,
                 'healing' => 0,
                 'damage_blocked' => 0,
-                'country' => ''
+                'country' => '',
+                'heroes_played' => $data['heroes_played'] ?? [],
+                'hero_changes' => $data['hero_changes'] ?? []
             ];
         }
             

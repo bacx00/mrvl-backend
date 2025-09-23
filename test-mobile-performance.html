@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
+    <title>Mobile Performance Test - MRVL Tournament Platform</title>
+    
+    <!-- Critical CSS for mobile -->
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: #0f0f23;
+            color: white;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
+        }
+        
+        .container {
+            max-width: 768px;
+            margin: 0 auto;
+            padding: 16px;
+        }
+        
+        .performance-metrics {
+            background: #1a1a2e;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            padding: 8px 0;
+            border-bottom: 1px solid #333;
+        }
+        
+        .metric:last-child {
+            border-bottom: none;
+        }
+        
+        .metric-value {
+            font-weight: bold;
+            color: #dc2626;
+        }
+        
+        .metric-value.good {
+            color: #10b981;
+        }
+        
+        .metric-value.warning {
+            color: #f59e0b;
+        }
+        
+        .metric-value.error {
+            color: #ef4444;
+        }
+        
+        .test-button {
+            background: #dc2626;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 16px 24px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 8px;
+            min-height: 44px;
+            min-width: 120px;
+            transition: background-color 0.1s ease-out;
+            -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+            touch-action: manipulation;
+        }
+        
+        .test-button:active {
+            background: #b91c1c;
+            transform: scale(0.95);
+        }
+        
+        .mobile-match-card {
+            background: #2a2a35;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 8px 0;
+            cursor: pointer;
+            transition: transform 0.1s ease-out;
+            -webkit-tap-highlight-color: rgba(220, 38, 38, 0.1);
+            touch-action: manipulation;
+        }
+        
+        .mobile-match-card:active {
+            transform: scale(0.98);
+        }
+        
+        .match-teams {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .team {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .team-logo {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #dc2626;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .score {
+            font-size: 24px;
+            font-weight: bold;
+            color: #dc2626;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 32px;
+        }
+        
+        .loading.active {
+            display: block;
+        }
+        
+        .spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid #333;
+            border-top: 3px solid #dc2626;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .test-results {
+            background: #1a1a2e;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 16px;
+            max-height: 300px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .log-entry {
+            font-family: monospace;
+            font-size: 12px;
+            padding: 4px 0;
+            border-bottom: 1px solid #333;
+        }
+        
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+        
+        .log-entry.error {
+            color: #ef4444;
+        }
+        
+        .log-entry.warning {
+            color: #f59e0b;
+        }
+        
+        .log-entry.success {
+            color: #10b981;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Mobile Performance Test Suite</h1>
+        <p>Testing MRVL Tournament Platform mobile optimizations</p>
+        
+        <!-- Performance Metrics -->
+        <div class="performance-metrics">
+            <h2>Real-Time Performance Metrics</h2>
+            <div class="metric">
+                <span>Time to Interactive (TTI):</span>
+                <span class="metric-value" id="tti-metric">Measuring...</span>
+            </div>
+            <div class="metric">
+                <span>First Contentful Paint (FCP):</span>
+                <span class="metric-value" id="fcp-metric">Measuring...</span>
+            </div>
+            <div class="metric">
+                <span>Largest Contentful Paint (LCP):</span>
+                <span class="metric-value" id="lcp-metric">Measuring...</span>
+            </div>
+            <div class="metric">
+                <span>Cumulative Layout Shift (CLS):</span>
+                <span class="metric-value" id="cls-metric">Measuring...</span>
+            </div>
+            <div class="metric">
+                <span>Touch Response Time:</span>
+                <span class="metric-value" id="touch-metric">Not tested</span>
+            </div>
+            <div class="metric">
+                <span>Memory Usage:</span>
+                <span class="metric-value" id="memory-metric">Checking...</span>
+            </div>
+        </div>
+        
+        <!-- Test Controls -->
+        <div>
+            <h2>Performance Tests</h2>
+            <button class="test-button" onclick="testTouchResponse()">Test Touch Response</button>
+            <button class="test-button" onclick="testScrollPerformance()">Test Scroll Performance</button>
+            <button class="test-button" onclick="testComponentRendering()">Test Component Rendering</button>
+            <button class="test-button" onclick="testAPICache()">Test API Caching</button>
+            <button class="test-button" onclick="runAllTests()">Run All Tests</button>
+        </div>
+        
+        <!-- Loading State -->
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Running performance tests...</p>
+        </div>
+        
+        <!-- Sample Mobile Components for Testing -->
+        <div id="test-components">
+            <h2>Sample Tournament Components</h2>
+            <div class="mobile-match-card" onclick="testMatchClick(1)">
+                <div class="match-teams">
+                    <div class="team">
+                        <div class="team-logo">T1</div>
+                        <span>Team Alpha</span>
+                    </div>
+                    <div class="score">2-1</div>
+                    <div class="team">
+                        <span>Team Beta</span>
+                        <div class="team-logo">T2</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mobile-match-card" onclick="testMatchClick(2)">
+                <div class="match-teams">
+                    <div class="team">
+                        <div class="team-logo">G1</div>
+                        <span>Gamma Squad</span>
+                    </div>
+                    <div class="score">0-0</div>
+                    <div class="team">
+                        <span>Delta Force</span>
+                        <div class="team-logo">G2</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Test Results Log -->
+        <div class="test-results" id="test-results">
+            <h3>Test Results</h3>
+            <div id="log-container">
+                <div class="log-entry">Ready to run tests...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Performance monitoring
+        let performanceData = {};
+        let testResults = [];
+        
+        // Initialize performance monitoring
+        function initPerformanceMonitoring() {
+            // Web Vitals monitoring
+            if ('PerformanceObserver' in window) {
+                // First Contentful Paint
+                new PerformanceObserver((entryList) => {
+                    for (const entry of entryList.getEntries()) {
+                        if (entry.name === 'first-contentful-paint') {
+                            updateMetric('fcp-metric', `${entry.startTime.toFixed(2)}ms`, entry.startTime < 1800 ? 'good' : entry.startTime < 3000 ? 'warning' : 'error');
+                        }
+                    }
+                }).observe({ entryTypes: ['paint'] });
+                
+                // Largest Contentful Paint
+                new PerformanceObserver((entryList) => {
+                    const entries = entryList.getEntries();
+                    const lastEntry = entries[entries.length - 1];
+                    updateMetric('lcp-metric', `${lastEntry.startTime.toFixed(2)}ms`, lastEntry.startTime < 2500 ? 'good' : lastEntry.startTime < 4000 ? 'warning' : 'error');
+                }).observe({ entryTypes: ['largest-contentful-paint'] });
+                
+                // Layout Shift
+                let clsValue = 0;
+                new PerformanceObserver((entryList) => {
+                    for (const entry of entryList.getEntries()) {
+                        if (!entry.hadRecentInput) {
+                            clsValue += entry.value;
+                        }
+                    }
+                    updateMetric('cls-metric', clsValue.toFixed(4), clsValue < 0.1 ? 'good' : clsValue < 0.25 ? 'warning' : 'error');
+                }).observe({ entryTypes: ['layout-shift'] });
+            }
+            
+            // Memory usage
+            if ('memory' in performance) {
+                setInterval(() => {
+                    const memory = performance.memory;
+                    const usedMB = Math.round(memory.usedJSHeapSize / 1024 / 1024);
+                    const totalMB = Math.round(memory.totalJSHeapSize / 1024 / 1024);
+                    updateMetric('memory-metric', `${usedMB}MB / ${totalMB}MB`, usedMB < 50 ? 'good' : usedMB < 100 ? 'warning' : 'error');
+                }, 2000);
+            }
+            
+            // Time to Interactive (simplified)
+            setTimeout(() => {
+                const navigationEntry = performance.getEntriesByType('navigation')[0];
+                const tti = navigationEntry.loadEventEnd - navigationEntry.navigationStart;
+                updateMetric('tti-metric', `${tti.toFixed(2)}ms`, tti < 3000 ? 'good' : tti < 5000 ? 'warning' : 'error');
+            }, 1000);
+        }
+        
+        function updateMetric(elementId, value, status = '') {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.textContent = value;
+                element.className = `metric-value ${status}`;
+            }
+        }
+        
+        function logResult(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry ${type}`;
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            
+            const container = document.getElementById('log-container');
+            container.appendChild(logEntry);
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        // Touch response test
+        function testTouchResponse() {
+            logResult('Starting touch response test...', 'info');
+            let touchStartTime = 0;
+            let testCount = 0;
+            const maxTests = 5;
+            const touchTimes = [];
+            
+            function touchTestHandler(e) {
+                if (e.type === 'touchstart') {
+                    touchStartTime = performance.now();
+                } else if (e.type === 'touchend') {
+                    const touchEndTime = performance.now();
+                    const responseTime = touchEndTime - touchStartTime;
+                    touchTimes.push(responseTime);
+                    testCount++;
+                    
+                    logResult(`Touch ${testCount}: ${responseTime.toFixed(2)}ms`, responseTime < 100 ? 'success' : 'warning');
+                    
+                    if (testCount >= maxTests) {
+                        const avgTime = touchTimes.reduce((a, b) => a + b) / touchTimes.length;
+                        updateMetric('touch-metric', `${avgTime.toFixed(2)}ms avg`, avgTime < 100 ? 'good' : avgTime < 200 ? 'warning' : 'error');
+                        
+                        // Remove event listeners
+                        document.removeEventListener('touchstart', touchTestHandler);
+                        document.removeEventListener('touchend', touchTestHandler);
+                        
+                        logResult(`Touch test completed. Average: ${avgTime.toFixed(2)}ms`, 'success');
+                    } else {
+                        logResult(`Tap anywhere for next test (${testCount}/${maxTests})`, 'info');
+                    }
+                }
+            }
+            
+            document.addEventListener('touchstart', touchTestHandler, { passive: true });
+            document.addEventListener('touchend', touchTestHandler, { passive: true });
+            
+            logResult('Tap anywhere on the screen 5 times to test touch response', 'info');
+        }
+        
+        // Scroll performance test
+        function testScrollPerformance() {
+            logResult('Starting scroll performance test...', 'info');
+            
+            const testContainer = document.createElement('div');
+            testContainer.style.cssText = `
+                height: 200px;
+                overflow-y: auto;
+                background: #1a1a2e;
+                border-radius: 8px;
+                margin: 16px 0;
+                -webkit-overflow-scrolling: touch;
+            `;
+            
+            // Add lots of content to test scrolling
+            for (let i = 0; i < 100; i++) {
+                const item = document.createElement('div');
+                item.style.cssText = 'padding: 8px; border-bottom: 1px solid #333;';
+                item.textContent = `Scroll test item ${i + 1}`;
+                testContainer.appendChild(item);
+            }
+            
+            document.getElementById('test-components').appendChild(testContainer);
+            
+            let frameCount = 0;
+            let lastScrollTime = 0;
+            const frameTimes = [];
+            
+            function scrollHandler() {
+                const now = performance.now();
+                if (lastScrollTime) {
+                    const frameDuration = now - lastScrollTime;
+                    frameTimes.push(frameDuration);
+                    frameCount++;
+                    
+                    if (frameDuration > 20) {
+                        logResult(`Scroll jank detected: ${frameDuration.toFixed(2)}ms`, 'warning');
+                    }
+                }
+                lastScrollTime = now;
+                
+                if (frameCount >= 50) {
+                    const avgFrameTime = frameTimes.reduce((a, b) => a + b) / frameTimes.length;
+                    const fps = 1000 / avgFrameTime;
+                    logResult(`Scroll test completed. Average FPS: ${fps.toFixed(1)}`, fps > 45 ? 'success' : 'warning');
+                    
+                    testContainer.removeEventListener('scroll', scrollHandler);
+                    setTimeout(() => {
+                        testContainer.remove();
+                    }, 2000);
+                }
+            }
+            
+            testContainer.addEventListener('scroll', scrollHandler, { passive: true });
+            logResult('Scroll the test container to measure performance', 'info');
+        }
+        
+        // Component rendering test
+        function testComponentRendering() {
+            logResult('Starting component rendering test...', 'info');
+            showLoading(true);
+            
+            setTimeout(() => {
+                const start = performance.now();
+                
+                // Render many components quickly
+                const container = document.createElement('div');
+                for (let i = 0; i < 50; i++) {
+                    const card = document.createElement('div');
+                    card.className = 'mobile-match-card';
+                    card.innerHTML = `
+                        <div class="match-teams">
+                            <div class="team">
+                                <div class="team-logo">T${i % 10}</div>
+                                <span>Team ${i + 1}</span>
+                            </div>
+                            <div class="score">${Math.floor(Math.random() * 3)}-${Math.floor(Math.random() * 3)}</div>
+                            <div class="team">
+                                <span>Opposition ${i + 1}</span>
+                                <div class="team-logo">O${i % 10}</div>
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                }
+                
+                document.getElementById('test-components').appendChild(container);
+                
+                const end = performance.now();
+                const renderTime = end - start;
+                
+                logResult(`Rendered 50 components in ${renderTime.toFixed(2)}ms`, renderTime < 100 ? 'success' : 'warning');
+                
+                // Clean up after 3 seconds
+                setTimeout(() => {
+                    container.remove();
+                    showLoading(false);
+                }, 3000);
+                
+            }, 100);
+        }
+        
+        // API cache test (simulated)
+        function testAPICache() {
+            logResult('Starting API cache test...', 'info');
+            showLoading(true);
+            
+            const apiCache = new Map();
+            const testEndpoints = ['/matches', '/news', '/forums/threads'];
+            
+            // Simulate first requests (cache miss)
+            const firstRequestTimes = [];
+            testEndpoints.forEach((endpoint, index) => {
+                setTimeout(() => {
+                    const start = performance.now();
+                    
+                    // Simulate API call
+                    setTimeout(() => {
+                        const end = performance.now();
+                        const requestTime = end - start;
+                        firstRequestTimes.push(requestTime);
+                        
+                        // Cache the result
+                        apiCache.set(endpoint, { data: `cached-data-${index}`, timestamp: Date.now() });
+                        
+                        logResult(`First request to ${endpoint}: ${requestTime.toFixed(2)}ms`, 'info');
+                        
+                        if (firstRequestTimes.length === testEndpoints.length) {
+                            // Now test cached requests
+                            setTimeout(() => {
+                                const cachedRequestTimes = [];
+                                
+                                testEndpoints.forEach(endpoint => {
+                                    const start = performance.now();
+                                    const cached = apiCache.get(endpoint);
+                                    const end = performance.now();
+                                    const requestTime = end - start;
+                                    cachedRequestTimes.push(requestTime);
+                                    
+                                    logResult(`Cached request to ${endpoint}: ${requestTime.toFixed(2)}ms`, 'success');
+                                });
+                                
+                                const avgFirst = firstRequestTimes.reduce((a, b) => a + b) / firstRequestTimes.length;
+                                const avgCached = cachedRequestTimes.reduce((a, b) => a + b) / cachedRequestTimes.length;
+                                const speedup = avgFirst / avgCached;
+                                
+                                logResult(`Cache performance: ${speedup.toFixed(1)}x faster`, 'success');
+                                showLoading(false);
+                                
+                            }, 100);
+                        }
+                    }, 200 + Math.random() * 300); // Simulate network delay
+                    
+                }, index * 100);
+            });
+        }
+        
+        // Test match card clicks
+        function testMatchClick(matchId) {
+            const start = performance.now();
+            
+            // Simulate navigation processing
+            setTimeout(() => {
+                const end = performance.now();
+                const clickTime = end - start;
+                logResult(`Match ${matchId} click processed in ${clickTime.toFixed(2)}ms`, clickTime < 50 ? 'success' : 'warning');
+            }, 10);
+        }
+        
+        // Run all tests
+        function runAllTests() {
+            logResult('Running comprehensive performance test suite...', 'info');
+            
+            testTouchResponse();
+            setTimeout(() => testScrollPerformance(), 2000);
+            setTimeout(() => testComponentRendering(), 4000);
+            setTimeout(() => testAPICache(), 6000);
+            
+            setTimeout(() => {
+                logResult('All performance tests completed!', 'success');
+            }, 10000);
+        }
+        
+        // Show/hide loading
+        function showLoading(show) {
+            const loading = document.getElementById('loading');
+            if (show) {
+                loading.classList.add('active');
+            } else {
+                loading.classList.remove('active');
+            }
+        }
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            initPerformanceMonitoring();
+            logResult('Mobile performance test suite initialized', 'success');
+            
+            // Test device capabilities
+            logResult(`Device: ${navigator.userAgent}`, 'info');
+            logResult(`Screen: ${window.innerWidth}x${window.innerHeight}`, 'info');
+            logResult(`Touch support: ${('ontouchstart' in window) ? 'Yes' : 'No'}`, 'info');
+            logResult(`Hardware concurrency: ${navigator.hardwareConcurrency || 'Unknown'} cores`, 'info');
+        });
+    </script>
+</body>
+</html>

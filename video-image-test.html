@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Embedding & Image Display Test - Article 9</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: system-ui, -apple-system, sans-serif; }
+        .console-log { background: #1a1a1a; color: #00ff00; padding: 10px; border-radius: 4px; margin: 10px 0; font-family: 'Courier New', monospace; font-size: 12px; overflow-x: auto; }
+        .test-section { border: 2px solid #374151; border-radius: 8px; padding: 20px; margin: 20px 0; background: #111827; }
+        .success { border-color: #10b981; background: #064e3b; }
+        .warning { border-color: #f59e0b; background: #451a03; }
+        .error { border-color: #ef4444; background: #450a0a; }
+        .status-ok { color: #10b981; font-weight: bold; }
+        .status-warn { color: #f59e0b; font-weight: bold; }
+        .status-error { color: #ef4444; font-weight: bold; }
+        .debug-info { background: #1e3a8a; color: #dbeafe; padding: 8px; border-radius: 4px; margin: 5px 0; font-size: 11px; }
+    </style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+    <div class="container mx-auto p-6">
+        <h1 class="text-3xl font-bold text-center mb-8 text-red-400">🎥 Video Embedding & Image Display Test</h1>
+        <p class="text-center mb-8 text-gray-300">Testing Article ID: 9 - Video & Image Functionality</p>
+        
+        <div id="test-results"></div>
+        
+        <div class="test-section">
+            <h2 class="text-xl font-bold mb-4 text-blue-400">🔍 Browser Console Output</h2>
+            <div id="console-output" class="console-log">
+                Monitoring browser console for debug messages...
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2 class="text-xl font-bold mb-4 text-yellow-400">📋 Test Summary</h2>
+            <div id="test-summary" class="space-y-2">
+                <p>Running comprehensive tests...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Capture console logs for debugging
+        let consoleOutput = [];
+        const originalLog = console.log;
+        const originalError = console.error;
+        const originalWarn = console.warn;
+        
+        console.log = function(...args) {
+            consoleOutput.push({type: 'log', message: args.join(' '), timestamp: new Date().toISOString()});
+            originalLog.apply(console, args);
+            updateConsoleDisplay();
+        };
+        
+        console.error = function(...args) {
+            consoleOutput.push({type: 'error', message: args.join(' '), timestamp: new Date().toISOString()});
+            originalError.apply(console, args);
+            updateConsoleDisplay();
+        };
+        
+        console.warn = function(...args) {
+            consoleOutput.push({type: 'warn', message: args.join(' '), timestamp: new Date().toISOString()});
+            originalWarn.apply(console, args);
+            updateConsoleDisplay();
+        };
+
+        function updateConsoleDisplay() {
+            const output = document.getElementById('console-output');
+            const recent = consoleOutput.slice(-20); // Show last 20 log entries
+            output.innerHTML = recent.map(log => {
+                const color = log.type === 'error' ? '#ff6b6b' : log.type === 'warn' ? '#ffd93d' : '#6bcf7f';
+                return `<div style="color: ${color}; margin: 2px 0;">[${log.timestamp.split('T')[1].split('.')[0]}] ${log.type.toUpperCase()}: ${log.message}</div>`;
+            }).join('') || 'No console output captured yet...';
+        }
+
+        let testResults = [];
+        
+        function addTestResult(title, status, message, details = null) {
+            testResults.push({ title, status, message, details, timestamp: new Date().toISOString() });
+            updateTestDisplay();
+        }
+        
+        function updateTestDisplay() {
+            const container = document.getElementById('test-results');
+            container.innerHTML = testResults.map(test => {
+                const statusClass = test.status === 'success' ? 'success' : test.status === 'warning' ? 'warning' : 'error';
+                const statusText = test.status === 'success' ? 'status-ok' : test.status === 'warning' ? 'status-warn' : 'status-error';
+                return `
+                    <div class="test-section ${statusClass}">
+                        <h3 class="text-lg font-semibold mb-2 ${statusText}">
+                            ${test.status === 'success' ? '✅' : test.status === 'warning' ? '⚠️' : '❌'} ${test.title}
+                        </h3>
+                        <p class="mb-2">${test.message}</p>
+                        ${test.details ? `<div class="debug-info">${test.details}</div>` : ''}
+                        <div class="text-xs text-gray-400 mt-2">Test Time: ${test.timestamp}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Test 1: Backend API Response
+        async function testBackendAPI() {
+            console.log('🔍 Testing backend API for article 9...');
+            try {
+                const response = await fetch('https://staging.mrvl.net/api/news/9');
+                const data = await response.json();
+                
+                if (data.success && data.data) {
+                    const article = data.data;
+                    
+                    // Check video data
+                    const videoData = article.videos && article.videos[0];
+                    const hasVideo = videoData && videoData.video_id === '8E1hrK77GLI';
+                    
+                    // Check image data
+                    const imageData = article.featured_image;
+                    const hasImage = imageData && typeof imageData === 'object' && imageData.url;
+                    
+                    // Check content with placeholder
+                    const hasPlaceholder = article.content && article.content.includes('[VIDEO_EMBED_0]');
+                    
+                    let status = 'success';
+                    let details = `
+                        Article Title: ${article.title}
+                        Content Preview: ${article.content.substring(0, 100)}...
+                        
+                        VIDEO DATA:
+                        - Has videos array: ${!!article.videos}
+                        - Video count: ${article.videos ? article.videos.length : 0}
+                        - Video platform: ${videoData ? videoData.platform : 'none'}
+                        - Video ID: ${videoData ? videoData.video_id : 'none'}
+                        - Original URL: ${videoData ? videoData.original_url : 'none'}
+                        - Has [VIDEO_EMBED_0] placeholder: ${hasPlaceholder}
+                        
+                        IMAGE DATA:
+                        - Image object type: ${typeof imageData}
+                        - Image URL: ${imageData ? imageData.url : 'none'}
+                        - Image exists flag: ${imageData ? imageData.exists : 'none'}
+                    `;
+                    
+                    if (!hasVideo) {
+                        status = 'warning';
+                    }
+                    
+                    addTestResult(
+                        'Backend API Response', 
+                        status, 
+                        `Retrieved article data successfully. Video: ${hasVideo ? 'Found' : 'Missing'}, Image: ${hasImage ? 'Found' : 'Missing'}, Placeholder: ${hasPlaceholder ? 'Found' : 'Missing'}`,
+                        details
+                    );
+                    
+                    return { article, videoData, imageData };
+                } else {
+                    throw new Error('Invalid API response structure');
+                }
+            } catch (error) {
+                addTestResult('Backend API Response', 'error', `Failed to fetch article: ${error.message}`);
+                return null;
+            }
+        }
+
+        // Test 2: Video URL Generation
+        function testVideoEmbedGeneration(videoData) {
+            console.log('🎥 Testing video embed URL generation...');
+            
+            if (!videoData) {
+                addTestResult('Video Embed Generation', 'error', 'No video data available for testing');
+                return;
+            }
+
+            // Simulate the frontend video processing
+            const type = videoData.platform; // "youtube"
+            const id = videoData.video_id;   // "8E1hrK77GLI"
+            
+            // Test embed URL generation (simulating the frontend logic)
+            const params = new URLSearchParams({
+                rel: '0',
+                modestbranding: '1',
+                controls: '1',
+                showinfo: '0',
+                fs: '1'
+            });
+            
+            const expectedEmbedUrl = `https://www.youtube.com/embed/${id}?${params.toString()}`;
+            
+            console.log('🎥 VideoEmbed - Generated embed URL:', expectedEmbedUrl, 'for type:', type, 'id:', id);
+            
+            addTestResult(
+                'Video Embed Generation',
+                'success',
+                'Video embed URL generated successfully',
+                `Platform: ${type}, ID: ${id}, Expected URL: ${expectedEmbedUrl}`
+            );
+            
+            return expectedEmbedUrl;
+        }
+
+        // Test 3: Image URL Processing
+        function testImageProcessing(imageData) {
+            console.log('🖼️ Testing image URL processing...');
+            
+            if (!imageData || typeof imageData !== 'object') {
+                addTestResult('Image Processing', 'error', 'Invalid image data structure');
+                return;
+            }
+            
+            const imageUrl = imageData.url;
+            const baseUrl = 'https://staging.mrvl.net';
+            
+            console.log('🖼️ getNewsFeaturedImageUrl - Complex image object detected:', imageData);
+            
+            let finalImageUrl;
+            if (imageUrl && typeof imageUrl === 'string') {
+                if (imageUrl.startsWith('http') || imageUrl.startsWith(baseUrl)) {
+                    finalImageUrl = imageUrl;
+                    console.log('🖼️ getNewsFeaturedImageUrl - Using complete URL from object:', finalImageUrl);
+                } else {
+                    finalImageUrl = `${baseUrl}${imageUrl}`;
+                    console.log('🖼️ getNewsFeaturedImageUrl - Built complete URL from object:', finalImageUrl);
+                }
+                
+                addTestResult(
+                    'Image Processing',
+                    'success',
+                    'Image URL processed successfully',
+                    `Raw URL: ${imageUrl}, Final URL: ${finalImageUrl}, Image exists: ${imageData.exists}`
+                );
+                
+                return finalImageUrl;
+            } else {
+                addTestResult('Image Processing', 'error', 'Invalid image URL in object');
+                return null;
+            }
+        }
+
+        // Test 4: Content Placeholder Processing
+        function testPlaceholderReplacement(content, videoData) {
+            console.log('🔄 Testing placeholder replacement...');
+            
+            if (!content) {
+                addTestResult('Placeholder Replacement', 'error', 'No content available');
+                return;
+            }
+            
+            const hasPlaceholder = content.includes('[VIDEO_EMBED_0]');
+            const videoCount = videoData ? 1 : 0;
+            
+            if (hasPlaceholder && videoCount > 0) {
+                // Simulate the processing logic from NewsDetailPage.js
+                let processedContent = content;
+                processedContent = processedContent.replace(/\[VIDEO_EMBED_(\d+)\]/g, '<!-- VIDEO_EMBEDDED_$1 -->');
+                
+                const hasProcessedMarker = processedContent.includes('<!-- VIDEO_EMBEDDED_0 -->');
+                
+                addTestResult(
+                    'Placeholder Replacement',
+                    hasProcessedMarker ? 'success' : 'warning',
+                    `Placeholder processing ${hasProcessedMarker ? 'successful' : 'incomplete'}`,
+                    `Original: ${content.substring(0, 50)}..., Processed: ${processedContent.substring(0, 50)}...`
+                );
+                
+                return processedContent;
+            } else {
+                addTestResult(
+                    'Placeholder Replacement',
+                    'warning',
+                    `Placeholder: ${hasPlaceholder ? 'Found' : 'Missing'}, Video: ${videoCount > 0 ? 'Available' : 'Missing'}`
+                );
+                return content;
+            }
+        }
+
+        // Test 5: Frontend Navigation Test
+        async function testFrontendPageLoad() {
+            console.log('🌐 Testing frontend page load...');
+            
+            try {
+                const response = await fetch('http://localhost:3000/news/9', {
+                    method: 'GET',
+                    headers: { 'Accept': 'text/html' }
+                });
+                
+                if (response.ok) {
+                    const html = await response.text();
+                    const hasReactRoot = html.includes('id="root"');
+                    const hasMetaTags = html.includes('viewport');
+                    
+                    addTestResult(
+                        'Frontend Page Load',
+                        'success',
+                        'Frontend page loads successfully',
+                        `React root: ${hasReactRoot}, Meta tags: ${hasMetaTags}, Status: ${response.status}`
+                    );
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                addTestResult('Frontend Page Load', 'error', `Page load failed: ${error.message}`);
+            }
+        }
+
+        // Test 6: Image Accessibility Test
+        function testImageAccessibility(imageUrl) {
+            console.log('🖼️ Testing image accessibility...');
+            
+            if (!imageUrl) {
+                addTestResult('Image Accessibility', 'error', 'No image URL to test');
+                return;
+            }
+            
+            const img = new Image();
+            img.onload = function() {
+                addTestResult(
+                    'Image Accessibility',
+                    'success',
+                    'Image loads successfully',
+                    `URL: ${imageUrl}, Dimensions: ${img.naturalWidth}x${img.naturalHeight}`
+                );
+            };
+            img.onerror = function() {
+                addTestResult(
+                    'Image Accessibility',
+                    'error',
+                    'Image failed to load',
+                    `URL: ${imageUrl}`
+                );
+            };
+            img.src = imageUrl;
+        }
+
+        // Main test execution
+        async function runTests() {
+            console.log('🚀 Starting comprehensive video & image tests...');
+            
+            // Test 1: API Response
+            const apiResult = await testBackendAPI();
+            
+            if (apiResult) {
+                // Test 2: Video Processing
+                const embedUrl = testVideoEmbedGeneration(apiResult.videoData);
+                
+                // Test 3: Image Processing  
+                const imageUrl = testImageProcessing(apiResult.imageData);
+                
+                // Test 4: Placeholder Processing
+                const processedContent = testPlaceholderReplacement(apiResult.article.content, apiResult.videoData);
+                
+                // Test 5: Frontend Page Load
+                await testFrontendPageLoad();
+                
+                // Test 6: Image Accessibility
+                if (imageUrl) {
+                    testImageAccessibility(imageUrl);
+                }
+                
+                // Update summary
+                setTimeout(() => {
+                    const summary = document.getElementById('test-summary');
+                    const successCount = testResults.filter(t => t.status === 'success').length;
+                    const warningCount = testResults.filter(t => t.status === 'warning').length;
+                    const errorCount = testResults.filter(t => t.status === 'error').length;
+                    
+                    summary.innerHTML = `
+                        <p class="text-green-400">✅ Successful Tests: ${successCount}</p>
+                        <p class="text-yellow-400">⚠️ Warning Tests: ${warningCount}</p>
+                        <p class="text-red-400">❌ Failed Tests: ${errorCount}</p>
+                        <p class="text-blue-400">📊 Total Tests: ${testResults.length}</p>
+                        <div class="mt-4 p-4 bg-gray-800 rounded">
+                            <h4 class="font-bold mb-2">🔧 Key Findings:</h4>
+                            <ul class="space-y-1 text-sm">
+                                <li>• Backend returns video data with platform: "${apiResult.videoData?.platform}" and ID: "${apiResult.videoData?.video_id}"</li>
+                                <li>• Content contains placeholder: "${apiResult.article.content.includes('[VIDEO_EMBED_0]') ? 'Yes' : 'No'}"</li>
+                                <li>• Image data is complex object: "${typeof apiResult.imageData === 'object' ? 'Yes' : 'No'}"</li>
+                                <li>• Image URL structure: "${apiResult.imageData?.url || 'None'}"</li>
+                            </ul>
+                        </div>
+                    `;
+                }, 1000);
+            }
+        }
+
+        // Start tests when page loads
+        window.addEventListener('load', () => {
+            setTimeout(runTests, 500);
+        });
+    </script>
+</body>
+</html>

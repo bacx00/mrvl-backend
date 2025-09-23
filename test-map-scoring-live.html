@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Map Scoring Live Test - Marvel Rivals</title>
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f0f23, #1a1a3e);
+            color: #fff;
+            padding: 20px;
+            margin: 0;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            background: linear-gradient(90deg, #ff6b6b, #4ecdc4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 2.5em;
+            margin-bottom: 30px;
+        }
+        .match-header {
+            background: rgba(255,255,255,0.05);
+            border: 2px solid #4ecdc4;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .series-score {
+            font-size: 3em;
+            font-weight: bold;
+            color: #ffd700;
+            margin: 20px 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        .team-name {
+            display: inline-block;
+            width: 200px;
+            text-align: center;
+        }
+        .vs {
+            color: #ff6b6b;
+            margin: 0 20px;
+        }
+        .map-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .map-card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 12px;
+            padding: 15px;
+            transition: all 0.3s;
+        }
+        .map-card.active {
+            border-color: #4ecdc4;
+            box-shadow: 0 0 20px rgba(78,205,196,0.3);
+        }
+        .map-card.completed {
+            border-color: #27ae60;
+            background: rgba(39,174,96,0.1);
+        }
+        .map-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .map-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #4ecdc4;
+        }
+        .map-status {
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+        .status-pending { background: #666; }
+        .status-active { background: #f39c12; }
+        .status-completed { background: #27ae60; }
+        .map-score-display {
+            font-size: 2em;
+            font-weight: bold;
+            text-align: center;
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+        }
+        .score-controls {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            margin: 15px 0;
+        }
+        .team-score-control {
+            text-align: center;
+        }
+        .team-label {
+            font-size: 0.9em;
+            color: #aaa;
+            margin-bottom: 5px;
+        }
+        .score-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .score-buttons {
+            display: flex;
+            gap: 5px;
+            justify-content: center;
+        }
+        button {
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9em;
+        }
+        button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 3px 10px rgba(102,126,234,0.4);
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .win-button {
+            background: linear-gradient(90deg, #27ae60, #16a085);
+            padding: 10px 20px;
+            margin: 10px 5px;
+            font-size: 1em;
+        }
+        .test-controls {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .test-button {
+            background: linear-gradient(90deg, #e74c3c, #c0392b);
+            padding: 12px 24px;
+            margin: 5px;
+            font-size: 1.1em;
+        }
+        .test-button.primary {
+            background: linear-gradient(90deg, #3498db, #2980b9);
+        }
+        .log-section {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .log-entry {
+            padding: 8px;
+            margin: 4px 0;
+            background: rgba(0,0,0,0.2);
+            border-left: 3px solid #4ecdc4;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        .log-entry.error {
+            border-left-color: #e74c3c;
+            background: rgba(231,76,60,0.1);
+        }
+        .log-entry.success {
+            border-left-color: #27ae60;
+            background: rgba(39,174,96,0.1);
+        }
+        .log-entry.warning {
+            border-left-color: #f39c12;
+            background: rgba(243,156,18,0.1);
+        }
+        .winner-indicator {
+            display: inline-block;
+            padding: 5px 10px;
+            background: #ffd700;
+            color: #000;
+            border-radius: 5px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 Map Scoring System - Live Test</h1>
+        
+        <!-- Match Header with Series Score -->
+        <div class="match-header">
+            <h2>Best of 5 - Grand Finals</h2>
+            <div class="series-score">
+                <span class="team-name">Rare Atom</span>
+                <span id="series-team1">0</span>
+                <span class="vs">VS</span>
+                <span id="series-team2">0</span>
+                <span class="team-name">Soniqs</span>
+            </div>
+            <div id="match-status">Match Status: <span style="color: #f39c12;">Live</span></div>
+        </div>
+
+        <!-- Test Controls -->
+        <div class="test-controls">
+            <h3>🧪 Test Scenarios</h3>
+            <button class="test-button primary" onclick="testScenario1()">
+                Scenario 1: Normal Match Flow (3-0)
+            </button>
+            <button class="test-button primary" onclick="testScenario2()">
+                Scenario 2: Back & Forth (3-2)
+            </button>
+            <button class="test-button primary" onclick="testScenario3()">
+                Scenario 3: Reverse Sweep (3-2)
+            </button>
+            <br><br>
+            <button class="test-button" onclick="resetMatch()">🔄 Reset Match</button>
+            <button class="test-button" onclick="testLiveUpdate()">⚡ Test Live Update</button>
+            <button class="test-button" onclick="verifyBackend()">🔍 Verify Backend</button>
+        </div>
+
+        <!-- Map Cards -->
+        <div class="map-container" id="maps-container">
+            <!-- Maps will be dynamically generated -->
+        </div>
+
+        <!-- Log Section -->
+        <div class="log-section">
+            <h3>📝 Test Log</h3>
+            <div id="log-container"></div>
+        </div>
+    </div>
+
+    <script>
+        const matchId = 1;
+        const apiUrl = 'https://staging.mrvl.net/api';
+        const token = localStorage.getItem('authToken');
+        
+        // Match state
+        let matchState = {
+            currentMap: 1,
+            totalMaps: 5,
+            team1SeriesScore: 0,
+            team2SeriesScore: 0,
+            maps: {}
+        };
+
+        // Initialize maps
+        for (let i = 1; i <= 5; i++) {
+            matchState.maps[i] = {
+                team1Score: 0,
+                team2Score: 0,
+                status: i === 1 ? 'active' : 'pending',
+                winner: null
+            };
+        }
+
+        function log(message, type = 'info') {
+            const logContainer = document.getElementById('log-container');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            const timestamp = new Date().toLocaleTimeString();
+            entry.textContent = `[${timestamp}] ${message}`;
+            logContainer.appendChild(entry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+
+        function renderMaps() {
+            const container = document.getElementById('maps-container');
+            container.innerHTML = '';
+            
+            for (let i = 1; i <= matchState.totalMaps; i++) {
+                const map = matchState.maps[i];
+                const mapCard = document.createElement('div');
+                mapCard.className = `map-card ${map.status}`;
+                
+                mapCard.innerHTML = `
+                    <div class="map-header">
+                        <div class="map-title">Map ${i}</div>
+                        <div class="map-status status-${map.status}">${map.status.toUpperCase()}</div>
+                    </div>
+                    <div class="map-score-display">
+                        <span style="color: #4ecdc4;">Rare Atom</span>
+                        <span style="color: #ffd700; margin: 0 20px;">
+                            ${map.team1Score} - ${map.team2Score}
+                        </span>
+                        <span style="color: #ff6b6b;">Soniqs</span>
+                        ${map.winner ? `<span class="winner-indicator">Winner: ${map.winner === 1 ? 'Rare Atom' : 'Soniqs'}</span>` : ''}
+                    </div>
+                    ${map.status === 'active' ? `
+                        <div class="score-controls">
+                            <div class="team-score-control">
+                                <div class="team-label">Rare Atom</div>
+                                <div class="score-value" id="map${i}-team1">${map.team1Score}</div>
+                                <div class="score-buttons">
+                                    <button onclick="updateMapScore(${i}, 1, -1)">-</button>
+                                    <button onclick="updateMapScore(${i}, 1, 1)">+</button>
+                                </div>
+                            </div>
+                            <div class="team-score-control">
+                                <div class="team-label">Soniqs</div>
+                                <div class="score-value" id="map${i}-team2">${map.team2Score}</div>
+                                <div class="score-buttons">
+                                    <button onclick="updateMapScore(${i}, 2, -1)">-</button>
+                                    <button onclick="updateMapScore(${i}, 2, 1)">+</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="text-align: center;">
+                            <button class="win-button" onclick="completeMap(${i}, 1)">Rare Atom Wins Map</button>
+                            <button class="win-button" onclick="completeMap(${i}, 2)">Soniqs Wins Map</button>
+                        </div>
+                    ` : ''}
+                `;
+                
+                container.appendChild(mapCard);
+            }
+        }
+
+        async function updateMapScore(mapNum, team, delta) {
+            const map = matchState.maps[mapNum];
+            if (team === 1) {
+                map.team1Score = Math.max(0, map.team1Score + delta);
+            } else {
+                map.team2Score = Math.max(0, map.team2Score + delta);
+            }
+            
+            log(`Map ${mapNum}: Score updated to ${map.team1Score} - ${map.team2Score}`);
+            renderMaps();
+            await sendUpdate();
+        }
+
+        async function completeMap(mapNum, winner) {
+            const map = matchState.maps[mapNum];
+            map.status = 'completed';
+            map.winner = winner;
+            
+            if (winner === 1) {
+                matchState.team1SeriesScore++;
+                log(`✅ Map ${mapNum}: Rare Atom wins ${map.team1Score} - ${map.team2Score}`, 'success');
+            } else {
+                matchState.team2SeriesScore++;
+                log(`✅ Map ${mapNum}: Soniqs wins ${map.team1Score} - ${map.team2Score}`, 'success');
+            }
+            
+            // Update series score display
+            document.getElementById('series-team1').textContent = matchState.team1SeriesScore;
+            document.getElementById('series-team2').textContent = matchState.team2SeriesScore;
+            
+            // Check for match winner
+            if (matchState.team1SeriesScore >= 3) {
+                log(`🏆 MATCH COMPLETE: Rare Atom wins ${matchState.team1SeriesScore} - ${matchState.team2SeriesScore}!`, 'success');
+                document.getElementById('match-status').innerHTML = 'Match Status: <span style="color: #27ae60;">Completed - Rare Atom Wins!</span>';
+            } else if (matchState.team2SeriesScore >= 3) {
+                log(`🏆 MATCH COMPLETE: Soniqs wins ${matchState.team2SeriesScore} - ${matchState.team1SeriesScore}!`, 'success');
+                document.getElementById('match-status').innerHTML = 'Match Status: <span style="color: #27ae60;">Completed - Soniqs Wins!</span>';
+            } else {
+                // Activate next map
+                const nextMap = mapNum + 1;
+                if (nextMap <= matchState.totalMaps) {
+                    matchState.maps[nextMap].status = 'active';
+                    matchState.currentMap = nextMap;
+                    log(`📍 Moving to Map ${nextMap}`, 'warning');
+                }
+            }
+            
+            renderMaps();
+            await sendUpdate();
+        }
+
+        async function sendUpdate() {
+            const payload = {
+                series_score_team1: matchState.team1SeriesScore,
+                series_score_team2: matchState.team2SeriesScore,
+                current_map: matchState.currentMap,
+                maps: matchState.maps,
+                status: (matchState.team1SeriesScore >= 3 || matchState.team2SeriesScore >= 3) ? 'completed' : 'live'
+            };
+            
+            try {
+                const response = await fetch(`${apiUrl}/admin/matches/${matchId}/update-live-stats`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(payload)
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    log('📤 Update sent to backend successfully');
+                } else {
+                    throw new Error(result.message || 'Update failed');
+                }
+            } catch (error) {
+                log(`❌ Backend update error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testScenario1() {
+            log('🎮 Starting Scenario 1: Normal Match Flow (3-0 sweep)', 'warning');
+            resetMatch();
+            
+            // Map 1: 16-10
+            setTimeout(async () => {
+                log('Map 1: Simulating rounds...', 'info');
+                for (let i = 0; i < 16; i++) {
+                    matchState.maps[1].team1Score++;
+                    if (i < 10) matchState.maps[1].team2Score++;
+                }
+                renderMaps();
+                await completeMap(1, 1);
+            }, 1000);
+            
+            // Map 2: 16-14
+            setTimeout(async () => {
+                log('Map 2: Close match...', 'info');
+                matchState.maps[2].team1Score = 16;
+                matchState.maps[2].team2Score = 14;
+                renderMaps();
+                await completeMap(2, 1);
+            }, 3000);
+            
+            // Map 3: 16-8
+            setTimeout(async () => {
+                log('Map 3: Dominant performance...', 'info');
+                matchState.maps[3].team1Score = 16;
+                matchState.maps[3].team2Score = 8;
+                renderMaps();
+                await completeMap(3, 1);
+            }, 5000);
+        }
+
+        async function testScenario2() {
+            log('🎮 Starting Scenario 2: Back & Forth (3-2 thriller)', 'warning');
+            resetMatch();
+            
+            const sequence = [
+                { map: 1, winner: 1, score1: 16, score2: 12 },
+                { map: 2, winner: 2, score1: 14, score2: 16 },
+                { map: 3, winner: 1, score1: 16, score2: 13 },
+                { map: 4, winner: 2, score1: 10, score2: 16 },
+                { map: 5, winner: 1, score1: 16, score2: 14 }
+            ];
+            
+            for (let i = 0; i < sequence.length; i++) {
+                setTimeout(async () => {
+                    const s = sequence[i];
+                    log(`Map ${s.map}: Setting score ${s.score1} - ${s.score2}`, 'info');
+                    matchState.maps[s.map].team1Score = s.score1;
+                    matchState.maps[s.map].team2Score = s.score2;
+                    renderMaps();
+                    await completeMap(s.map, s.winner);
+                }, (i + 1) * 2000);
+            }
+        }
+
+        async function testScenario3() {
+            log('🎮 Starting Scenario 3: Reverse Sweep (0-2 to 3-2)', 'warning');
+            resetMatch();
+            
+            const sequence = [
+                { map: 1, winner: 2, score1: 8, score2: 16 },
+                { map: 2, winner: 2, score1: 10, score2: 16 },
+                { map: 3, winner: 1, score1: 16, score2: 14 },
+                { map: 4, winner: 1, score1: 16, score2: 11 },
+                { map: 5, winner: 1, score1: 16, score2: 15 }
+            ];
+            
+            for (let i = 0; i < sequence.length; i++) {
+                setTimeout(async () => {
+                    const s = sequence[i];
+                    log(`Map ${s.map}: ${s.winner === 1 ? 'Rare Atom' : 'Soniqs'} wins ${s.score1} - ${s.score2}`, 'info');
+                    matchState.maps[s.map].team1Score = s.score1;
+                    matchState.maps[s.map].team2Score = s.score2;
+                    renderMaps();
+                    await completeMap(s.map, s.winner);
+                }, (i + 1) * 2000);
+            }
+        }
+
+        function resetMatch() {
+            matchState = {
+                currentMap: 1,
+                totalMaps: 5,
+                team1SeriesScore: 0,
+                team2SeriesScore: 0,
+                maps: {}
+            };
+            
+            for (let i = 1; i <= 5; i++) {
+                matchState.maps[i] = {
+                    team1Score: 0,
+                    team2Score: 0,
+                    status: i === 1 ? 'active' : 'pending',
+                    winner: null
+                };
+            }
+            
+            document.getElementById('series-team1').textContent = '0';
+            document.getElementById('series-team2').textContent = '0';
+            document.getElementById('match-status').innerHTML = 'Match Status: <span style="color: #f39c12;">Live</span>';
+            
+            log('🔄 Match reset to initial state', 'warning');
+            renderMaps();
+            sendUpdate();
+        }
+
+        async function testLiveUpdate() {
+            log('⚡ Testing live score update...', 'warning');
+            const currentMapNum = matchState.currentMap;
+            const map = matchState.maps[currentMapNum];
+            
+            // Simulate rapid score changes
+            const updates = [
+                { team: 1, score: 5 },
+                { team: 2, score: 3 },
+                { team: 1, score: 8 },
+                { team: 2, score: 7 },
+                { team: 1, score: 12 },
+                { team: 2, score: 10 }
+            ];
+            
+            for (let i = 0; i < updates.length; i++) {
+                setTimeout(() => {
+                    const update = updates[i];
+                    if (update.team === 1) {
+                        matchState.maps[currentMapNum].team1Score = update.score;
+                    } else {
+                        matchState.maps[currentMapNum].team2Score = update.score;
+                    }
+                    log(`Live Update: Map ${currentMapNum} score is now ${matchState.maps[currentMapNum].team1Score} - ${matchState.maps[currentMapNum].team2Score}`);
+                    renderMaps();
+                    sendUpdate();
+                }, i * 500);
+            }
+        }
+
+        async function verifyBackend() {
+            log('🔍 Verifying backend data...', 'warning');
+            
+            try {
+                const response = await fetch(`${apiUrl}/matches/${matchId}`);
+                const data = await response.json();
+                
+                if (data.success && data.data) {
+                    const match = data.data;
+                    log(`✅ Backend Series Score: ${match.team1_score || 0} - ${match.team2_score || 0}`, 'success');
+                    log(`✅ Match Status: ${match.status}`, 'success');
+                    
+                    // Check if maps data exists
+                    if (match.maps) {
+                        log('✅ Maps data found in backend', 'success');
+                        Object.entries(match.maps).forEach(([mapNum, mapData]) => {
+                            log(`  Map ${mapNum}: ${mapData.team1_score} - ${mapData.team2_score} (${mapData.status})`, 'info');
+                        });
+                    } else {
+                        log('⚠️ No maps data in backend response', 'warning');
+                    }
+                } else {
+                    throw new Error('Failed to retrieve match data');
+                }
+            } catch (error) {
+                log(`❌ Backend verification error: ${error.message}`, 'error');
+            }
+        }
+
+        // Initialize
+        log('🎮 Map Scoring Test System Ready', 'success');
+        log('Select a test scenario to begin', 'info');
+        renderMaps();
+    </script>
+</body>
+</html>

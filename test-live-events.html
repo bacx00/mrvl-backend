@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Events Monitor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .event-log {
+            background: #f5f5f5;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            font-size: 12px;
+        }
+        .event-log.match { border-left: 4px solid #2196F3; }
+        .event-log.storage { border-left: 4px solid #4CAF50; }
+        .event-log.error { border-left: 4px solid #f44336; }
+        .controls {
+            margin: 20px 0;
+        }
+        button {
+            margin: 0 5px;
+            padding: 8px 15px;
+            cursor: pointer;
+        }
+        #eventContainer {
+            max-height: 600px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+        }
+        .timestamp {
+            color: #666;
+            font-size: 11px;
+        }
+        pre {
+            margin: 5px 0;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <h1>Live Events Monitor</h1>
+    
+    <div class="controls">
+        <button onclick="clearLogs()">Clear Logs</button>
+        <button onclick="simulateScoreUpdate()">Simulate Score Update</button>
+        <button onclick="simulateHeroChange()">Simulate Hero Change</button>
+        <label>
+            <input type="checkbox" id="autoScroll" checked> Auto-scroll
+        </label>
+    </div>
+    
+    <h2>Events Log:</h2>
+    <div id="eventContainer"></div>
+    
+    <script>
+        let eventCount = 0;
+        const eventContainer = document.getElementById('eventContainer');
+        const autoScrollCheckbox = document.getElementById('autoScroll');
+        
+        // Listen for ALL mrvl events
+        const eventTypes = [
+            'mrvl-match-updated',
+            'mrvl-score-updated',
+            'mrvl-hero-updated',
+            'mrvl-stats-updated',
+            'liveMatchUpdate'
+        ];
+        
+        eventTypes.forEach(eventType => {
+            window.addEventListener(eventType, (event) => {
+                logEvent('match', eventType, event.detail);
+            });
+        });
+        
+        // Listen for storage events
+        window.addEventListener('storage', (event) => {
+            if (event.key && (event.key.includes('mrvl-') || event.key.includes('liveMatchUpdate'))) {
+                try {
+                    const data = JSON.parse(event.newValue);
+                    logEvent('storage', event.key, data);
+                } catch (e) {
+                    logEvent('error', 'Storage Parse Error', { key: event.key, error: e.message });
+                }
+            }
+        });
+        
+        function logEvent(type, eventName, data) {
+            eventCount++;
+            const logDiv = document.createElement('div');
+            logDiv.className = `event-log ${type}`;
+            
+            const timestamp = new Date().toLocaleTimeString('en-US', { 
+                hour12: false, 
+                hour: '2-digit', 
+                minute: '2-digit', 
+                second: '2-digit',
+                fractionalSecondDigits: 3 
+            });
+            
+            let summary = '';
+            if (data) {
+                if (data.updateType) summary += `Type: ${data.updateType} `;
+                if (data.matchId) summary += `Match: ${data.matchId} `;
+                if (data.teamNumber) summary += `Team: ${data.teamNumber} `;
+                if (data.mapScore !== undefined) summary += `Score: ${data.mapScore} `;
+                if (data.hero) summary += `Hero: ${data.hero} `;
+                if (data.playerName) summary += `Player: ${data.playerName} `;
+            }
+            
+            logDiv.innerHTML = `
+                <strong>#${eventCount} ${eventName}</strong> 
+                <span class="timestamp">${timestamp}</span>
+                ${summary ? `<br>Summary: ${summary}` : ''}
+                <pre>${JSON.stringify(data, null, 2)}</pre>
+            `;
+            
+            eventContainer.appendChild(logDiv);
+            
+            if (autoScrollCheckbox.checked) {
+                logDiv.scrollIntoView({ behavior: 'smooth', block: 'end' });
+            }
+        }
+        
+        function clearLogs() {
+            eventContainer.innerHTML = '';
+            eventCount = 0;
+        }
+        
+        function simulateScoreUpdate() {
+            const event = new CustomEvent('mrvl-match-updated', {
+                detail: {
+                    matchId: '1',
+                    updateType: 'SCORE_UPDATE',
+                    timestamp: Date.now(),
+                    mapScore: Math.floor(Math.random() * 10),
+                    teamNumber: Math.random() > 0.5 ? 1 : 2,
+                    mapIndex: 0,
+                    source: 'test-page'
+                }
+            });
+            window.dispatchEvent(event);
+        }
+        
+        function simulateHeroChange() {
+            const heroes = ['Spider-Man', 'Iron Man', 'Captain America', 'Thor', 'Hulk'];
+            const event = new CustomEvent('mrvl-match-updated', {
+                detail: {
+                    matchId: '1',
+                    updateType: 'HERO_CHANGE',
+                    timestamp: Date.now(),
+                    hero: heroes[Math.floor(Math.random() * heroes.length)],
+                    playerName: 'TestPlayer',
+                    team: 'team1',
+                    mapIndex: 0,
+                    source: 'test-page'
+                }
+            });
+            window.dispatchEvent(event);
+        }
+        
+        // Initial message
+        logEvent('match', 'System', { message: 'Event monitor started. Open this page alongside your app to monitor all events.' });
+    </script>
+</body>
+</html>
