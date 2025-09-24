@@ -36,7 +36,7 @@ use App\Http\Controllers\{
     OptimizedAdminController,
     BulkOperationController,
     MentionController,
-    TestDataController,
+    // TestDataController, // Commented out - controller doesn't exist
     VoteController,
     AchievementController,
     ChallengeController,
@@ -362,6 +362,11 @@ Route::post('/matches/{matchId}/live-update', [LiveUpdateController::class, 'upd
 
 // News comments route (public viewing)
 Route::get('/news/{newsId}/comments', [NewsController::class, 'getCommentsWithNesting']);
+
+// Tournament Structure Routes (public viewing)
+Route::get('/events/{eventId}/tournament-structure', [\App\Http\Controllers\TournamentGeneratorController::class, 'getTournamentStructure']);
+Route::get('/tournament-formats', [\App\Http\Controllers\TournamentGeneratorController::class, 'getAvailableFormats']);
+Route::get('/match-formats', [\App\Http\Controllers\TournamentGeneratorController::class, 'getMatchFormats']);
 
 // ===================================
 // STANDARDIZED API ENDPOINTS FOR FRONTEND COMPATIBILITY
@@ -931,7 +936,12 @@ Route::middleware(['auth:api', 'role:admin|moderator'])->prefix('admin')->group(
 });
 
 Route::middleware(['auth:api', 'role:admin'])->prefix('admin')->group(function () {
-    
+
+    // Tournament Generator Routes
+    Route::post('/events/{eventId}/generate-tournament', [\App\Http\Controllers\TournamentGeneratorController::class, 'generateTournament']);
+    Route::put('/events/{eventId}/matches/bulk', [\App\Http\Controllers\TournamentGeneratorController::class, 'bulkUpdateMatches']);
+    Route::put('/matches/{matchId}', [\App\Http\Controllers\TournamentGeneratorController::class, 'updateMatch']);
+
     // Bulk Operations
     Route::prefix('bulk')->group(function () {
         Route::post('/{type}/delete', [BulkOperationController::class, 'bulkDelete']);
@@ -1198,6 +1208,15 @@ Route::post('/teams/{teamId}/coach/upload', [TeamController::class, 'uploadCoach
         Route::put('/bracket/matches/{matchId}/games/{gameNumber}', [ComprehensiveBracketController::class, 'updateGame']);
         Route::post('/bracket/matches/{matchId}/reset-bracket', [ComprehensiveBracketController::class, 'resetBracket']);
         Route::post('/{eventId}/swiss/generate-round', [ComprehensiveBracketController::class, 'generateSwissRound']);
+
+        // Independent Bracket Management (separate from matches)
+        Route::post('/{eventId}/independent-bracket', [BracketController::class, 'saveBracket']);
+        Route::get('/{eventId}/independent-bracket', [BracketController::class, 'getBracket']);
+        Route::put('/{eventId}/independent-bracket/match', [BracketController::class, 'updateBracketMatch']);
+        Route::delete('/{eventId}/independent-bracket', [BracketController::class, 'clearBracket']);
+        Route::post('/{eventId}/independent-bracket/clone', [BracketController::class, 'cloneBracket']);
+        Route::get('/{eventId}/independent-bracket/export', [BracketController::class, 'exportBracket']);
+        Route::post('/{eventId}/independent-bracket/import', [BracketController::class, 'importBracket']);
     });
     
     
@@ -1700,14 +1719,14 @@ Route::middleware('auth:api')->group(function () {
     });
 });
 
-// Test Data Routes (Non-production only)
-if (!app()->environment('production')) {
-    Route::prefix('test')->group(function () {
-        Route::post('/matches', [TestDataController::class, 'createTestMatches']);
-        Route::post('/matches/{match}/simulate', [TestDataController::class, 'simulateLiveUpdate']);
-        Route::get('/matches/{match}/data', [TestDataController::class, 'getLiveMatchData']);
-    });
-}
+// Test Data Routes (Non-production only) - Commented out due to missing controller
+// if (!app()->environment('production')) {
+//     Route::prefix('test')->group(function () {
+//         Route::post('/matches', [TestDataController::class, 'createTestMatches']);
+//         Route::post('/matches/{match}/simulate', [TestDataController::class, 'simulateLiveUpdate']);
+//         Route::get('/matches/{match}/data', [TestDataController::class, 'getLiveMatchData']);
+//     });
+// }
 
 // Test routes for role verification
 Route::middleware(['auth:api', 'role:admin'])->get('/test-admin', function (Request $request) {
